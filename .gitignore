@@ -1,0 +1,38 @@
+# Bí mật
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Dữ liệu chạy
+backend/data/cache/
+backend/data/raw/
+reports/
+
+# Claude Code cá nhân
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Hệ điều hành / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

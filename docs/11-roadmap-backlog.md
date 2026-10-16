@@ -1,0 +1,253 @@
+# 11. Lộ trình và backlog
+
+> Phiên bản 1.0 · 2026-10-16 · Nguồn sự thật về **việc cần làm**. Trạng thái hiện tại xem [PROGRESS.md](PROGRESS.md).
+
+## 1. Cách làm việc (Scrum rút gọn cho 1 người + Claude Code)
+
+- **Sprint 1 tuần**, mỗi sprint gắn với 1–2 milestone (bảng mục 3).
+- **Một task = một nhánh git = một phiên Claude Code** (hoặc vài phiên với `/clear` giữa chừng). Tên nhánh: `task/T2.6-pipeline`.
+- **Vòng lặp mỗi task** (chi tiết trong [CLAUDE.md](../CLAUDE.md)):
+  `/next` → Plan mode → `/plan-task <ID>` → code + test → `/check` → `/review` → sửa → `/done <ID>`.
+- **Cuối mỗi milestone:** gọi subagent `qa-tester`, chạy `make check` toàn bộ, cập nhật sơ đồ trong docs nếu kiến trúc thực tế khác thiết kế, `/clear`.
+- **Thay đổi quyết định lớn** (thư viện, schema, phạm vi) → ghi ADR mới trong `docs/adr/`.
+- **Việc phát sinh** → thêm task mới vào cuối milestone liên quan với ID kế tiếp (ví dụ T2.7), ghi "Phát sinh từ T2.6".
+
+Trạng thái: ⬜ Chưa làm · 🔄 Đang làm · ✅ Xong · ⛔ Bị chặn (ghi lý do trong PROGRESS.md).
+Ước lượng: S ≈ ½ ngày · M ≈ 1 ngày · L ≈ 2 ngày (thời gian làm cùng Claude Code, ước lượng thô).
+
+## 2. Definition of Done
+
+Một task chỉ được đánh ✅ khi **tất cả** đúng:
+
+1. Mọi mục "Xong khi" của task đã đạt và kiểm chứng được (lệnh, test hoặc ảnh chụp).
+2. `make check` xanh (lint, type, test backend + frontend).
+3. Code mới có test; coverage không giảm dưới ngưỡng ở [09 §5](09-testing-strategy.md#5-ngưỡng-chất-lượng-cổng-ci).
+4. Subagent `code-reviewer` không còn vấn đề mức "Phải sửa".
+5. Tài liệu liên quan đã cập nhật nếu hành vi khác thiết kế (docs, `.env.example`, OpenAPI).
+6. `docs/PROGRESS.md` đã cập nhật; commit theo quy ước `feat(T2.6): …` / `fix(T…)` / `test(T…)` / `docs(T…)`.
+
+## 3. Lộ trình
+
+| Sprint (tuần) | Milestone | Kết quả trình diễn được |
+| --- | --- | --- |
+| 1 | M0 Nền tảng · M1 Dữ liệu | App rỗng chạy được, CI xanh, DB có dữ liệu seed |
+| 2 | M2 Hạ tầng thu thập | Thu thập mock-shop có phân trang + captcha giả + HITL |
+| 3 | M3 GearVN | Dữ liệu thật từ GearVN cho 4 nhóm |
+| 4 | M4 Hoàng Hà + Laptop88 | 3 nguồn lõi |
+| 5 | M5 Chuẩn hóa & ghép | Cùng một mẫu laptop gom giá từ nhiều trang |
+| 6 | M6 Agent | Hỏi bằng CLI/test, nhận bảng kết quả đúng; báo cáo eval đầu tiên |
+| 7 | M7 API | Toàn bộ chức năng qua REST + SSE |
+| 8–9 | M8 Frontend | Ứng dụng web hoàn chỉnh luồng chính |
+| 10 | M9 Theo dõi giá · M10 Tầng 2 · M11 Hoàn thiện | Cảnh báo giá, tìm nhóm khác, Docker, báo cáo eval cuối |
+| (nếu còn) | X Mở rộng | Điện thoại |
+
+```mermaid
+flowchart LR
+  M0[M0 Nền tảng] --> M1[M1 Dữ liệu] --> M2[M2 Hạ tầng thu thập]
+  M2 --> M3[M3 GearVN] --> M4[M4 Hoàng Hà + Laptop88]
+  M1 --> M5[M5 Chuẩn hóa]
+  M3 --> M5
+  M4 --> M5
+  M5 --> M6[M6 Agent] --> M7[M7 API] --> M8[M8 Frontend]
+  M7 --> M9[M9 Theo dõi giá]
+  M6 --> M10[M10 Tầng 2]
+  M8 --> M11[M11 Hoàn thiện]
+  M9 --> M11
+  M10 --> M11
+```
+
+## 4. Backlog chi tiết
+
+### M0 — Nền tảng
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T0.1 | Scaffold backend | – | S | ⬜ |
+| T0.2 | Scaffold frontend | – | M | ⬜ |
+| T0.3 | Makefile, git, CI | T0.1, T0.2 | S | ⬜ |
+| T0.4 | Đọc điều khoản sử dụng các nguồn | – | S | ⬜ |
+
+**T0.1 Scaffold backend** — Tài liệu: [03 §6–7](03-architecture.md#6-cấu-trúc-thư-mục-mục-tiêu-sau-m0)
+Xong khi:
+- `backend/pyproject.toml` quản lý bằng uv, Python ≥ 3.11; phụ thuộc: fastapi, uvicorn, pydantic-settings, sqlmodel, alembic, psycopg[binary] (v3), httpx, selectolax, beautifulsoup4, langchain (+ provider Google), apscheduler, rapidfuzz; dev: pytest, pytest-asyncio, pytest-cov, respx, time-machine, ruff, mypy. **Khóa phiên bản** đã kiểm tra trên Context7.
+- Cấu trúc thư mục `app/` đúng 03 §6 (các package rỗng có `__init__.py`).
+- `app/config.py` đọc mọi biến trong `.env.example` (gồm `DATABASE_URL`, `TEST_DATABASE_URL` dạng `postgresql+psycopg://`); `app/main.py` app factory; `GET /api/health` trả đúng schema ở [07 §3.1](07-api-spec.md#31-hệ-thống).
+- Cấu hình ruff (line 100), mypy strict cho `app/`, pytest (asyncio auto, marker `live`, `slow`, mặc định bỏ `live`), fixture chặn mạng trong `conftest.py`.
+- Test: `test_health.py` pass.
+
+**T0.2 Scaffold frontend** — Tài liệu: [08](08-ui-ux.md)
+Xong khi:
+- Vite + React + TypeScript strict; Tailwind; shadcn/ui khởi tạo với token ở 08 §5 (sáng/tối); font Be Vietnam Pro; lucide-react.
+- React Router với các route ở 08 §2 (trang giữ chỗ); layout có thanh điều hướng.
+- TanStack Query provider; `src/api/client.ts` đọc `VITE_API_BASE_URL` (gốc máy chủ, client tự thêm `/api`); `vite.config.ts` đặt `envDir: '..'` để dùng `.env` ở thư mục gốc.
+- ESLint + Prettier; Vitest + Testing Library + MSW; Playwright cài đặt cấu hình (chưa có test).
+- Test: render layout và điều hướng giữa 2 route.
+
+**T0.3 Makefile, git, CI** — Tài liệu: [09 §6](09-testing-strategy.md#6-lệnh), [10 §5](10-deployment.md#5-ci-github-actions-githubworkflowsciyml)
+Xong khi:
+- `docker-compose.yml` có service `db` (`postgres:17`, volume `pgdata`, healthcheck `pg_isready`, đọc `POSTGRES_*` từ `.env`) và `docker/postgres/init/` tạo database `product_buyer_test` ([ADR-0007](adr/0007-postgresql.md), [10 §4](10-deployment.md#4-docker-compose)).
+- Makefile có: `db-up` (chờ healthcheck), `db-down`, `setup` (gọi `db-up` trước), `dev`, `worker`, `mock-shop`, `check`, `test-be`, `test-fe`, `e2e`, `eval`, `test-live`, `scrape`, `seed`, `gen-api`, `migrate`. Biến: `scrape` nhận `SITE`, `CAT`, `PAGES`; `seed` nhận `FIXTURE` (dev/eval/e2e); `eval` nhận `CASES` (danh sách id, tùy chọn). Mỗi target có dòng mô tả; `make help` liệt kê.
+- `git init`, nhánh `main`, commit đầu.
+- `.github/workflows/ci.yml` chạy job backend (có service `postgres:17`) và frontend như 10 §5.
+- `make check` chạy xanh từ máy sạch sau `make setup`.
+
+**T0.4 Đọc điều khoản sử dụng** — Tài liệu: [02 §6](02-scope-and-sources.md#6-rủi-ro)
+Xong khi:
+- Với GearVN, Hoàng Hà, Laptop88, Viettel Store, Nguyễn Kim: tạo `docs/sources/<site>.md` từ mẫu, điền mục 1 (robots.txt đọc lại) và mục 2 (link điều khoản, trích nguyên văn đoạn liên quan đến thu thập tự động nếu có).
+- Kết luận từng trang: Được dùng / Không dùng / Cần hỏi giảng viên. **Người dùng duyệt kết luận** trước khi làm M3.
+- Trang "Không dùng" → cập nhật 02 và ghi ADR.
+
+### M1 — Dữ liệu
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T1.1 | Enum + DTO miền | T0.1 | S | ⬜ |
+| T1.2 | Model SQLModel + Alembic | T1.1 | M | ⬜ |
+| T1.3 | Khung specs + `gpu_rank` | T1.1 | S | ⬜ |
+| T1.4 | Repositories | T1.2 | M | ⬜ |
+| T1.5 | Seed script + dữ liệu seed hư cấu | T1.4, T1.3 | M | ⬜ |
+
+**T1.1** — [04 §4, §6](04-data-model.md#4-enum). Xong khi: mọi enum và DTO có trong `app/domain/`; test validate (`QueryIntent.limit` 1..20, `SpecFilter.op` hợp lệ, URL chuẩn).
+**T1.2** — [04 §2–3](04-data-model.md#2-sơ-đồ-quan-hệ-erd). Xong khi: 12 bảng như ERD, ràng buộc và chỉ mục đúng §3; migration đầu tiên; test `alembic upgrade head` trên DB PostgreSQL rỗng; cột JSON là `JSONB` (GIN trên `product.specs`), enum là `VARCHAR` + `CHECK`, thời gian `TIMESTAMP WITH TIME ZONE`, unique một phần cho `product` ([ADR-0007](adr/0007-postgresql.md)); `conftest.py` có fixture session PostgreSQL rollback mỗi test ([09 §4](09-testing-strategy.md#4-cấu-hình-pytest)).
+**T1.3** — [04 §5](04-data-model.md#5-khung-thông-số-theo-nhóm-pydantic). Xong khi: 4 model specs (+ `PhoneSpecs`), danh sách trường bắt buộc mỗi nhóm, `gpu_rank()` với bảng khởi tạo; test thứ tự hạng và chuẩn hóa tên GPU (`"GeForce RTX4060 8GB"` → `RTX 4060`).
+**T1.4** — Xong khi: repository cho Product, Offer (upsert theo `url`), PriceHistory (luật thêm dòng §3), ScrapeRun, ShoppingList, PriceAlert, Conversation/Message, AgentRun, các cache; truy vấn lọc theo specs JSON (toán tử JSONB của SQLAlchemy, không SQL thô); upsert offer bằng `INSERT … ON CONFLICT (url)`; test trên PostgreSQL test, gồm ca luật thêm lịch sử giá.
+**T1.5** — [09 §3](09-testing-strategy.md#3-dữ-liệu-test). Xong khi: `scripts/seed.py --fixture dev|eval|e2e`; dữ liệu hư cấu (tên có chữ "Mock"), ≥ 30 laptop, ≥ 10 mỗi nhóm phụ kiện, phủ đủ các câu trong `docs/eval/queries.yaml`; một số sản phẩm có offer ở 2–3 trang và có lịch sử giá 30 ngày.
+
+### M2 — Hạ tầng thu thập
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T2.1 | Fetcher (robots, độ trễ, retry, offline, raw cache) + `scripts/fetch_page.py` | T0.1, T2.2 | M | ⬜ |
+| T2.2 | BaseScraper, SiteConfig, registry, ChallengeDetector | T1.1 | S | ⬜ |
+| T2.3 | Mock-shop | T0.1 | M | ⬜ |
+| T2.4 | MockShopScraper | T2.2, T2.3 | S | ⬜ |
+| T2.5 | Chuẩn hóa cơ bản: giá, URL, hãng | T1.1 | S | ⬜ |
+| T2.6 | Pipeline + `scrape_service` + vòng đời ScrapeRun + HITL + `make scrape` | T1.4, T2.1, T2.4, T2.5 | L | ⬜ |
+
+**T2.1** — [06 §3](06-scraping-design.md#3-fetcher). Xong khi: test với `respx`: URL bị robots chặn không gửi request; độ trễ thực tế ≥ cấu hình (đồng hồ giả); 2 domain chạy song song không chờ nhau; retry 5xx với backoff; 403 không retry; 429 tôn trọng `Retry-After`; offline mode chặn domain thật; robots.txt không tải được → không cho phép; mock-shop dùng `MOCK_SHOP_DELAY_SECONDS`, không jitter. `scripts/fetch_page.py --site --url --out [--allow-online]` lưu một trang qua Fetcher ([06 §8](06-scraping-design.md#8-fixtures)).
+**T2.2** — [06 §2, §4](06-scraping-design.md#2-giao-diện-basescraper). Xong khi: lớp trừu tượng và registry; `ChallengeDetector` có test cho từng dấu hiệu (403, 429, từ khóa captcha, soft block).
+**T2.3** — [06 §5](06-scraping-design.md#5-mock-shop-appmock_shop). Xong khi: mọi endpoint trong bảng; dữ liệu 60 sản phẩm hư cấu; test phân trang, captcha sau N request, đáp án đúng/sai, chế độ lỗi.
+**T2.4** — Xong khi: scraper mock-shop parse danh sách (JSON-LD + HTML), chi tiết, tìm kiếm; fixture lưu từ mock-shop; test parser.
+**T2.5** — [04 §7](04-data-model.md#7-quy-tắc-chuẩn-hóa). Xong khi: `parse_price` (gồm giá bị che → None), `clean_url`, `detect_brand`; ≥ 20 ca test tham số hóa.
+**T2.6** — [06 §7](06-scraping-design.md#7-pipeline-appscraperspipelinepy), [03 §5.2](03-architecture.md#52-thu-thập-định-kỳ). Xong khi: test integration chạy pipeline với mock-shop (ASGI transport): lượt đầy đủ → `SUCCEEDED` với số liệu đúng; gặp captcha → `NEEDS_HUMAN` → `resume(answer)` → `SUCCEEDED`; lỗi một item → `items_failed` tăng, lượt không dừng; giá đổi → thêm `PriceHistory` và trả `offer_id`; trang thật bị chặn → `BLOCKED` và tạm nghỉ 24 giờ; `make scrape SITE=mockshop CAT=laptop` chạy được.
+
+### M3 — GearVN
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T3.1 | Khảo sát GearVN + fixtures | T0.4, T2.1 | M | ⬜ |
+| T3.2 | GearVNScraper | T3.1 | M | ⬜ |
+| T3.3 | Chạy thật có kiểm soát | T3.2, T2.6 | S | ⬜ |
+
+**T3.1** — Dùng skill `add-scraper` (Pha A). Xong khi: `docs/sources/gearvn.md` điền đủ mục 3–7; URL danh mục 4 nhóm; quyết định `requires_js`; fixtures theo [06 §8](06-scraping-design.md#8-fixtures).
+**T3.2** — Xong khi: parse danh sách 4 nhóm, chi tiết, tìm kiếm; test trên fixture; coverage module ≥ 90%.
+**T3.3** — **Người dùng tự bật** `SCRAPER_OFFLINE_ONLY=false`. Xong khi: `make scrape SITE=gearvn CAT=<nhóm> PAGES=1` cho 4 nhóm đều `SUCCEEDED`; tỷ lệ parse ≥ 90%; ghi kết quả vào `docs/sources/gearvn.md`.
+
+### M4 — Hoàng Hà + Laptop88
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T4.1 | Khảo sát Hoàng Hà + fixtures | T0.4, T2.1 | S | ⬜ |
+| T4.2 | HoangHaScraper (ánh xạ `price_type`) | T4.1, T2.2 | M | ⬜ |
+| T4.3 | Khảo sát Laptop88 + fixtures (không dùng Playwright MCP/WebFetch, xem [06 §8](06-scraping-design.md#8-fixtures)) | T0.4, T2.1 | S | ⬜ |
+| T4.4 | Laptop88Scraper | T4.3, T2.2 | M | ⬜ |
+| T4.5 | Chạy thật có kiểm soát 2 nguồn | T4.2, T4.4, T2.6 | S | ⬜ |
+
+**T4.2** — Xong khi: phân biệt giá niêm yết, giá hiện tại, giá thành viên, flash sale (giá bị che → không lưu); test cho từng loại. Xác minh Hoàng Hà có bán chuột/bàn phím/tai nghe hay không và ghi vào 02 §1.
+**T4.4** — Xong khi: `min_delay_s=10`, `supports_live_search=False`; không tạo URL có `specMap`/`filter`; đọc thông số rút gọn trên thẻ; test 4 nhóm.
+
+### M5 — Chuẩn hóa & ghép mẫu
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T5.1 | Bộ trích xuất thông số theo luật (4 nhóm) + golden test | T1.3, T3.2, T4.2, T4.4 | L | ⬜ |
+| T5.2 | Trích `model_code` + matcher + golden pairs | T5.1 | M | ⬜ |
+| T5.3 | LLM dự phòng + cache | T5.1, T6.1 | M | ⬜ |
+
+**T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
+**T5.2** — Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
+**T5.3** — Phụ thuộc T6.1 nằm ở M6 nhưng T6.1 chỉ cần T0.1, nên `/next` sẽ chọn T6.1 trước khi T5.3 sẵn sàng. Bật/tắt bằng `LLM_EXTRACTOR_ENABLED`. Xong khi: chỉ gọi khi thiếu trường bắt buộc; kết quả validate bằng khung specs; cache theo hash; test với model giả; ghi số lần gọi vào log.
+
+### M6 — Agent
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T6.1 | LLM factory + `ScriptedChatModel` | T0.1 | S | ⬜ |
+| T6.2 | Services: catalog, compare, shopping_list, alert (CRUD) | T1.4 | M | ⬜ |
+| T6.3 | Planner + prompt | T6.1, T1.1 | M | ⬜ |
+| T6.4 | 8 tool | T6.2 | M | ⬜ |
+| T6.5 | Executor + sự kiện + guardrail + bộ nhớ hội thoại | T6.3, T6.4 | L | ⬜ |
+| T6.6 | Eval harness + báo cáo cơ sở | T6.5, T1.5 | M | ⬜ |
+
+**T6.1** — [05 §2](05-agent-design.md#2-mô-hình-và-cấu-hình). Xong khi: `get_chat_model(role)` cho gemini/openai/fake; tra Context7 cho API LangChain hiện hành và ghi phiên bản; `ScriptedChatModel` phát chuỗi tool call định sẵn.
+**T6.2** — Xong khi: `catalog_service.search(QueryIntent-like filters)` lọc đúng theo specs JSON và giá hiệu lực (§4 `effective_price` ở 04); `stale` khi dữ liệu > 24 giờ; test với seed.
+**T6.3** — [05 §4](05-agent-design.md#4-prompt). Xong khi: prompt trong `prompts/planner.md`; test với model giả cho phần chuyển đổi hậu xử lý (ví dụ chuẩn hóa tiền, map GPU → rank); test snapshot prompt.
+**T6.4** — [05 §3](05-agent-design.md#3-hợp-đồng-tool). Xong khi: 8 tool đúng hợp đồng; kết quả ≤ 4.000 ký tự; test từng tool với seed; `live_search_other` tạm trả `{"items": [], "sites_skipped": [...], "reason": "chưa bật tầng 2"}` cho đến M10.
+**T6.5** — [05 §1, §5, §6](05-agent-design.md#5-guardrail-code-chạy-sau-executor). Xong khi: test kịch bản: câu hỏi chuẩn → `plan` → `tool_*` → `final`; id bịa bị loại; vượt bước; tool lỗi; tham chiếu "máy thứ 2"; không gọi tool ghi khi không được yêu cầu; hỏi lại khi mơ hồ.
+**T6.6** — [05 §7](05-agent-design.md#7-đánh-giá-agent-eval). Xong khi: `make eval` chạy toàn bộ `queries.yaml` (đã bổ sung đủ ≥ 30 câu), xuất `reports/eval-<ngày>.md`; ghi kết quả cơ sở vào PROGRESS.md; nếu dưới ngưỡng → tạo task sửa prompt.
+
+### M7 — API
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T7.1 | Products, categories, compare, price-history | T6.2 | M | ⬜ |
+| T7.2 | Chat + SSE + conversations | T6.5 | M | ⬜ |
+| T7.3 | Lists + alerts | T6.2 | S | ⬜ |
+| T7.4 | Admin + challenge HITL | T2.6 | M | ⬜ |
+| T7.5 | Sinh kiểu TypeScript từ OpenAPI | T7.1–T7.4, T0.2 | S | ⬜ |
+
+Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test integration cho mọi endpoint (thành công + ít nhất một lỗi); SSE test bằng client đọc luồng, gồm phát lại khi kết nối sau khi run xong.
+
+### M8 — Frontend
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T8.1 | Token, layout, điều hướng, API client | T7.5 | M | ⬜ |
+| T8.2 | Trang chính + chat + tiến trình agent (SSE) | T8.1 | L | ⬜ |
+| T8.3 | Bảng kết quả + ngăn so sánh | T8.2 | L | ⬜ |
+| T8.4 | Chi tiết sản phẩm + biểu đồ giá | T8.1 | M | ⬜ |
+| T8.5 | Danh sách mua | T8.1 | M | ⬜ |
+| T8.6 | Cảnh báo giá | T8.1 | M | ⬜ |
+| T8.7 | Quản trị + hộp thoại challenge | T8.1 | M | ⬜ |
+| T8.8 | E2E luồng chính | T8.2–T8.7 | M | ⬜ |
+
+Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái ở [08 §3–4](08-ui-ux.md#3-wireframe); test Vitest cho logic và trạng thái (tải/rỗng/lỗi); ảnh chụp màn hình sáng + tối, desktop + 375 px lưu vào `docs/ui/screens/`; người dùng duyệt ảnh.
+**T8.8** — Xong khi: 4 luồng E2E: hỏi → bảng; so sánh; thêm vào danh sách; tạo cảnh báo; chạy với `LLM_PROVIDER=fake` + seed `e2e`.
+
+### M9 — Theo dõi giá & vận hành
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T9.1 | Đánh giá cảnh báo + chống gửi trùng | T6.2, T2.6 | M | ⬜ |
+| T9.2 | Notifier email + Telegram | T9.1 | S | ⬜ |
+| T9.3 | Worker + lịch APScheduler | T2.6, T9.1 | M | ⬜ |
+| T9.4 | Dockerfile + docker compose | T8.8 | M | ⬜ |
+
+**T9.1** — Xong khi: test đúng tiêu chí US-07 ([01 §5](01-requirements.md#5-user-story-và-tiêu-chí-chấp-nhận)); cảnh báo `triggered` gửi lại chỉ khi giá xuống thấp hơn `last_notified_price` thêm ≥ 1%.
+**T9.3** — Xong khi: job làm mới danh mục theo `CATALOG_REFRESH_CRON`, job làm mới offer đang được theo dõi theo `TRACKED_REFRESH_CRON` (chỉ trang chi tiết của offer có cảnh báo/danh sách), mỗi job chạy qua `scrape_service` (gọi pipeline rồi đánh giá cảnh báo, [03 §4](03-architecture.md#4-thành-phần-backend-c4-mức-3)); không chạy 2 lượt cùng (site, category); test với scheduler giả.
+
+### M10 — Tầng 2 (nhóm khác)
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T10.1 | Khảo sát + parser tìm kiếm Viettel Store, Nguyễn Kim (GearVN đã có ở T3.2) | T0.4, T2.2 | M | ⬜ |
+| T10.2 | `live_search_service` + cache 6 giờ | T10.1, T2.1 | M | ⬜ |
+| T10.3 | Nối agent (planner tier 2, tool) + bảng tầng 2 ở frontend | T10.2, T6.5, T8.3 | M | ⬜ |
+
+Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng độ trễ; mỗi trang ≤ `limit_per_site` kết quả; nhãn "chưa chuẩn hóa"; test kịch bản "loa bluetooth dưới 1 triệu" với fixture.
+
+### M11 — Hoàn thiện
+
+| ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
+| --- | --- | --- | --- | --- |
+| T11.1 | Eval cuối với LLM thật, chỉnh prompt đến khi đạt ngưỡng | M6–M10 | M | ⬜ |
+| T11.2 | Cập nhật tài liệu theo code thực tế + README + sơ đồ | T11.1 | M | ⬜ |
+| T11.3 | Diễn tập kịch bản demo ([10 §7](10-deployment.md#7-kịch-bản-demo-bảo-vệ-gợi-ý)) | T9.4 | S | ⬜ |
+
+### X — Mở rộng (chỉ khi M0–M11 xong)
+
+| ID | Task | Ước lượng | Trạng thái |
+| --- | --- | --- | --- |
+| X1 | Nhóm điện thoại: nâng Viettel Store và Nguyễn Kim thành trang lõi cho nhóm này ([02 §1](02-scope-and-sources.md#1-ma-trận-trang--nhóm-sản-phẩm)); `PhoneSpecs`, scraper Hoàng Hà/Viettel Store/Nguyễn Kim cho điện thoại, biến thể dung lượng | L | ⬜ |
+| X2 | Đổi trang lõi nếu một nguồn bị loại ở T0.4 (gợi ý: FPT Shop, HACOM) | L | ⬜ |
+| X3 | Xuất danh sách mua ra CSV / chia sẻ link | S | ⬜ |
