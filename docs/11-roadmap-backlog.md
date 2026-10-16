@@ -64,7 +64,7 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | T0.1 | Scaffold backend | – | S | ✅ |
 | T0.2 | Scaffold frontend | – | M | ✅ |
-| T0.3 | Makefile, git, CI | T0.1, T0.2 | S | ⬜ |
+| T0.3 | Makefile, git, CI | T0.1, T0.2 | S | ✅ |
 | T0.4 | Đọc điều khoản sử dụng các nguồn | – | S | ⬜ |
 | T0.5 | Hoàn thiện nền frontend (phát sinh từ T0.2) | T0.2 | S | ⬜ |
 
