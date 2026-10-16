@@ -1,0 +1,27 @@
+# Dev/test: chỉ service `db`. Các service api, worker, mock-shop, web thêm ở T9.4 (docs/10 §4).
+# Docker Compose tự đọc `.env` ở thư mục gốc.
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-buyer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Đặt POSTGRES_PASSWORD trong .env (sao chép từ .env.example)}
+      POSTGRES_DB: ${POSTGRES_DB:-product_buyer}
+    ports:
+      # Chỉ mở cho máy cục bộ. Đổi POSTGRES_PORT nếu cổng 5432 đã bị chiếm.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Chỉ chạy khi volume rỗng: tạo database product_buyer_test cho pytest.
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # -h 127.0.0.1: server tạm lúc khởi tạo (chạy initdb.d) chỉ nghe unix socket, không báo healthy sớm.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

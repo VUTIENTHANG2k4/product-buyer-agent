@@ -16,7 +16,7 @@ Chi tiết: [docs/README.md](docs/README.md).
 
 ### 1. Chuẩn bị máy
 - Python 3.11+ và [uv](https://docs.astral.sh/uv/) (hook của dự án chạy bằng `uv`, nên `uv` phải có trong PATH).
-- Node.js 20 LTS+, npm, Git. Windows: dùng Git Bash hoặc WSL2 để chạy `make`.
+- Node.js 20 LTS+, npm, Git. Windows: dùng Git Bash hoặc WSL2 để chạy `make`; cài GNU make bằng `winget install ezwinports.make` (bản make của MSYS2 làm mất biến môi trường nên `docker compose` không chạy được).
 - **Docker Desktop** (bắt buộc): PostgreSQL 17 chạy bằng Docker Compose cho cả dev và test ([ADR-0007](docs/adr/0007-postgresql.md)).
 - Claude Code (CLI hoặc extension VS Code).
 - API key Gemini (Google AI Studio) cho `make eval` và chạy thật. Test không cần key.
@@ -30,7 +30,7 @@ cp .env.example .env        # điền GOOGLE_API_KEY, ALERT_DEFAULT_EMAIL, SCRAP
 export CONTEXT7_API_KEY=... # tùy chọn, cho MCP Context7
 claude                      # mở Claude Code tại thư mục gốc
 ```
-Từ sau T0.3, bật PostgreSQL bằng `make db-up` trước khi chạy `make setup` / `make dev` / `make check`. Trước T0.3, dùng `docker compose up -d db`.
+Bật PostgreSQL bằng `make db-up` trước khi chạy `make dev` / `make check` (`make setup` tự gọi `db-up`). `make help` liệt kê mọi lệnh; lệnh thuộc task chưa làm sẽ báo "Chưa khả dụng". Nếu cổng 5432 đã bị chiếm, đặt `POSTGRES_PORT` khác (ví dụ 5435) và sửa cổng trong `DATABASE_URL` / `TEST_DATABASE_URL` trong `.env` cho khớp.
 
 Lần đầu mở, Claude Code hỏi cho phép MCP server trong `.mcp.json` (Playwright, Context7): chọn đồng ý.
 

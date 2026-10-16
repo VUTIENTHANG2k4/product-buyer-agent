@@ -1,0 +1,6 @@
+# Giữ LF để Makefile và file chạy trong container không hỏng khi clone trên Windows (autocrlf).
+Makefile text eol=lf
+*.sh text eol=lf
+*.sql text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
