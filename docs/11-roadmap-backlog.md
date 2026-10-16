@@ -63,9 +63,10 @@ flowchart LR
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
 | T0.1 | Scaffold backend | – | S | ✅ |
-| T0.2 | Scaffold frontend | – | M | ⬜ |
+| T0.2 | Scaffold frontend | – | M | ✅ |
 | T0.3 | Makefile, git, CI | T0.1, T0.2 | S | ⬜ |
 | T0.4 | Đọc điều khoản sử dụng các nguồn | – | S | ⬜ |
+| T0.5 | Hoàn thiện nền frontend (phát sinh từ T0.2) | T0.2 | S | ⬜ |
 
 **T0.1 Scaffold backend** — Tài liệu: [03 §6–7](03-architecture.md#6-cấu-trúc-thư-mục-mục-tiêu-sau-m0)
 Xong khi:
@@ -96,6 +97,14 @@ Xong khi:
 - Với GearVN, Hoàng Hà, Laptop88, Viettel Store, Nguyễn Kim: tạo `docs/sources/<site>.md` từ mẫu, điền mục 1 (robots.txt đọc lại) và mục 2 (link điều khoản, trích nguyên văn đoạn liên quan đến thu thập tự động nếu có).
 - Kết luận từng trang: Được dùng / Không dùng / Cần hỏi giảng viên. **Người dùng duyệt kết luận** trước khi làm M3.
 - Trang "Không dùng" → cập nhật 02 và ghi ADR.
+
+**T0.5 Hoàn thiện nền frontend** — Phát sinh từ review T0.2 (mục "Gợi ý", làm khi tiện, trước T8.1).
+Xong khi:
+- `QueryClient` chỉ retry khi `ApiError.status` là 0 hoặc ≥ 500 (không retry 4xx); có test.
+- Tiếp cận: liên kết "Bỏ qua tới nội dung" + `id` cho `<main>`, `document.title` theo route, thêm `eslint-plugin-jsx-a11y`.
+- Playwright: `server.strictPort` ở `vite.config.ts`, `reuseExistingServer: !process.env.CI`, thêm `e2e/` vào tsconfig khi có spec; tách `tsconfig.test.json` để kiểu `vitest/globals` không lọt vào mã chạy thật.
+- Thêm lớp tiện ích `tabular-nums` cho cột giá khi làm T8.3; `ApiError` giữ `details` khi cần lỗi theo trường; xem lại tương phản `Button` variant `default` khi hover (`hover:bg-primary/80`).
+- (`gen:api` + `openapi-typescript` thuộc T7.5; coverage frontend khi 09 §5 đặt ngưỡng.)
 
 ### M1 — Dữ liệu
 

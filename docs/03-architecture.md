@@ -238,11 +238,11 @@ product-buyer-agent/
 │       ├── fixtures/<site>/*.html
 │       └── conftest.py
 ├── frontend/
-│   ├── package.json  vite.config.ts  tailwind.config.ts
+│   ├── package.json  vite.config.ts  components.json  (Tailwind v4: cấu hình bằng CSS, không có tailwind.config.ts)
 │   ├── src/
 │   │   ├── app/ (router, providers)  pages/  components/ui/ (shadcn)  components/
 │   │   ├── features/ (chat, compare, product, lists, alerts, admin)
-│   │   ├── api/ (client.ts, types.gen.ts)  hooks/  lib/  styles/
+│   │   ├── api/ (client.ts, types.gen.ts)  hooks/  lib/  styles/ (globals.css: token)
 │   │   (test Vitest đặt cạnh mã nguồn: src/**/*.test.tsx; MSW handler ở src/mocks/)
 │   └── e2e/ (playwright)
 └── docs/
