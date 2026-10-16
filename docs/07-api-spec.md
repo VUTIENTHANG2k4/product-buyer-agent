@@ -37,7 +37,7 @@
 ### 3.1 Hệ thống
 | Method | Path | Mô tả |
 | --- | --- | --- |
-| GET | `/health` | `{status: "ok", db: "ok", llm_provider, offline_mode, version}` |
+| GET | `/health` | `{status: "ok", db: "ok", llm_provider, offline_mode, version}`. Khi CSDL không kết nối được: HTTP 200 với `status: "degraded"`, `db: "error"` (các trường còn lại giữ nguyên). |
 
 ### 3.2 Chat / Agent
 | Method | Path | Mô tả |

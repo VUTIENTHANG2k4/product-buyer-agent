@@ -1,0 +1,57 @@
+[project]
+name = "product-buyer-agent"
+version = "0.1.0"
+description = "AI agent mua sắm đồ công nghệ tiếng Việt"
+requires-python = ">=3.11"
+dependencies = [
+    "alembic==1.20.0",
+    "apscheduler==3.11.3",
+    "beautifulsoup4==4.15.0",
+    "fastapi==0.143.3",
+    "httpx==0.28.1",
+    "langchain==1.4.6",
+    "langchain-google-genai==4.4.2",
+    "psycopg[binary]==3.3.6",
+    "pydantic-settings==2.16.0",
+    "rapidfuzz==3.14.6",
+    "selectolax==1.0.0",
+    "sqlmodel==0.0.48",
+    "uvicorn[standard]==0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy==2.4.0",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "pytest-cov==7.1.0",
+    "respx==0.23.1",
+    "ruff==0.17.1",
+    "time-machine==3.5.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["app"]
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+addopts = '-m "not live"'
+markers = [
+    "live: chạy với trang thật, chỉ chạy thủ công (cần SCRAPER_OFFLINE_ONLY=false)",
+    "slow: test chậm",
+]

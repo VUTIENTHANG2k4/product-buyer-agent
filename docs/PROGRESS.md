@@ -6,8 +6,8 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: T0.1 Scaffold backend (T0.2 và T0.4 làm song song được)
-- Cập nhật lần cuối: 2026-10-16 — khởi tạo bộ tài liệu đặc tả
+- Task kế tiếp đề xuất: T0.2 Scaffold frontend (T0.4 làm song song được; T0.3 cần cả T0.1 và T0.2)
+- Cập nhật lần cuối: 2026-10-16 — xong T0.1 Scaffold backend
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -31,7 +31,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | – | |
+| Coverage backend | 98% (14 test) | 2026-10-16 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
 | Eval hallucination | – | |
@@ -39,3 +39,7 @@
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
 - (Thêm khi phát hiện điều mà phiên sau cần biết, ví dụ "GearVN cần Playwright cho trang danh sách".)
 - 2026-10-16: đổi CSDL sang PostgreSQL 17 qua Docker Compose, test trên Postgres thật ([ADR-0007](adr/0007-postgresql.md) thay ADR-0002). Cần `make db-up` (trước T0.3: `docker compose up -d db`).
+- 2026-10-16 (T0.1): `GET /api/health` trả HTTP 200 + `status: "degraded"`, `db: "error"` khi DB lỗi. Kiểm tra DB nằm ở `services/health_service.py` (api không được import db). `DATABASE_URL`/`TEST_DATABASE_URL` là `SecretStr`.
+- Test chặn socket nhưng libpq (psycopg) không đi qua Python socket nên không bị chặn; test đụng DB lỗi phải dùng engine giả (dùng URL thật sẽ treo ~2 phút trên Windows).
+- Việc nhỏ chưa có task (làm khi tiện): `app/logging.py`, `app/worker.py`, CORS origin vào `config.py`, engine theo lifespan + session theo request (T1.x), coverage trong `make check` (T0.3), chặn DNS trong fixture mạng.
+- Máy dev đang có PostgreSQL khác ở cổng 5432 từ chối mật khẩu `buyer`: kiểm tra trước `make db-up` ở T0.3.
