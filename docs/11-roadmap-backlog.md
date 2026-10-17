@@ -70,6 +70,7 @@ flowchart LR
 | T0.6 | Chặn mạng thật trong test: asyncio/httpx trên Windows và DNS (phát sinh từ QA M0) | T0.1 | S | ✅ |
 | T0.7 | Kiểm tra miền giá trị của cấu hình (phát sinh từ QA M0) | T0.1 | S | ✅ |
 | T0.8 | Định dạng lỗi chuẩn `{"error": {...}}` và handler chung (phát sinh từ QA M0) | T0.1 | M | ✅ |
+| T0.9 | Vá handler lỗi: `details` không serialize được, thông điệp tiếng Anh (phát sinh từ QA M0 lần hai) | T0.8 | S | ⬜ |
 
 **T0.1 Scaffold backend** — Tài liệu: [03 §6–7](03-architecture.md#6-cấu-trúc-thư-mục-mục-tiêu-sau-m0)
 Xong khi:
@@ -131,6 +132,13 @@ Xong khi:
 - Gỡ `xfail(strict=True)` khỏi `test_unknown_path_uses_documented_error_envelope` (2 ca) trong `backend/tests/unit/test_api_edge.py`; thêm test cho 422 (có `details`), 500 (không lộ chi tiết) và 405.
 - Nhánh dự phòng `{detail}` trong `apiFetch` có thể giữ nguyên; `GET /api/health` vẫn đúng 07 §3.1.
 
+**T0.9 Vá handler lỗi** — Phát sinh từ QA M0 lần hai (lỗi 1 và 2). Không chặn M1; làm trước khi service đưa thời gian vào `details` (M2 trở đi: `SITE_COOLDOWN`, `DUPLICATE_ALERT`, M9).
+Xong khi:
+- `_error_response` trong `backend/app/api/errors.py` mã hóa `details` bằng `jsonable_encoder` (hoặc `AppError` ép giá trị JSON), nên `SiteCooldown(details={"retry_after": datetime})` vẫn trả 409 `SITE_COOLDOWN`, không thành 500; `SecretStr` trong `details` không bị lộ.
+- Nhánh `HTTP_<status>` dùng thông điệp tiếng Việt chung (`custom or _GENERIC_HTTP_MESSAGE`) khi `HTTPException` không có thông điệp riêng khác cụm chuẩn: `HTTPException(403)` và `HTTPException(400, detail=None)` không còn ra "Forbidden"/"Bad Request".
+- Gỡ `xfail(strict=True)` khỏi `test_app_error_with_datetime_or_set_details_keeps_its_own_status` (2 ca) và `test_http_exception_without_own_message_gets_the_vietnamese_generic_message` (2 ca) trong `backend/tests/unit/test_error_envelope_m0b.py`.
+- Nếu `AppError` có `status_code` 204/304 thì handler không gắn thân (hiện chưa lớp nào dùng; chỉ cần test khi thêm lớp).
+
 ### M1 — Dữ liệu
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
@@ -158,7 +166,7 @@ Xong khi:
 | T2.5 | Chuẩn hóa cơ bản: giá, URL, hãng | T1.1 | S | ⬜ |
 | T2.6 | Pipeline + `scrape_service` + vòng đời ScrapeRun + HITL + `make scrape` | T1.4, T2.1, T2.4, T2.5 | L | ⬜ |
 
-**T2.1** — [06 §3](06-scraping-design.md#3-fetcher). Xong khi: test với `respx`: URL bị robots chặn không gửi request; độ trễ thực tế ≥ cấu hình (đồng hồ giả); 2 domain chạy song song không chờ nhau; retry 5xx với backoff; 403 không retry; 429 tôn trọng `Retry-After`; offline mode chặn domain thật; robots.txt không tải được → không cho phép; mock-shop dùng `MOCK_SHOP_DELAY_SECONDS`, không jitter. `scripts/fetch_page.py --site --url --out [--allow-online]` lưu một trang qua Fetcher ([06 §8](06-scraping-design.md#8-fixtures)).
+**T2.1** — [06 §3](06-scraping-design.md#3-fetcher). Xong khi: test với `respx`: URL bị robots chặn không gửi request; độ trễ thực tế ≥ cấu hình (đồng hồ giả); 2 domain chạy song song không chờ nhau; retry 5xx với backoff; 403 không retry; 429 tôn trọng `Retry-After`; offline mode chặn domain thật; robots.txt không tải được → không cho phép; mock-shop dùng `MOCK_SHOP_DELAY_SECONDS`, không jitter. `scripts/fetch_page.py --site --url --out [--allow-online]` lưu một trang qua Fetcher ([06 §8](06-scraping-design.md#8-fixtures)). **Việc dồn từ QA M0 lần hai (lỗi 3–5, Fetcher là nơi chúng có tác động thật):** (a) vá thêm `socket.socket.sendto` và `BaseProactorEventLoop.sock_sendto` trong `backend/tests/conftest.py` cùng `gethostbyaddr`/`getnameinfo`/`getfqdn`, rồi gỡ `xfail` của `test_udp_sendto_to_a_disallowed_address_is_blocked`, `test_asyncio_udp_sock_sendto_to_a_disallowed_address_is_blocked` và `test_hostname_lookup_through_gethostbyaddr_or_getfqdn_is_blocked` trong `test_network_guard_m0b.py`; (b) `SCRAPER_USER_AGENT` từ chối ký tự điều khiển (NUL, BEL, DEL, CR/LF) và chuỗi chỉ gồm ký tự độ rộng 0 (U+200B) ngay lúc khởi động, rồi gỡ `xfail` của `test_user_agent_with_control_or_invisible_only_content_is_rejected_at_startup` trong `test_config_m0b.py` (h11 hiện chỉ báo `LocalProtocolError` ở request đầu tiên).
 **T2.2** — [06 §2, §4](06-scraping-design.md#2-giao-diện-basescraper). Xong khi: lớp trừu tượng và registry; `ChallengeDetector` có test cho từng dấu hiệu (403, 429, từ khóa captcha, soft block).
 **T2.3** — [06 §5](06-scraping-design.md#5-mock-shop-appmock_shop). Xong khi: mọi endpoint trong bảng; dữ liệu 60 sản phẩm hư cấu; test phân trang, captcha sau N request, đáp án đúng/sai, chế độ lỗi.
 **T2.4** — Xong khi: scraper mock-shop parse danh sách (JSON-LD + HTML), chi tiết, tìm kiếm; fixture lưu từ mock-shop; test parser.
