@@ -26,7 +26,7 @@ Quy tắc: một nhóm thuộc tầng 1 khi có **ít nhất 2 trang lõi** cung
 | Hoàng Hà Mobile | Cho phép `/` | `/*filters=`, `/tim-kiem`, `/tin-tuc/search`, `/so-sanh/`, `/Ajax/`, `/account/`, `/gio-hang/` | Không khai báo | Không dùng bộ lọc và tìm kiếm của trang |
 | Laptop88 | Cho phép `/` | `/*?specMap=`, `/*?filter=` | 2 s (bot chung); 10 s (bot tìm kiếm AI) | Chặn hoàn toàn `ClaudeBot`, `GPTBot`, `ChatGPT-User`, `CCBot`, `Bytespider` |
 | Viettel Store | Cho phép | Chỉ thư mục kỹ thuật (`/DataFiles/`, `/bin/`, `/css/`, `/js/`, …) | Không khai báo | |
-| Nguyễn Kim | Cho phép `/` | `/checkout`, `/account`, `/cart/`, `/orders/`, `/login`, `/register`, `/otp`, `/compare`, `/search-order` | Không khai báo | |
+| Nguyễn Kim | Cho phép `/` | `/checkout`, `/account`, `/cart/`, `/orders/`, `/login`, `/register`, `/otp`, `/compare`, `/search-order`, `/maintenance` | Không khai báo | `/maintenance` thêm ở lần đọc lại 2026-10-17 (T0.4) |
 
 Nguồn: `https://<domain>/robots.txt` của từng trang. **robots.txt có thể thay đổi**, vì vậy hệ thống luôn đọc lại lúc chạy (cache 24 giờ), không dựa vào bảng này.
 

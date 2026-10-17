@@ -6,16 +6,16 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: T1.1 Enum + DTO miền (đủ phụ thuộc: T0.1). T0.4 cần người dùng đọc/duyệt điều khoản trước M3; T0.5 làm khi tiện, trước T8.1
-- Cập nhật lần cuối: 2026-10-17 — xong T0.3 Makefile, git, CI
+- Task kế tiếp đề xuất: T1.1 Enum + DTO miền (đủ phụ thuộc: T0.1). T3.1 (GearVN) làm được sau M1–M2; T0.5 làm khi tiện, trước T8.1
+- Cập nhật lần cuối: 2026-10-17 — xong T0.4 đọc điều khoản (GearVN, Viettel Store, Nguyễn Kim: Được dùng; Hoàng Hà, Laptop88: Cần hỏi giảng viên)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
 | --- | --- | --- |
-| M0 Nền tảng | ⬜ | Còn T0.4, T0.5 |
+| M0 Nền tảng | ⬜ | Còn T0.5 |
 | M1 Dữ liệu | ⬜ | |
 | M2 Hạ tầng thu thập | ⬜ | |
-| M3 GearVN | ⬜ | Cần T0.4 được người dùng duyệt |
+| M3 GearVN | ⬜ | T0.4 đã duyệt: GearVN được dùng |
 | M4 Hoàng Hà + Laptop88 | ⬜ | |
 | M5 Chuẩn hóa & ghép | ⬜ | |
 | M6 Agent | ⬜ | |
@@ -26,7 +26,7 @@
 | M11 Hoàn thiện | ⬜ | |
 
 ## Bị chặn / cần người dùng quyết định
-- [ ] T0.4: người dùng đọc và duyệt kết luận điều khoản sử dụng của 5 nguồn trước khi chạy scraper thật.
+- [ ] Hỏi giảng viên (từ T0.4): Hoàng Hà và Laptop88 đang "Cần hỏi giảng viên" (xem `docs/sources/`). T4.1 chờ Hoàng Hà; T4.3/T4.4 chờ Laptop88 (người dùng chưa kiểm tra footer laptop88.vn có trang quy chế/điều khoản riêng không). M3 (GearVN) không bị chặn.
 
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
