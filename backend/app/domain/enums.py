@@ -79,3 +79,8 @@ class AgentRunStatus(StrEnum):
     succeeded = "succeeded"
     needs_clarification = "needs_clarification"
     failed = "failed"
+
+
+class MessageRole(StrEnum):
+    user = "user"
+    assistant = "assistant"
