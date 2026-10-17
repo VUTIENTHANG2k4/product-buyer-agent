@@ -145,7 +145,7 @@ Xong khi:
 | --- | --- | --- | --- | --- |
 | T1.1 | Enum + DTO miền | T0.1 | S | ✅ |
 | T1.2 | Model SQLModel + Alembic | T1.1 | M | ⬜ |
-| T1.3 | Khung specs + `gpu_rank` | T1.1 | S | ⬜ |
+| T1.3 | Khung specs + `gpu_rank` | T1.1 | S | ✅ |
 | T1.4 | Repositories | T1.2 | M | ⬜ |
 | T1.5 | Seed script + dữ liệu seed hư cấu | T1.4, T1.3 | M | ⬜ |
 
