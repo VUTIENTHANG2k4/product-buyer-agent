@@ -67,6 +67,9 @@ flowchart LR
 | T0.3 | Makefile, git, CI | T0.1, T0.2 | S | ✅ |
 | T0.4 | Đọc điều khoản sử dụng các nguồn | – | S | ✅ |
 | T0.5 | Hoàn thiện nền frontend (phát sinh từ T0.2) | T0.2 | S | ✅ |
+| T0.6 | Chặn mạng thật trong test: asyncio/httpx trên Windows và DNS (phát sinh từ QA M0) | T0.1 | S | ⬜ |
+| T0.7 | Kiểm tra miền giá trị của cấu hình (phát sinh từ QA M0) | T0.1 | S | ⬜ |
+| T0.8 | Định dạng lỗi chuẩn `{"error": {...}}` và handler chung (phát sinh từ QA M0) | T0.1 | M | ⬜ |
 
 **T0.1 Scaffold backend** — Tài liệu: [03 §6–7](03-architecture.md#6-cấu-trúc-thư-mục-mục-tiêu-sau-m0)
 Xong khi:
@@ -107,6 +110,27 @@ Xong khi:
 - `tabular-nums` cho cột giá: Tailwind v4 có sẵn class này, không cần thêm lớp tiện ích; T8.3 chỉ việc dùng.
 - (`gen:api` + `openapi-typescript` thuộc T7.5; coverage frontend khi 09 §5 đặt ngưỡng.)
 
+**T0.6 Chặn mạng thật trong test (Windows + DNS)** — Phát sinh từ QA M0 (lỗi 1). Tài liệu: [09 §4](09-testing-strategy.md#4-cấu-hình-pytest). Làm **trước T2.1** (Fetcher dùng `httpx.AsyncClient`).
+Xong khi:
+- Trên Windows, fixture chặn mạng trong `backend/tests/conftest.py` cũng chặn kết nối asyncio (ProactorEventLoop dùng `ConnectEx`, không đi qua `socket.connect`), ví dụ đổi sang `WindowsSelectorEventLoopPolicy` hoặc vá `loop.sock_connect`/`create_connection`; hoặc chặn ở tầng transport mặc định của `httpx`.
+- Chặn cả phân giải DNS (`socket.getaddrinfo`, `loop.getaddrinfo`) cho tên không thuộc danh sách cho phép (`localhost`, máy chủ DB test); có test mới cho DNS (QA M0 chưa viết vì sẽ gọi DNS thật khi chưa sửa).
+- Gỡ `_WINDOWS_ASYNC_GAP` (xfail strict, chỉ trên `win32`) khỏi `test_asyncio_connection_to_disallowed_loopback_port_is_blocked` và `test_httpx_async_request_to_disallowed_loopback_port_is_blocked` trong `backend/tests/unit/test_network_guard_edge.py`; hai test xanh thật trên Windows và Linux/CI.
+- Test dùng DB thật (libpq không đi qua socket Python) vẫn xanh; `make check` xanh.
+
+**T0.7 Kiểm tra miền giá trị của cấu hình** — Phát sinh từ QA M0 (lỗi 2). Tài liệu: [02 §3](02-scope-and-sources.md), `.env.example`.
+Xong khi:
+- `app/config.py` ràng buộc miền bằng `Field(ge=..., le=...)` và `allow_inf_nan=False`: `SCRAPER_MIN_DELAY_SECONDS ≥ 0` (hữu hạn), `SCRAPER_TIMEOUT_SECONDS > 0`, `SCRAPER_MAX_RETRIES ≥ 0`, `SCRAPER_MAX_LISTING_PAGES ≥ 1`, `AGENT_MAX_STEPS ≥ 1`, `POSTGRES_PORT` và `SMTP_PORT` trong 1..65535; `SCRAPER_USER_AGENT` sau `strip()` không rỗng (quy tắc User-Agent trung thực).
+- Gỡ `xfail(strict=True)` khỏi `test_out_of_range_numeric_setting_is_rejected` (10 ca) và `test_whitespace_only_user_agent_is_rejected` trong `backend/tests/unit/test_config_edge.py`; các test cấu hình cũ vẫn xanh.
+- Mặc định trong `Settings` và `.env.example` vẫn khớp nhau và nằm trong miền hợp lệ.
+
+**T0.8 Định dạng lỗi chuẩn và handler chung** — Phát sinh từ QA M0 (lỗi 6). Tài liệu: [07 §1–2](07-api-spec.md#1-quy-ước). Các task T7.* dựa vào task này khi kiểm tra "mã lỗi đúng bảng §2".
+Xong khi:
+- `app/domain/errors.py` có lỗi miền (mã, HTTP status, thông điệp tiếng Việt, `details`) theo bảng mã ở 07 §2; handler đăng ký trong app factory trả `{"error": {"code", "message", "details"}}` cho: lỗi miền, `HTTPException`/Starlette (404 và 405 của route lạ), `RequestValidationError` → `VALIDATION_ERROR` 422 với `details` theo trường, và `Exception` → `INTERNAL_ERROR` 500 không lộ stack trace hay chuỗi bí mật.
+- Nếu cần mã chung cho 404/405 của route lạ thì bổ sung vào 07 §2 (không đoán ngầm trong code).
+- OpenAPI mô tả schema lỗi dùng chung để T7.5 sinh kiểu.
+- Gỡ `xfail(strict=True)` khỏi `test_unknown_path_uses_documented_error_envelope` (2 ca) trong `backend/tests/unit/test_api_edge.py`; thêm test cho 422 (có `details`), 500 (không lộ chi tiết) và 405.
+- Nhánh dự phòng `{detail}` trong `apiFetch` có thể giữ nguyên; `GET /api/health` vẫn đúng 07 §3.1.
+
 ### M1 — Dữ liệu
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
@@ -127,7 +151,7 @@ Xong khi:
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T2.1 | Fetcher (robots, độ trễ, retry, offline, raw cache) + `scripts/fetch_page.py` | T0.1, T2.2 | M | ⬜ |
+| T2.1 | Fetcher (robots, độ trễ, retry, offline, raw cache) + `scripts/fetch_page.py` | T0.1, T0.6, T2.2 | M | ⬜ |
 | T2.2 | BaseScraper, SiteConfig, registry, ChallengeDetector | T1.1 | S | ⬜ |
 | T2.3 | Mock-shop | T0.1 | M | ⬜ |
 | T2.4 | MockShopScraper | T2.2, T2.3 | S | ⬜ |
@@ -220,9 +244,19 @@ Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test
 | T8.6 | Cảnh báo giá | T8.1 | M | ⬜ |
 | T8.7 | Quản trị + hộp thoại challenge | T8.1 | M | ⬜ |
 | T8.8 | E2E luồng chính | T8.2–T8.7 | M | ⬜ |
+| T8.9 | Sửa `apiFetch`: hủy bằng lý do bất kỳ, thông điệp lỗi rỗng (phát sinh từ QA M0) | T0.5 | S | ⬜ |
+| T8.10 | Sửa `NavBar`: `aria-current` trên trang không tìm thấy (phát sinh từ QA M0) | T8.1 | S | ⬜ |
 
 Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái ở [08 §3–4](08-ui-ux.md#3-wireframe); test Vitest cho logic và trạng thái (tải/rỗng/lỗi); ảnh chụp màn hình sáng + tối, desktop + 375 px lưu vào `docs/ui/screens/`; người dùng duyệt ảnh.
 **T8.8** — Xong khi: 4 luồng E2E: hỏi → bảng; so sánh; thêm vào danh sách; tạo cảnh báo; chạy với `LLM_PROVIDER=fake` + seed `e2e`. Lưu ý từ T0.5: `e2e/**/*.ts` đang nằm trong `tsconfig.node.json` (không có DOM lib); nếu spec dùng `window`/`document` trong `page.evaluate`, tách `tsconfig.e2e.json` có lib DOM.
+**T8.9** — Phát sinh từ QA M0 (lỗi 3 và 4); làm trước T8.2 vì chat SSE và `useQuery` dùng chung `apiFetch`. Xong khi:
+- `apiFetch` coi mọi lần hủy là hủy: khi `init.signal?.aborted` thì ném lại lỗi gốc, không đổi thành `ApiError(0, 'NETWORK_ERROR')` (nếu không `shouldRetry` sẽ thử lại một lần hủy, kể cả `controller.abort(new Error('…'))`).
+- Khi `error.message` từ máy chủ là chuỗi rỗng thì dùng `strings.errors.unknown` để UI không hiện hộp lỗi trống.
+- Gỡ hai `it.fails` trong `frontend/src/api/client.edge.test.ts` (test "abort kèm lý do tùy ý…" và "thông điệp lỗi từ máy chủ rỗng…") và để chúng xanh thật; `client.test.ts` cũ vẫn xanh.
+**T8.10** — Phát sinh từ QA M0 (lỗi 5); làm cùng hoặc sau T8.1 vì T8.1 quyết định cách nav nổi ở `/c/:id` và `/products/:id` (docs/08 chưa nói rõ). Xong khi:
+- `/alerts/x` và `/admin/anything` hiện trang không tìm thấy mà không mục nav nào có `aria-current="page"`: thêm `end: true` cho mục không có route con (`/alerts`, `/admin`), `/lists` giữ khớp tiền tố vì có `/lists/:id`.
+- Quyết định cho `/c/:id` và `/products/:id` (nổi "Hỏi agent" hay không) được ghi vào docs/08 §2, và test `/products/42` trong `router.edge.test.tsx` khẳng định đúng quyết định đó.
+- Gỡ `it.fails.each` trong `describe('NavBar · aria-current')` của `frontend/src/app/router.edge.test.tsx`.
 
 ### M9 — Theo dõi giá & vận hành
 
