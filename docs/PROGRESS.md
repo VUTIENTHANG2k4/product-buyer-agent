@@ -7,7 +7,7 @@
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
 - Task kế tiếp đề xuất: T1.4 (repositories), rồi T1.5 (seed) để hết M1. T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — xong T1.2 (12 bảng SQLModel + migration `0001` + fixture `db_session`; nhánh `task/T1.2-models-alembic`, chưa merge). T1.3 đã merge vào main
+- Cập nhật lần cuối: 2026-10-17 — xong T1.2 (12 bảng SQLModel + migration `0001` + fixture `db_session`; đã merge vào main). T1.3 cũng đã merge
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
