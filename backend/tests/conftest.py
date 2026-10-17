@@ -9,6 +9,15 @@ from typing import Any
 from urllib.parse import urlsplit
 
 import pytest
+from dotenv import dotenv_values
+from sqlalchemy import Engine, create_engine, text
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import OperationalError
+from sqlmodel import Session
+
+from tests.db_support import BACKEND_DIR, upgrade_to_head
+
+REPO_ROOT = BACKEND_DIR.parent
 
 # Phải đặt trước khi import app.*: test không phụ thuộc cấu hình trên máy.
 os.environ.update(
@@ -21,9 +30,19 @@ os.environ.update(
     }
 )
 os.environ.setdefault("DATABASE_URL", "postgresql+psycopg://test:test@localhost:5432/product_buyer")
-os.environ.setdefault(
-    "TEST_DATABASE_URL", "postgresql+psycopg://test:test@localhost:5432/product_buyer_test"
+# CSDL test: biến môi trường (CI) > .env của máy (cổng Postgres khác nhau giữa các máy) > mặc định.
+# Chỉ đọc đúng khóa này từ .env; các cấu hình khác vẫn do conftest đặt cố định ở trên.
+_test_db_url = os.environ.get("TEST_DATABASE_URL") or dotenv_values(REPO_ROOT / ".env").get(
+    "TEST_DATABASE_URL"
 )
+_parsed_db_url = make_url(
+    _test_db_url or "postgresql+psycopg://test:test@localhost:5432/product_buyer_test"
+)
+if _parsed_db_url.host == "localhost":
+    # Docker chỉ mở cổng trên 127.0.0.1; `localhost` thử ::1 trước và treo hết connect_timeout
+    # (3 giây) ở mỗi kết nối mới trên Windows.
+    _parsed_db_url = _parsed_db_url.set(host="127.0.0.1")
+os.environ["TEST_DATABASE_URL"] = _parsed_db_url.render_as_string(hide_password=False)
 
 from app.config import Settings  # noqa: E402  (sau khi đặt biến môi trường ở trên)
 
@@ -154,3 +173,53 @@ def disable_network(
     monkeypatch.setattr(socket, "gethostbyname", guarded_gethostbyname)
     monkeypatch.setattr(socket, "gethostbyname_ex", guarded_gethostbyname_ex)
     yield allowed
+
+
+@pytest.fixture(scope="session")
+def db_engine() -> Iterator[Engine]:
+    """Engine tới `TEST_DATABASE_URL`, đã `alembic upgrade head` (một lần mỗi phiên pytest).
+
+    Không kết nối được thì dừng cả phiên với hướng dẫn, thay vì để từng test báo lỗi kết nối.
+    """
+    url = make_url(os.environ["TEST_DATABASE_URL"])
+    if not (url.database or "").endswith("_test"):
+        # Chốt chặn: test chạy `upgrade head` và kiểm đếm bảng, không bao giờ được trỏ vào DB dev.
+        pytest.exit(
+            f"TEST_DATABASE_URL must point to a database whose name ends with _test "
+            f"(got {url.database!r}); refusing to run DB tests against it.",
+            returncode=2,
+        )
+    engine = create_engine(url, connect_args={"connect_timeout": 3})
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except OperationalError as exc:
+        engine.dispose()
+        pytest.exit(
+            # ASCII: pytest in thông báo thoát bằng escape trên console Windows (cp1252).
+            f"Cannot reach the test PostgreSQL ({type(exc.orig).__name__}). "
+            "Run `make db-up` and check TEST_DATABASE_URL in .env.",
+            returncode=2,
+        )
+    upgrade_to_head(engine)
+    yield engine
+    engine.dispose()
+
+
+@pytest.fixture
+def db_session(db_engine: Engine) -> Iterator[Session]:
+    """Session PostgreSQL; mọi thay đổi (kể cả `commit()`) bị rollback khi test kết thúc.
+
+    Transaction ngoài ôm cả test; `create_savepoint` làm `commit()` trong code chỉ giải phóng
+    savepoint. Test cần kiểm lỗi ràng buộc dùng `with session.begin_nested():` để lỗi không làm
+    hỏng transaction.
+    """
+    connection = db_engine.connect()
+    transaction = connection.begin()
+    session = Session(bind=connection, join_transaction_mode="create_savepoint")
+    try:
+        yield session
+    finally:
+        session.close()
+        transaction.rollback()
+        connection.close()

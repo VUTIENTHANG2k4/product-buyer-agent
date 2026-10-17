@@ -159,7 +159,18 @@ erDiagram
 | `price_alert` | INDEX(`product_id`, `status`) | `destination` = email hoặc Telegram chat id |
 | `agent_run` | PK uuid | `events` lưu toàn bộ sự kiện SSE để xem lại và debug |
 
-Migration bằng Alembic. Mỗi thay đổi schema = một migration + test chạy `alembic upgrade head` trên DB PostgreSQL rỗng.
+**Quy ước lưu trữ đã cài đặt** (`app/db/models.py`, migration `backend/alembic/versions/0001_initial_schema.py`):
+
+- Tiền (`price`, `list_price`, `price_at_add`, `target_price`, `last_notified_price`) là `BIGINT` + `CHECK >= 0` (`target_price > 0`). `offer.price` **NOT NULL**: mục không đọc được giá bị bỏ qua ở pipeline (T2.6) và tính vào `items_failed`; `price_history.price` cũng NOT NULL.
+- Cột nullable theo DTO: `product.model_code`, `product.image_url`, `offer.list_price/site_sku/rating/rating_count/match_score`, `shopping_list_item.preferred_offer_id/price_at_add/note`, `scrape_run.challenge/error_message/finished_at`, `price_alert.last_notified_*`, `conversation.title`, `message.payload`, `agent_run.intent/latency_ms`. Còn lại NOT NULL (`product.brand` cũng NOT NULL: `detect_brand` phải có giá trị dự phòng).
+- Enum là `VARCHAR(32)` + `CHECK` tên `ck_<bảng>_<cột>`. Alembic autogenerate **không** so sánh CHECK: thêm giá trị enum phải viết migration tay (bỏ và tạo lại ràng buộc).
+- `CHECK` bổ sung: `specs_confidence`, `match_score` trong 0..1; `rating` trong 0..5; `quantity >= 1`; `rating_count`, các bộ đếm của `scrape_run`, `agent_run.tool_calls`, `latency_ms` ≥ 0.
+- Khóa ngoại: `offer.product_id` không cascade (chặn xóa `product` còn offer); `shopping_list_item.product_id` `RESTRICT`; `price_history.offer_id`, `shopping_list_item.list_id`, `price_alert.product_id`, `message.conversation_id`, `agent_run.conversation_id` `ON DELETE CASCADE`; `shopping_list_item.preferred_offer_id` `SET NULL`.
+- Chỉ mục thêm ngoài bảng trên: `message(conversation_id, created_at)` và `agent_run(conversation_id)` (liệt kê theo hội thoại). `agent_run.id` là `UUID` gốc của PostgreSQL.
+- Chỉ mục GIN mặc định (`jsonb_ops`) chỉ tăng tốc `@>` và `?`; lọc `specs["gpu_rank"].as_integer() >= 40` dùng `->>` nên không dùng GIN. Nếu đo thấy chậm ở T1.4, thêm chỉ mục biểu thức riêng cho `gpu_rank`.
+- JSONB không theo dõi thay đổi tại chỗ: repository gán lại cả dict/list. Python `None` ở cột JSONB nullable lưu thành SQL `NULL` (`none_as_null`).
+
+Migration bằng Alembic (`make migrate`; URL lấy từ `DATABASE_URL`). Mỗi thay đổi schema = một migration + test chạy `alembic upgrade head` trên DB PostgreSQL rỗng (`backend/tests/integration/test_migrations.py` còn kiểm model và migration không lệch nhau).
 
 Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.specs["gpu_rank"].as_integer() >= 40`, `Product.specs["is_gaming"].as_boolean()`), không viết SQL thô.
 
@@ -177,6 +188,7 @@ Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.spe
 | `AlertChannel` | `email`, `telegram` |
 | `AlertStatus` | `active`, `triggered`, `paused` |
 | `AgentRunStatus` | `running`, `succeeded`, `needs_clarification`, `failed` |
+| `MessageRole` | `user`, `assistant` (lời gọi tool nằm trong `agent_run.events`, không nằm ở bảng tin nhắn) |
 
 **Giá dùng để so sánh** (`effective_price`) của một offer: lấy `price` nếu `price_type` ∈ {`regular`, `sale`, `flash`}; nếu `member` thì vẫn hiển thị nhưng mặc định so sánh bằng `list_price` khi có, kèm nhãn "giá thành viên". Giá bị che (ví dụ flash sale sắp diễn ra hiển thị "2*.**0.000") **không lưu**.
 
