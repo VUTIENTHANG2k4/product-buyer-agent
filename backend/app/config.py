@@ -2,13 +2,20 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import SecretStr
+from pydantic import Field, NonNegativeInt, PositiveInt, SecretStr, StringConstraints
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # backend/app/config.py -> thư mục gốc repo (nơi đặt file cấu hình môi trường)
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
+# Miền giá trị hợp lệ: sai thì Settings() lỗi ngay lúc khởi động, không đợi tới nơi dùng.
+NonNegativeSeconds = Annotated[float, Field(ge=0, allow_inf_nan=False)]
+PositiveSeconds = Annotated[float, Field(gt=0, allow_inf_nan=False)]
+Port = Annotated[int, Field(ge=1, le=65535)]
+# User-Agent trung thực là bắt buộc (docs/02 §3): không nhận chuỗi rỗng hay toàn khoảng trắng.
+UserAgent = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 class Settings(BaseSettings):
@@ -27,7 +34,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     openai_api_key: SecretStr = SecretStr("")
     openai_model: str = "gpt-4o-mini"
-    agent_max_steps: int = 8
+    agent_max_steps: PositiveInt = 8
     llm_extractor_enabled: bool = True
 
     # Cơ sở dữ liệu (URL chứa mật khẩu nên là SecretStr; không có mặc định để khỏi hardcode).
@@ -35,16 +42,16 @@ class Settings(BaseSettings):
     postgres_user: str = "buyer"
     postgres_password: SecretStr = SecretStr("")
     postgres_db: str = "product_buyer"
-    postgres_port: int = 5432
+    postgres_port: Port = 5432
     database_url: SecretStr
     test_database_url: SecretStr = SecretStr("")
 
     # Thu thập dữ liệu
-    scraper_user_agent: str
-    scraper_min_delay_seconds: float = 5
-    scraper_timeout_seconds: float = 30
-    scraper_max_retries: int = 3
-    scraper_max_listing_pages: int = 3
+    scraper_user_agent: UserAgent
+    scraper_min_delay_seconds: NonNegativeSeconds = 5
+    scraper_timeout_seconds: PositiveSeconds = 30
+    scraper_max_retries: NonNegativeInt = 3
+    scraper_max_listing_pages: PositiveInt = 3
     scraper_offline_only: bool = True
 
     # Mock-shop
@@ -59,7 +66,7 @@ class Settings(BaseSettings):
 
     # Thông báo giá
     smtp_host: str = ""
-    smtp_port: int = 587
+    smtp_port: Port = 587
     smtp_user: str = ""
     smtp_password: SecretStr = SecretStr("")
     alert_email_from: str = ""
