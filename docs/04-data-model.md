@@ -184,6 +184,8 @@ Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.spe
 
 Mọi trường đều tùy chọn khi parse; cột "Bắt buộc" là trường cần có để sản phẩm được dùng trong lọc tầng 1. Thiếu trường bắt buộc → mở trang chi tiết → vẫn thiếu → LLM dự phòng → vẫn thiếu → `specs_confidence < 0.5`, sản phẩm chỉ xuất hiện khi lọc không dùng trường đó.
 
+Kiểu dữ liệu chặt như DTO §6: số nguyên strict (không nhận bool/chuỗi/float), dung lượng và số đo (`ram_gb`, `storage_gb`, `refresh_hz`, `dpi_max`, `weight_g`…) phải > 0 (parser đọc hỏng trả `None`, không trả 0; riêng `gpu_vram_gb` cho phép 0), số thực hữu hạn và > 0, chuỗi không rỗng. Khóa lạ bị bỏ qua (`extra="ignore"`).
+
 ### 5.1 `LaptopSpecs`
 
 | Trường | Kiểu | Ví dụ | Bắt buộc |
@@ -246,6 +248,14 @@ Mọi trường đều tùy chọn khi parse; cột "Bắt buộc" là trường
 Để hiểu "RTX 4060 trở lên", mỗi `gpu_model` được ánh xạ sang một số thứ hạng trong `app/normalize/specs/gpu_rank.py`. Đây là **thứ tự xấp xỉ do dự án tự định nghĩa** để lọc, không phải điểm benchmark; cần rà soát khi thêm GPU mới và có test bảo vệ thứ tự.
 
 Giá trị khởi tạo (càng lớn càng mạnh): `Integrated` 0 · `RTX 2050` 10 · `RTX 3050` 20 · `RTX 3050 Ti` 22 · `RTX 4050` 30 · `RTX 3060` 32 · `RTX 5050` 34 · `RTX 4060` 40 · `RTX 5060` 45 · `RTX 4070` 50 · `RTX 5070` 55 · `RTX 5070 Ti` 60 · `RTX 4080` 70 · `RTX 5080` 75 · `RTX 4090` 80 · `RTX 5090` 85. GPU không có trong bảng → `null` và không thỏa bộ lọc theo hạng.
+
+**Chuẩn hóa tên GPU** (`normalize_gpu_name`, chạy trước khi tra bảng). `LaptopSpecs` đưa `gpu_model` về tên chuẩn khi dựng model; `gpu_rank` là trường dẫn xuất chỉ đọc (`computed_field`), tính từ `gpu_model` mỗi lần truy cập nên luôn khớp kể cả khi `gpu_model` bị gán lại. `gpu_rank` vẫn có trong `model_dump()` để lọc JSONB; giá trị `gpu_rank` truyền vào khi parse bị bỏ qua.
+
+- Không phân biệt hoa/thường; bỏ `GeForce`, `NVIDIA`, `™`, `®`, `Laptop GPU`, dung lượng VRAM. Chấp nhận `RTX4060`, `rtx 4060`, `RTX-4060`, `RTX_4060`, `GeForceRTX4060`. `"GeForce RTX4060 8GB"` → `RTX 4060`.
+- Dạng chuẩn: `RTX <4 chữ số>`, `GTX <3-4 chữ số>`, `RX <4 chữ số>[M|S]`, kèm hậu tố đứng riêng từ `Ti`, `XT`, `Super` theo thứ tự đó (ví dụ `RTX 3050 Ti`, `RX 7600M XT`, `RX 6700S`). `"RTX 4060 TIGER"` vẫn ra `RTX 4060`. RTX workstation (`RTX 4000 Ada`) không được nhận.
+- GPU tích hợp (`Integrated`, `Onboard`, `UHD`, `Iris`, `Intel Graphics`, `Arc Graphics`, `Radeon Graphics`, `Radeon <3-4 số>M|S`, `Apple M<số>`) → `Integrated`. GPU rời được xét trước, nên `Radeon RX 7600M` không bị coi là tích hợp. Intel Arc rời (`Arc A370M`) và `GeForce MX` cố ý không nằm trong danh sách: chưa có hạng, nên `None`.
+- Tên nhận ra nhưng chưa có trong bảng (GTX, RX, `RTX 4070 Ti`, `RTX 4070 Super`…) giữ nguyên tên chuẩn, `gpu_rank = null`.
+- Chuỗi nhắc tới nhiều GPU rời **khác nhau** (`"RTX 4050 (up to RTX 4060)"`) là mơ hồ → `normalize_gpu_name` trả `None`. Chuỗi không phải GPU cũng trả `None`; khi đó `LaptopSpecs` giữ nguyên chuỗi đã bỏ khoảng trắng đầu/cuối và `gpu_rank = null`.
 
 ## 6. DTO miền (`app/domain/dto.py`)
 

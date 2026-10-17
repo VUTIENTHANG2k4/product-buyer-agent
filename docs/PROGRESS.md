@@ -6,8 +6,8 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: T1.3 (khung specs + `gpu_rank`), rồi T1.2. T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — xong T1.1 (10 enum + 5 DTO trong `app/domain/`; đã merge vào main)
+- Task kế tiếp đề xuất: T1.2 (model SQLModel + Alembic), rồi T1.4, T1.5. T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
+- Cập nhật lần cuối: 2026-10-17 — xong T1.3 (5 model specs + `gpu_rank` trong `app/normalize/specs/`; nhánh `task/T1.3-specs-gpu-rank`, chưa merge). T1.1 đã merge vào main
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -31,7 +31,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 100% (444 pass + 12 xfail đã biết của T0.9/T2.1, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
+| Coverage backend | 100% (655 pass + 12 xfail đã biết của T0.9/T2.1, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
@@ -50,3 +50,4 @@
 - 2026-10-17 (T0.8): lỗi nghiệp vụ ném lớp con của `AppError` (`app/domain/errors.py`, khớp bảng 07 §2; có test đối chiếu docs); không ném `HTTPException`. `FastAPI(responses=error_responses(422, 500))` ở `main.py` giữ schema lỗi chuẩn cho mọi route; router chỉ thêm 404/409... qua `error_responses(...)`. `UnhandledErrorMiddleware` phải thêm trước `CORSMiddleware`. Lỗi 422 có `details.errors[{in, field, message, type}]` (không có `input`). Fixture `disable_network` (T0.6) chặn cả asyncio Proactor lẫn DNS; lỗi chặn từ `httpx.AsyncClient` đến tay test dưới dạng `ExceptionGroup` (anyio), dùng `expect_blocked()` trong `test_network_guard_edge.py`. Hook ruff xoá import chưa dùng ngay sau mỗi lần sửa: thêm import cùng lần sửa với đoạn dùng nó.
 - 2026-10-17 (T1.1): DTO chặt hơn docs cũ (đã ghi ở 04 §6): số nguyên strict (không nhận bool/chuỗi/float), `SpecFilter.value` phải khớp `op`, URL chỉ là `HttpUrl` (bỏ utm/userinfo/fragment là `clean_url` của T2.5, lưu DB bằng `str(url)`). `extra="forbid"` cho `QueryIntent` hoãn sang T6.3 (cần kiểm Gemini). Backend vẫn còn 12 xfail của QA M0 lần hai, gỡ ở T0.9 và T2.1.
 - Máy dev có PostgreSQL khác ở cổng 5432 (5433, 5434 cũng bận): đặt `POSTGRES_PORT=5435` và cổng tương ứng trong `DATABASE_URL`/`TEST_DATABASE_URL` của `.env`.
+- 2026-10-17 (T1.3): `LaptopSpecs.gpu_rank` là `computed_field` chỉ đọc (tính từ `gpu_model`, có trong `model_dump()` để lọc JSONB; đầu vào `gpu_rank` bị bỏ qua). Specs dùng `extra="ignore"`, số nguyên strict và > 0 (riêng `gpu_vram_gb` cho 0). `SPEC_MODELS`/`REQUIRED_FIELDS` là `MappingProxyType`; quy ước "None hoặc list rỗng = thiếu" chưa có hàm dùng chung (`missing_required_fields` để T5.1). GPU chưa có trong bảng §5.6 (GTX, RX, Ti/Super mới, Arc rời, MX) chuẩn hóa được tên nhưng `gpu_rank = null`.
