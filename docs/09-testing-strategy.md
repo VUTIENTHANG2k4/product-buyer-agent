@@ -37,6 +37,13 @@ flowchart TB
 
 - **Fixture HTML** cho từng trang (xem [06 §8](06-scraping-design.md#8-fixtures)).
 - **Seed DB**: `scripts/seed.py --fixture dev|eval|e2e` nạp sản phẩm hư cấu từ `backend/tests/fixtures/seed/*.json`. Bộ `eval` chứa đủ sản phẩm để mọi câu trong `queries.yaml` có đáp án xác định.
+  - Chạy từ `backend/` bằng `uv run python -m scripts.seed --fixture …` (`make seed FIXTURE=…`; dùng `-m` để import được `app`). Script mới trong `scripts/` (scrape, eval) nên chạy cùng cách.
+  - File: `laptops.json`, `mice.json`, `keyboards.json`, `headsets.json` (`{"category", "products": [...]}`, mỗi sản phẩm có `offers`; `history` là các điểm đổi giá trong 30 ngày, không khai báo thì giá phẳng) và `extras.json` (danh sách mua + cảnh báo mẫu). Tên có chữ "Mock", URL thuộc miền `.example`; specs được kiểm bằng khung ở `app/normalize/specs` (khóa lạ hoặc thiếu trường bắt buộc là lỗi).
+  - Profile: `dev` và `eval` nạp toàn bộ (74 sản phẩm: 35 laptop, 13 mỗi nhóm phụ kiện) kèm danh sách mua, cảnh báo và lượt thu thập mẫu; `e2e` chỉ nạp sản phẩm có `"e2e": true` (16 sản phẩm) và không có dữ liệu phụ vì luồng E2E tự tạo.
+  - Chạy lại không nhân đôi dòng (khóa tự nhiên: nhóm + hãng + mã mẫu, và `offer.url`); offer đã có được ghi đè bằng giá trị trong fixture (kể cả giá; lịch sử chỉ thêm dòng khi đổi giá hoặc dòng cuối cũ hơn 24 giờ). `--reset --yes` (`make seed RESET=1`) xóa sạch mọi bảng ứng dụng trước khi nạp để eval/e2e xác định; mặc định tắt, và `--reset` không có `--yes` bị từ chối vì lệnh xóa toàn bộ CSDL trong `DATABASE_URL`.
+  - Lịch sử giá đi qua `PriceHistoryRepository.record_snapshot` nên theo đúng luật thêm dòng ở [04 §3](04-data-model.md#3-bảng-chi-tiết-và-ràng-buộc).
+  - Module `test_seed_data.py` giữ một transaction seed `eval` suốt module nên không dùng chung module với test seed khác (cùng khóa unique, và `TRUNCATE` cần khóa độc quyền): đừng bật chạy song song (xdist) mà không xem lại.
+  - Test: `tests/integration/test_seed_loader.py` (bộ nạp, dữ liệu nhỏ), `test_seed_data.py` (dữ liệu thật phủ `queries.yaml`: dịch `constraints` thành `ProductQuery`), `test_seed_e2e_profile.py`.
 - **Factory**: `tests/factories.py` tạo Product/Offer với giá trị mặc định hợp lệ.
 
 ## 4. Cấu hình pytest

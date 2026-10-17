@@ -147,7 +147,7 @@ Xong khi:
 | T1.2 | Model SQLModel + Alembic | T1.1 | M | ✅ |
 | T1.3 | Khung specs + `gpu_rank` | T1.1 | S | ✅ |
 | T1.4 | Repositories | T1.2 | M | ✅ |
-| T1.5 | Seed script + dữ liệu seed hư cấu | T1.4, T1.3 | M | ⬜ |
+| T1.5 | Seed script + dữ liệu seed hư cấu | T1.4, T1.3 | M | ✅ |
 
 **T1.1** — [04 §4, §6](04-data-model.md#4-enum). Xong khi: mọi enum và DTO có trong `app/domain/`; test validate (`QueryIntent.limit` 1..20, `SpecFilter.op` hợp lệ, URL chuẩn).
 **T1.2** — [04 §2–3](04-data-model.md#2-sơ-đồ-quan-hệ-erd). Ghi chú từ review T1.1: URL trong DTO là `HttpUrl`, ghi cột bằng `str(url)`; giá nên là `BIGINT` hoặc có `CHECK` cận trên vì DTO chưa chặn giá quá lớn. Xong khi: 12 bảng như ERD, ràng buộc và chỉ mục đúng §3; migration đầu tiên; test `alembic upgrade head` trên DB PostgreSQL rỗng; cột JSON là `JSONB` (GIN trên `product.specs`), enum là `VARCHAR` + `CHECK`, thời gian `TIMESTAMP WITH TIME ZONE`, unique một phần cho `product` ([ADR-0007](adr/0007-postgresql.md)); `conftest.py` có fixture session PostgreSQL rollback mỗi test ([09 §4](09-testing-strategy.md#4-cấu-hình-pytest)).

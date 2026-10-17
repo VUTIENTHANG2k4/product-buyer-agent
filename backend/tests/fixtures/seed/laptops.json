@@ -1,0 +1,1660 @@
+{
+  "category": "laptop",
+  "products": [
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-FX507",
+      "canonical_name": "ASUS Mock TUF Gaming F15 FX507",
+      "specs": {
+        "cpu_model": "i5-12500H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 3050",
+        "gpu_vram_gb": 6,
+        "ram_gb": 8,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.2,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-asus-fx507.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-fx507",
+          "title": "ASUS Mock TUF Gaming F15 FX507 - Chính hãng",
+          "price": 18990000
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-fx507",
+          "title": "ASUS Mock TUF Gaming F15 FX507 - Chính hãng",
+          "price": 19440000,
+          "rating": 4.3,
+          "rating_count": 31
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-FX507Z4",
+      "canonical_name": "ASUS Mock TUF Gaming F15 FX507ZC4",
+      "specs": {
+        "cpu_model": "i7-13620H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4050",
+        "gpu_vram_gb": 6,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.2,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-asus-fx507z4.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-fx507z4",
+          "title": "ASUS Mock TUF Gaming F15 FX507ZC4 - Chính hãng",
+          "price": 23990000,
+          "rating": 4.7,
+          "rating_count": 57,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 26390000
+            },
+            {
+              "days_ago": 20,
+              "price": 25390000
+            },
+            {
+              "days_ago": 9,
+              "price": 24690000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-fx507z4",
+          "title": "ASUS Mock TUF Gaming F15 FX507ZC4 - Chính hãng",
+          "price": 24440000,
+          "price_type": "sale",
+          "list_price": 25440000,
+          "rating": 4.0,
+          "rating_count": 68
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-TUFA15",
+      "canonical_name": "ASUS Mock TUF Gaming A15 FA507NU",
+      "specs": {
+        "cpu_model": "Ryzen 7 7735HS",
+        "cpu_vendor": "amd",
+        "gpu_model": "RTX 4050",
+        "gpu_vram_gb": 6,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.2,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-asus-tufa15.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-tufa15",
+          "title": "ASUS Mock TUF Gaming A15 FA507NU - Chính hãng",
+          "price": 22490000,
+          "rating": 4.4,
+          "rating_count": 94,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 23590000
+            },
+            {
+              "days_ago": 22,
+              "price": 21990000
+            },
+            {
+              "days_ago": 14,
+              "price": 24090000
+            },
+            {
+              "days_ago": 5,
+              "price": 22890000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-tufa15",
+          "title": "ASUS Mock TUF Gaming A15 FA507NU - Chính hãng",
+          "price": 22940000,
+          "rating": 4.7,
+          "rating_count": 105
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-asus-tufa15",
+          "title": "ASUS Mock TUF Gaming A15 FA507NU - Chính hãng",
+          "price": 22690000,
+          "rating": 4.0,
+          "rating_count": 116
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-G614JV",
+      "canonical_name": "ASUS Mock ROG Strix G16 G614JV",
+      "specs": {
+        "cpu_model": "i7-13650HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "GeForce RTX 4060 8GB",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 16.0,
+        "resolution": "1920x1200",
+        "refresh_hz": 165,
+        "panel": "IPS",
+        "weight_kg": 2.5,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-asus-g614jv.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-g614jv",
+          "title": "ASUS Mock ROG Strix G16 G614JV - Chính hãng",
+          "price": 29490000,
+          "rating": 4.1,
+          "rating_count": 131,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 32390000
+            },
+            {
+              "days_ago": 20,
+              "price": 31290000
+            },
+            {
+              "days_ago": 9,
+              "price": 30390000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-g614jv",
+          "title": "ASUS Mock ROG Strix G16 G614JV - Chính hãng",
+          "price": 29840000,
+          "price_type": "member",
+          "list_price": 29940000,
+          "rating": 4.4,
+          "rating_count": 142
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-GA402",
+      "canonical_name": "ASUS Mock ROG Zephyrus G14 GA403",
+      "specs": {
+        "cpu_model": "Ryzen 9 8945HS",
+        "cpu_vendor": "amd",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 14.0,
+        "resolution": "2880x1800",
+        "refresh_hz": 120,
+        "panel": "OLED",
+        "weight_kg": 1.5,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-asus-ga402.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-ga402",
+          "title": "ASUS Mock ROG Zephyrus G14 GA403 - Chính hãng",
+          "price": 37990000,
+          "rating": 4.8,
+          "rating_count": 168
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-ga402",
+          "title": "ASUS Mock ROG Zephyrus G14 GA403 - Chính hãng",
+          "price": 38440000,
+          "stock_status": "out_of_stock"
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-G834",
+      "canonical_name": "ASUS Mock ROG Strix SCAR 18 G834JYR",
+      "specs": {
+        "cpu_model": "i9-14900HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4090",
+        "gpu_vram_gb": 16,
+        "ram_gb": 32,
+        "storage_gb": 2048,
+        "storage_type": "ssd",
+        "screen_in": 18.0,
+        "resolution": "2560x1600",
+        "refresh_hz": 240,
+        "panel": "IPS",
+        "weight_kg": 3.1,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-asus-g834.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-g834",
+          "title": "ASUS Mock ROG Strix SCAR 18 G834JYR - Chính hãng",
+          "price": 79990000
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-g834",
+          "title": "ASUS Mock ROG Strix SCAR 18 G834JYR - Chính hãng",
+          "price": 80440000,
+          "price_type": "sale",
+          "list_price": 81440000,
+          "rating": 4.8,
+          "rating_count": 216
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-A16",
+      "canonical_name": "ASUS Mock TUF Gaming A16 FA608",
+      "specs": {
+        "cpu_model": "Ryzen 9 8940H",
+        "cpu_vendor": "amd",
+        "gpu_model": "RTX 5070",
+        "gpu_vram_gb": 12,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 16.0,
+        "resolution": "1920x1200",
+        "refresh_hz": 165,
+        "panel": "IPS",
+        "weight_kg": 2.3,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-asus-a16.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-a16",
+          "title": "ASUS Mock TUF Gaming A16 FA608 - Chính hãng",
+          "price": 41490000,
+          "rating": 4.2,
+          "rating_count": 242,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 39390000
+            },
+            {
+              "days_ago": 18,
+              "price": 40190000
+            },
+            {
+              "days_ago": 6,
+              "price": 41090000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-a16",
+          "title": "ASUS Mock TUF Gaming A16 FA608 - Chính hãng",
+          "price": 41940000,
+          "rating": 4.5,
+          "rating_count": 253
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-X1504",
+      "canonical_name": "ASUS Mock Vivobook 15 X1504",
+      "specs": {
+        "cpu_model": "i5-1335U",
+        "cpu_vendor": "intel",
+        "gpu_model": "Integrated",
+        "gpu_vram_gb": 0,
+        "ram_gb": 8,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 60,
+        "panel": "IPS",
+        "weight_kg": 1.7,
+        "os": "Windows 11 Home",
+        "is_gaming": false
+      },
+      "image_url": "https://mock-images.example/mock-asus-x1504.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-x1504",
+          "title": "ASUS Mock Vivobook 15 X1504 - Chính hãng",
+          "price": 12990000,
+          "rating": 4.9,
+          "rating_count": 279
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-x1504",
+          "title": "ASUS Mock Vivobook 15 X1504 - Chính hãng",
+          "price": 13440000,
+          "rating": 4.2,
+          "rating_count": 290
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-asus-x1504",
+          "title": "ASUS Mock Vivobook 15 X1504 - Chính hãng",
+          "price": 13190000,
+          "rating": 4.5,
+          "rating_count": 301
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-UX3405",
+      "canonical_name": "ASUS Mock Zenbook 14 OLED UX3405",
+      "specs": {
+        "cpu_model": "Core Ultra 7 155H",
+        "cpu_vendor": "intel",
+        "gpu_model": "Intel Arc Graphics",
+        "gpu_vram_gb": 0,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 14.0,
+        "resolution": "2880x1800",
+        "refresh_hz": 120,
+        "panel": "OLED",
+        "weight_kg": 1.2,
+        "os": "Windows 11 Home",
+        "is_gaming": false
+      },
+      "image_url": "https://mock-images.example/mock-asus-ux3405.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-ux3405",
+          "title": "ASUS Mock Zenbook 14 OLED UX3405 - Chính hãng",
+          "price": 25890000,
+          "rating": 4.6,
+          "rating_count": 316
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-ux3405",
+          "title": "ASUS Mock Zenbook 14 OLED UX3405 - Chính hãng",
+          "price": 26340000,
+          "rating": 4.9,
+          "rating_count": 327
+        }
+      ]
+    },
+    {
+      "brand": "Lenovo",
+      "model_code": "MOCK-LEN-LOQ15A",
+      "canonical_name": "Lenovo Mock LOQ 15IAX9",
+      "specs": {
+        "cpu_model": "i5-12450H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 3050",
+        "gpu_vram_gb": 6,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.4,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-len-loq15a.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-len-loq15a",
+          "title": "Lenovo Mock LOQ 15IAX9 - Chính hãng",
+          "price": 17890000,
+          "rating": 4.3,
+          "rating_count": 353,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 19690000
+            },
+            {
+              "days_ago": 20,
+              "price": 18990000
+            },
+            {
+              "days_ago": 9,
+              "price": 18390000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-len-loq15a",
+          "title": "Lenovo Mock LOQ 15IAX9 - Chính hãng",
+          "price": 18340000,
+          "price_type": "sale",
+          "list_price": 19340000
+        }
+      ]
+    },
+    {
+      "brand": "Lenovo",
+      "model_code": "MOCK-LEN-15IRX9",
+      "canonical_name": "Lenovo Mock LOQ 15IRX9",
+      "specs": {
+        "cpu_model": "i7-13650HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.4,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-len-15irx9.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-len-15irx9",
+          "title": "Lenovo Mock LOQ 15IRX9 - Chính hãng",
+          "price": 27490000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 30190000
+            },
+            {
+              "days_ago": 20,
+              "price": 29090000
+            },
+            {
+              "days_ago": 9,
+              "price": 28290000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-len-15irx9",
+          "title": "Lenovo Mock LOQ 15IRX9 - Chính hãng",
+          "price": 27840000,
+          "price_type": "member",
+          "list_price": 27940000,
+          "rating": 4.3,
+          "rating_count": 401
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-len-15irx9",
+          "title": "Lenovo Mock LOQ 15IRX9 - Chính hãng",
+          "price": 27690000,
+          "rating": 4.6,
+          "rating_count": 412
+        }
+      ]
+    },
+    {
+      "brand": "Lenovo",
+      "model_code": "MOCK-LEN-LEGION5",
+      "canonical_name": "Lenovo Mock Legion 5 15ARP9",
+      "specs": {
+        "cpu_model": "Ryzen 7 7745HX",
+        "cpu_vendor": "amd",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "2560x1440",
+        "refresh_hz": 165,
+        "panel": "IPS",
+        "weight_kg": 2.4,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-len-legion5.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-len-legion5",
+          "title": "Lenovo Mock Legion 5 15ARP9 - Chính hãng",
+          "price": 28890000,
+          "rating": 4.7,
+          "rating_count": 427,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 30290000
+            },
+            {
+              "days_ago": 22,
+              "price": 28290000
+            },
+            {
+              "days_ago": 14,
+              "price": 30890000
+            },
+            {
+              "days_ago": 5,
+              "price": 29490000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-len-legion5",
+          "title": "Lenovo Mock Legion 5 15ARP9 - Chính hãng",
+          "price": 29340000,
+          "rating": 4.0,
+          "rating_count": 438
+        }
+      ]
+    },
+    {
+      "brand": "Lenovo",
+      "model_code": "MOCK-LEN-PRO5",
+      "canonical_name": "Lenovo Mock Legion Pro 5 16IRX9",
+      "specs": {
+        "cpu_model": "i7-14700HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4070",
+        "gpu_vram_gb": 8,
+        "ram_gb": 32,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 16.0,
+        "resolution": "2560x1600",
+        "refresh_hz": 240,
+        "panel": "IPS",
+        "weight_kg": 2.5,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-len-pro5.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-len-pro5",
+          "title": "Lenovo Mock Legion Pro 5 16IRX9 - Chính hãng",
+          "price": 42890000,
+          "rating": 4.4,
+          "rating_count": 464,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 47190000
+            },
+            {
+              "days_ago": 20,
+              "price": 45490000
+            },
+            {
+              "days_ago": 9,
+              "price": 44190000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-len-pro5",
+          "title": "Lenovo Mock Legion Pro 5 16IRX9 - Chính hãng",
+          "price": 43340000,
+          "rating": 4.7,
+          "rating_count": 475
+        }
+      ]
+    },
+    {
+      "brand": "Lenovo",
+      "model_code": "MOCK-LEN-E14",
+      "canonical_name": "Lenovo Mock ThinkPad E14 Gen 5",
+      "specs": {
+        "cpu_model": "i5-1335U",
+        "cpu_vendor": "intel",
+        "gpu_model": "Integrated",
+        "gpu_vram_gb": 0,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 14.0,
+        "resolution": "1920x1200",
+        "refresh_hz": 60,
+        "panel": "IPS",
+        "weight_kg": 1.4,
+        "os": "Windows 11 Home",
+        "is_gaming": false
+      },
+      "image_url": "https://mock-images.example/mock-len-e14.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-len-e14",
+          "title": "Lenovo Mock ThinkPad E14 Gen 5 - Chính hãng",
+          "price": 16490000,
+          "rating": 4.1,
+          "rating_count": 21
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-len-e14",
+          "title": "Lenovo Mock ThinkPad E14 Gen 5 - Chính hãng",
+          "price": 16940000,
+          "price_type": "sale",
+          "list_price": 17940000,
+          "stock_status": "out_of_stock",
+          "rating": 4.4,
+          "rating_count": 32
+        }
+      ]
+    },
+    {
+      "brand": "Lenovo",
+      "model_code": "MOCK-LEN-SLIM5",
+      "canonical_name": "Lenovo Mock IdeaPad Slim 5 14ABR8",
+      "specs": {
+        "cpu_model": "Ryzen 5 7530U",
+        "cpu_vendor": "amd",
+        "gpu_model": "Integrated",
+        "gpu_vram_gb": 0,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 14.0,
+        "resolution": "1920x1200",
+        "refresh_hz": 60,
+        "panel": "IPS",
+        "weight_kg": 1.4,
+        "os": "Windows 11 Home",
+        "is_gaming": false
+      },
+      "image_url": "https://mock-images.example/mock-len-slim5.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-len-slim5",
+          "title": "Lenovo Mock IdeaPad Slim 5 14ABR8 - Chính hãng",
+          "price": 14890000,
+          "rating": 4.8,
+          "rating_count": 58
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-len-slim5",
+          "title": "Lenovo Mock IdeaPad Slim 5 14ABR8 - Chính hãng",
+          "price": 15340000
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-len-slim5",
+          "title": "Lenovo Mock IdeaPad Slim 5 14ABR8 - Chính hãng",
+          "price": 15090000,
+          "rating": 4.4,
+          "rating_count": 80
+        }
+      ]
+    },
+    {
+      "brand": "Acer",
+      "model_code": "MOCK-ACER-ANV15",
+      "canonical_name": "Acer Mock Nitro V 15 ANV15-51",
+      "specs": {
+        "cpu_model": "i5-13420H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4050",
+        "gpu_vram_gb": 6,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.1,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-acer-anv15.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-acer-anv15",
+          "title": "Acer Mock Nitro V 15 ANV15-51 - Chính hãng",
+          "price": 21890000
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-acer-anv15",
+          "title": "Acer Mock Nitro V 15 ANV15-51 - Chính hãng",
+          "price": 22340000,
+          "rating": 4.8,
+          "rating_count": 106
+        }
+      ]
+    },
+    {
+      "brand": "Acer",
+      "model_code": "MOCK-ACER-AN515",
+      "canonical_name": "Acer Mock Nitro 5 Tiger AN515-58",
+      "specs": {
+        "cpu_model": "i7-12700H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 3060",
+        "gpu_vram_gb": 6,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.5,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-acer-an515.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-acer-an515",
+          "title": "Acer Mock Nitro 5 Tiger AN515-58 - Chính hãng",
+          "price": 24490000,
+          "rating": 4.2,
+          "rating_count": 132,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 25690000
+            },
+            {
+              "days_ago": 22,
+              "price": 23990000
+            },
+            {
+              "days_ago": 14,
+              "price": 26190000
+            },
+            {
+              "days_ago": 5,
+              "price": 24990000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-acer-an515",
+          "title": "Acer Mock Nitro 5 Tiger AN515-58 - Chính hãng",
+          "price": 24940000,
+          "rating": 4.5,
+          "rating_count": 143
+        }
+      ]
+    },
+    {
+      "brand": "Acer",
+      "model_code": "MOCK-ACER-PHN16",
+      "canonical_name": "Acer Mock Predator Helios Neo 16",
+      "specs": {
+        "cpu_model": "i7-14700HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 16.0,
+        "resolution": "1920x1200",
+        "refresh_hz": 165,
+        "panel": "IPS",
+        "weight_kg": 2.6,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-acer-phn16.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-acer-phn16",
+          "title": "Acer Mock Predator Helios Neo 16 - Chính hãng",
+          "price": 32890000,
+          "rating": 4.9,
+          "rating_count": 169
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-acer-phn16",
+          "title": "Acer Mock Predator Helios Neo 16 - Chính hãng",
+          "price": 33340000,
+          "price_type": "sale",
+          "list_price": 34340000,
+          "rating": 4.2,
+          "rating_count": 180
+        }
+      ]
+    },
+    {
+      "brand": "Acer",
+      "model_code": "MOCK-ACER-A515",
+      "canonical_name": "Acer Mock Aspire 5 A515-58",
+      "specs": {
+        "cpu_model": "i5-1235U",
+        "cpu_vendor": "intel",
+        "gpu_model": "Integrated",
+        "gpu_vram_gb": 0,
+        "ram_gb": 8,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 60,
+        "panel": "IPS",
+        "weight_kg": 1.8,
+        "os": "Windows 11 Home",
+        "is_gaming": false
+      },
+      "image_url": "https://mock-images.example/mock-acer-a515.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-acer-a515",
+          "title": "Acer Mock Aspire 5 A515-58 - Chính hãng",
+          "price": 11490000,
+          "rating": 4.6,
+          "rating_count": 206
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-acer-a515",
+          "title": "Acer Mock Aspire 5 A515-58 - Chính hãng",
+          "price": 11940000,
+          "rating": 4.9,
+          "rating_count": 217
+        }
+      ]
+    },
+    {
+      "brand": "MSI",
+      "model_code": "MOCK-MSI-GF63",
+      "canonical_name": "MSI Mock Thin GF63 12UCX",
+      "specs": {
+        "cpu_model": "i5-12450H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 2050",
+        "gpu_vram_gb": 4,
+        "ram_gb": 8,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 1.9,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-msi-gf63.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-msi-gf63",
+          "title": "MSI Mock Thin GF63 12UCX - Chính hãng",
+          "price": 15890000,
+          "rating": 4.3,
+          "rating_count": 243
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-msi-gf63",
+          "title": "MSI Mock Thin GF63 12UCX - Chính hãng",
+          "price": 16340000
+        }
+      ]
+    },
+    {
+      "brand": "MSI",
+      "model_code": "MOCK-MSI-B13V",
+      "canonical_name": "MSI Mock Katana 15 B13VFK",
+      "specs": {
+        "cpu_model": "i7-13620H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.3,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-msi-b13v.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-msi-b13v",
+          "title": "MSI Mock Katana 15 B13VFK - Chính hãng",
+          "price": 26890000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 25490000
+            },
+            {
+              "days_ago": 18,
+              "price": 26090000
+            },
+            {
+              "days_ago": 6,
+              "price": 26590000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-msi-b13v",
+          "title": "MSI Mock Katana 15 B13VFK - Chính hãng",
+          "price": 27340000,
+          "rating": 4.3,
+          "rating_count": 291
+        }
+      ]
+    },
+    {
+      "brand": "MSI",
+      "model_code": "MOCK-MSI-CYBORG",
+      "canonical_name": "MSI Mock Cyborg 15 A12VF",
+      "specs": {
+        "cpu_model": "i7-12650H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4050",
+        "gpu_vram_gb": 6,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.0,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-msi-cyborg.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-msi-cyborg",
+          "title": "MSI Mock Cyborg 15 A12VF - Chính hãng",
+          "price": 20890000,
+          "rating": 4.7,
+          "rating_count": 317
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-msi-cyborg",
+          "title": "MSI Mock Cyborg 15 A12VF - Chính hãng",
+          "price": 21340000,
+          "price_type": "sale",
+          "list_price": 22340000,
+          "rating": 4.0,
+          "rating_count": 328
+        }
+      ]
+    },
+    {
+      "brand": "MSI",
+      "model_code": "MOCK-MSI-VEC16",
+      "canonical_name": "MSI Mock Vector 16 HX A14V",
+      "specs": {
+        "cpu_model": "i9-14900HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4070",
+        "gpu_vram_gb": 8,
+        "ram_gb": 32,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 16.0,
+        "resolution": "2560x1600",
+        "refresh_hz": 240,
+        "panel": "IPS",
+        "weight_kg": 2.7,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-msi-vec16.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-msi-vec16",
+          "title": "MSI Mock Vector 16 HX A14V - Chính hãng",
+          "price": 39890000,
+          "rating": 4.4,
+          "rating_count": 354,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 43890000
+            },
+            {
+              "days_ago": 20,
+              "price": 42290000
+            },
+            {
+              "days_ago": 9,
+              "price": 41090000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-msi-vec16",
+          "title": "MSI Mock Vector 16 HX A14V - Chính hãng",
+          "price": 40340000,
+          "stock_status": "out_of_stock",
+          "rating": 4.7,
+          "rating_count": 365
+        }
+      ]
+    },
+    {
+      "brand": "MSI",
+      "model_code": "MOCK-MSI-GE78",
+      "canonical_name": "MSI Mock Raider GE78 HX",
+      "specs": {
+        "cpu_model": "i9-14900HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4080",
+        "gpu_vram_gb": 12,
+        "ram_gb": 32,
+        "storage_gb": 2048,
+        "storage_type": "ssd",
+        "screen_in": 17.0,
+        "resolution": "2560x1600",
+        "refresh_hz": 240,
+        "panel": "IPS",
+        "weight_kg": 3.0,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-msi-ge78.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-msi-ge78",
+          "title": "MSI Mock Raider GE78 HX - Chính hãng",
+          "price": 62890000,
+          "rating": 4.1,
+          "rating_count": 391
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-msi-ge78",
+          "title": "MSI Mock Raider GE78 HX - Chính hãng",
+          "price": 63340000,
+          "rating": 4.4,
+          "rating_count": 402
+        }
+      ]
+    },
+    {
+      "brand": "HP",
+      "model_code": "MOCK-HP-VICTUS15",
+      "canonical_name": "HP Mock Victus 15-fb2",
+      "specs": {
+        "cpu_model": "Ryzen 5 8645HS",
+        "cpu_vendor": "amd",
+        "gpu_model": "RTX 4050",
+        "gpu_vram_gb": 6,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.3,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-hp-victus15.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-hp-victus15",
+          "title": "HP Mock Victus 15-fb2 - Chính hãng",
+          "price": 20390000,
+          "rating": 4.8,
+          "rating_count": 428,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 22390000
+            },
+            {
+              "days_ago": 20,
+              "price": 21590000
+            },
+            {
+              "days_ago": 9,
+              "price": 20990000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-hp-victus15",
+          "title": "HP Mock Victus 15-fb2 - Chính hãng",
+          "price": 20740000,
+          "price_type": "member",
+          "list_price": 20840000
+        }
+      ]
+    },
+    {
+      "brand": "HP",
+      "model_code": "MOCK-HP-VICTUS16",
+      "canonical_name": "HP Mock Victus 16-s1",
+      "specs": {
+        "cpu_model": "Ryzen 7 8845HS",
+        "cpu_vendor": "amd",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 16.1,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.4,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-hp-victus16.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-hp-victus16",
+          "title": "HP Mock Victus 16-s1 - Chính hãng",
+          "price": 26390000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 27690000
+            },
+            {
+              "days_ago": 22,
+              "price": 25890000
+            },
+            {
+              "days_ago": 14,
+              "price": 28190000
+            },
+            {
+              "days_ago": 5,
+              "price": 26890000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-hp-victus16",
+          "title": "HP Mock Victus 16-s1 - Chính hãng",
+          "price": 26840000,
+          "price_type": "sale",
+          "list_price": 27840000,
+          "rating": 4.8,
+          "rating_count": 476
+        }
+      ]
+    },
+    {
+      "brand": "HP",
+      "model_code": "MOCK-HP-OMEN16",
+      "canonical_name": "HP Mock Omen 16-xf0",
+      "specs": {
+        "cpu_model": "i7-14700HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 16.1,
+        "resolution": "2560x1440",
+        "refresh_hz": 165,
+        "panel": "IPS",
+        "weight_kg": 2.4,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-hp-omen16.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-hp-omen16",
+          "title": "HP Mock Omen 16-xf0 - Chính hãng",
+          "price": 31890000,
+          "rating": 4.2,
+          "rating_count": 22
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-hp-omen16",
+          "title": "HP Mock Omen 16-xf0 - Chính hãng",
+          "price": 32340000,
+          "rating": 4.5,
+          "rating_count": 33
+        }
+      ]
+    },
+    {
+      "brand": "HP",
+      "model_code": "MOCK-HP-PAV15",
+      "canonical_name": "HP Mock Pavilion 15-eg3",
+      "specs": {
+        "cpu_model": "i5-1335U",
+        "cpu_vendor": "intel",
+        "gpu_model": "Integrated",
+        "gpu_vram_gb": 0,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 60,
+        "panel": "IPS",
+        "weight_kg": 1.7,
+        "os": "Windows 11 Home",
+        "is_gaming": false
+      },
+      "image_url": "https://mock-images.example/mock-hp-pav15.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-hp-pav15",
+          "title": "HP Mock Pavilion 15-eg3 - Chính hãng",
+          "price": 15390000,
+          "rating": 4.9,
+          "rating_count": 59
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-hp-pav15",
+          "title": "HP Mock Pavilion 15-eg3 - Chính hãng",
+          "price": 15840000,
+          "rating": 4.2,
+          "rating_count": 70
+        }
+      ]
+    },
+    {
+      "brand": "Dell",
+      "model_code": "MOCK-DELL-G15",
+      "canonical_name": "Dell Mock G15 5530",
+      "specs": {
+        "cpu_model": "i7-13650HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 120,
+        "panel": "WVA",
+        "weight_kg": 2.8,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-dell-g15.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-dell-g15",
+          "title": "Dell Mock G15 5530 - Chính hãng",
+          "price": 28190000,
+          "rating": 4.6,
+          "rating_count": 96
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-dell-g15",
+          "title": "Dell Mock G15 5530 - Chính hãng",
+          "price": 28640000,
+          "rating": 4.9,
+          "rating_count": 107
+        }
+      ]
+    },
+    {
+      "brand": "Dell",
+      "model_code": "MOCK-DELL-INS15",
+      "canonical_name": "Dell Mock Inspiron 15 3530",
+      "specs": {
+        "cpu_model": "i5-1335U",
+        "cpu_vendor": "intel",
+        "gpu_model": "Integrated",
+        "gpu_vram_gb": 0,
+        "ram_gb": 8,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 120,
+        "panel": "WVA",
+        "weight_kg": 1.7,
+        "os": "Windows 11 Home",
+        "is_gaming": false
+      },
+      "image_url": "https://mock-images.example/mock-dell-ins15.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-dell-ins15",
+          "title": "Dell Mock Inspiron 15 3530 - Chính hãng",
+          "price": 13490000,
+          "rating": 4.3,
+          "rating_count": 133
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-dell-ins15",
+          "title": "Dell Mock Inspiron 15 3530 - Chính hãng",
+          "price": 13940000,
+          "price_type": "sale",
+          "list_price": 14940000
+        }
+      ]
+    },
+    {
+      "brand": "Dell",
+      "model_code": "MOCK-DELL-AWM16",
+      "canonical_name": "Dell Mock Alienware m16 R2",
+      "specs": {
+        "cpu_model": "Core Ultra 9 185H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4070",
+        "gpu_vram_gb": 8,
+        "ram_gb": 32,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 16.0,
+        "resolution": "2560x1600",
+        "refresh_hz": 240,
+        "panel": "IPS",
+        "weight_kg": 2.7,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-dell-awm16.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-dell-awm16",
+          "title": "Dell Mock Alienware m16 R2 - Chính hãng",
+          "price": 56890000
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-dell-awm16",
+          "title": "Dell Mock Alienware m16 R2 - Chính hãng",
+          "price": 57340000,
+          "rating": 4.3,
+          "rating_count": 181
+        }
+      ]
+    },
+    {
+      "brand": "Gigabyte",
+      "model_code": "MOCK-GIGA-G5KF",
+      "canonical_name": "Gigabyte Mock G5 KF5",
+      "specs": {
+        "cpu_model": "i5-12500H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.0,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-giga-g5kf.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-giga-g5kf",
+          "title": "Gigabyte Mock G5 KF5 - Chính hãng",
+          "price": 25490000,
+          "rating": 4.7,
+          "rating_count": 207,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 24190000
+            },
+            {
+              "days_ago": 18,
+              "price": 24690000
+            },
+            {
+              "days_ago": 6,
+              "price": 25190000
+            }
+          ]
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-giga-g5kf",
+          "title": "Gigabyte Mock G5 KF5 - Chính hãng",
+          "price": 25840000,
+          "price_type": "member",
+          "list_price": 25940000,
+          "stock_status": "out_of_stock",
+          "rating": 4.0,
+          "rating_count": 218
+        }
+      ]
+    },
+    {
+      "brand": "Gigabyte",
+      "model_code": "MOCK-GIGA-AORUS15",
+      "canonical_name": "Gigabyte Mock Aorus 15 BKF",
+      "specs": {
+        "cpu_model": "i7-13620H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "2560x1440",
+        "refresh_hz": 165,
+        "panel": "IPS",
+        "weight_kg": 2.4,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-giga-aorus15.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-giga-aorus15",
+          "title": "Gigabyte Mock Aorus 15 BKF - Chính hãng",
+          "price": 30890000,
+          "rating": 4.4,
+          "rating_count": 244
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-giga-aorus15",
+          "title": "Gigabyte Mock Aorus 15 BKF - Chính hãng",
+          "price": 31340000,
+          "rating": 4.7,
+          "rating_count": 255
+        }
+      ]
+    },
+    {
+      "brand": "ASUS",
+      "model_code": "MOCK-ASUS-TUF5060",
+      "canonical_name": "ASUS Mock TUF Gaming F16 FX608 RTX 5060",
+      "specs": {
+        "cpu_model": "i7-14650HX",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 5060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 1024,
+        "storage_type": "ssd",
+        "screen_in": 16.0,
+        "resolution": "1920x1200",
+        "refresh_hz": 165,
+        "panel": "IPS",
+        "weight_kg": 2.3,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-asus-tuf5060.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-asus-tuf5060",
+          "title": "ASUS Mock TUF Gaming F16 FX608 RTX 5060 - Chính hãng",
+          "price": 34990000,
+          "rating": 4.1,
+          "rating_count": 281
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-asus-tuf5060",
+          "title": "ASUS Mock TUF Gaming F16 FX608 RTX 5060 - Chính hãng",
+          "price": 35440000,
+          "price_type": "sale",
+          "list_price": 36440000,
+          "rating": 4.4,
+          "rating_count": 292
+        }
+      ]
+    },
+    {
+      "brand": "Apple",
+      "model_code": "MOCK-APL-MBA13",
+      "canonical_name": "Apple Mock MacBook Air 13 M3",
+      "specs": {
+        "cpu_model": "Apple M3",
+        "cpu_vendor": "apple",
+        "gpu_model": "Apple M3",
+        "gpu_vram_gb": 0,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 13.6,
+        "resolution": "2560x1664",
+        "refresh_hz": 60,
+        "panel": "Liquid Retina",
+        "weight_kg": 1.2,
+        "os": "macOS",
+        "is_gaming": false
+      },
+      "image_url": "https://mock-images.example/mock-apl-mba13.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-apl-mba13",
+          "title": "Apple Mock MacBook Air 13 M3 - Chính hãng",
+          "price": 27990000,
+          "rating": 4.8,
+          "rating_count": 318
+        },
+        {
+          "site": "hoangha",
+          "url": "https://mock-hoangha.example/p/mock-apl-mba13",
+          "title": "Apple Mock MacBook Air 13 M3 - Chính hãng",
+          "price": 28440000
+        }
+      ]
+    }
+  ]
+}

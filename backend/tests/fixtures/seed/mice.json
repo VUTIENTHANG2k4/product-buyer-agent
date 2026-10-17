@@ -1,0 +1,600 @@
+{
+  "category": "mouse",
+  "products": [
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-G102",
+      "canonical_name": "Logitech Mock G102 Lightsync",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "dpi_max": 8000,
+        "sensor": "Mercury",
+        "buttons": 6,
+        "weight_g": 85,
+        "rgb": true,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-log-g102.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-g102",
+          "title": "Logitech Mock G102 Lightsync - Chính hãng",
+          "price": 399000
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-g102",
+          "title": "Logitech Mock G102 Lightsync - Chính hãng",
+          "price": 849000,
+          "rating": 4.3,
+          "rating_count": 31
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-log-g102",
+          "title": "Logitech Mock G102 Lightsync - Chính hãng",
+          "price": 599000,
+          "rating": 4.6,
+          "rating_count": 42
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-G304",
+      "canonical_name": "Logitech Mock G304 Lightspeed",
+      "specs": {
+        "connection": [
+          "wireless_2_4"
+        ],
+        "dpi_max": 12000,
+        "sensor": "HERO",
+        "buttons": 6,
+        "weight_g": 99,
+        "rgb": false,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-log-g304.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-g304",
+          "title": "Logitech Mock G304 Lightspeed - Chính hãng",
+          "price": 599000,
+          "rating": 4.7,
+          "rating_count": 57,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 660000
+            },
+            {
+              "days_ago": 20,
+              "price": 630000
+            },
+            {
+              "days_ago": 9,
+              "price": 620000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-g304",
+          "title": "Logitech Mock G304 Lightspeed - Chính hãng",
+          "price": 1049000,
+          "price_type": "sale",
+          "list_price": 2049000,
+          "rating": 4.0,
+          "rating_count": 68
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-log-g304",
+          "title": "Logitech Mock G304 Lightspeed - Chính hãng",
+          "price": 799000,
+          "rating": 4.3,
+          "rating_count": 79
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-GPXS2",
+      "canonical_name": "Logitech Mock G Pro X Superlight 2",
+      "specs": {
+        "connection": [
+          "wireless_2_4"
+        ],
+        "dpi_max": 32000,
+        "sensor": "HERO 2",
+        "buttons": 5,
+        "weight_g": 60,
+        "rgb": false,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-log-gpxs2.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-gpxs2",
+          "title": "Logitech Mock G Pro X Superlight 2 - Chính hãng",
+          "price": 3090000,
+          "rating": 4.4,
+          "rating_count": 94
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-gpxs2",
+          "title": "Logitech Mock G Pro X Superlight 2 - Chính hãng",
+          "price": 3540000,
+          "rating": 4.7,
+          "rating_count": 105
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-MX3S",
+      "canonical_name": "Logitech Mock MX Master 3S",
+      "specs": {
+        "connection": [
+          "bluetooth",
+          "wireless_2_4"
+        ],
+        "dpi_max": 8000,
+        "sensor": "Darkfield",
+        "buttons": 7,
+        "weight_g": 141,
+        "rgb": false,
+        "shape": "ergo_right"
+      },
+      "image_url": "https://mock-images.example/mock-log-mx3s.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-mx3s",
+          "title": "Logitech Mock MX Master 3S - Chính hãng",
+          "price": 2190000,
+          "rating": 4.1,
+          "rating_count": 131
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-mx3s",
+          "title": "Logitech Mock MX Master 3S - Chính hãng",
+          "price": 2540000,
+          "price_type": "member",
+          "list_price": 2640000,
+          "rating": 4.4,
+          "rating_count": 142
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-M650",
+      "canonical_name": "Logitech Mock M650 Signature",
+      "specs": {
+        "connection": [
+          "bluetooth",
+          "wireless_2_4"
+        ],
+        "dpi_max": 4000,
+        "sensor": "Optical",
+        "buttons": 5,
+        "weight_g": 100,
+        "rgb": false,
+        "shape": "ergo_right"
+      },
+      "image_url": "https://mock-images.example/mock-log-m650.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-m650",
+          "title": "Logitech Mock M650 Signature - Chính hãng",
+          "price": 790000,
+          "rating": 4.8,
+          "rating_count": 168,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 830000
+            },
+            {
+              "days_ago": 22,
+              "price": 770000
+            },
+            {
+              "days_ago": 14,
+              "price": 850000
+            },
+            {
+              "days_ago": 5,
+              "price": 810000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-m650",
+          "title": "Logitech Mock M650 Signature - Chính hãng",
+          "price": 1240000,
+          "stock_status": "out_of_stock"
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-M350",
+      "canonical_name": "Logitech Mock Pebble M350",
+      "specs": {
+        "connection": [
+          "bluetooth",
+          "wireless_2_4"
+        ],
+        "dpi_max": 1000,
+        "sensor": "Optical",
+        "buttons": 3,
+        "weight_g": 100,
+        "rgb": false,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-log-m350.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-m350",
+          "title": "Logitech Mock Pebble M350 - Chính hãng",
+          "price": 349000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 380000
+            },
+            {
+              "days_ago": 20,
+              "price": 370000
+            },
+            {
+              "days_ago": 9,
+              "price": 360000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-m350",
+          "title": "Logitech Mock Pebble M350 - Chính hãng",
+          "price": 799000,
+          "price_type": "sale",
+          "list_price": 1799000,
+          "rating": 4.8,
+          "rating_count": 216
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-log-m350",
+          "title": "Logitech Mock Pebble M350 - Chính hãng",
+          "price": 549000,
+          "rating": 4.1,
+          "rating_count": 227
+        }
+      ]
+    },
+    {
+      "brand": "Razer",
+      "model_code": "MOCK-RZR-DAE",
+      "canonical_name": "Razer Mock DeathAdder Essential",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "dpi_max": 6400,
+        "sensor": "Optical",
+        "buttons": 5,
+        "weight_g": 96,
+        "rgb": false,
+        "shape": "ergo_right"
+      },
+      "image_url": "https://mock-images.example/mock-rzr-dae.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-rzr-dae",
+          "title": "Razer Mock DeathAdder Essential - Chính hãng",
+          "price": 449000,
+          "rating": 4.2,
+          "rating_count": 242
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-rzr-dae",
+          "title": "Razer Mock DeathAdder Essential - Chính hãng",
+          "price": 899000,
+          "rating": 4.5,
+          "rating_count": 253
+        }
+      ]
+    },
+    {
+      "brand": "Razer",
+      "model_code": "MOCK-RZR-VIPERMINI",
+      "canonical_name": "Razer Mock Viper Mini",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "dpi_max": 8500,
+        "sensor": "Optical",
+        "buttons": 6,
+        "weight_g": 61,
+        "rgb": true,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-rzr-vipermini.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-rzr-vipermini",
+          "title": "Razer Mock Viper Mini - Chính hãng",
+          "price": 690000,
+          "rating": 4.9,
+          "rating_count": 279
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-rzr-vipermini",
+          "title": "Razer Mock Viper Mini - Chính hãng",
+          "price": 1140000,
+          "rating": 4.2,
+          "rating_count": 290
+        }
+      ]
+    },
+    {
+      "brand": "Razer",
+      "model_code": "MOCK-RZR-OROCHIV2",
+      "canonical_name": "Razer Mock Orochi V2",
+      "specs": {
+        "connection": [
+          "bluetooth",
+          "wireless_2_4"
+        ],
+        "dpi_max": 18000,
+        "sensor": "Optical",
+        "buttons": 6,
+        "weight_g": 60,
+        "rgb": false,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-rzr-orochiv2.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-rzr-orochiv2",
+          "title": "Razer Mock Orochi V2 - Chính hãng",
+          "price": 1190000,
+          "rating": 4.6,
+          "rating_count": 316,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1130000
+            },
+            {
+              "days_ago": 18,
+              "price": 1150000
+            },
+            {
+              "days_ago": 6,
+              "price": 1180000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-rzr-orochiv2",
+          "title": "Razer Mock Orochi V2 - Chính hãng",
+          "price": 1640000,
+          "rating": 4.9,
+          "rating_count": 327
+        }
+      ]
+    },
+    {
+      "brand": "Razer",
+      "model_code": "MOCK-RZR-BASILISK",
+      "canonical_name": "Razer Mock Basilisk V3",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "dpi_max": 26000,
+        "sensor": "Focus+",
+        "buttons": 11,
+        "weight_g": 101,
+        "rgb": true,
+        "shape": "ergo_right"
+      },
+      "image_url": "https://mock-images.example/mock-rzr-basilisk.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-rzr-basilisk",
+          "title": "Razer Mock Basilisk V3 - Chính hãng",
+          "price": 1390000,
+          "rating": 4.3,
+          "rating_count": 353
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-rzr-basilisk",
+          "title": "Razer Mock Basilisk V3 - Chính hãng",
+          "price": 1840000,
+          "price_type": "sale",
+          "list_price": 2840000
+        }
+      ]
+    },
+    {
+      "brand": "SteelSeries",
+      "model_code": "MOCK-SS-AEROX3",
+      "canonical_name": "SteelSeries Mock Aerox 3 Wireless",
+      "specs": {
+        "connection": [
+          "wireless_2_4",
+          "bluetooth"
+        ],
+        "dpi_max": 18000,
+        "sensor": "TrueMove Air",
+        "buttons": 6,
+        "weight_g": 68,
+        "rgb": true,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-ss-aerox3.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-ss-aerox3",
+          "title": "SteelSeries Mock Aerox 3 Wireless - Chính hãng",
+          "price": 1890000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1990000
+            },
+            {
+              "days_ago": 22,
+              "price": 1840000
+            },
+            {
+              "days_ago": 14,
+              "price": 1990000
+            },
+            {
+              "days_ago": 5,
+              "price": 1940000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-ss-aerox3",
+          "title": "SteelSeries Mock Aerox 3 Wireless - Chính hãng",
+          "price": 2240000,
+          "price_type": "member",
+          "list_price": 2340000,
+          "rating": 4.3,
+          "rating_count": 401
+        }
+      ]
+    },
+    {
+      "brand": "Corsair",
+      "model_code": "MOCK-COR-HARPOONW",
+      "canonical_name": "Corsair Mock Harpoon RGB Wireless",
+      "specs": {
+        "connection": [
+          "wireless_2_4",
+          "bluetooth"
+        ],
+        "dpi_max": 10000,
+        "sensor": "Optical",
+        "buttons": 6,
+        "weight_g": 99,
+        "rgb": true,
+        "shape": "ergo_right"
+      },
+      "image_url": "https://mock-images.example/mock-cor-harpoonw.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-cor-harpoonw",
+          "title": "Corsair Mock Harpoon RGB Wireless - Chính hãng",
+          "price": 890000,
+          "rating": 4.7,
+          "rating_count": 427,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 980000
+            },
+            {
+              "days_ago": 20,
+              "price": 940000
+            },
+            {
+              "days_ago": 9,
+              "price": 920000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-cor-harpoonw",
+          "title": "Corsair Mock Harpoon RGB Wireless - Chính hãng",
+          "price": 1340000,
+          "rating": 4.0,
+          "rating_count": 438
+        }
+      ]
+    },
+    {
+      "brand": "DareU",
+      "model_code": "MOCK-DAREU-EM901X",
+      "canonical_name": "DareU Mock EM901X RGB",
+      "specs": {
+        "connection": [
+          "wireless_2_4"
+        ],
+        "dpi_max": 6000,
+        "sensor": "PAW3325",
+        "buttons": 6,
+        "weight_g": 69,
+        "rgb": true,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-dareu-em901x.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-dareu-em901x",
+          "title": "DareU Mock EM901X RGB - Chính hãng",
+          "price": 499000,
+          "rating": 4.4,
+          "rating_count": 464,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 470000
+            },
+            {
+              "days_ago": 18,
+              "price": 480000
+            },
+            {
+              "days_ago": 6,
+              "price": 490000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-dareu-em901x",
+          "title": "DareU Mock EM901X RGB - Chính hãng",
+          "price": 949000,
+          "rating": 4.7,
+          "rating_count": 475
+        }
+      ]
+    }
+  ]
+}
