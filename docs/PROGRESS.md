@@ -6,8 +6,8 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: T1.1 Enum + DTO miền (rồi T1.3, T1.2). T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — xong M0 (T0.1–T0.8) và `qa-tester` lần hai; QA lần hai tìm 5 lỗi → T0.9 + 2 việc dồn vào T2.1; sang M1
+- Task kế tiếp đề xuất: T1.3 (khung specs + `gpu_rank`), rồi T1.2. T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
+- Cập nhật lần cuối: 2026-10-17 — xong T1.1 (10 enum + 5 DTO trong `app/domain/`; nhánh `task/T1.1-domain-enums-dto`, chưa merge)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -31,7 +31,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 100% (322 pass + 12 xfail đã biết, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
+| Coverage backend | 100% (444 pass + 12 xfail đã biết của T0.9/T2.1, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
@@ -48,4 +48,5 @@
 - 2026-10-17 (T0.5): kiểu `vitest/globals` + jest-dom chỉ có trong `tsconfig.test.json` (app loại `*.test.*`, `src/test`, `src/mocks`); `tsc -b` mới là lệnh kiểm kiểu thật (`npx tsc --noEmit` ở gốc không kiểm file nào vì `"files": []`). `strictPort` làm `make dev` lỗi khi cổng 5173 bận. `overrides` của `eslint-plugin-jsx-a11y` trong `package.json` có vì plugin chưa khai báo peer ESLint 10 (đã kiểm rule chạy thật). Mỗi route khai báo `handle.title`. `e2e/` nằm trong `tsconfig.node.json` (không có DOM lib; xem T8.8).
 - 2026-10-17 (QA M0): lỗi frontend đã biết còn được giữ bằng `it.fails` (Vitest, `client.edge.test.ts`, `router.edge.test.tsx`); sửa xong thì test đỏ, phải gỡ dấu (xem "Xong khi" của T8.9, T8.10). Backend có 12 `xfail(strict=True)` trong `*_m0b.py` (QA lần hai) cho T0.9 và 2 việc dồn vào T2.1 (chốt chặn UDP/DNS ngược, UA có ký tự điều khiển); XPASS sẽ báo đỏ, khi đó gỡ dấu xfail. Subagent `qa-tester` từng chạy `taskkill python.exe` để dừng test treo: server dev Python đang chạy có thể đã bị dừng.
 - 2026-10-17 (T0.8): lỗi nghiệp vụ ném lớp con của `AppError` (`app/domain/errors.py`, khớp bảng 07 §2; có test đối chiếu docs); không ném `HTTPException`. `FastAPI(responses=error_responses(422, 500))` ở `main.py` giữ schema lỗi chuẩn cho mọi route; router chỉ thêm 404/409... qua `error_responses(...)`. `UnhandledErrorMiddleware` phải thêm trước `CORSMiddleware`. Lỗi 422 có `details.errors[{in, field, message, type}]` (không có `input`). Fixture `disable_network` (T0.6) chặn cả asyncio Proactor lẫn DNS; lỗi chặn từ `httpx.AsyncClient` đến tay test dưới dạng `ExceptionGroup` (anyio), dùng `expect_blocked()` trong `test_network_guard_edge.py`. Hook ruff xoá import chưa dùng ngay sau mỗi lần sửa: thêm import cùng lần sửa với đoạn dùng nó.
+- 2026-10-17 (T1.1): DTO chặt hơn docs cũ (đã ghi ở 04 §6): số nguyên strict (không nhận bool/chuỗi/float), `SpecFilter.value` phải khớp `op`, URL chỉ là `HttpUrl` (bỏ utm/userinfo/fragment là `clean_url` của T2.5, lưu DB bằng `str(url)`). `extra="forbid"` cho `QueryIntent` hoãn sang T6.3 (cần kiểm Gemini). Backend vẫn còn 12 xfail của QA M0 lần hai, gỡ ở T0.9 và T2.1.
 - Máy dev có PostgreSQL khác ở cổng 5432 (5433, 5434 cũng bận): đặt `POSTGRES_PORT=5435` và cổng tương ứng trong `DATABASE_URL`/`TEST_DATABASE_URL` của `.env`.

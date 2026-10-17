@@ -252,7 +252,7 @@ Giá trị khởi tạo (càng lớn càng mạnh): `Integrated` 0 · `RTX 2050`
 ```python
 class ListingItem(BaseModel):          # đầu ra parser trang danh sách
     site: SiteKey
-    url: HttpUrl                       # đã chuẩn hóa: bỏ query theo dõi (utm_*, fbclid…)
+    url: HttpUrl                       # http/https hợp lệ; pipeline gọi clean_url (§7) trước khi dựng DTO
     title: str
     price: int | None                  # None nếu không đọc được hoặc bị che
     list_price: int | None
@@ -281,7 +281,7 @@ class SpecFilter(BaseModel):
     op: Literal["eq", "gte", "lte", "contains", "contains_any", "in"]
     # contains: trường list chứa giá trị; contains_any: trường list chứa ít nhất một giá trị trong value (list);
     # in: trường vô hướng thuộc value (list)
-    value: str | int | float | list[str]
+    value: bool | int | float | str | list[str]   # bool cho trường bool (is_gaming); float hữu hạn
 
 class QueryIntent(BaseModel):          # đầu ra planner
     category: Category | None
@@ -298,6 +298,14 @@ class QueryIntent(BaseModel):          # đầu ra planner
     clarification_question: str | None
     plan_steps: list[str]              # các bước hiển thị cho người dùng
 ```
+
+**Ràng buộc kiểm tra khi dựng DTO** (cài đặt ở `app/domain/dto.py`, lỗi → `ValidationError`):
+
+- Số nguyên không nhận bool, chuỗi hay float (`price`, `list_price`, `price_min`, `price_max`, `rating_count`, `limit`): parser phải chuẩn hóa về `int` trước. Tiền ≥ 0, `rating_count` ≥ 0, `rating` 0..5, `limit` 1..20.
+- `price_min ≤ price_max` khi cả hai có. `title` và `SpecFilter.field` không rỗng sau khi bỏ khoảng trắng đầu/cuối.
+- `SpecFilter`: `in`/`contains_any` cần `value` là list; `gte`/`lte` cần số (không phải bool, không NaN/inf); `eq`/`contains` cần giá trị đơn.
+- Giá trị mặc định: `tier=1`, `sort="relevance"`, `limit=10`, `needs_clarification=False`, các list rỗng, `price_type`/`stock_status` là `unknown`, `category_hint=other`.
+- `HttpUrl` không phải `str`: lớp lưu trữ (T1.2/T1.4) ghi `str(url)`. DTO chỉ kiểm tra URL hợp lệ, không bỏ tham số theo dõi, userinfo hay fragment; việc đó là của `clean_url` (T2.5).
 
 ## 7. Quy tắc chuẩn hóa
 

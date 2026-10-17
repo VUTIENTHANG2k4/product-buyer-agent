@@ -143,14 +143,14 @@ Xong khi:
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T1.1 | Enum + DTO miền | T0.1 | S | ⬜ |
+| T1.1 | Enum + DTO miền | T0.1 | S | ✅ |
 | T1.2 | Model SQLModel + Alembic | T1.1 | M | ⬜ |
 | T1.3 | Khung specs + `gpu_rank` | T1.1 | S | ⬜ |
 | T1.4 | Repositories | T1.2 | M | ⬜ |
 | T1.5 | Seed script + dữ liệu seed hư cấu | T1.4, T1.3 | M | ⬜ |
 
 **T1.1** — [04 §4, §6](04-data-model.md#4-enum). Xong khi: mọi enum và DTO có trong `app/domain/`; test validate (`QueryIntent.limit` 1..20, `SpecFilter.op` hợp lệ, URL chuẩn).
-**T1.2** — [04 §2–3](04-data-model.md#2-sơ-đồ-quan-hệ-erd). Xong khi: 12 bảng như ERD, ràng buộc và chỉ mục đúng §3; migration đầu tiên; test `alembic upgrade head` trên DB PostgreSQL rỗng; cột JSON là `JSONB` (GIN trên `product.specs`), enum là `VARCHAR` + `CHECK`, thời gian `TIMESTAMP WITH TIME ZONE`, unique một phần cho `product` ([ADR-0007](adr/0007-postgresql.md)); `conftest.py` có fixture session PostgreSQL rollback mỗi test ([09 §4](09-testing-strategy.md#4-cấu-hình-pytest)).
+**T1.2** — [04 §2–3](04-data-model.md#2-sơ-đồ-quan-hệ-erd). Ghi chú từ review T1.1: URL trong DTO là `HttpUrl`, ghi cột bằng `str(url)`; giá nên là `BIGINT` hoặc có `CHECK` cận trên vì DTO chưa chặn giá quá lớn. Xong khi: 12 bảng như ERD, ràng buộc và chỉ mục đúng §3; migration đầu tiên; test `alembic upgrade head` trên DB PostgreSQL rỗng; cột JSON là `JSONB` (GIN trên `product.specs`), enum là `VARCHAR` + `CHECK`, thời gian `TIMESTAMP WITH TIME ZONE`, unique một phần cho `product` ([ADR-0007](adr/0007-postgresql.md)); `conftest.py` có fixture session PostgreSQL rollback mỗi test ([09 §4](09-testing-strategy.md#4-cấu-hình-pytest)).
 **T1.3** — [04 §5](04-data-model.md#5-khung-thông-số-theo-nhóm-pydantic). Xong khi: 4 model specs (+ `PhoneSpecs`), danh sách trường bắt buộc mỗi nhóm, `gpu_rank()` với bảng khởi tạo; test thứ tự hạng và chuẩn hóa tên GPU (`"GeForce RTX4060 8GB"` → `RTX 4060`).
 **T1.4** — Xong khi: repository cho Product, Offer (upsert theo `url`), PriceHistory (luật thêm dòng §3), ScrapeRun, ShoppingList, PriceAlert, Conversation/Message, AgentRun, các cache; truy vấn lọc theo specs JSON (toán tử JSONB của SQLAlchemy, không SQL thô); upsert offer bằng `INSERT … ON CONFLICT (url)`; test trên PostgreSQL test, gồm ca luật thêm lịch sử giá.
 **T1.5** — [09 §3](09-testing-strategy.md#3-dữ-liệu-test). Xong khi: `scripts/seed.py --fixture dev|eval|e2e`; dữ liệu hư cấu (tên có chữ "Mock"), ≥ 30 laptop, ≥ 10 mỗi nhóm phụ kiện, phủ đủ các câu trong `docs/eval/queries.yaml`; một số sản phẩm có offer ở 2–3 trang và có lịch sử giá 30 ngày.
@@ -170,7 +170,7 @@ Xong khi:
 **T2.2** — [06 §2, §4](06-scraping-design.md#2-giao-diện-basescraper). Xong khi: lớp trừu tượng và registry; `ChallengeDetector` có test cho từng dấu hiệu (403, 429, từ khóa captcha, soft block).
 **T2.3** — [06 §5](06-scraping-design.md#5-mock-shop-appmock_shop). Xong khi: mọi endpoint trong bảng; dữ liệu 60 sản phẩm hư cấu; test phân trang, captcha sau N request, đáp án đúng/sai, chế độ lỗi.
 **T2.4** — Xong khi: scraper mock-shop parse danh sách (JSON-LD + HTML), chi tiết, tìm kiếm; fixture lưu từ mock-shop; test parser.
-**T2.5** — [04 §7](04-data-model.md#7-quy-tắc-chuẩn-hóa). Xong khi: `parse_price` (gồm giá bị che → None), `clean_url`, `detect_brand`; ≥ 20 ca test tham số hóa.
+**T2.5** — [04 §7](04-data-model.md#7-quy-tắc-chuẩn-hóa). Xong khi: `parse_price` (gồm giá bị che → None), `clean_url`, `detect_brand`; ≥ 20 ca test tham số hóa. Từ review T1.1: `clean_url` bỏ cả userinfo (`user:pw@`) và fragment, vì `HttpUrl` ở DTO chấp nhận chúng; `parse_price` trả `int` (DTO không nhận chuỗi/float).
 **T2.6** — [06 §7](06-scraping-design.md#7-pipeline-appscraperspipelinepy), [03 §5.2](03-architecture.md#52-thu-thập-định-kỳ). Xong khi: test integration chạy pipeline với mock-shop (ASGI transport): lượt đầy đủ → `SUCCEEDED` với số liệu đúng; gặp captcha → `NEEDS_HUMAN` → `resume(answer)` → `SUCCEEDED`; lỗi một item → `items_failed` tăng, lượt không dừng; giá đổi → thêm `PriceHistory` và trả `offer_id`; trang thật bị chặn → `BLOCKED` và tạm nghỉ 24 giờ; `make scrape SITE=mockshop CAT=laptop` chạy được.
 
 ### M3 — GearVN
@@ -223,7 +223,7 @@ Xong khi:
 
 **T6.1** — [05 §2](05-agent-design.md#2-mô-hình-và-cấu-hình). Xong khi: `get_chat_model(role)` cho gemini/openai/fake; tra Context7 cho API LangChain hiện hành và ghi phiên bản; `ScriptedChatModel` phát chuỗi tool call định sẵn.
 **T6.2** — Xong khi: `catalog_service.search(QueryIntent-like filters)` lọc đúng theo specs JSON và giá hiệu lực (§4 `effective_price` ở 04); `stale` khi dữ liệu > 24 giờ; test với seed.
-**T6.3** — [05 §4](05-agent-design.md#4-prompt). Xong khi: prompt trong `prompts/planner.md`; test với model giả cho phần chuyển đổi hậu xử lý (ví dụ chuẩn hóa tiền, map GPU → rank); test snapshot prompt.
+**T6.3** — [05 §4](05-agent-design.md#4-prompt). Ghi chú từ review T1.1: cân nhắc `extra="forbid"` và `validate_assignment=True` cho `QueryIntent`/`SpecFilter` (tên trường LLM gõ sai hiện bị bỏ qua im lặng); chỉ bật sau khi tra Context7 xem schema `additionalProperties: false` có chạy với Gemini structured output, kèm retry khi validate lỗi. Xong khi: prompt trong `prompts/planner.md`; test với model giả cho phần chuyển đổi hậu xử lý (ví dụ chuẩn hóa tiền, map GPU → rank); test snapshot prompt.
 **T6.4** — [05 §3](05-agent-design.md#3-hợp-đồng-tool). Xong khi: 8 tool đúng hợp đồng; kết quả ≤ 4.000 ký tự; test từng tool với seed; `live_search_other` tạm trả `{"items": [], "sites_skipped": [...], "reason": "chưa bật tầng 2"}` cho đến M10.
 **T6.5** — [05 §1, §5, §6](05-agent-design.md#5-guardrail-code-chạy-sau-executor). Xong khi: test kịch bản: câu hỏi chuẩn → `plan` → `tool_*` → `final`; id bịa bị loại; vượt bước; tool lỗi; tham chiếu "máy thứ 2"; không gọi tool ghi khi không được yêu cầu; hỏi lại khi mơ hồ.
 **T6.6** — [05 §7](05-agent-design.md#7-đánh-giá-agent-eval). Xong khi: `make eval` chạy toàn bộ `queries.yaml` (đã bổ sung đủ ≥ 30 câu), xuất `reports/eval-<ngày>.md`; ghi kết quả cơ sở vào PROGRESS.md; nếu dưới ngưỡng → tạo task sửa prompt.
