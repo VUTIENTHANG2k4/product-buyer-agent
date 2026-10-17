@@ -128,6 +128,7 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 | Token | Sáng | Tối | Dùng cho |
 | --- | --- | --- | --- |
 | `--primary` | `#0F766E` (teal 700) | `#2DD4BF` | Nút chính, liên kết, điểm nhấn |
+| `--primary-hover` | `#115E59` (teal 800) | `#5EEAD4` | Nền nút chính khi hover (tương phản với chữ ≥ 7.5:1; không dùng độ trong suốt vì `primary/80` chỉ đạt 3.76:1) |
 | `--accent-deal` | `#B45309` (amber 700) | `#FBBF24` | Giá giảm, nhãn khuyến mãi |
 | `--success` | `#15803D` | `#4ADE80` | Giá thấp nhất, trạng thái thành công |
 | `--destructive` | `#B91C1C` | `#F87171` | Lỗi, BLOCKED |
@@ -148,6 +149,7 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 - Điểm gãy: `sm` 640, `md` 768, `lg` 1024, `xl` 1280. Từ 360 px không cuộn ngang trang; bảng kết quả trên điện thoại chuyển thành danh sách thẻ.
 - Tương phản tối thiểu WCAG AA (4.5:1 cho chữ thường).
 - Điều hướng đầy đủ bằng bàn phím: Enter gửi, Shift+Enter xuống dòng, focus hiển thị rõ.
+- Liên kết "Bỏ qua tới nội dung" là mục focus đầu tiên của layout, chuyển focus vào `<main id="main-content">`. Mỗi route khai báo `handle.title`; `document.title` có dạng "<tiêu đề> · Buyer Agent".
 - Vùng tiến trình agent dùng `aria-live="polite"`.
 - Không chỉ dùng màu để truyền nghĩa: giá giảm có mũi tên ↓ và chữ.
 

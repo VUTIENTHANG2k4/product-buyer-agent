@@ -20,5 +20,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "eslint.config.js"]
+  "include": ["vite.config.ts", "playwright.config.ts", "eslint.config.js", "e2e/**/*.ts"]
 }

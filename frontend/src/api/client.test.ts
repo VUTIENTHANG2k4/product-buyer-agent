@@ -78,6 +78,36 @@ describe('apiFetch', () => {
     })
   })
 
+  it('giữ details của thân lỗi để hiển thị lỗi theo trường', async () => {
+    server.use(
+      http.post('http://api.test/api/lists', () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: 'Dữ liệu không hợp lệ',
+              details: { name: 'Tên không được để trống' },
+            },
+          },
+          { status: 422 },
+        ),
+      ),
+    )
+    const error = await apiFetch('/lists', { method: 'POST', json: {} }).catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).details).toEqual({ name: 'Tên không được để trống' })
+  })
+
+  it('details là undefined khi thân lỗi không có details', async () => {
+    server.use(
+      http.get('http://api.test/api/products/9', () =>
+        HttpResponse.json({ error: { code: 'NOT_FOUND', message: 'x' } }, { status: 404 }),
+      ),
+    )
+    const error = await apiFetch('/products/9').catch((e: unknown) => e)
+    expect((error as ApiError).details).toBeUndefined()
+  })
+
   it('dùng mã HTTP_<status> khi thân lỗi không phải JSON', async () => {
     server.use(
       http.get('http://api.test/api/boom', () => new HttpResponse('oops', { status: 500 })),

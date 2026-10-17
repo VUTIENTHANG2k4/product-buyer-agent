@@ -6,13 +6,13 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: T1.1 Enum + DTO miền (đủ phụ thuộc: T0.1). T3.1 (GearVN) làm được sau M1–M2; T0.5 làm khi tiện, trước T8.1
-- Cập nhật lần cuối: 2026-10-17 — xong T0.4 đọc điều khoản (GearVN, Viettel Store, Nguyễn Kim: Được dùng; Hoàng Hà, Laptop88: Cần hỏi giảng viên)
+- Task kế tiếp đề xuất: T1.1 Enum + DTO miền (đủ phụ thuộc: T0.1). T3.1 (GearVN) làm được sau M1–M2
+- Cập nhật lần cuối: 2026-10-17 — xong T0.5 (retry chỉ 0/≥500, skip link, `document.title` theo route, jsx-a11y, tách tsconfig test, token `--primary-hover`); M0 hoàn tất
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
 | --- | --- | --- |
-| M0 Nền tảng | ⬜ | Còn T0.5 |
+| M0 Nền tảng | ✅ | Chưa chạy `qa-tester` cuối milestone |
 | M1 Dữ liệu | ⬜ | |
 | M2 Hạ tầng thu thập | ⬜ | |
 | M3 GearVN | ⬜ | T0.4 đã duyệt: GearVN được dùng |
@@ -32,7 +32,7 @@
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
 | Coverage backend | 98% (14 test, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
-| Test frontend (Vitest) | 23 pass (chưa đo coverage) | 2026-10-17 |
+| Test frontend (Vitest) | 54 pass (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
 | Eval hallucination | – | |
@@ -45,4 +45,5 @@
 - Test chặn socket nhưng libpq (psycopg) không đi qua Python socket nên không bị chặn; test đụng DB lỗi phải dùng engine giả (dùng URL thật sẽ treo ~2 phút trên Windows).
 - Việc nhỏ chưa có task (làm khi tiện): `app/logging.py`, `app/worker.py`, CORS origin vào `config.py`, engine theo lifespan + session theo request (T1.x), chặn DNS trong fixture mạng.
 - 2026-10-16 (T0.2): frontend dùng npm, Vite 8, React Router 8 (`RouterProvider` từ `react-router/dom`), Tailwind v4 (token trong `src/styles/globals.css`, không có `tailwind.config.ts`), TS 6 (không đặt `baseUrl`, chỉ `paths`), shadcn preset `vega`. Lệnh trong `frontend/`: `npm run lint|typecheck|test|format:check|build` (T0.3 gom vào `make check`; `npx tsc --noEmit` cũng phải xanh). Test dùng MSW và đỏ nếu request chưa có handler. Chế độ tối theo hệ điều hành, chưa có nút đổi (T8.1). Hook dự án chặn `rm -rf` và chuỗi đọc file `.env` trong lệnh Bash.
+- 2026-10-17 (T0.5): kiểu `vitest/globals` + jest-dom chỉ có trong `tsconfig.test.json` (app loại `*.test.*`, `src/test`, `src/mocks`); `tsc -b` mới là lệnh kiểm kiểu thật (`npx tsc --noEmit` ở gốc không kiểm file nào vì `"files": []`). `strictPort` làm `make dev` lỗi khi cổng 5173 bận. `overrides` của `eslint-plugin-jsx-a11y` trong `package.json` có vì plugin chưa khai báo peer ESLint 10 (đã kiểm rule chạy thật). Mỗi route khai báo `handle.title`. `e2e/` nằm trong `tsconfig.node.json` (không có DOM lib; xem T8.8).
 - Máy dev có PostgreSQL khác ở cổng 5432 (5433, 5434 cũng bận): đặt `POSTGRES_PORT=5435` và cổng tương ứng trong `DATABASE_URL`/`TEST_DATABASE_URL` của `.env`.
