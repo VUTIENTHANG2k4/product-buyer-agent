@@ -6,12 +6,15 @@ const DEFAULT_BASE_URL = 'http://localhost:8000'
 export class ApiError extends Error {
   readonly status: number
   readonly code: string
+  /** Chi tiết lỗi theo trường (vd. lỗi kiểm tra dữ liệu), nếu máy chủ có gửi. */
+  readonly details?: unknown
 
-  constructor(status: number, code: string, message: string) {
+  constructor(status: number, code: string, message: string, details?: unknown) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
+    this.details = details
   }
 }
 
@@ -42,16 +45,18 @@ function isAbortError(error: unknown): boolean {
 async function toApiError(response: Response): Promise<ApiError> {
   let code = `HTTP_${response.status}`
   let message: string = strings.errors.unknown
+  let details: unknown
   try {
     const body: unknown = await response.json()
     if (isRecord(body) && isRecord(body.error)) {
       if (typeof body.error.code === 'string') code = body.error.code
       if (typeof body.error.message === 'string') message = body.error.message
+      details = body.error.details
     }
   } catch {
     // Thân phản hồi không phải JSON: giữ mã và thông điệp mặc định.
   }
-  return new ApiError(response.status, code, message)
+  return new ApiError(response.status, code, message, details)
 }
 
 export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Promise<T> {

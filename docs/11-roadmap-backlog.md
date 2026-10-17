@@ -66,7 +66,7 @@ flowchart LR
 | T0.2 | Scaffold frontend | – | M | ✅ |
 | T0.3 | Makefile, git, CI | T0.1, T0.2 | S | ✅ |
 | T0.4 | Đọc điều khoản sử dụng các nguồn | – | S | ✅ |
-| T0.5 | Hoàn thiện nền frontend (phát sinh từ T0.2) | T0.2 | S | ⬜ |
+| T0.5 | Hoàn thiện nền frontend (phát sinh từ T0.2) | T0.2 | S | ✅ |
 
 **T0.1 Scaffold backend** — Tài liệu: [03 §6–7](03-architecture.md#6-cấu-trúc-thư-mục-mục-tiêu-sau-m0)
 Xong khi:
@@ -103,7 +103,8 @@ Xong khi:
 - `QueryClient` chỉ retry khi `ApiError.status` là 0 hoặc ≥ 500 (không retry 4xx); có test.
 - Tiếp cận: liên kết "Bỏ qua tới nội dung" + `id` cho `<main>`, `document.title` theo route, thêm `eslint-plugin-jsx-a11y`.
 - Playwright: `server.strictPort` ở `vite.config.ts`, `reuseExistingServer: !process.env.CI`, thêm `e2e/` vào tsconfig khi có spec; tách `tsconfig.test.json` để kiểu `vitest/globals` không lọt vào mã chạy thật.
-- Thêm lớp tiện ích `tabular-nums` cho cột giá khi làm T8.3; `ApiError` giữ `details` khi cần lỗi theo trường; xem lại tương phản `Button` variant `default` khi hover (`hover:bg-primary/80`).
+- `ApiError` giữ `details` khi cần lỗi theo trường; xem lại tương phản `Button` variant `default` khi hover (`hover:bg-primary/80`, chỉ đạt 3.76:1 → đã thay bằng token `--primary-hover`).
+- `tabular-nums` cho cột giá: Tailwind v4 có sẵn class này, không cần thêm lớp tiện ích; T8.3 chỉ việc dùng.
 - (`gen:api` + `openapi-typescript` thuộc T7.5; coverage frontend khi 09 §5 đặt ngưỡng.)
 
 ### M1 — Dữ liệu
@@ -221,7 +222,7 @@ Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test
 | T8.8 | E2E luồng chính | T8.2–T8.7 | M | ⬜ |
 
 Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái ở [08 §3–4](08-ui-ux.md#3-wireframe); test Vitest cho logic và trạng thái (tải/rỗng/lỗi); ảnh chụp màn hình sáng + tối, desktop + 375 px lưu vào `docs/ui/screens/`; người dùng duyệt ảnh.
-**T8.8** — Xong khi: 4 luồng E2E: hỏi → bảng; so sánh; thêm vào danh sách; tạo cảnh báo; chạy với `LLM_PROVIDER=fake` + seed `e2e`.
+**T8.8** — Xong khi: 4 luồng E2E: hỏi → bảng; so sánh; thêm vào danh sách; tạo cảnh báo; chạy với `LLM_PROVIDER=fake` + seed `e2e`. Lưu ý từ T0.5: `e2e/**/*.ts` đang nằm trong `tsconfig.node.json` (không có DOM lib); nếu spec dùng `window`/`document` trong `page.evaluate`, tách `tsconfig.e2e.json` có lib DOM.
 
 ### M9 — Theo dõi giá & vận hành
 

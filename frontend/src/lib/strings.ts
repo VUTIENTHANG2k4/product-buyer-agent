@@ -1,6 +1,10 @@
+const appName = 'Buyer Agent'
+
 // Chữ hiển thị cho người dùng, gom một chỗ để dễ sửa.
 export const strings = {
-  appName: 'Buyer Agent',
+  appName,
+  skipToContent: 'Bỏ qua tới nội dung',
+  documentTitle: (title: string | undefined) => (title ? `${title} · ${appName}` : appName),
   nav: {
     label: 'Điều hướng chính',
     home: 'Hỏi agent',

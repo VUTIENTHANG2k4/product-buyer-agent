@@ -8,6 +8,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   // Dùng chung cấu hình môi trường ở thư mục gốc dự án (chỉ biến VITE_* được đưa ra trình duyệt).
   envDir: '..',
+  // Cổng cố định để Playwright (baseURL localhost:5173) và CORS của API luôn khớp;
+  // cổng bận thì báo lỗi thay vì tự nhảy sang cổng khác.
+  server: { port: 5173, strictPort: true },
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, 'src') },
   },
