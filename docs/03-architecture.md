@@ -223,13 +223,13 @@ product-buyer-agent/
 │   │   ├── worker.py             # entry worker + scheduler
 │   │   ├── config.py             # pydantic-settings
 │   │   ├── logging.py
-│   │   ├── api/                  # routers/, schemas.py, deps.py, sse.py
+│   │   ├── api/                  # routers/, schemas.py, deps.py, errors.py (handler + middleware lỗi chuẩn), sse.py
 │   │   ├── agent/                # planner.py, executor.py, llm.py, events.py, guardrails.py, tools/, prompts/
 │   │   ├── services/             # catalog, compare, shopping_list, alert, live_search, scrape, notifier/
 │   │   ├── scrapers/             # base.py, registry.py, pipeline.py, http/, sites/
 │   │   ├── normalize/            # price.py, url.py, brand.py, model_code.py, matcher.py, llm_extractor.py, specs/
 │   │   ├── db/                   # engine.py, models.py, repositories/
-│   │   ├── domain/               # enums.py, dto.py (ListingItem, ProductDetail, QueryIntent…)
+│   │   ├── domain/               # enums.py, dto.py (ListingItem, ProductDetail, QueryIntent…), errors.py (AppError theo 07 §2)
 │   │   └── mock_shop/            # main.py, data.json, templates/
 │   ├── scripts/                  # seed.py, run_eval.py, scrape.py
 │   ├── data/                     # cache/, raw/ (gitignore); CSDL nằm trong PostgreSQL
@@ -274,5 +274,5 @@ product-buyer-agent/
 - **Log:** log có cấu trúc (JSON khi chạy production, dạng dễ đọc khi dev), mỗi lượt chạy và mỗi agent run có `run_id`.
 - **Thời gian:** lưu UTC trong DB, hiển thị giờ Việt Nam (Asia/Ho_Chi_Minh) ở frontend.
 - **Tiền tệ:** lưu `int` đơn vị đồng (VND), không dùng float.
-- **Lỗi:** API trả lỗi dạng `{"error": {"code": "...", "message": "..."}}`; mã lỗi liệt kê ở [07](07-api-spec.md).
+- **Lỗi:** API trả lỗi dạng `{"error": {"code": "...", "message": "...", "details": {}}}`; mã lỗi và dạng `details` ở [07 §1–2](07-api-spec.md). Lỗi nghiệp vụ là `AppError` (`domain/errors.py`); `api/errors.py` chuyển mọi lỗi (kể cả 404/405/422 và lỗi không lường trước) sang dạng này.
 - **Bảo mật:** CORS chỉ cho origin frontend; không có xác thực (ứng dụng cục bộ một người dùng, ghi rõ ngoài phạm vi).
