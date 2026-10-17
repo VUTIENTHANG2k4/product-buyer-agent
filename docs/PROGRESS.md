@@ -6,13 +6,13 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: T0.7, T0.8 (T0.8 bắt buộc trước M7) hoặc T1.1 Enum + DTO miền. T2.1 đã đủ chặn mạng (T0.6 ✅) nhưng còn chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — xong T0.6 (fixture `disable_network` chặn thêm `sock_connect` của Proactor trên Windows và DNS)
+- Task kế tiếp đề xuất: T0.8 (bắt buộc trước M7, hoàn tất M0) hoặc T1.1 Enum + DTO miền. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
+- Cập nhật lần cuối: 2026-10-17 — xong T0.7 (`Settings` ràng buộc miền giá trị; UA được `strip()` và không rỗng)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
 | --- | --- | --- |
-| M0 Nền tảng | 🔄 | T0.1–T0.6 ✅; còn T0.7, T0.8 (phát sinh từ QA M0) |
+| M0 Nền tảng | 🔄 | T0.1–T0.7 ✅; còn T0.8 (phát sinh từ QA M0) |
 | M1 Dữ liệu | ⬜ | |
 | M2 Hạ tầng thu thập | ⬜ | |
 | M3 GearVN | ⬜ | T0.4 đã duyệt: GearVN được dùng |
@@ -31,7 +31,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 100% (98 pass + 13 xfail đã biết, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
+| Coverage backend | 100% (127 pass + 2 xfail đã biết, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
@@ -43,7 +43,7 @@
 - 2026-10-17 (T0.3): trên Windows cài make bằng `winget install ezwinports.make` (make của MSYS2 làm mất biến môi trường nên `docker compose` lỗi). Thông báo tiếng Việt trong Makefile dùng `$(error)`/`$(info)`, không dùng `echo` (hỏng dấu). Target của task sau báo "Chưa khả dụng"; tên cờ script (`--site --category --pages --fixture --cases`) là giả định, T1.5/T2.6/T6.6 chỉnh Makefile nếu khác. CI chưa có job e2e (T8.8). `.prettierrc` đặt `endOfLine: auto` vì working copy CRLF. `make dev` bị kill cưỡng bức trên Windows để lại worker uvicorn mồ côi giữ cổng 8000: dừng bằng Ctrl-C. Dev server Vite đang chạy sẽ làm `npm ci` (`make setup`) lỗi EPERM: tắt trước. `npm ci` báo 7 lỗ hổng high (chưa có task).
 - 2026-10-16 (T0.1): `GET /api/health` trả HTTP 200 + `status: "degraded"`, `db: "error"` khi DB lỗi. Kiểm tra DB nằm ở `services/health_service.py` (api không được import db). `DATABASE_URL`/`TEST_DATABASE_URL` là `SecretStr`.
 - Test chặn socket nhưng libpq (psycopg) không đi qua Python socket nên không bị chặn; test đụng DB lỗi phải dùng engine giả (dùng URL thật sẽ treo ~2 phút trên Windows).
-- Việc nhỏ chưa có task (làm khi tiện): `app/logging.py`, `app/worker.py`, CORS origin vào `config.py`, engine theo lifespan + session theo request (T1.x), chặn DNS trong fixture mạng.
+- Việc nhỏ chưa có task (làm khi tiện): `app/logging.py`, `app/worker.py`, CORS origin vào `config.py`, engine theo lifespan + session theo request (T1.x). Từ review T0.7: chặn ký tự điều khiển (CR/LF) giữa chuỗi `SCRAPER_USER_AGENT` (gộp vào T2.1), trần trên cho timeout/delay, miền của `MOCK_SHOP_DELAY_SECONDS ≥ 0` và `MOCK_SHOP_CAPTCHA_AFTER ≥ 1`. `Settings()` giờ lỗi khi giá trị ngoài miền (xem chú thích trong `.env.example`).
 - 2026-10-16 (T0.2): frontend dùng npm, Vite 8, React Router 8 (`RouterProvider` từ `react-router/dom`), Tailwind v4 (token trong `src/styles/globals.css`, không có `tailwind.config.ts`), TS 6 (không đặt `baseUrl`, chỉ `paths`), shadcn preset `vega`. Lệnh trong `frontend/`: `npm run lint|typecheck|test|format:check|build` (T0.3 gom vào `make check`; `npx tsc --noEmit` cũng phải xanh). Test dùng MSW và đỏ nếu request chưa có handler. Chế độ tối theo hệ điều hành, chưa có nút đổi (T8.1). Hook dự án chặn `rm -rf` và chuỗi đọc file `.env` trong lệnh Bash.
 - 2026-10-17 (T0.5): kiểu `vitest/globals` + jest-dom chỉ có trong `tsconfig.test.json` (app loại `*.test.*`, `src/test`, `src/mocks`); `tsc -b` mới là lệnh kiểm kiểu thật (`npx tsc --noEmit` ở gốc không kiểm file nào vì `"files": []`). `strictPort` làm `make dev` lỗi khi cổng 5173 bận. `overrides` của `eslint-plugin-jsx-a11y` trong `package.json` có vì plugin chưa khai báo peer ESLint 10 (đã kiểm rule chạy thật). Mỗi route khai báo `handle.title`. `e2e/` nằm trong `tsconfig.node.json` (không có DOM lib; xem T8.8).
 - 2026-10-17 (QA M0): lỗi đã biết được giữ bằng `xfail(strict=True)` (backend) và `it.fails` (Vitest) để `make check` vẫn xanh; sửa xong lỗi thì test báo XPASS/đỏ, phải gỡ dấu (xem "Xong khi" của T0.7, T0.8, T8.9, T8.10). Fixture `disable_network` (T0.6) chặn cả asyncio Proactor lẫn DNS; lỗi chặn từ `httpx.AsyncClient` đến tay test dưới dạng `ExceptionGroup` (anyio), dùng `expect_blocked()` trong `test_network_guard_edge.py`. Hook ruff xoá import chưa dùng ngay sau mỗi lần sửa: thêm import cùng lần sửa với đoạn dùng nó.

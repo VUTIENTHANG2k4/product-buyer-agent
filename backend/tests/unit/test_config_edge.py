@@ -206,38 +206,84 @@ def test_secret_fields_are_all_secretstr_so_new_secrets_cannot_regress() -> None
     assert plain == []
 
 
-# --- Lỗ hổng đã biết: giá trị phi lý được chấp nhận (xfail strict: hết lỗi thì test báo để gỡ) ---
-
-_BUG_NOTE = "Settings chưa ràng buộc miền giá trị (xem báo cáo QA M0)"
+# --- Miền giá trị: số phi lý và User-Agent rỗng bị từ chối ngay lúc khởi động ---
 
 
-@pytest.mark.xfail(strict=True, reason=_BUG_NOTE)
 @pytest.mark.parametrize(
-    ("variable", "value"),
+    ("variable", "value", "field"),
     [
-        ("SCRAPER_MIN_DELAY_SECONDS", "-1"),
-        ("SCRAPER_MIN_DELAY_SECONDS", "nan"),
-        ("SCRAPER_MIN_DELAY_SECONDS", "inf"),
-        ("SCRAPER_TIMEOUT_SECONDS", "0"),
-        ("SCRAPER_MAX_RETRIES", "-1"),
-        ("SCRAPER_MAX_LISTING_PAGES", "0"),
-        ("AGENT_MAX_STEPS", "0"),
-        ("AGENT_MAX_STEPS", "-5"),
-        ("POSTGRES_PORT", "70000"),
-        ("SMTP_PORT", "0"),
+        ("SCRAPER_MIN_DELAY_SECONDS", "-1", "scraper_min_delay_seconds"),
+        ("SCRAPER_MIN_DELAY_SECONDS", "nan", "scraper_min_delay_seconds"),
+        ("SCRAPER_MIN_DELAY_SECONDS", "inf", "scraper_min_delay_seconds"),
+        ("SCRAPER_TIMEOUT_SECONDS", "0", "scraper_timeout_seconds"),
+        ("SCRAPER_TIMEOUT_SECONDS", "-3", "scraper_timeout_seconds"),
+        ("SCRAPER_TIMEOUT_SECONDS", "nan", "scraper_timeout_seconds"),
+        ("SCRAPER_TIMEOUT_SECONDS", "inf", "scraper_timeout_seconds"),
+        ("SCRAPER_MAX_RETRIES", "-1", "scraper_max_retries"),
+        ("SCRAPER_MAX_LISTING_PAGES", "0", "scraper_max_listing_pages"),
+        ("SCRAPER_MAX_LISTING_PAGES", "-1", "scraper_max_listing_pages"),
+        ("AGENT_MAX_STEPS", "0", "agent_max_steps"),
+        ("AGENT_MAX_STEPS", "-5", "agent_max_steps"),
+        ("POSTGRES_PORT", "0", "postgres_port"),
+        ("POSTGRES_PORT", "70000", "postgres_port"),
+        ("SMTP_PORT", "0", "smtp_port"),
+        ("SMTP_PORT", "65536", "smtp_port"),
     ],
 )
 def test_out_of_range_numeric_setting_is_rejected(
-    monkeypatch: pytest.MonkeyPatch, variable: str, value: str
+    monkeypatch: pytest.MonkeyPatch, variable: str, value: str, field: str
 ) -> None:
     monkeypatch.setenv(variable, value)
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc:
         _settings()
+    assert _failed_fields(exc) == {field}
 
 
-@pytest.mark.xfail(strict=True, reason=_BUG_NOTE)
-def test_whitespace_only_user_agent_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize(
+    ("variable", "value", "field", "expected"),
+    [
+        ("SCRAPER_MIN_DELAY_SECONDS", "0", "scraper_min_delay_seconds", 0.0),
+        ("SCRAPER_TIMEOUT_SECONDS", "0.001", "scraper_timeout_seconds", 0.001),
+        ("SCRAPER_MAX_RETRIES", "0", "scraper_max_retries", 0),
+        ("SCRAPER_MAX_LISTING_PAGES", "1", "scraper_max_listing_pages", 1),
+        ("AGENT_MAX_STEPS", "1", "agent_max_steps", 1),
+        ("POSTGRES_PORT", "1", "postgres_port", 1),
+        ("POSTGRES_PORT", "65535", "postgres_port", 65535),
+        ("SMTP_PORT", "1", "smtp_port", 1),
+        ("SMTP_PORT", "65535", "smtp_port", 65535),
+    ],
+)
+def test_boundary_value_is_accepted(
+    monkeypatch: pytest.MonkeyPatch, variable: str, value: str, field: str, expected: float
+) -> None:
+    monkeypatch.setenv(variable, value)
+    assert getattr(_settings(), field) == expected
+
+
+@pytest.mark.parametrize("value", ["   ", "\t\n"])
+def test_whitespace_only_user_agent_is_rejected(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
     # User-Agent trung thực là bắt buộc (CLAUDE.md): chuỗi toàn khoảng trắng không phải UA.
-    monkeypatch.setenv("SCRAPER_USER_AGENT", "   ")
-    with pytest.raises(ValidationError):
+    monkeypatch.setenv("SCRAPER_USER_AGENT", value)
+    with pytest.raises(ValidationError) as exc:
         _settings()
+    assert _failed_fields(exc) == {"scraper_user_agent"}
+
+
+def test_user_agent_is_stored_without_surrounding_whitespace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SCRAPER_USER_AGENT", "  Bot/1.0 (lien-he: a@b.vn)  ")
+    assert _settings().scraper_user_agent == "Bot/1.0 (lien-he: a@b.vn)"
+
+
+def test_range_error_message_does_not_leak_secret_value(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Thêm ràng buộc miền không được làm lộ các bí mật khác khi báo lỗi.
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://u:mat-khau-db@localhost/db")
+    monkeypatch.setenv("SCRAPER_TIMEOUT_SECONDS", "0")
+    with pytest.raises(ValidationError) as exc:
+        _settings()
+    assert "mat-khau-db" not in str(exc.value)
