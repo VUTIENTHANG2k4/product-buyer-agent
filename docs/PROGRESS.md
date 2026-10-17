@@ -7,7 +7,7 @@
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
 - Task kế tiếp đề xuất: T1.3 (khung specs + `gpu_rank`), rồi T1.2. T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — xong T1.1 (10 enum + 5 DTO trong `app/domain/`; nhánh `task/T1.1-domain-enums-dto`, chưa merge)
+- Cập nhật lần cuối: 2026-10-17 — xong T1.1 (10 enum + 5 DTO trong `app/domain/`; đã merge vào main)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
