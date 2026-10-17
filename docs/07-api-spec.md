@@ -11,6 +11,7 @@
   ```json
   {"error": {"code": "PRODUCT_NOT_FOUND", "message": "Không tìm thấy sản phẩm 999", "details": {}}}
   ```
+  `details` luôn là object (có thể rỗng). Với `VALIDATION_ERROR`: `{"errors": [{"in": "query|body|path|header|cookie", "field": "page_size", "message": "…", "type": "less_than_equal"}]}`; `field` là đường dẫn chấm (`items.0.name`, rỗng nếu lỗi ở gốc body hoặc JSON sai cú pháp). Không trả lại trường `input`/`ctx` của pydantic; `message` do pydantic sinh (tiếng Anh) và một số loại lỗi (uuid, `value_error`) có thể nhắc một phần giá trị, nên giao diện dựa vào `type`. Lỗi 500 không kèm stack trace hay thông điệp ngoại lệ. Router không ném `HTTPException` cho lỗi nghiệp vụ mà dùng lớp con của `AppError`; `HTTPException` chỉ giữ thông điệp riêng khi khác cụm chuẩn của HTTP (ví dụ "Not Found"). Mã 204 và 304 không có thân.
 - OpenAPI tự sinh tại `/api/openapi.json`; frontend sinh kiểu bằng `openapi-typescript` (lệnh `npm run gen:api`). **OpenAPI là nguồn sự thật**; bảng dưới là bản tóm tắt để lập kế hoạch.
 - Không xác thực (ứng dụng cục bộ). CORS cho `http://localhost:5173`.
 - Frontend: `VITE_API_BASE_URL` là gốc máy chủ (`http://localhost:8000`, không gồm `/api`); `src/api/client.ts` tự thêm tiền tố `/api`.
@@ -20,6 +21,8 @@
 | Code | HTTP | Khi nào |
 | --- | --- | --- |
 | `VALIDATION_ERROR` | 422 | Tham số sai |
+| `NOT_FOUND` | 404 | Đường dẫn không tồn tại |
+| `METHOD_NOT_ALLOWED` | 405 | Sai phương thức HTTP (kèm header `Allow`) |
 | `PRODUCT_NOT_FOUND`, `LIST_NOT_FOUND`, `ALERT_NOT_FOUND`, `RUN_NOT_FOUND` | 404 | |
 | `DUPLICATE_ALERT` | 409 | Đã có cảnh báo `active` cùng sản phẩm và ngưỡng |
 | `SCRAPE_ALREADY_RUNNING` | 409 | Đang có lượt RUNNING cho (site, category) |
@@ -30,7 +33,9 @@
 | `LLM_UNAVAILABLE` | 503 | Không gọi được LLM |
 | `AGENT_HALLUCINATION` | – (chỉ trong sự kiện SSE `error`) | Guardrail loại toàn bộ sản phẩm LLM nêu vì không có trong kết quả tool |
 | `AGENT_STEP_LIMIT` | – (chỉ trong sự kiện SSE `error`) | Vượt `AGENT_MAX_STEPS` mà chưa có kết quả nào để tổng hợp |
-| `INTERNAL_ERROR` | 500 | |
+| `INTERNAL_ERROR` | 500 | Lỗi không lường trước (response vẫn mang header CORS) |
+
+Lỗi HTTP khác do framework sinh ra (ví dụ 418) dùng mã `HTTP_<status>`; frontend dùng cùng quy ước khi thân lỗi không phải JSON.
 
 ## 3. Endpoint
 

@@ -69,7 +69,7 @@ flowchart LR
 | T0.5 | Hoàn thiện nền frontend (phát sinh từ T0.2) | T0.2 | S | ✅ |
 | T0.6 | Chặn mạng thật trong test: asyncio/httpx trên Windows và DNS (phát sinh từ QA M0) | T0.1 | S | ✅ |
 | T0.7 | Kiểm tra miền giá trị của cấu hình (phát sinh từ QA M0) | T0.1 | S | ✅ |
-| T0.8 | Định dạng lỗi chuẩn `{"error": {...}}` và handler chung (phát sinh từ QA M0) | T0.1 | M | ⬜ |
+| T0.8 | Định dạng lỗi chuẩn `{"error": {...}}` và handler chung (phát sinh từ QA M0) | T0.1 | M | ✅ |
 
 **T0.1 Scaffold backend** — Tài liệu: [03 §6–7](03-architecture.md#6-cấu-trúc-thư-mục-mục-tiêu-sau-m0)
 Xong khi:

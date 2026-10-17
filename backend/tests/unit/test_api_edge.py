@@ -188,12 +188,9 @@ def test_openapi_health_response_declares_all_documented_fields(client: TestClie
     assert set(props) == {"status", "db", "llm_provider", "offline_mode", "version"}
 
 
-# --- Định dạng lỗi chuẩn (docs/07 §1) chưa có: xfail strict để nhắc khi triển khai ---
+# --- Định dạng lỗi chuẩn (docs/07 §1); chi tiết hơn ở test_error_envelope.py ---
 
 
-@pytest.mark.xfail(
-    strict=True, reason="Chưa có handler lỗi chuẩn docs/07 §1 (không task nào nhận); xem báo cáo QA"
-)
 @pytest.mark.parametrize("path", ["/api/khong-ton-tai", "/api/health/extra"])
 def test_unknown_path_uses_documented_error_envelope(client: TestClient, path: str) -> None:
     body = client.get(path).json()
