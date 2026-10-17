@@ -1,0 +1,555 @@
+{
+  "category": "keyboard",
+  "products": [
+    {
+      "brand": "Akko",
+      "model_code": "MOCK-AKKO-3087",
+      "canonical_name": "Akko Mock 3087 v2 Red",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Akko CS Red",
+        "form_factor": "tkl",
+        "hot_swap": false,
+        "backlight": "single"
+      },
+      "image_url": "https://mock-images.example/mock-akko-3087.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-akko-3087",
+          "title": "Akko Mock 3087 v2 Red - Chính hãng",
+          "price": 1190000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1310000
+            },
+            {
+              "days_ago": 20,
+              "price": 1260000
+            },
+            {
+              "days_ago": 9,
+              "price": 1230000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-akko-3087",
+          "title": "Akko Mock 3087 v2 Red - Chính hãng",
+          "price": 1640000,
+          "rating": 4.3,
+          "rating_count": 31
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-akko-3087",
+          "title": "Akko Mock 3087 v2 Red - Chính hãng",
+          "price": 1390000,
+          "rating": 4.6,
+          "rating_count": 42
+        }
+      ]
+    },
+    {
+      "brand": "Keychron",
+      "model_code": "MOCK-KEY-K8PRO",
+      "canonical_name": "Keychron Mock K8 Pro",
+      "specs": {
+        "connection": [
+          "wired",
+          "bluetooth"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Gateron Red",
+        "form_factor": "tkl",
+        "hot_swap": true,
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-key-k8pro.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-key-k8pro",
+          "title": "Keychron Mock K8 Pro - Chính hãng",
+          "price": 2190000,
+          "rating": 4.7,
+          "rating_count": 57,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 2290000
+            },
+            {
+              "days_ago": 22,
+              "price": 2140000
+            },
+            {
+              "days_ago": 14,
+              "price": 2340000
+            },
+            {
+              "days_ago": 5,
+              "price": 2240000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-key-k8pro",
+          "title": "Keychron Mock K8 Pro - Chính hãng",
+          "price": 2640000,
+          "price_type": "sale",
+          "list_price": 3640000,
+          "rating": 4.0,
+          "rating_count": 68
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-G413",
+      "canonical_name": "Logitech Mock G413 TKL SE",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Tactile Brown",
+        "form_factor": "tkl",
+        "hot_swap": false,
+        "backlight": "single"
+      },
+      "image_url": "https://mock-images.example/mock-log-g413.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-g413",
+          "title": "Logitech Mock G413 TKL SE - Chính hãng",
+          "price": 1490000,
+          "rating": 4.4,
+          "rating_count": 94
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-g413",
+          "title": "Logitech Mock G413 TKL SE - Chính hãng",
+          "price": 1940000,
+          "rating": 4.7,
+          "rating_count": 105
+        }
+      ]
+    },
+    {
+      "brand": "Razer",
+      "model_code": "MOCK-RZR-HUNTSMAN",
+      "canonical_name": "Razer Mock Huntsman Tournament Edition",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "switch_type": "optical",
+        "switch_name": "Razer Linear Red",
+        "form_factor": "tkl",
+        "hot_swap": false,
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-rzr-huntsman.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-rzr-huntsman",
+          "title": "Razer Mock Huntsman Tournament Edition - Chính hãng",
+          "price": 2390000,
+          "rating": 4.1,
+          "rating_count": 131
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-rzr-huntsman",
+          "title": "Razer Mock Huntsman Tournament Edition - Chính hãng",
+          "price": 2740000,
+          "price_type": "member",
+          "list_price": 2840000,
+          "rating": 4.4,
+          "rating_count": 142
+        }
+      ]
+    },
+    {
+      "brand": "Corsair",
+      "model_code": "MOCK-COR-K70TKL",
+      "canonical_name": "Corsair Mock K70 RGB TKL",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Cherry MX Red",
+        "form_factor": "tkl",
+        "hot_swap": false,
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-cor-k70tkl.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-cor-k70tkl",
+          "title": "Corsair Mock K70 RGB TKL - Chính hãng",
+          "price": 3190000,
+          "rating": 4.8,
+          "rating_count": 168
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-cor-k70tkl",
+          "title": "Corsair Mock K70 RGB TKL - Chính hãng",
+          "price": 3640000,
+          "stock_status": "out_of_stock"
+        }
+      ]
+    },
+    {
+      "brand": "DareU",
+      "model_code": "MOCK-DAREU-EK87",
+      "canonical_name": "DareU Mock EK87 Red",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Dareu Red",
+        "form_factor": "tkl",
+        "hot_swap": false,
+        "backlight": "single"
+      },
+      "image_url": "https://mock-images.example/mock-dareu-ek87.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-dareu-ek87",
+          "title": "DareU Mock EK87 Red - Chính hãng",
+          "price": 590000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 560000
+            },
+            {
+              "days_ago": 18,
+              "price": 570000
+            },
+            {
+              "days_ago": 6,
+              "price": 580000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-dareu-ek87",
+          "title": "DareU Mock EK87 Red - Chính hãng",
+          "price": 1040000,
+          "price_type": "sale",
+          "list_price": 2040000,
+          "rating": 4.8,
+          "rating_count": 216
+        }
+      ]
+    },
+    {
+      "brand": "Akko",
+      "model_code": "MOCK-AKKO-5075B",
+      "canonical_name": "Akko Mock 5075B Plus",
+      "specs": {
+        "connection": [
+          "wired",
+          "bluetooth",
+          "wireless_2_4"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Akko CS Jelly Pink",
+        "form_factor": "75",
+        "hot_swap": true,
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-akko-5075b.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-akko-5075b",
+          "title": "Akko Mock 5075B Plus - Chính hãng",
+          "price": 1890000,
+          "rating": 4.2,
+          "rating_count": 242,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 2090000
+            },
+            {
+              "days_ago": 20,
+              "price": 1990000
+            },
+            {
+              "days_ago": 9,
+              "price": 1940000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-akko-5075b",
+          "title": "Akko Mock 5075B Plus - Chính hãng",
+          "price": 2340000,
+          "rating": 4.5,
+          "rating_count": 253
+        }
+      ]
+    },
+    {
+      "brand": "Keychron",
+      "model_code": "MOCK-KEY-K2",
+      "canonical_name": "Keychron Mock K2 V2",
+      "specs": {
+        "connection": [
+          "wired",
+          "bluetooth"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Gateron Brown",
+        "form_factor": "75",
+        "hot_swap": true,
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-key-k2.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-key-k2",
+          "title": "Keychron Mock K2 V2 - Chính hãng",
+          "price": 1990000,
+          "rating": 4.9,
+          "rating_count": 279
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-key-k2",
+          "title": "Keychron Mock K2 V2 - Chính hãng",
+          "price": 2440000,
+          "rating": 4.2,
+          "rating_count": 290
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-MXKEYS",
+      "canonical_name": "Logitech Mock MX Keys S",
+      "specs": {
+        "connection": [
+          "bluetooth",
+          "wireless_2_4"
+        ],
+        "switch_type": "membrane",
+        "switch_name": "Perfect Stroke",
+        "form_factor": "full",
+        "hot_swap": false,
+        "backlight": "single"
+      },
+      "image_url": "https://mock-images.example/mock-log-mxkeys.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-mxkeys",
+          "title": "Logitech Mock MX Keys S - Chính hãng",
+          "price": 2690000,
+          "rating": 4.6,
+          "rating_count": 316
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-mxkeys",
+          "title": "Logitech Mock MX Keys S - Chính hãng",
+          "price": 3140000,
+          "rating": 4.9,
+          "rating_count": 327
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-K380",
+      "canonical_name": "Logitech Mock K380 Multi-Device",
+      "specs": {
+        "connection": [
+          "bluetooth"
+        ],
+        "switch_type": "membrane",
+        "switch_name": "Scissor",
+        "form_factor": "other",
+        "hot_swap": false,
+        "backlight": "none"
+      },
+      "image_url": "https://mock-images.example/mock-log-k380.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-k380",
+          "title": "Logitech Mock K380 Multi-Device - Chính hãng",
+          "price": 790000,
+          "rating": 4.3,
+          "rating_count": 353,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 830000
+            },
+            {
+              "days_ago": 22,
+              "price": 770000
+            },
+            {
+              "days_ago": 14,
+              "price": 850000
+            },
+            {
+              "days_ago": 5,
+              "price": 810000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-k380",
+          "title": "Logitech Mock K380 Multi-Device - Chính hãng",
+          "price": 1240000,
+          "price_type": "sale",
+          "list_price": 2240000
+        }
+      ]
+    },
+    {
+      "brand": "Razer",
+      "model_code": "MOCK-RZR-BWV4X",
+      "canonical_name": "Razer Mock BlackWidow V4 X",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Razer Green",
+        "form_factor": "full",
+        "hot_swap": false,
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-rzr-bwv4x.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-rzr-bwv4x",
+          "title": "Razer Mock BlackWidow V4 X - Chính hãng",
+          "price": 3490000
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-rzr-bwv4x",
+          "title": "Razer Mock BlackWidow V4 X - Chính hãng",
+          "price": 3840000,
+          "price_type": "member",
+          "list_price": 3940000,
+          "rating": 4.3,
+          "rating_count": 401
+        }
+      ]
+    },
+    {
+      "brand": "SteelSeries",
+      "model_code": "MOCK-SS-APEXPRO",
+      "canonical_name": "SteelSeries Mock Apex Pro TKL",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "switch_type": "magnetic",
+        "switch_name": "OmniPoint 2.0",
+        "form_factor": "tkl",
+        "hot_swap": false,
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-ss-apexpro.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-ss-apexpro",
+          "title": "SteelSeries Mock Apex Pro TKL - Chính hãng",
+          "price": 4990000,
+          "rating": 4.7,
+          "rating_count": 427
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-ss-apexpro",
+          "title": "SteelSeries Mock Apex Pro TKL - Chính hãng",
+          "price": 5440000,
+          "rating": 4.0,
+          "rating_count": 438
+        }
+      ]
+    },
+    {
+      "brand": "Corsair",
+      "model_code": "MOCK-COR-K65MINI",
+      "canonical_name": "Corsair Mock K65 RGB Mini",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "switch_type": "mechanical",
+        "switch_name": "Cherry MX Red",
+        "form_factor": "60",
+        "hot_swap": false,
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-cor-k65mini.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-cor-k65mini",
+          "title": "Corsair Mock K65 RGB Mini - Chính hãng",
+          "price": 1790000,
+          "rating": 4.4,
+          "rating_count": 464,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1940000
+            },
+            {
+              "days_ago": 20,
+              "price": 1890000
+            },
+            {
+              "days_ago": 9,
+              "price": 1840000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-cor-k65mini",
+          "title": "Corsair Mock K65 RGB Mini - Chính hãng",
+          "price": 2240000,
+          "rating": 4.7,
+          "rating_count": 475
+        }
+      ]
+    }
+  ]
+}

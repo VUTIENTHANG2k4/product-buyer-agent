@@ -1,0 +1,577 @@
+{
+  "category": "headset",
+  "products": [
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-G331",
+      "canonical_name": "Logitech Mock G331",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "wired_3_5"
+        ],
+        "has_mic": true,
+        "anc": false,
+        "surround_7_1": false,
+        "driver_mm": 50
+      },
+      "image_url": "https://mock-images.example/mock-log-g331.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-g331",
+          "title": "Logitech Mock G331 - Chính hãng",
+          "price": 1090000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1200000
+            },
+            {
+              "days_ago": 20,
+              "price": 1160000
+            },
+            {
+              "days_ago": 9,
+              "price": 1120000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-g331",
+          "title": "Logitech Mock G331 - Chính hãng",
+          "price": 1540000,
+          "rating": 4.3,
+          "rating_count": 31
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-log-g331",
+          "title": "Logitech Mock G331 - Chính hãng",
+          "price": 1290000,
+          "rating": 4.6,
+          "rating_count": 42
+        }
+      ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-GPROX",
+      "canonical_name": "Logitech Mock G Pro X Gaming",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "wired_3_5",
+          "usb"
+        ],
+        "has_mic": true,
+        "anc": false,
+        "surround_7_1": true,
+        "driver_mm": 50
+      },
+      "image_url": "https://mock-images.example/mock-log-gprox.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-gprox",
+          "title": "Logitech Mock G Pro X Gaming - Chính hãng",
+          "price": 2390000,
+          "rating": 4.7,
+          "rating_count": 57
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-log-gprox",
+          "title": "Logitech Mock G Pro X Gaming - Chính hãng",
+          "price": 2840000,
+          "price_type": "sale",
+          "list_price": 3840000,
+          "rating": 4.0,
+          "rating_count": 68
+        }
+      ]
+    },
+    {
+      "brand": "HyperX",
+      "model_code": "MOCK-HX-STINGER",
+      "canonical_name": "HyperX Mock Cloud Stinger",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "wired_3_5"
+        ],
+        "has_mic": true,
+        "anc": false,
+        "surround_7_1": false,
+        "driver_mm": 50
+      },
+      "image_url": "https://mock-images.example/mock-hx-stinger.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-hx-stinger",
+          "title": "HyperX Mock Cloud Stinger - Chính hãng",
+          "price": 790000,
+          "rating": 4.4,
+          "rating_count": 94,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 750000
+            },
+            {
+              "days_ago": 18,
+              "price": 770000
+            },
+            {
+              "days_ago": 6,
+              "price": 780000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-hx-stinger",
+          "title": "HyperX Mock Cloud Stinger - Chính hãng",
+          "price": 1240000,
+          "rating": 4.7,
+          "rating_count": 105
+        }
+      ]
+    },
+    {
+      "brand": "HyperX",
+      "model_code": "MOCK-HX-CLOUD2",
+      "canonical_name": "HyperX Mock Cloud II",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "usb"
+        ],
+        "has_mic": true,
+        "anc": false,
+        "surround_7_1": true,
+        "driver_mm": 53
+      },
+      "image_url": "https://mock-images.example/mock-hx-cloud2.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-hx-cloud2",
+          "title": "HyperX Mock Cloud II - Chính hãng",
+          "price": 1790000,
+          "rating": 4.1,
+          "rating_count": 131
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-hx-cloud2",
+          "title": "HyperX Mock Cloud II - Chính hãng",
+          "price": 2140000,
+          "price_type": "member",
+          "list_price": 2240000,
+          "rating": 4.4,
+          "rating_count": 142
+        }
+      ]
+    },
+    {
+      "brand": "Razer",
+      "model_code": "MOCK-RZR-KRAKENX",
+      "canonical_name": "Razer Mock Kraken X",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "wired_3_5"
+        ],
+        "has_mic": true,
+        "anc": false,
+        "surround_7_1": true,
+        "driver_mm": 40
+      },
+      "image_url": "https://mock-images.example/mock-rzr-krakenx.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-rzr-krakenx",
+          "title": "Razer Mock Kraken X - Chính hãng",
+          "price": 990000,
+          "rating": 4.8,
+          "rating_count": 168,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1040000
+            },
+            {
+              "days_ago": 22,
+              "price": 970000
+            },
+            {
+              "days_ago": 14,
+              "price": 1060000
+            },
+            {
+              "days_ago": 5,
+              "price": 1010000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-rzr-krakenx",
+          "title": "Razer Mock Kraken X - Chính hãng",
+          "price": 1440000,
+          "stock_status": "out_of_stock"
+        }
+      ]
+    },
+    {
+      "brand": "Razer",
+      "model_code": "MOCK-RZR-BSV2X",
+      "canonical_name": "Razer Mock BlackShark V2 X",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "wired_3_5"
+        ],
+        "has_mic": true,
+        "anc": false,
+        "surround_7_1": false,
+        "driver_mm": 50
+      },
+      "image_url": "https://mock-images.example/mock-rzr-bsv2x.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-rzr-bsv2x",
+          "title": "Razer Mock BlackShark V2 X - Chính hãng",
+          "price": 1490000
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-rzr-bsv2x",
+          "title": "Razer Mock BlackShark V2 X - Chính hãng",
+          "price": 1940000,
+          "price_type": "sale",
+          "list_price": 2940000,
+          "rating": 4.8,
+          "rating_count": 216
+        }
+      ]
+    },
+    {
+      "brand": "SteelSeries",
+      "model_code": "MOCK-SS-NOVA1",
+      "canonical_name": "SteelSeries Mock Arctis Nova 1",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "wired_3_5",
+          "usb"
+        ],
+        "has_mic": true,
+        "anc": false,
+        "surround_7_1": false,
+        "driver_mm": 40
+      },
+      "image_url": "https://mock-images.example/mock-ss-nova1.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-ss-nova1",
+          "title": "SteelSeries Mock Arctis Nova 1 - Chính hãng",
+          "price": 1890000,
+          "rating": 4.2,
+          "rating_count": 242
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-ss-nova1",
+          "title": "SteelSeries Mock Arctis Nova 1 - Chính hãng",
+          "price": 2340000,
+          "rating": 4.5,
+          "rating_count": 253
+        }
+      ]
+    },
+    {
+      "brand": "Corsair",
+      "model_code": "MOCK-COR-HS55",
+      "canonical_name": "Corsair Mock HS55 Stereo",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "wired_3_5"
+        ],
+        "has_mic": true,
+        "anc": false,
+        "surround_7_1": false,
+        "driver_mm": 50
+      },
+      "image_url": "https://mock-images.example/mock-cor-hs55.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-cor-hs55",
+          "title": "Corsair Mock HS55 Stereo - Chính hãng",
+          "price": 1290000,
+          "rating": 4.9,
+          "rating_count": 279,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1420000
+            },
+            {
+              "days_ago": 20,
+              "price": 1370000
+            },
+            {
+              "days_ago": 9,
+              "price": 1330000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-cor-hs55",
+          "title": "Corsair Mock HS55 Stereo - Chính hãng",
+          "price": 1740000,
+          "rating": 4.2,
+          "rating_count": 290
+        }
+      ]
+    },
+    {
+      "brand": "Sony",
+      "model_code": "MOCK-SONY-XM5",
+      "canonical_name": "Sony Mock WH-1000XM5",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "bluetooth",
+          "wired_3_5"
+        ],
+        "has_mic": true,
+        "anc": true,
+        "surround_7_1": false,
+        "driver_mm": 30
+      },
+      "image_url": "https://mock-images.example/mock-sony-xm5.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-sony-xm5",
+          "title": "Sony Mock WH-1000XM5 - Chính hãng",
+          "price": 6990000,
+          "rating": 4.6,
+          "rating_count": 316
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-sony-xm5",
+          "title": "Sony Mock WH-1000XM5 - Chính hãng",
+          "price": 7440000,
+          "rating": 4.9,
+          "rating_count": 327
+        }
+      ]
+    },
+    {
+      "brand": "Sony",
+      "model_code": "MOCK-SONY-CH720N",
+      "canonical_name": "Sony Mock WH-CH720N",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "bluetooth"
+        ],
+        "has_mic": true,
+        "anc": true,
+        "surround_7_1": false,
+        "driver_mm": 30
+      },
+      "image_url": "https://mock-images.example/mock-sony-ch720n.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-sony-ch720n",
+          "title": "Sony Mock WH-CH720N - Chính hãng",
+          "price": 2990000,
+          "rating": 4.3,
+          "rating_count": 353,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 3290000
+            },
+            {
+              "days_ago": 20,
+              "price": 3140000
+            },
+            {
+              "days_ago": 9,
+              "price": 3090000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-sony-ch720n",
+          "title": "Sony Mock WH-CH720N - Chính hãng",
+          "price": 3440000,
+          "price_type": "sale",
+          "list_price": 4440000
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-sony-ch720n",
+          "title": "Sony Mock WH-CH720N - Chính hãng",
+          "price": 3190000,
+          "rating": 4.9,
+          "rating_count": 375
+        }
+      ]
+    },
+    {
+      "brand": "Anker",
+      "model_code": "MOCK-ANK-Q30",
+      "canonical_name": "Anker Mock Soundcore Life Q30",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "bluetooth",
+          "wired_3_5"
+        ],
+        "has_mic": true,
+        "anc": true,
+        "surround_7_1": false,
+        "driver_mm": 40
+      },
+      "image_url": "https://mock-images.example/mock-ank-q30.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-ank-q30",
+          "title": "Anker Mock Soundcore Life Q30 - Chính hãng",
+          "price": 1690000,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1740000
+            },
+            {
+              "days_ago": 22,
+              "price": 1640000
+            },
+            {
+              "days_ago": 14,
+              "price": 1790000
+            },
+            {
+              "days_ago": 5,
+              "price": 1740000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-ank-q30",
+          "title": "Anker Mock Soundcore Life Q30 - Chính hãng",
+          "price": 2040000,
+          "price_type": "member",
+          "list_price": 2140000,
+          "rating": 4.3,
+          "rating_count": 401
+        }
+      ]
+    },
+    {
+      "brand": "JBL",
+      "model_code": "MOCK-JBL-770NC",
+      "canonical_name": "JBL Mock Tune 770NC",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "bluetooth",
+          "wired_3_5"
+        ],
+        "has_mic": true,
+        "anc": true,
+        "surround_7_1": false,
+        "driver_mm": 40
+      },
+      "image_url": "https://mock-images.example/mock-jbl-770nc.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-jbl-770nc",
+          "title": "JBL Mock Tune 770NC - Chính hãng",
+          "price": 1990000,
+          "rating": 4.7,
+          "rating_count": 427
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-jbl-770nc",
+          "title": "JBL Mock Tune 770NC - Chính hãng",
+          "price": 2440000,
+          "rating": 4.0,
+          "rating_count": 438
+        }
+      ]
+    },
+    {
+      "brand": "Edifier",
+      "model_code": "MOCK-EDI-W820NB",
+      "canonical_name": "Edifier Mock W820NB Plus",
+      "specs": {
+        "form": "over_ear",
+        "connection": [
+          "bluetooth"
+        ],
+        "has_mic": true,
+        "anc": true,
+        "surround_7_1": false,
+        "driver_mm": 40
+      },
+      "image_url": "https://mock-images.example/mock-edi-w820nb.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-edi-w820nb",
+          "title": "Edifier Mock W820NB Plus - Chính hãng",
+          "price": 1590000,
+          "rating": 4.4,
+          "rating_count": 464,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 1440000
+            },
+            {
+              "days_ago": 18,
+              "price": 1490000
+            },
+            {
+              "days_ago": 6,
+              "price": 1540000
+            }
+          ]
+        },
+        {
+          "site": "laptop88",
+          "url": "https://mock-laptop88.example/p/mock-edi-w820nb",
+          "title": "Edifier Mock W820NB Plus - Chính hãng",
+          "price": 2040000,
+          "rating": 4.7,
+          "rating_count": 475
+        }
+      ]
+    }
+  ]
+}

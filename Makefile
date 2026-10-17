@@ -57,7 +57,7 @@ check: test-be test-fe ## Cổng chất lượng: ruff, mypy, pytest, eslint, ts
 test-be: ## Backend: ruff, mypy, pytest + coverage (>= 80%)
 	$(BE) uv run ruff check .
 	$(BE) uv run ruff format --check .
-	$(BE) uv run mypy app
+	$(BE) uv run mypy app scripts
 	$(BE) uv run pytest --cov=app --cov-fail-under=80 --cov-report=term-missing:skip-covered --cov-report=xml
 
 test-fe: ## Frontend: eslint, prettier, tsc, vitest
@@ -85,10 +85,10 @@ scrape: ## Một lượt thu thập: make scrape SITE=mockshop CAT=laptop [PAGES
 	$(BE) uv run python scripts/scrape.py --site $(SITE) --category $(CAT) $(if $(PAGES),--pages $(PAGES))
 
 FIXTURE ?= dev
-seed: ## Nạp dữ liệu hư cấu: make seed FIXTURE=dev|eval|e2e
+seed: ## Nạp dữ liệu hư cấu: make seed FIXTURE=dev|eval|e2e [RESET=1: xóa sạch DB trước]
 	$(if $(filter dev eval e2e,$(FIXTURE)),,$(error FIXTURE phải là dev, eval hoặc e2e (nhận '$(FIXTURE)')))
 	$(call require,backend/scripts/seed.py,T1.5)
-	$(BE) uv run python scripts/seed.py --fixture $(FIXTURE)
+	$(BE) uv run python -m scripts.seed --fixture $(FIXTURE) $(if $(RESET),--reset --yes)
 
 gen-api: ## Sinh kiểu TypeScript từ OpenAPI
 	$(if $(shell grep -q '"gen:api"' frontend/package.json && echo yes),,$(error Chưa khả dụng: thiếu script gen:api trong frontend/package.json (làm ở T7.5)))

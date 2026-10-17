@@ -26,6 +26,7 @@ dev = [
     "pytest-asyncio==1.4.0",
     "pytest-cov==7.1.0",
     "python-dotenv==1.2.4",
+    "pyyaml==6.0.3",
     "respx==0.23.1",
     "ruff==0.17.1",
     "time-machine==3.5.1",
@@ -48,7 +49,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["app"]
+files = ["app", "scripts"]
 plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
