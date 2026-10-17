@@ -174,6 +174,18 @@ Migration bằng Alembic (`make migrate`; URL lấy từ `DATABASE_URL`). Mỗi 
 
 Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.specs["gpu_rank"].as_integer() >= 40`, `Product.specs["is_gaming"].as_boolean()`), không viết SQL thô.
 
+**Repository** (`app/db/repositories/`, T1.4):
+
+- Mỗi lớp nhận `Session` qua `__init__`, chỉ `flush`, **không `commit`** (service/pipeline giữ transaction). Hàm có yếu tố thời gian nhận `now` (UTC), mặc định `utc_now()`, để test dùng mốc cố định. Đồng bộ (sync), cùng kiểu với `db/engine.py`; pipeline async bọc bằng `asyncio.to_thread`.
+- `OfferRepository.upsert` là `INSERT … ON CONFLICT (url) DO UPDATE … RETURNING`: giữ `id` và `first_seen_at`, làm mới phần còn lại, bật lại `is_active`; trả `created` theo `xmax = 0`. `deactivate_unseen(site, category, scraped_before)` là bước 3 của pipeline ([06 §7](06-scraping-design.md#7-pipeline-appscraperspipelinepy)).
+- Luật thêm `price_history` (`PriceHistoryRepository.record_snapshot`) so với **dòng lịch sử gần nhất** của offer, không so với `offer.price`: thêm khi chưa có dòng nào (`first`), khi `price`/`price_type`/`stock_status` đổi (`changed`), hoặc khi dòng cuối cũ hơn 24 giờ (`heartbeat`; đúng 24 giờ chưa thêm). Kết quả có `previous_price` và `price_changed` (chỉ đổi `price_type`/tồn kho thì `price_changed=False`) để pipeline đếm `price_changes` và `alert_service` biết giá cũ.
+- `effective_price()` (§4) là biểu thức SQL duy nhất cho giá hiệu lực; `ProductRepository.search` tính giá, `sites`, số offer trên các offer **đang bán (`is_active`)** khớp điều kiện, nên sản phẩm không còn offer đang bán không xuất hiện. Từ khóa và `sort=relevance` do `catalog_service` ánh xạ trước khi gọi.
+- Ánh xạ `SpecFilter` → JSONB: `eq`/`gte`/`lte` với số dùng `CASE WHEN jsonb_typeof(…) = 'number' THEN CAST(… AS FLOAT)` (trường thiếu hoặc sai kiểu thì không khớp, không lỗi truy vấn); bool dùng `as_boolean()` có cùng cách bảo vệ; chuỗi dùng `as_string()`; `contains` là `specs @> {field: [value]}`; `contains_any` là OR của các `@>` (danh sách rỗng không khớp gì); `in` dùng `as_string() IN (…)`. Tên trường luôn là tham số ràng buộc.
+- `upsert` ghi đè mọi cột còn lại bằng giá trị mới, kể cả `None`/`{}` (`rating`, `site_sku`, `raw_specs`, `match_*`): pipeline (T2.6) phải truyền đủ giá trị (ví dụ gộp `raw_specs` từ trang chi tiết) trước khi gọi, nếu không lượt chỉ có trang danh sách sẽ xóa dữ liệu đã có. `record_snapshot` đọc rồi ghi không khóa; chấp nhận được vì `scrape_service` không chạy hai lượt cùng (site, category) (T9.3).
+- `ShoppingListRepository.add_item`, `update_item`, `remove_item`, `rename` đều chạm `shopping_list.updated_at` (danh sách sắp theo `updated_at` mới nhất trước). `add_item` và các cache dùng `ON CONFLICT` (cộng `quantity`; ghi đè kết quả cache và làm mới `created_at`).
+- `ScrapeRunRepository.set_status`: `finished_at` chỉ có ở `SUCCEEDED`/`PARTIAL`/`FAILED`/`BLOCKED`; `NEEDS_HUMAN` là trạng thái chờ, chưa kết thúc (chuyển lại `RUNNING` khi `resume`). `error_message`/`challenge` được thay bằng giá trị truyền vào (None là xóa). Repository không kiểm tra chuyển trạng thái hợp lệ; pipeline chịu trách nhiệm.
+- `SpecFilter` với `in` chỉ so khớp trường vô hướng bằng chuỗi (`ram_gb in ["8","32"]` khớp số 8 và 32); không khớp trường bool hay list.
+
 ## 4. Enum
 
 | Enum | Giá trị |

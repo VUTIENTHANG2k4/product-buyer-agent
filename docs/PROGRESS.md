@@ -6,8 +6,8 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: T1.4 (repositories), rồi T1.5 (seed) để hết M1. T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — xong T1.2 (12 bảng SQLModel + migration `0001` + fixture `db_session`; đã merge vào main). T1.3 cũng đã merge
+- Task kế tiếp đề xuất: T1.5 (seed) để hết M1 (xong thì chạy `qa-tester` cho M1). T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
+- Cập nhật lần cuối: 2026-10-17 — xong T1.4 (9 module repository trong `app/db/repositories/`, nhánh `task/T1.4-repositories`, chưa merge). T1.2, T1.3 đã merge vào main
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -31,7 +31,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 100% (787 pass + 12 xfail đã biết của T0.9/T2.1, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
+| Coverage backend | 100% (917 pass + 12 xfail đã biết của T0.9/T2.1, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
@@ -52,3 +52,4 @@
 - Máy dev có PostgreSQL khác ở cổng 5432 (5433, 5434 cũng bận): đặt `POSTGRES_PORT=5435` và cổng tương ứng trong `DATABASE_URL`/`TEST_DATABASE_URL` của `.env`.
 - 2026-10-17 (T1.3): `LaptopSpecs.gpu_rank` là `computed_field` chỉ đọc (tính từ `gpu_model`, có trong `model_dump()` để lọc JSONB; đầu vào `gpu_rank` bị bỏ qua). Specs dùng `extra="ignore"`, số nguyên strict và > 0 (riêng `gpu_vram_gb` cho 0). `SPEC_MODELS`/`REQUIRED_FIELDS` là `MappingProxyType`; quy ước "None hoặc list rỗng = thiếu" chưa có hàm dùng chung (`missing_required_fields` để T5.1). GPU chưa có trong bảng §5.6 (GTX, RX, Ti/Super mới, Arc rời, MX) chuẩn hóa được tên nhưng `gpu_rank = null`.
 - 2026-10-17 (T1.2): chạy `alembic` từ `backend/` (`make migrate`). Test DB cần `make db-up`; conftest lấy `TEST_DATABASE_URL` từ env rồi `.env`, đổi host `localhost` → `127.0.0.1` (trên Windows `localhost` thử IPv6 trước và treo 3 s mỗi kết nối mới; nên đặt 127.0.0.1 trong `.env`, `.env.example` đã đổi) và chỉ chạy khi tên DB kết thúc `_test`. Dùng `db_session` (rollback bằng savepoint; test lỗi ràng buộc bọc `session.begin_nested()`) và `tests/factories.py`. Enum là VARCHAR + CHECK: thêm giá trị enum phải viết migration tay (test so CHECK với enum sẽ đỏ nếu quên). JSONB không theo dõi sửa tại chỗ: gán lại cả dict. `offer.price` NOT NULL, `product.brand` NOT NULL (chi tiết docs/04 §3).
+- 2026-10-17 (T1.4): repository đồng bộ, nhận `Session`, chỉ `flush` (không commit), thời gian truyền qua `now`; chi tiết ở docs/04 §3. Test repository ở `backend/tests/integration/repositories/` (tên file `test_repo_*.py` để không trùng basename). Dùng `session.exec`; truy vấn nhiều cột dùng `sqlalchemy.select` + `session.execute`. Cột `xmax` trong `upsert` là thủ thuật PostgreSQL để biết dòng mới (đã kiểm trên PG 17).
