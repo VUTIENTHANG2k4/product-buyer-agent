@@ -7,7 +7,7 @@
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
 - Task kế tiếp đề xuất: T1.5 (seed) để hết M1 (xong thì chạy `qa-tester` cho M1). T0.9 (S) nên làm trước khi service đưa thời gian vào `details` lỗi. T2.1 chờ T2.2. T3.1 (GearVN) làm được sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — xong T1.4 (9 module repository trong `app/db/repositories/`, nhánh `task/T1.4-repositories`, chưa merge). T1.2, T1.3 đã merge vào main
+- Cập nhật lần cuối: 2026-10-17 — xong T1.4 (9 module repository trong `app/db/repositories/`, đã merge vào main). T1.2, T1.3 cũng đã merge
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
