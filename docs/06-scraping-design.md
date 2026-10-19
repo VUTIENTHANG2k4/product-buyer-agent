@@ -147,7 +147,7 @@ Hoàng Hà Mobile và Laptop88 đã bị loại khỏi danh sách nguồn từ 2
 | Trang | Nhóm (tầng 1) | `min_delay_s` | `requires_js` | Tầng 2 | Ghi chú đã biết |
 | --- | --- | --- | --- | --- | --- |
 | `gearvn` | laptop, mouse, keyboard, headset | 5 | Không (HTML dựng sẵn ở máy chủ, T3.1) | Có | Danh sách không có JSON-LD sản phẩm (parse thẻ `a.product-card`), chi tiết có JSON-LD `Product` + `additionalProperty`; chip thông số trên thẻ không có nhãn; sản phẩm ngừng kinh doanh hiện "Liên hệ tư vấn" (không giá) |
-| `fptshop` | Xác định ở T4.1 | 5 | Xác định ở T4.1 (nếu cần JavaScript mà HTML tĩnh không có dữ liệu thì dừng, xem ADR-0008) | Xác định ở T4.1 | Có thể có nhiều loại giá (niêm yết, giá hiện tại, thành viên, flash sale) → map `price_type` cẩn thận |
+| `fptshop` | laptop, mouse, keyboard, headset | 5 | Không (trang chi tiết có JSON-LD `Product` trong HTML dựng sẵn, T4.1) | Không (chưa khảo sát) | Danh mục chỉ có ~25 sản phẩm trong HTML (phần còn lại qua nút "Xem thêm"/API) nên duyệt **qua sitemap + trang chi tiết**; phụ kiện nhận diện nhóm bằng tiền tố slug; `mpn` = `sku` = mã nội bộ; giá flash sale theo suất không lưu |
 | `anphat` | Xác định ở T4.3 (dự kiến cả 4 nhóm) | 5 (`Crawl-delay: 5`) | Xác định ở T4.3 | Xác định ở T4.3 | Chi tiết sau khảo sát |
 | `viettelstore` | (mở rộng) | 5 | Xác định khi khảo sát | Có | Tên điện thoại chứa dung lượng |
 | `nguyenkim` | (mở rộng) | 5 | Xác định khi khảo sát | Có | |

@@ -217,7 +217,7 @@ Xong khi:
 | --- | --- | --- | --- | --- |
 | T4.0 | ADR-0008, cập nhật docs, thêm `fptshop`/`anphat` vào `SiteKey` + migration 0002 | – | S | ✅ |
 | T4.0b | Sửa `detect_challenge`: bỏ thân `<script>` nội tuyến khỏi vùng khớp từ khóa captcha (FPT Shop báo nhầm), test hai chiều | T4.0 | S | ✅ |
-| T4.1 | Khảo sát FPT Shop + fixtures (`docs/sources/fptshop.md`) | T4.0, T2.1 | S | ⬜ |
+| T4.1 | Khảo sát FPT Shop + fixtures (`docs/sources/fptshop.md`) | T4.0, T2.1 | S | ✅ |
 | T4.2 | FptShopScraper (ánh xạ `price_type`) | T4.1, T2.2 | M | ⬜ |
 | T4.3 | Khảo sát An Phát + fixtures (`docs/sources/anphat.md`) | T4.0, T2.1 | S | ⬜ |
 | T4.4 | AnPhatScraper | T4.3, T2.2 | M | ⬜ |
@@ -226,7 +226,7 @@ Xong khi:
 
 **T4.0** — Xong khi: ADR-0008 và mục lục ADR; docs 01–08, 11 và `.claude/rules/scraping.md` không còn coi Hoàng Hà/Laptop88 là nguồn; `docs/sources/hoangha.md`, `laptop88.md` đánh dấu không dùng; migration `0002` thêm hai giá trị vào CHECK `site` của `offer` và `scrape_run` (test nâng cấp từ 0001 giữ dữ liệu cũ, downgrade về 6 giá trị).
 **T4.1** — Xong khi: `fptshop.md` điền đủ mục 1–7; URL danh mục (nhóm nào FPT Shop bán, ghi vào 02 §1); quyết định `requires_js` (code chưa hỗ trợ JavaScript: HTML tĩnh phải có dữ liệu — JSON-LD, JSON nhúng hoặc thẻ sản phẩm — nếu không dừng và hỏi người dùng); fixtures theo [06 §8](06-scraping-design.md#8-fixtures); người dùng đã duyệt kết luận điều khoản.
-**T4.2** — Xong khi: phân biệt giá niêm yết, giá hiện tại, giá thành viên, flash sale (giá bị che → không lưu); test cho từng loại hiển thị thật của trang; coverage module ≥ 90%.
+**T4.2** — Thiết kế theo khảo sát T4.1: danh mục FPT Shop không phân trang được bằng HTTP tĩnh nên `FptShopScraper.crawl_category` lấy URL từ sitemap và tải trang chi tiết (JSON-LD `Product`) theo lô; ghi đè `parse_listing` không dùng. Xong khi: phân biệt giá niêm yết, giá hiện tại, giá thành viên, flash sale (giá bị che → không lưu); test cho từng loại hiển thị thật của trang; coverage module ≥ 90%.
 **T4.3** — Xong khi: như T4.1 cho An Phát; ghi cách tìm trang điều khoản/chính sách (khảo sát sơ bộ: không có trang điều khoản sử dụng riêng) và `Crawl-delay: 5`.
 **T4.4** — Xong khi: `min_delay_s` khớp robots.txt (`Crawl-delay`) và khảo sát; không tạo URL robots.txt chặn; test 4 nhóm (hoặc các nhóm trang bán); coverage module ≥ 90%.
 **T4.5** — **Người dùng tự bật** `SCRAPER_OFFLINE_ONLY=false`. Xong khi: `make scrape SITE=<fptshop|anphat> CAT=<nhóm> PAGES=1` cho mọi nhóm đã khảo sát đều `SUCCEEDED` (hoặc `PARTIAL` chỉ vì `PAGES=1` khi còn trang sau); không `FAILED`/`BLOCKED`; tỷ lệ parse ≥ 90%; ghi kết quả vào `docs/sources/<site>.md` mục 7; nhắc người dùng đặt lại `SCRAPER_OFFLINE_ONLY=true`.

@@ -10,7 +10,7 @@ Dựa trên menu trang chủ và kết quả tìm kiếm ngày 2026-10-16. "Cầ
 | Trang | Laptop | Chuột | Bàn phím | Tai nghe | Điện thoại (mở rộng) | Tầng 2 (tìm trực tiếp) |
 | --- | --- | --- | --- | --- | --- | --- |
 | GearVN | **Lõi** | **Lõi** | **Lõi** | **Lõi** | Không bán | Có |
-| FPT Shop | **Lõi** (xác minh ở T4.1) | Cần xác minh | Cần xác minh | Cần xác minh | Mở rộng | Cần xác minh |
+| FPT Shop | **Lõi** | **Lõi** | **Lõi** | **Lõi** | Mở rộng | **Không** (chưa khảo sát tìm kiếm; danh sách đi qua sitemap, xem [sources/fptshop.md](sources/fptshop.md)) |
 | An Phát Computer | **Lõi** (xác minh ở T4.3) | Cần xác minh | Cần xác minh | Cần xác minh | Không bán (chưa xác minh) | Cần xác minh |
 | Viettel Store | Mở rộng | Mở rộng | Không thấy | Mở rộng | Mở rộng | Có |
 | Nguyễn Kim | Mở rộng | Không thấy | Không thấy | Không thấy | Mở rộng | Có |
@@ -25,7 +25,7 @@ Từ 2026-10-19 ([ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)
 | Trang | Bot chung (`*`) | Đường dẫn bị chặn liên quan | Crawl-delay | Ghi chú |
 | --- | --- | --- | --- | --- |
 | GearVN | Cho phép `/` | `/gio-hang`, `/thanh-toan`, `/design-system`, `/tai-khoan`, `/api/` | Không khai báo | Không chặn trang tìm kiếm |
-| FPT Shop | Khảo sát sơ bộ 2026-10-19: không chặn `ClaudeBot`/`ChatGPT-User` | Điền ở T4.1 | Điền ở T4.1 | Đọc lại bằng Fetcher/trình duyệt trong T4.1 |
+| FPT Shop | Cho phép `/` (đọc bản gốc 2026-10-19); không chặn `ClaudeBot`/`ChatGPT-User` | `/admin/`, `/cms/`, `/web/`, `/ajax/`, `/gio-hang/`, `/so-sanh-san-pham/`, `/dien-dan/`, `/tai-khoan/`, `/don-hang/`, `/dat-hang/`; hơn 40 mẫu tham số (`/*sort=`, `/*muc-gia=`, `/*hang-san-xuat=`, `/*utm_*=`…) và `/*t=` | Không khai báo | `Sitemap: /sitemap.xml`; danh mục phân trang bằng "Xem thêm" (API), nên thu thập qua sitemap |
 | An Phát Computer | Khảo sát sơ bộ 2026-10-19: không chặn `ClaudeBot`/`ChatGPT-User` | Điền ở T4.3 | 5 s (khai báo `Crawl-delay: 5`) | Đọc lại trong T4.3 |
 | Viettel Store | Cho phép | Chỉ thư mục kỹ thuật (`/DataFiles/`, `/bin/`, `/css/`, `/js/`, …) | Không khai báo | |
 | Nguyễn Kim | Cho phép `/` | `/checkout`, `/account`, `/cart/`, `/orders/`, `/login`, `/register`, `/otp`, `/compare`, `/search-order`, `/maintenance` | Không khai báo | `/maintenance` thêm ở lần đọc lại 2026-10-17 (T0.4) |
@@ -63,7 +63,7 @@ Nguồn: `https://<domain>/robots.txt` của từng trang. **robots.txt có th�
 | Trang | Nhóm | URL đã thấy |
 | --- | --- | --- |
 | GearVN | Laptop / Chuột / Bàn phím / Tai nghe | Đã xác minh ở T3.1 (2026-10-19): `https://gearvn.com/collections/laptop`, `/collections/chuot-may-tinh`, `/collections/ban-phim-may-tinh`, `/collections/tai-nghe-may-tinh` (danh mục tổng; bộ sưu tập theo dòng GPU là tập con nên không dùng). Chi tiết: [sources/gearvn.md](sources/gearvn.md) |
-| FPT Shop | Laptop / Chuột / Bàn phím / Tai nghe | Chưa xác định, khảo sát trong T4.1 |
+| FPT Shop | Laptop / Chuột / Bàn phím / Tai nghe | Không dùng URL danh mục: lấy URL sản phẩm từ `https://fptshop.com.vn/products/sitemap-may-tinh-xach-tay.xml` và `sitemap-phu-kien*.xml` (T4.1). Chi tiết: [sources/fptshop.md](sources/fptshop.md) |
 | An Phát Computer | Laptop / Chuột / Bàn phím / Tai nghe | Chưa xác định, khảo sát trong T4.3 |
 | Viettel Store | Chuột / Tai nghe | `https://viettelstore.vn/phu-kien/chuot-pkid010005001.html`, `https://viettelstore.vn/phu-kien/tai-nghe-pkid010005005.html` |
 | Nguyễn Kim | Laptop / Điện thoại | `https://www.nguyenkim.com/laptop.c`, `https://www.nguyenkim.com/dien-thoai.c` |

@@ -5,8 +5,8 @@
 
 ## Trạng thái
 - Sprint hiện tại: 4 (M3, M3b xong; M4 đang làm với nguồn mới FPT Shop + An Phát)
-- Đang làm: M4 trên nhánh `milestone/M4-fptshop-anphat` (đã đổi nguồn: FPT Shop + An Phát thay Hoàng Hà + Laptop88, 2026-10-19). Lượt này: T4.0 (ADR + docs), T4.1, T4.2, T4.3, T4.4, T4.5
-- Task kế tiếp đề xuất: T4.1 (T4.0 ✅; dừng chờ người dùng duyệt T0.4 FPT Shop trước khi lưu fixture). T2.8 làm cùng T7.4. T3.3 đã chạy thật: nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true`
+- Đang làm: M4 trên nhánh `milestone/M4-fptshop-anphat` (đã đổi nguồn: FPT Shop + An Phát thay Hoàng Hà + Laptop88, 2026-10-19). Lượt này: T4.0 ✅, T4.0b ✅, T4.1 ✅, T4.2 (kế tiếp), T4.3 (mục 1–3 đã điền, chờ người dùng duyệt T0.4 An Phát), T4.4, T4.5
+- Task kế tiếp đề xuất: T4.2 (FptShopScraper qua sitemap + trang chi tiết). T4.3 cần người dùng duyệt An Phát trước khi lưu fixture. T2.8 làm cùng T7.4. T3.3 đã chạy thật: nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true`
 - Cập nhật lần cuối: 2026-10-19 — M3b xong (T1.7, T1.8, T3.4, T2.7; qua `code-reviewer`, bỏ qua `qa-tester`). Chưa merge
 
 ## Milestone
