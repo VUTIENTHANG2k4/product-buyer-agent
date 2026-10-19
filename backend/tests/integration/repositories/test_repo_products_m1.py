@@ -331,7 +331,9 @@ def test_search_rating_uses_the_best_rating_over_active_offers_only(db_session: 
         pytest.param({"price_max": 10**30}, id="price_max"),
         pytest.param({"price_min": 10**30}, id="price_min"),
         pytest.param({"offset": 10**20}, id="offset"),
-        pytest.param({"spec_filters": [{"field": "ram_gb", "op": "gte", "value": 10**30}]}, id="spec-value"),
+        pytest.param(
+            {"spec_filters": [{"field": "ram_gb", "op": "gte", "value": 10**30}]}, id="spec-value"
+        ),
     ],
 )
 def test_search_with_integers_beyond_bigint_is_rejected_or_answered_not_crashed(
