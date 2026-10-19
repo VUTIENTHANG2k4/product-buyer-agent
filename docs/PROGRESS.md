@@ -6,14 +6,14 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: chạy `qa-tester` cho M1 rồi `/clear`. Sau đó T0.9 (S) trước khi service đưa thời gian vào `details` lỗi; T2.2/T2.3/T2.5 (M2) làm được ngay, T2.1 chờ T2.2. T3.1 (GearVN) sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — xong T1.5 (`backend/scripts/seed.py`, 74 sản phẩm hư cấu, nhánh `task/T1.5-seed`, chưa merge). Hết M1 (T1.1–T1.5)
+- Task kế tiếp đề xuất: T1.6 (S, làm trước T2.6) rồi T1.7, T1.8 (S, không chặn); T0.9 (S) trước khi service đưa thời gian vào `details` lỗi. M2: T2.2/T2.3/T2.5 làm được ngay, T2.1 chờ T2.2. T3.1 (GearVN) sau M1–M2
+- Cập nhật lần cuối: 2026-10-17 — T1.5 đã merge vào main và push (`3176bda`); QA M1 xong: 8 lỗi → T1.6–T1.8, 5 việc dồn vào T6.2/T2.6
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
 | --- | --- | --- |
 | M0 Nền tảng | ✅ | Đã qua `qa-tester` 2 lần; còn T0.9 (tùy chọn, không chặn M1) |
-| M1 Dữ liệu | ✅ | Chưa qua `qa-tester` |
+| M1 Dữ liệu | ✅ | Đã qua `qa-tester` (còn T1.6–T1.8, không chặn M2) |
 | M2 Hạ tầng thu thập | ⬜ | |
 | M3 GearVN | ⬜ | T0.4 đã duyệt: GearVN được dùng |
 | M4 Hoàng Hà + Laptop88 | ⬜ | |
@@ -31,7 +31,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 100% (1001 pass + 12 xfail đã biết của T0.9/T2.1, ngưỡng 80% trong `make test-be`) | 2026-10-17 |
+| Coverage backend | 100% (1298 pass + 38 xfail đã biết của T0.9/T2.1/T1.6–T1.8/T6.2, ngưỡng 80% trong `make test-be`, ~75 giây) | 2026-10-17 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
@@ -54,3 +54,4 @@
 - 2026-10-17 (T1.2): chạy `alembic` từ `backend/` (`make migrate`). Test DB cần `make db-up`; conftest lấy `TEST_DATABASE_URL` từ env rồi `.env`, đổi host `localhost` → `127.0.0.1` (trên Windows `localhost` thử IPv6 trước và treo 3 s mỗi kết nối mới; nên đặt 127.0.0.1 trong `.env`, `.env.example` đã đổi) và chỉ chạy khi tên DB kết thúc `_test`. Dùng `db_session` (rollback bằng savepoint; test lỗi ràng buộc bọc `session.begin_nested()`) và `tests/factories.py`. Enum là VARCHAR + CHECK: thêm giá trị enum phải viết migration tay (test so CHECK với enum sẽ đỏ nếu quên). JSONB không theo dõi sửa tại chỗ: gán lại cả dict. `offer.price` NOT NULL, `product.brand` NOT NULL (chi tiết docs/04 §3).
 - 2026-10-17 (T1.4): repository đồng bộ, nhận `Session`, chỉ `flush` (không commit), thời gian truyền qua `now`; chi tiết ở docs/04 §3. Test repository ở `backend/tests/integration/repositories/` (tên file `test_repo_*.py` để không trùng basename). Dùng `session.exec`; truy vấn nhiều cột dùng `sqlalchemy.select` + `session.execute`. Cột `xmax` trong `upsert` là thủ thuật PostgreSQL để biết dòng mới (đã kiểm trên PG 17).
 - 2026-10-17 (T1.5): script trong `backend/scripts/` chạy bằng `python -m scripts.<tên>` từ `backend/` (chạy `python scripts/x.py` không import được `app`); Makefile `scrape`/`eval` còn gọi kiểu cũ, T2.6/T6.6 sửa. `make seed FIXTURE=dev|eval|e2e [RESET=1]`: `--reset` xóa sạch DB nên bắt buộc `--yes`. Dữ liệu ở `backend/tests/fixtures/seed/*.json` (tên "Mock", URL `.example`), sinh một lần rồi sửa tay; mỗi profile mô tả ở docs/09 §3. `make check` giờ chạy mypy cả `scripts/`. Test `test_seed_data.py` giữ một transaction suốt module: đừng gộp test seed khác vào cùng module.
+- 2026-10-17 (QA M1): 26 `xfail(strict=True)` mới trong `*_m1.py` (8 lỗi → T1.6–T1.8; 3 ca cần quyết định thiết kế dồn vào T6.2); XPASS báo đỏ, khi đó gỡ dấu xfail. Rủi ro chưa xử lý: bảng hạng GPU thiếu RTX 3070/3070 Ti/3080; seed rất "sạch" (T6.6 nên thêm vài sản phẩm thiếu specs/hết hàng cố ý).
