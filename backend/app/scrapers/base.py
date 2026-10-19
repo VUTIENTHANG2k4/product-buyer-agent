@@ -15,6 +15,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from app.domain.dto import Challenge, ListingItem, ListingPage, ProductDetail
 from app.domain.enums import Category, SiteKey
+from app.normalize.url import clean_url
 from app.scrapers.challenge import ChallengeDetected, detect_challenge, soft_block_challenge
 from app.scrapers.http.types import FetchResponse, PageFetcher
 
@@ -25,6 +26,14 @@ def _host(url: str) -> str:
     if parts.scheme not in ("http", "https") or not parts.netloc:
         raise ValueError(f"not an absolute http(s) URL: {url!r}")
     return parts.netloc.lower()
+
+
+def _visit_key(url: str) -> str:
+    """Khóa so sánh URL trang danh sách đã tải: `clean_url` để thứ tự tham số không làm trượt."""
+    try:
+        return clean_url(url)
+    except ValueError:
+        return url
 
 
 @dataclass(frozen=True)
@@ -118,7 +127,7 @@ class BaseScraper(ABC):
             raise ValueError("max_pages and start_page must be >= 1")
         base_host = _host(self.config.base_url)
         url = self.listing_url(category, start_page)
-        visited = {url}
+        visited = {_visit_key(url)}
         for page_no in range(start_page, max_pages + 1):
             resp = await self._fetcher.get(url)
             self._raise_if_challenge(resp)
@@ -133,11 +142,11 @@ class BaseScraper(ABC):
                 url = next_url
             else:
                 url = self.listing_url(category, page_no + 1)
-            if url in visited:
+            if _visit_key(url) in visited:
                 # Trang sau trỏ về trang đã tải: báo vòng lặp, không để lượt ghi là "chạm giới hạn".
                 yield page.model_copy(update={"pagination_loop": True})
                 return
-            visited.add(url)
+            visited.add(_visit_key(url))
             yield page
 
     async def fetch_detail(self, url: str) -> ProductDetail:

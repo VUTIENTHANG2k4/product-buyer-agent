@@ -1,5 +1,6 @@
 """Làm sạch URL sản phẩm để dùng làm khóa tự nhiên của `Offer` (docs/04 §7)."""
 
+import re
 from urllib.parse import quote, unquote_plus, urlsplit, urlunsplit
 
 MAX_URL_LENGTH = 2000
@@ -8,6 +9,7 @@ _TRACKING_PREFIXES = ("utm_",)
 _DEFAULT_PORTS = {"http": 80, "https": 443}
 # Ký tự được giữ nguyên trong chuỗi truy vấn; `%` giữ nguyên các `%XX` có sẵn.
 _QUERY_SAFE = "%!$'()*+,;=:@/?[]-._~"
+_PERCENT_ESCAPE = re.compile(r"%[0-9a-fA-F]{2}")
 
 
 def host_key(url: str) -> str:
@@ -48,7 +50,9 @@ def _clean_query(query: str) -> str:
             continue
         if "=" not in segment:
             segment += "="
-        kept.append((name, quote(segment, safe=_QUERY_SAFE)))
+        encoded = quote(segment, safe=_QUERY_SAFE)
+        # `%c3%a9` và `%C3%A9` là một byte: viết hoa hex để không thành hai khóa.
+        kept.append((name, _PERCENT_ESCAPE.sub(lambda match: match.group().upper(), encoded)))
     kept.sort(key=lambda pair: pair[0])
     return "&".join(segment for _, segment in kept)
 

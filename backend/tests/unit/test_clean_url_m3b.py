@@ -13,7 +13,7 @@ BASE = "https://shop.example/p"
         pytest.param(f"{BASE}?q=a%20b", f"{BASE}?q=a%20b", id="percent-20-kept"),
         pytest.param(f"{BASE}?q=a+b", f"{BASE}?q=a+b", id="plus-kept"),
         pytest.param(f"{BASE}?q=a%2Bb", f"{BASE}?q=a%2Bb", id="encoded-plus-kept"),
-        pytest.param(f"{BASE}?q=%c3%a9", f"{BASE}?q=%c3%a9", id="existing-hex-case-kept"),
+        pytest.param(f"{BASE}?q=%c3%a9", f"{BASE}?q=%C3%A9", id="hex-upper-cased"),
         pytest.param(f"{BASE}?b=2&a=1", f"{BASE}?a=1&b=2", id="sorted-by-name"),
         pytest.param(f"{BASE}?a=1&b=2", f"{BASE}?a=1&b=2", id="already-sorted"),
         pytest.param(f"{BASE}?z=1&a=2&a=1", f"{BASE}?a=2&a=1&z=1", id="repeated-name-keeps-order"),
@@ -37,6 +37,12 @@ def test_query_keeps_its_original_encoding_and_is_ordered_by_name(raw: str, expe
 
 def test_both_orders_of_the_same_parameters_are_one_key() -> None:
     assert clean_url(f"{BASE}?a=1&b=2") == clean_url(f"{BASE}?b=2&a=1")
+
+
+def test_hex_digits_in_either_case_are_one_key() -> None:
+    assert (
+        clean_url(f"{BASE}?q=%c3%a9") == clean_url(f"{BASE}?q=%C3%A9") == clean_url(f"{BASE}?q=é")
+    )
 
 
 def test_space_and_plus_encodings_stay_distinct_keys() -> None:

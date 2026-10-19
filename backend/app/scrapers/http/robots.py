@@ -243,6 +243,7 @@ class RobotsCache:
                 )
             return parse_robots(text, self._user_agent)
         if status in (401, 403):
+            # Fetcher đã đổi 403 thành `RobotsBlocked` trước khi tới đây; còn 401 và bộ tải khác.
             return DISALLOW_ALL  # thận trọng, giống urllib.robotparser
         if 400 <= status < 500 and status != 429:
             return ALLOW_ALL  # 404/410...: không có robots.txt, được phép theo chuẩn

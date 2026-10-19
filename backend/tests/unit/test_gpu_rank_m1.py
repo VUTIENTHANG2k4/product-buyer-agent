@@ -189,3 +189,30 @@ def test_new_ranked_gpus_are_recognised_with_spacing_and_case_noise() -> None:
     assert gpu_rank("GeForce RTX3070 8GB") == 38
     assert gpu_rank("rtx 3070ti") == 42
     assert gpu_rank("NVIDIA GeForce RTX 3080 Laptop GPU 16GB") == 52
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        pytest.param("Intel® Arc™ Graphics", "Integrated", id="arc-trademark"),
+        pytest.param("Intel® Iris™ Xe Graphics", "Integrated", id="iris-trademark"),
+        pytest.param("UHD™ Graphics", "Integrated", id="uhd-trademark"),
+        pytest.param("AMD Radeon™ Graphics", "Integrated", id="radeon-trademark"),
+        pytest.param("RTX 4060℠", "RTX 4060", id="service-mark-glued"),
+        pytest.param("GeForce RTX™ 4060®", "RTX 4060", id="rtx-trademark-registered"),
+    ],
+)
+@pytest.mark.parametrize("form", ["NFC", "NFKC", "NFKD"])
+def test_trademark_symbols_never_hide_a_gpu_name_in_any_unicode_form(
+    raw: str, expected: str, form: str
+) -> None:
+    assert normalize_gpu_name(unicodedata.normalize(form, raw)) == expected
+
+
+def test_overlong_input_is_rejected_quickly_instead_of_normalized() -> None:
+    started = time.perf_counter()
+
+    assert normalize_gpu_name("ﬃ" * 1_000_000) is None
+    assert normalize_gpu_name("RTX 4060 " + "x" * 600) is None
+    assert normalize_gpu_name("RTX 4060 " + "x" * 400) == "RTX 4060"
+    assert time.perf_counter() - started < 1.0

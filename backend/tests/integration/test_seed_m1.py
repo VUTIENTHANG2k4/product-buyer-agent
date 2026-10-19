@@ -121,13 +121,18 @@ def test_extras_file_saved_with_utf8_bom_is_loaded(tmp_path: Path) -> None:
     assert extras.shopping_list_name == EXTRAS["shopping_list_name"]
 
 
-@pytest.mark.parametrize("name", ["laptops.json", "extras.json"])
-def test_wrong_encoding_error_names_the_file(tmp_path: Path, name: str) -> None:
+@pytest.mark.parametrize(
+    ("name", "load"),
+    [("laptops.json", load_catalog), ("extras.json", load_extras)],
+)
+def test_wrong_encoding_error_names_the_file(
+    tmp_path: Path, name: str, load: Callable[[Path], object]
+) -> None:
     write_fixtures(tmp_path, extras=None)
     (tmp_path / name).write_bytes('{"category": "laptop"}'.encode("utf-16"))
 
     with pytest.raises(SeedDataError, match=name):
-        load_catalog(tmp_path) if name == "laptops.json" else load_extras(tmp_path)
+        load(tmp_path)
 
 
 def test_main_returns_exit_code_1_for_malformed_extras_file(

@@ -76,7 +76,7 @@ async def _get_bounded(client: httpx.AsyncClient, url: str) -> httpx.Response:
     """
     async with client.stream("GET", url) as response:
         declared = response.headers.get("content-length", "")
-        if declared.isdigit() and int(declared) > MAX_RESPONSE_BYTES:
+        if declared.isascii() and declared.isdigit() and int(declared) > MAX_RESPONSE_BYTES:
             raise ResponseTooLarge(f"Content-Length {declared} exceeds the limit", url=url)
         chunks: list[bytes] = []
         size = 0

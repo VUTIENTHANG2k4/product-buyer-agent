@@ -59,6 +59,11 @@ _INTEGRATED = re.compile(
 )
 
 
+# `™`/`℠` đã bị NFKC ở tầng trên thành `TM`/`SM` viết hoa dính vào cuối từ ("ArcTM", "4060SM").
+_GLUED_MARK = re.compile(r"(?<=[A-Za-z0-9])(?:TM|SM)(?![A-Za-z])")
+
+MAX_RAW_LENGTH: Final = 500  # tên GPU thật ngắn hơn nhiều; dài hơn là rác, không chuẩn hóa
+
 _TRADEMARK_TM = re.compile(
     r"(?<![a-z])(rtx|gtx|rx|geforce|radeon|nvidia|amd|intel)tm(?![a-z])|(?<=[0-9])tm(?![a-z])",
     re.IGNORECASE,
@@ -72,11 +77,16 @@ def normalize_gpu_name(raw: str) -> str | None:
     `"RTX 4050 (up to RTX 4060)"`). Tên nhận ra nhưng chưa có hạng (GTX, RX, Super…) vẫn được chuẩn
     hóa; `gpu_rank` mới là nơi quyết định có hạng hay không.
     """
-    # NFKC đưa chữ số toàn chiều rộng về ASCII nhưng đổi `™` thành `TM` dính liền vào từ đứng trước
-    # ("RTX™" → "RTXTM"), nên bỏ `TM` đó trước khi tìm tên.
-    text = unicodedata.normalize("NFKC", raw)
+    if len(raw) > MAX_RAW_LENGTH:
+        return None  # chuỗi thù địch: NFKC có thể nở rộng và chậm gần bậc hai
+    # NFKC đưa chữ số toàn chiều rộng về ASCII nhưng đổi `™`/`℠` thành `TM`/`SM` dính liền vào từ
+    # đứng trước. Nên bỏ các ký hiệu đó trên chuỗi gốc trước, rồi mới NFKC; `_TRADEMARK_TM` chỉ
+    # còn để xử lý đầu vào đã bị NFKC ở tầng trên ("RTXTM 4060").
+    text = re.sub(r"[™®℠]", " ", raw)
+    text = unicodedata.normalize("NFKC", text)
     text = _TRADEMARK_TM.sub(r"\1 ", text)
-    text = re.sub(r"geforce|[™®]", " ", text, flags=re.IGNORECASE)
+    text = _GLUED_MARK.sub(" ", text)
+    text = re.sub(r"geforce", " ", text, flags=re.IGNORECASE)
     names = {_canonical(match) for match in _DISCRETE.finditer(text)}
     if len(names) == 1:
         return names.pop()
