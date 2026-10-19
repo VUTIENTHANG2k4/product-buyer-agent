@@ -31,3 +31,9 @@ class PageFetcher(Protocol):
     """
 
     async def get(self, url: str) -> FetchResponse: ...
+
+
+class FormFetcher(PageFetcher, Protocol):
+    """`PageFetcher` có thêm gửi form: chỉ để nhập đáp án captcha của mock-shop (HITL)."""
+
+    async def post_form(self, url: str, data: Mapping[str, str]) -> FetchResponse: ...

@@ -24,6 +24,7 @@ import httpx
 from app.config import Settings
 from app.scrapers.http.errors import (
     FetchFailed,
+    FormNotAllowed,
     HttpStatusError,
     OfflineModeError,
     RedirectError,
@@ -151,6 +152,31 @@ class Fetcher:
                 continue
             return await self._finish(url, current, response, started)
         raise RedirectError(f"more than {MAX_REDIRECTS} redirects", url=url)
+
+    async def post_form(self, url: str, data: Mapping[str, str]) -> FetchResponse:
+        """Gửi form tới mock-shop (đáp án captcha); cookie phiên được giữ cho các `get` sau.
+
+        Chỉ mock-shop nhận form: trang thật ném `FormNotAllowed`, không có request nào được gửi.
+        Không retry và không theo chuyển hướng (một lần gửi = một đáp án); trả mọi mã trạng thái.
+        """
+        self._require_http(url)
+        if not self._is_mock(url):
+            raise FormNotAllowed("only the mock-shop accepts challenge answers", url=url)
+        started = self._clock()
+        crawl_delay = await self._check_allowed(url)
+        await self._pace(url, crawl_delay)
+        try:
+            response = await self._mock.post(url, data=dict(data))
+        except httpx.TransportError as exc:
+            raise FetchFailed(f"{type(exc).__name__}: {exc}", url=url) from exc
+        return FetchResponse(
+            url=url,
+            final_url=url,
+            status=response.status_code,
+            text=response.text,
+            headers=dict(response.headers),
+            elapsed_ms=max(0, int((self._clock() - started) * 1000)),
+        )
 
     # ---- kiểm tra trước khi gửi ----
     @staticmethod

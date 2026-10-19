@@ -82,7 +82,7 @@ test-live: ## Test với trang thật (thủ công, cần người dùng cho ph�
 scrape: ## Một lượt thu thập: make scrape SITE=mockshop CAT=laptop [PAGES=1]
 	$(if $(and $(SITE),$(CAT)),,$(error Cú pháp: make scrape SITE=mockshop CAT=laptop [PAGES=1]))
 	$(call require,backend/scripts/scrape.py,T2.6)
-	$(BE) uv run python scripts/scrape.py --site $(SITE) --category $(CAT) $(if $(PAGES),--pages $(PAGES))
+	$(BE) uv run python -m scripts.scrape --site $(SITE) --category $(CAT) $(if $(PAGES),--pages $(PAGES))
 
 FIXTURE ?= dev
 seed: ## Nạp dữ liệu hư cấu: make seed FIXTURE=dev|eval|e2e [RESET=1: xóa sạch DB trước]

@@ -217,6 +217,10 @@ class MockShopScraper(BaseScraper):
         )
 
     # ---- challenge ----
+    def challenge_submission(self, challenge: Challenge, answer: str) -> tuple[str, dict[str, str]]:
+        """Form `POST /captcha`: `token` của trang thử thách và `answer` do người nhập."""
+        return f"{_BASE_URL}/captcha", {"token": challenge.token or "", "answer": answer}
+
     def detect_challenge(self, resp: FetchResponse) -> Challenge | None:
         """Thêm đề bài (mã hiển thị trên trang) và `token` cho luồng nhập đáp án của mock-shop."""
         challenge = super().detect_challenge(resp)

@@ -33,5 +33,9 @@ class HttpStatusError(FetchError):
         self.status = status
 
 
+class FormNotAllowed(FetchError):
+    """Gửi form (đáp án captcha) chỉ được phép tới mock-shop; trang thật không bao giờ nhận."""
+
+
 class FetchFailed(FetchError):
     """Hết lượt retry vì lỗi mạng, timeout hoặc 5xx."""

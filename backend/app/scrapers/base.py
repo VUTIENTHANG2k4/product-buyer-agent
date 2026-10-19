@@ -94,6 +94,10 @@ class BaseScraper(ABC):
         """Trang có thể ghi đè khi khảo sát thấy dấu hiệu riêng hoặc báo nhầm."""
         return detect_challenge(resp, self.config.key)
 
+    def challenge_submission(self, challenge: Challenge, answer: str) -> tuple[str, dict[str, str]]:
+        """(URL, dữ liệu form) để gửi đáp án; chỉ trang có luồng nhập đáp án (mock-shop) cài đặt."""
+        raise NotImplementedError(f"{self.config.key} has no challenge answer form")
+
     # ---- điều phối ----
     async def crawl_category(
         self,

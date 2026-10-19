@@ -101,7 +101,7 @@ Xử lý trong pipeline:
 
 | Nguồn | Hành động |
 | --- | --- |
-| Mock-shop | `ScrapeRun.status = NEEDS_HUMAN`, lưu `challenge` (đề bài + token). Pipeline tạm dừng; API `POST /api/admin/scrape-runs/{id}/challenge` gửi đáp án tới mock-shop, nhận cookie, tiếp tục từ trang đang dừng. |
+| Mock-shop (chỉ `kind=captcha`) | `ScrapeRun.status = NEEDS_HUMAN`, lưu `challenge` (đề bài + token). Pipeline tạm dừng; API `POST /api/admin/scrape-runs/{id}/challenge` gửi đáp án tới mock-shop, nhận cookie, tiếp tục từ trang đang dừng. |
 | Trang thật | `ScrapeRun.status = BLOCKED`, ghi `challenge`. Pipeline từ chối chạy trang đó khi còn `ScrapeRun` `BLOCKED` của trang trong 24 giờ gần nhất (thời gian tạm nghỉ). **Không tự giải, không đổi IP, không đổi User-Agent.** |
 
 ## 5. Mock-shop (`app/mock_shop/`)
@@ -170,6 +170,19 @@ run(site, category, trigger, max_pages) -> ScrapeRun
 ```
 
 Cảnh báo chất lượng: tỷ lệ parse thành công < 80% hoặc số sản phẩm giảm > 50% so với lượt trước → log `WARNING` và hiển thị trên trang quản trị (dấu hiệu trang đổi giao diện).
+
+Chi tiết đã cài đặt (T2.6; `app/scrapers/pipeline.py`, `app/services/scrape_service.py`, `scripts/scrape.py`):
+
+- **Giao diện:** `ScrapePipeline(session_factory, fetcher, ...)` có `run(site, category, trigger, max_pages=None) -> PipelineResult` và `resume(run_id, answer, max_pages=None)`. `PipelineResult` (run_id, status, bộ đếm, `changed_offer_ids`, `challenge`, `error_message`) là kết quả trả về thay cho đối tượng `ScrapeRun`. Chỉ ném `SiteNotAvailable`, `SiteCooldown`, `ScrapeAlreadyRunning` (trước khi tạo lượt) và, ở `resume`, `RunNotFound`/`ChallengeNotPending`/`ChallengeFailed`; mọi kết cục khác được ghi vào `ScrapeRun` và trả về. `ScrapeService.run/resume` bọc thêm kiểm tra `OFFLINE_MODE` (trang thật khi `SCRAPER_OFFLINE_ONLY=true`) và chuyển `changed_offer_ids` cho hook `on_price_changes` sau **mỗi** lần gọi (kể cả `resume`, nên offer đổi giá trước khi lượt bị gián đoạn không mất); `alert_service` nối vào hook ở M9.
+- **Giao dịch:** mỗi trang danh sách lưu trong một transaction, từng mục trong một savepoint; lỗi lưu một mục chỉ tăng `items_failed`. Mọi thao tác CSDL chạy qua `asyncio.to_thread`. Bộ đếm trên `ScrapeRun` được cập nhật sau mỗi trang.
+- **Bộ đếm:** `items_parsed` = mọi thẻ sản phẩm đã thấy (kể cả thẻ parser bỏ qua, `ListingPage.skipped`); `items_failed` = thẻ không đọc được + mục không lưu được (giá không đọc được hoặc ngoài [10.000; 500.000.000] kể cả giá 0, URL không hợp lệ, lỗi CSDL); `offers_upserted` = `items_parsed − items_failed`; `price_changes` = số offer đã có lịch sử mà giá khác dòng gần nhất (offer mới không tính).
+- **Trạng thái cuối:** `SUCCEEDED`; `PARTIAL` khi `items_failed / items_parsed > 20%`, khi chạm `max_pages` mà còn trang sau (offer không còn thấy **không** bị tắt), hoặc khi lỗi tải ở trang thứ 2 trở đi (`error_message` ghi lỗi); `FAILED` khi lỗi tải ở trang đầu hoặc lỗi không lường trước (`error_message` chỉ ghi tên lớp lỗi, không ghi nội dung); `BLOCKED`/`NEEDS_HUMAN` theo §4. Cảnh báo chất lượng (tỷ lệ lỗi > 20%, số sản phẩm giảm > 50% so với lượt `SUCCEEDED` trước) ghi vào `error_message` và log `WARNING`. Chỉ lượt `SUCCEEDED` mới gọi `deactivate_unseen`.
+- **Chặn và thời gian nghỉ:** `BLOCKED` cho mọi challenge ở trang thật; mock-shop chỉ `NEEDS_HUMAN` với `kind=captcha` (403/429/`soft_block` của mock-shop vẫn là `BLOCKED`). Trang thật vừa `BLOCKED` thì mọi nhóm của trang đó bị từ chối (`SITE_COOLDOWN`, `details.retry_after`) trong 24 giờ kể từ lúc lượt bị chặn bắt đầu; mock-shop không có thời gian nghỉ.
+- **Một lượt mỗi (site, category):** `pg_advisory_xact_lock` quanh việc kiểm tra + tạo lượt; còn lượt `PENDING`/`RUNNING` chưa quá 2 giờ hoặc `NEEDS_HUMAN` chưa quá 1 giờ thì `SCRAPE_ALREADY_RUNNING` (quá hạn coi như tiến trình đã chết).
+- **HITL:** `resume` gửi đáp án qua `Fetcher.post_form` (chỉ mock-shop; trang thật ném `FormNotAllowed`), đáp án sai → `CHALLENGE_FAILED` và lượt vẫn `NEEDS_HUMAN`, đúng → tiếp tục cùng `run_id` từ trang `pages_fetched + 1`. Challenge xảy ra ở trang chi tiết thì trang danh sách đó chưa được lưu và sẽ tải lại khi tiếp tục. Cookie `mock_pass` nằm trong `Fetcher`, nên API dùng một `Fetcher` sống lâu; chạy `resume` ở tiến trình khác vẫn được vì cookie lấy lại từ chính lần gửi đáp án.
+- **Trang chi tiết:** chỉ tải cho mục có `raw_specs` rỗng, tối đa 20 trang mỗi lượt; lỗi tải chi tiết không làm hỏng mục. `raw_specs`, `rating`, `rating_count`, `site_sku` được gộp với giá trị đã có (giá trị mới thắng) vì `OfferRepository.upsert` ghi đè cả `None`/`{}`.
+- **Tạm thời tới M5:** chưa trích thông số theo luật/LLM và chưa có matcher; `resolve_product_interim` dùng lại sản phẩm của offer đã có (theo `url`), nếu không thì tạo `Product` mới (`brand` từ `detect_brand`, `model_code=None`, `specs={}`, `specs_confidence=0`). T5.2 thay hàm này (tham số `resolver` của pipeline).
+- **Lệnh:** `make scrape SITE=mockshop CAT=laptop [PAGES=2]` (cần `make db-up`, `make migrate` và `make mock-shop`); gặp captcha, lệnh hỏi đáp án ngay trên terminal (tối đa 3 lần), không có terminal thì in `uv run python -m scripts.scrape --site … --category … --resume RUN_ID --answer MÃ`. Mã thoát: 0 = `SUCCEEDED`/`PARTIAL`, 1 = lỗi/`BLOCKED`/`FAILED`, 3 = đang chờ đáp án. Lượt `mockshop` tắt các offer `mockshop` cùng nhóm không còn trong mock-shop (kể cả dữ liệu `make seed`).
 
 ## 8. Fixtures
 
