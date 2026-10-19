@@ -1,5 +1,6 @@
 """QA M1: fixture hỏng, chạy lại và tập con e2e của seed (scripts/seed.py, docs/09 §3)."""
 
+import codecs
 import json
 from collections.abc import Callable
 from copy import deepcopy
@@ -71,14 +72,6 @@ def test_broken_category_file_is_reported_as_seed_data_error(
     assert outcome in allowed, f"{label}: {outcome}"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1: load_catalog đọc file bằng read_text(encoding='utf-8') nên file lưu sai mã hóa "
-        "(ví dụ Windows-1258/UTF-16 do Notepad cũ) ném UnicodeDecodeError thay vì SeedDataError "
-        "-> `make seed` in traceback thay vì thông báo gọn + exit code 1."
-    ),
-)
 @pytest.mark.parametrize(
     "payload",
     [
@@ -100,16 +93,6 @@ def test_category_file_with_wrong_encoding_is_reported_as_seed_data_error(
     assert _outcome(lambda: load_catalog(tmp_path)) == "seed-error"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1: load_extras đọc bằng json.loads và read_text(utf-8) nên extras.json hỏng (JSON "
-        "sai cú pháp, UTF-8 sai, có BOM do Notepad trên Windows) ném json.JSONDecodeError/"
-        "UnicodeDecodeError thay vì SeedDataError -> `make seed` in traceback thay vì thông "
-        "báo gọn + exit code 1. Dùng model_validate_json và bắt UnicodeDecodeError "
-        "(load_catalog đã xử lý đúng JSON sai cú pháp)."
-    ),
-)
 @pytest.mark.parametrize(
     "payload",
     [
@@ -128,12 +111,25 @@ def test_broken_extras_file_is_reported_as_seed_data_error_or_loaded(
     assert _outcome(lambda: load_extras(tmp_path)) in ("seed-error", "ok")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1: cùng lỗi với load_extras, nhìn từ `make seed`: main() không bắt JSONDecodeError."
-    ),
-)
+def test_extras_file_saved_with_utf8_bom_is_loaded(tmp_path: Path) -> None:
+    write_fixtures(tmp_path, extras=None)
+    (tmp_path / "extras.json").write_bytes(codecs.BOM_UTF8 + json.dumps(EXTRAS).encode())
+
+    extras = load_extras(tmp_path)
+
+    assert extras is not None
+    assert extras.shopping_list_name == EXTRAS["shopping_list_name"]
+
+
+@pytest.mark.parametrize("name", ["laptops.json", "extras.json"])
+def test_wrong_encoding_error_names_the_file(tmp_path: Path, name: str) -> None:
+    write_fixtures(tmp_path, extras=None)
+    (tmp_path / name).write_bytes('{"category": "laptop"}'.encode("utf-16"))
+
+    with pytest.raises(SeedDataError, match=name):
+        load_catalog(tmp_path) if name == "laptops.json" else load_extras(tmp_path)
+
+
 def test_main_returns_exit_code_1_for_malformed_extras_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, db_engine: Engine
 ) -> None:

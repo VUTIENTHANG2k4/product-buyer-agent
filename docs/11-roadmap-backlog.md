@@ -155,7 +155,7 @@ Xong khi:
 | T1.4 | Repositories | T1.2 | M | ✅ |
 | T1.5 | Seed script + dữ liệu seed hư cấu | T1.4, T1.3 | M | ✅ |
 | T1.6 | Chặn giá trị PostgreSQL không lưu được ở `OfferUpsert`/`ProductQuery` (phát sinh từ QA M1) | T1.4 | S | ✅ |
-| T1.7 | Seed: file JSON hỏng/sai mã hóa báo `SeedDataError` gọn (phát sinh từ QA M1) | T1.5 | S | ⬜ |
+| T1.7 | Seed: file JSON hỏng/sai mã hóa báo `SeedDataError` gọn (phát sinh từ QA M1) | T1.5 | S | ✅ |
 | T1.8 | `normalize_gpu_name`: chữ số ASCII, hậu tố `XTX`, dạng Unicode (phát sinh từ QA M1) | T1.3 | S | ⬜ |
 
 **T1.1** — [04 §4, §6](04-data-model.md#4-enum). Xong khi: mọi enum và DTO có trong `app/domain/`; test validate (`QueryIntent.limit` 1..20, `SpecFilter.op` hợp lệ, URL chuẩn).

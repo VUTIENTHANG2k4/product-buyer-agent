@@ -6,6 +6,9 @@ Chạy từ `backend/`: `uv run python -m scripts.seed --fixture dev|eval|e2e [-
 - `<nhóm>.json`: `{"category": "laptop", "products": [...]}`, mỗi sản phẩm kèm các offer.
 - `extras.json` (chỉ cho `dev`/`eval`): danh sách mua và cảnh báo giá mẫu.
 
+File phải là UTF-8 (BOM của Notepad được chấp nhận); file hỏng hoặc sai mã hóa báo `SeedDataError`
+nêu tên file và `main` trả mã 1.
+
 Profile: `dev` và `eval` nạp toàn bộ (kèm danh sách mua, cảnh báo, lượt thu thập mẫu); `e2e` chỉ nạp
 sản phẩm có `"e2e": true` và không có dữ liệu phụ (luồng E2E tự tạo).
 
@@ -17,7 +20,6 @@ nhiên là (nhóm, hãng, mã mẫu) và `offer.url`); offer đã có được g
 
 import argparse
 import io
-import json
 import logging
 import sys
 from collections.abc import Sequence
@@ -234,6 +236,16 @@ def normalize_specs(category: Category, raw: dict[str, Any]) -> dict[str, Any]:
     return dumped
 
 
+def _read_seed_text(path: Path) -> str:
+    """Đọc file seed bằng UTF-8 (chấp nhận BOM do Notepad lưu); lỗi đọc thành `SeedDataError`."""
+    try:
+        return path.read_text(encoding="utf-8-sig")
+    except UnicodeDecodeError as error:
+        raise SeedDataError(f"{path.name}: không phải UTF-8 hợp lệ ({error.reason})") from error
+    except OSError as error:
+        raise SeedDataError(f"{path.name}: không đọc được file ({error.strerror})") from error
+
+
 def load_catalog(fixtures_dir: Path = FIXTURE_DIR) -> list[CatalogProduct]:
     """Đọc mọi `<nhóm>.json` trong `fixtures_dir`; kiểm khung và tính duy nhất của khóa, URL."""
     paths = sorted(path for path in fixtures_dir.glob("*.json") if path.name != EXTRAS_FILE)
@@ -244,7 +256,7 @@ def load_catalog(fixtures_dir: Path = FIXTURE_DIR) -> list[CatalogProduct]:
     urls: set[str] = set()
     for path in paths:
         try:
-            seed_file = SeedFile.model_validate_json(path.read_text(encoding="utf-8"))
+            seed_file = SeedFile.model_validate_json(_read_seed_text(path))
         except ValidationError as error:
             raise SeedDataError(f"{path.name}: {error}") from error
         for product in seed_file.products:
@@ -270,7 +282,7 @@ def load_extras(fixtures_dir: Path = FIXTURE_DIR) -> SeedExtras | None:
     if not path.exists():
         return None
     try:
-        return SeedExtras.model_validate(json.loads(path.read_text(encoding="utf-8")))
+        return SeedExtras.model_validate_json(_read_seed_text(path))
     except ValidationError as error:
         raise SeedDataError(f"{EXTRAS_FILE}: {error}") from error
 
