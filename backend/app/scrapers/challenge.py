@@ -4,7 +4,6 @@ Chỉ phát hiện và báo; không bao giờ giải captcha. Pipeline quyết �
 `BLOCKED` (trang thật).
 """
 
-import re
 import unicodedata
 from collections.abc import Mapping
 
@@ -30,13 +29,37 @@ def _fold(text: str) -> str:
 # Thân `<script>` nội tuyến (biến môi trường Next.js, JSON-LD, mã theo dõi...) hay chứa chữ như
 # `NEXT_PUBLIC_CAPTCHA_KEY` trên trang bình thường. Chỉ bỏ phần thân; thẻ mở (kể cả `src`) vẫn
 # được giữ nên widget reCAPTCHA/hCaptcha thật (div, iframe, `<script src=...>`) vẫn bị phát hiện.
-# Thẻ `<script>` không đóng thì không khớp, giữ nguyên để không bỏ sót.
-_SCRIPT_BODY = re.compile(r"(<script\b[^>]*>).*?(</script\s*>)", re.IGNORECASE | re.DOTALL)
+# Thẻ `<script>` không đóng thì giữ nguyên phần còn lại để không bỏ sót. Duyệt bằng `str.find`
+# (tuyến tính): regex lười gặp hàng nghìn `<script>` không đóng sẽ chạy bậc hai và treo event loop.
+_SCRIPT_OPEN = "<script"
+_SCRIPT_CLOSE = "</script"
+
+
+def _strip_script_bodies(folded: str) -> str:
+    parts: list[str] = []
+    pos = 0
+    while True:
+        start = folded.find(_SCRIPT_OPEN, pos)
+        after = start + len(_SCRIPT_OPEN)
+        if start < 0 or (after < len(folded) and (folded[after].isalnum() or folded[after] == "_")):
+            if start >= 0:  # `<scripts…`: không phải thẻ script, bỏ qua đoạn này và tìm tiếp
+                parts.append(folded[pos:after])
+                pos = after
+                continue
+            break
+        open_end = folded.find(">", after)
+        close = folded.find(_SCRIPT_CLOSE, open_end + 1) if open_end >= 0 else -1
+        if close < 0:
+            break
+        parts.append(folded[pos : open_end + 1])
+        pos = close
+    parts.append(folded[pos:])
+    return "".join(parts)
 
 
 def _captcha_text(text: str) -> str:
     """Thân trang đã bỏ nội dung script nội tuyến, dùng để tìm từ khóa captcha."""
-    return _fold(_SCRIPT_BODY.sub(r"\1\2", text))
+    return _strip_script_bodies(_fold(text))
 
 
 _FOLDED_MARKERS = tuple(_fold(marker) for marker in _CAPTCHA_MARKERS)

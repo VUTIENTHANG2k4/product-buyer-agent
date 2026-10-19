@@ -1,5 +1,7 @@
 """T4.0b: từ khóa captcha trong thân script nội tuyến không phải challenge (FPT Shop, Next.js)."""
 
+import time
+
 import pytest
 
 from app.domain.enums import ChallengeKind, SiteKey
@@ -80,3 +82,23 @@ def test_5xx_with_visible_marker_is_still_a_blocking_response() -> None:
 def test_cloudflare_interstitial_inside_script_still_counts() -> None:
     body = "<html><script>var chl_page = 1;</script></html>"
     assert is_blocking_error_response(503, {"server": "cloudflare"}, body) is True
+
+
+def test_many_unclosed_script_tags_are_scanned_in_linear_time() -> None:
+    # Regex lười chạy bậc hai trên đầu vào này (4000 thẻ ~0,5 s, 5 MB ~ hàng giờ).
+    page = "<script>" * 200_000 + "tail"
+    started = time.perf_counter()
+    assert detect_challenge(_resp(page), SiteKey.fptshop) is None
+    assert time.perf_counter() - started < 2.0
+
+
+def test_captcha_marker_after_an_unclosed_script_is_not_hidden() -> None:
+    page = "<script>var a = 1;</script><div id='captcha'></div><script>unclosed captcha"
+    challenge = detect_challenge(_resp(page), SiteKey.fptshop)
+    assert challenge is not None and challenge.kind is ChallengeKind.captcha
+
+
+def test_script_lookalike_tags_are_not_treated_as_scripts() -> None:
+    page = "<scripts>hidden captcha</scripts><p>ok</p></script>"
+    challenge = detect_challenge(_resp(page), SiteKey.fptshop)
+    assert challenge is not None and challenge.kind is ChallengeKind.captcha

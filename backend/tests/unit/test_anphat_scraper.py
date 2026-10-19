@@ -80,6 +80,15 @@ def test_blocking_status_is_a_challenge_even_with_the_registration_form(
     assert challenge is not None and challenge.kind is kind
 
 
+@pytest.mark.parametrize("status", [500, 502, 503])
+def test_5xx_with_the_registration_form_is_not_parsed_as_a_normal_page(
+    scraper: AnPhatScraper, status: int
+) -> None:
+    # Fetcher đã coi 5xx kèm chữ captcha là trang chặn và trả ngay; scraper phải cùng kết luận.
+    challenge = scraper.detect_challenge(response(f"<body>{REGISTER_FORM}Lỗi</body>", status))
+    assert challenge is not None and challenge.kind is ChallengeKind.captcha
+
+
 # --- Cấu hình, đăng ký ------------------------------------------------------------------------
 
 CATEGORY_URLS = {
@@ -439,6 +448,7 @@ def test_relative_links_tracking_parameters_and_odd_suffix_are_handled(
         "/chuot-may-tinh_dm1291.html",  # trang danh mục
         "/tin-tuc/bai-viet",  # không phải .html
         "https://other.example/chuot-a.html",
+        "http://www.anphatpc.com.vn/chuot-a.html",  # khóa URL phải là https
     ],
 )
 def test_card_that_is_not_a_product_page_of_this_site_is_skipped_and_counted(

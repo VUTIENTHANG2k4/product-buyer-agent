@@ -165,6 +165,10 @@ class AnPhatScraper(BaseScraper):
     )
 
     def detect_challenge(self, resp: FetchResponse) -> Challenge | None:
+        # Fetcher đã coi 5xx có chữ captcha là trang chặn của CDN (không thử lại, trả ngay) và nó
+        # xét văn bản gốc, nên ở đây cũng không loại form đăng ký: không để trang lỗi đi tiếp.
+        if resp.status >= 500:
+            return super().detect_challenge(resp)
         cleaned = replace(resp, text=_REGISTER_FORM_CAPTCHA.sub("", resp.text))
         return super().detect_challenge(cleaned)
 
@@ -196,7 +200,8 @@ class AnPhatScraper(BaseScraper):
         url = clean_url(urljoin(page_url, href))
         parts = urlsplit(url)
         if (
-            parts.netloc.lower() != urlsplit(_BASE_URL).netloc
+            parts.scheme != "https"
+            or parts.netloc.lower() != urlsplit(_BASE_URL).netloc
             or _PRODUCT_PATH.search(parts.path) is None
         ):
             raise ValueError("card link is not a product page of this site")

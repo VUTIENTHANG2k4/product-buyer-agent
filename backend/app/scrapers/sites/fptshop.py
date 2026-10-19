@@ -26,7 +26,7 @@ from app.normalize.price import parse_price
 from app.normalize.url import clean_url
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.challenge import ChallengeDetected, soft_block_challenge
-from app.scrapers.http.errors import HttpStatusError
+from app.scrapers.http.errors import FetchFailed, HttpStatusError, ResponseTooLarge
 from app.scrapers.parsing import json_ld_objects, node_text
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 _BASE_URL = "https://fptshop.com.vn"
 SITEMAP_INDEX_URL = f"{_BASE_URL}/sitemap.xml"
 BATCH_SIZE = 20  # sản phẩm mỗi "trang" của crawl_category
+MAX_CONSECUTIVE_ERRORS = 3  # tải lỗi liên tiếp (5xx, quá lớn...) thì dừng lượt
 
 _LAPTOP_SITEMAP_PATH = "/products/sitemap-may-tinh-xach-tay.xml"
 # Phụ kiện chia nhiều sitemap (`sitemap-phu-kien.xml`, `-1`, `-2`...); `-gia-dung` là đồ gia dụng.
@@ -92,8 +93,9 @@ def select_product_urls(category: Category, locs: Sequence[str]) -> list[str]:
     seen: set[str] = set()
     urls: list[str] = []
     for loc in locs:
-        if not _same_site(loc):
-            continue
+        parts = urlsplit(loc)
+        if not _same_site(loc) or parts.query or parts.fragment:
+            continue  # URL có tham số có thể bị robots.txt chặn (`Disallow: /*t=`)
         segments = [part for part in urlsplit(loc).path.split("/") if part]
         if len(segments) != 2:
             continue
@@ -200,7 +202,7 @@ def _rating(product: dict[str, Any]) -> tuple[float | None, int | None]:
             number = -1.0
         rating = number if 0 <= number <= 5 else None
     votes: int | None = None
-    if isinstance(count, str) and count.isdigit():
+    if isinstance(count, str) and count.isascii() and count.isdecimal():
         count = int(count)
     if isinstance(count, int) and not isinstance(count, bool) and count >= 0:
         votes = count
@@ -332,14 +334,20 @@ class FptShopScraper(BaseScraper):
         for page_no in range(start_page, min(max_pages, len(batches)) + 1):
             items: list[ListingItem] = []
             skipped = 0
+            errors = 0  # lỗi tải liên tiếp; một URL lỗi không làm mất cả lô
             for url in batches[page_no - 1]:
                 try:
                     response = await self._fetcher.get(url)
-                except HttpStatusError as error:
-                    if error.status not in (404, 410):
+                except (HttpStatusError, FetchFailed, ResponseTooLarge) as error:
+                    skipped += 1
+                    if isinstance(error, HttpStatusError) and error.status in (404, 410):
+                        continue  # sản phẩm đã gỡ nhưng còn trong sitemap
+                    errors += 1
+                    if errors >= MAX_CONSECUTIVE_ERRORS:
                         raise
-                    skipped += 1  # sản phẩm đã gỡ nhưng còn trong sitemap
+                    logger.warning("Bỏ qua sản phẩm tải lỗi (%s): %s", error, url)
                     continue
+                errors = 0
                 self._raise_if_challenge(response)
                 try:
                     items.append(self.parse_product(response.text, response.final_url, category))

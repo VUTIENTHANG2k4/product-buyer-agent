@@ -76,7 +76,7 @@ Trên thẻ danh sách, 5 trang mẫu có thẻ (126 thẻ):
 - Tồn kho: `btn-in-stock` → `in_stock`; `btn-out-stock` ("Đặt hàng": gọi điện để đặt, giá vẫn hiển thị) → `out_of_stock` (theo chính lớp của trang). Cả 12 thẻ trang cuối nhóm chuột là `btn-out-stock`.
 
 ## 6. Fixtures đã lưu
-Lưu ngày 2026-10-19 bằng bot dự án qua Fetcher (`scripts.fetch_page --allow-online`: robots.txt, độ trễ ≥ 5 s, User-Agent trung thực) trong `backend/tests/fixtures/anphat/`. Đã bỏ `<script>` (trừ JSON-LD), `<style>`, `<svg>`, `<iframe>`, ảnh `data:`, chú thích HTML, **toàn bộ `<header>` (menu ~300 KB) và `<footer>`** (chứa email/số điện thoại nhân viên), đổi tên người đánh giá trong JSON-LD thành "[đã ẩn]" và che số điện thoại/tên liên hệ trong khuyến mãi ("Mr.Kiên 0388…" → "[liên hệ đã ẩn]"). Mỗi file < 500 KB (19–362 KB); còn lại mã số thuế doanh nghiệp trong nội dung; không có email hay số cá nhân (test `test_anphat_fixtures.py` kiểm).
+Lưu ngày 2026-10-19 bằng bot dự án qua Fetcher (`scripts.fetch_page --allow-online`: robots.txt, độ trễ ≥ 5 s, User-Agent trung thực) trong `backend/tests/fixtures/anphat/`. Đã bỏ `<script>` (trừ JSON-LD), `<style>`, `<svg>`, `<iframe>`, ảnh `data:`, chú thích HTML, **toàn bộ `<header>` (menu ~300 KB) và `<footer>`** (chứa email/số điện thoại nhân viên), đổi tên người đánh giá trong JSON-LD thành "[đã ẩn]" và che số điện thoại/tên liên hệ trong khuyến mãi ("Mr.Kiên 0388…" → "[liên hệ đã ẩn]"), cùng các số di động có dấu chấm của quầy tư vấn/showroom trong khối "Liên hệ" (sửa sau review M4; giữ lại tổng đài 1900 0323). Mỗi file < 500 KB (19–362 KB); còn lại mã số thuế doanh nghiệp trong nội dung; không có email hay số cá nhân (test `test_anphat_fixtures.py` kiểm).
 
 | File | Nội dung |
 | --- | --- |

@@ -223,6 +223,7 @@ Xong khi:
 | T4.4 | AnPhatScraper | T4.3, T2.2 | M | ✅ |
 | T4.5 | Chạy thật có kiểm soát 2 nguồn | T4.2, T4.4, T2.6 | S | ✅ |
 | T4.6 | Đổi seed/test từ `hoangha`/`laptop88` sang `fptshop`/`anphat`; cân nhắc gỡ giá trị cũ khỏi `SiteKey` bằng migration (không chặn M5) | T4.0 | S | ⬜ |
+| T4.7 | Gợi ý còn lại từ review M4: thêm `turnstile` vào dấu hiệu captcha và ghi hạn chế captcha chèn bằng JS nội tuyến (06 §4); `soft_block` của FPT Shop chỉ khi không có mục bị bỏ vì 404; `_struck_price` giới hạn trong khối giá chính; trần số sitemap `-N`; test downgrade 0002 khi còn dữ liệu `fptshop`/`anphat` | T4.2, T4.4 | S | ⬜ |
 
 **T4.0** — Xong khi: ADR-0008 và mục lục ADR; docs 01–08, 11 và `.claude/rules/scraping.md` không còn coi Hoàng Hà/Laptop88 là nguồn; `docs/sources/hoangha.md`, `laptop88.md` đánh dấu không dùng; migration `0002` thêm hai giá trị vào CHECK `site` của `offer` và `scrape_run` (test nâng cấp từ 0001 giữ dữ liệu cũ, downgrade về 6 giá trị).
 **T4.1** — Xong khi: `fptshop.md` điền đủ mục 1–7; URL danh mục (nhóm nào FPT Shop bán, ghi vào 02 §1); quyết định `requires_js` (code chưa hỗ trợ JavaScript: HTML tĩnh phải có dữ liệu — JSON-LD, JSON nhúng hoặc thẻ sản phẩm — nếu không dừng và hỏi người dùng); fixtures theo [06 §8](06-scraping-design.md#8-fixtures); người dùng đã duyệt kết luận điều khoản.

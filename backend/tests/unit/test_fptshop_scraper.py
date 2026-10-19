@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from app.domain.dto import ListingItem
 from app.domain.enums import Category, ChallengeKind, PriceType, SiteKey, StockStatus
 from app.scrapers.challenge import ChallengeDetected
-from app.scrapers.http.errors import FetchFailed, HttpStatusError
+from app.scrapers.http.errors import FetchFailed, HttpStatusError, ResponseTooLarge
 from app.scrapers.http.robots import parse_robots
 from app.scrapers.http.types import FetchResponse
 from app.scrapers.registry import SCRAPERS, get_scraper
@@ -248,6 +248,16 @@ def test_product_url_selection_drops_foreign_hosts_deep_paths_and_duplicates() -
     ]
 
 
+def test_sitemap_urls_with_query_or_fragment_are_dropped() -> None:
+    # robots.txt chặn `/*t=`: không bao giờ tạo URL có tham số từ sitemap.
+    locs = [
+        f"{BASE}/phu-kien/chuot-a?t=1",
+        f"{BASE}/phu-kien/chuot-b#reviews",
+        f"{BASE}/phu-kien/chuot-c",
+    ]
+    assert select_product_urls(Category.mouse, locs) == [f"{BASE}/phu-kien/chuot-c"]
+
+
 def test_product_urls_for_a_category_without_source_are_empty() -> None:
     assert select_product_urls(Category.phone, [f"{BASE}/phu-kien/chuot-a"]) == []
 
@@ -416,6 +426,7 @@ def test_availability_maps_to_stock_status(
         ({"ratingValue": 5, "reviewCount": "7"}, (5.0, 7)),
         ({"ratingValue": "abc", "reviewCount": -1}, (None, None)),
         ({"ratingValue": 9, "reviewCount": True}, (None, None)),
+        ({"ratingValue": 5, "reviewCount": "²"}, (5.0, None)),  # isdigit() đúng, int() lỗi
         ("4.5", (None, None)),
         (None, (None, None)),
     ],
@@ -598,18 +609,39 @@ async def test_crawl_reads_the_accessory_sitemaps_and_keeps_only_the_category(
     assert all(item.category_hint is category for item in result[0].items)
 
 
-async def test_removed_products_are_skipped_but_other_http_errors_stop_the_run() -> None:
+async def test_removed_products_are_skipped_and_counted() -> None:
     urls = laptop_urls(3)
     gone = HttpStatusError("HTTP 404", url=urls[1], status=404)
     pages = await collect(FptShopScraper(crawl_fetcher(urls, **{urls[1]: gone})), max_pages=1)
     assert (len(pages[0].items), pages[0].skipped) == (2, 1)
 
-    teapot = HttpStatusError("HTTP 418", url=urls[1], status=418)
-    with pytest.raises(HttpStatusError):
-        await collect(FptShopScraper(crawl_fetcher(urls, **{urls[1]: teapot})), max_pages=1)
-    failed = FetchFailed("HTTP 500 after 3 retries", url=urls[1])
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        HttpStatusError("HTTP 418", url="x", status=418),
+        FetchFailed("HTTP 500 after 3 retries", url="x"),
+        ResponseTooLarge("body too large", url="x"),
+    ],
+)
+async def test_one_failing_product_does_not_lose_the_rest_of_the_batch(error: Exception) -> None:
+    urls = laptop_urls(5)
+    pages = await collect(FptShopScraper(crawl_fetcher(urls, **{urls[1]: error})), max_pages=1)
+    assert (len(pages[0].items), pages[0].skipped) == (4, 1)
+
+
+async def test_consecutive_fetch_errors_stop_the_run() -> None:
+    urls = laptop_urls(6)
+    failed = {url: FetchFailed("HTTP 500 after 3 retries", url=url) for url in urls[1:4]}
     with pytest.raises(FetchFailed):
-        await collect(FptShopScraper(crawl_fetcher(urls, **{urls[1]: failed})), max_pages=1)
+        await collect(FptShopScraper(crawl_fetcher(urls, **failed)), max_pages=1)
+
+
+async def test_fetch_errors_separated_by_good_pages_do_not_stop_the_run() -> None:
+    urls = laptop_urls(8)
+    failed = {url: FetchFailed("HTTP 500 after 3 retries", url=url) for url in urls[1::2][:3]}
+    pages = await collect(FptShopScraper(crawl_fetcher(urls, **failed)), max_pages=1)
+    assert (len(pages[0].items), pages[0].skipped) == (5, 3)
 
 
 async def test_unreadable_product_pages_are_counted_as_skipped() -> None:

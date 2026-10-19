@@ -39,6 +39,8 @@ def test_fixture_has_no_personal_contact_data(path: Path) -> None:
     text = path.read_text(encoding="utf-8")
     assert re.findall(r"[\w.+-]+@[\w-]+\.[\w.]+", text) == []
     assert set(re.findall(r"(?<!\d)0\d{9,10}(?!\d)", text)) <= {SHOP_TAX_ID}
+    # Số di động viết có dấu chấm ("0936.021.377") của quầy tư vấn/showroom cũng đã được che.
+    assert re.findall(r"(?<![\d.])0\d{2,3}[. ]\d{3}[. ]\d{3,4}(?![\d.])", text) == []
     assert "Mr.Kiên" not in text
 
 
