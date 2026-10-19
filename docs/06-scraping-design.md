@@ -40,7 +40,7 @@ class SiteConfig:
 class BaseScraper(ABC):
     config: ClassVar[SiteConfig]
 
-    def __init__(self, fetcher: Fetcher) -> None: ...
+    def __init__(self, fetcher: PageFetcher) -> None: ...   # Fetcher (T2.1) thỏa PageFetcher
 
     # ---- URL ----
     def listing_url(self, category: Category, page: int) -> str: ...
@@ -53,18 +53,28 @@ class BaseScraper(ABC):
     def parse_detail(self, html: str, url: str) -> ProductDetail:
         raise NotImplementedError
     def parse_search(self, html: str, page_url: str) -> list[ListingItem]:
-        return self.parse_listing(html, Category.OTHER, page_url).items
+        return self.parse_listing(html, Category.other, page_url).items
 
     # ---- phát hiện challenge (mặc định dùng ChallengeDetector chung) ----
     def detect_challenge(self, resp: FetchResponse) -> Challenge | None: ...
 
     # ---- điều phối (đã cài sẵn, lớp con hiếm khi ghi đè) ----
-    async def crawl_category(self, category: Category, max_pages: int) -> AsyncIterator[ListingPage]: ...
+    async def crawl_category(self, category: Category, max_pages: int, *, start_page: int = 1,
+                             expect_items: bool = False) -> AsyncIterator[ListingPage]: ...
     async def fetch_detail(self, url: str) -> ProductDetail: ...
     async def live_search(self, query: str, limit: int) -> list[ListingItem]: ...
 ```
 
-Đăng ký: `app/scrapers/registry.py` có `SCRAPERS: dict[SiteKey, type[BaseScraper]]`. Thêm trang = thêm một dòng.
+Đăng ký: `app/scrapers/registry.py` có `SCRAPERS: dict[SiteKey, type[BaseScraper]]`. Thêm trang = thêm một dòng. `get_scraper(site, fetcher)` dựng scraper; trang chưa đăng ký hoặc `enabled=False` → `SiteNotAvailable` (`LookupError`).
+
+Chi tiết đã cài đặt (T2.2), khác hoặc chi tiết hơn bản phác ở trên:
+
+- `BaseScraper.__init__` nhận `PageFetcher` (Protocol trong `scrapers/http/types.py`, chỉ có `async get(url) -> FetchResponse`); lớp `Fetcher` thật (T2.1) thỏa Protocol này. `FetchResponse` là dataclass bất biến với các trường ở §3 "Phản hồi".
+- `SiteConfig` tự kiểm tra khi khởi tạo: `min_delay_s` hữu hạn ≥ 0, `base_url` http/https tuyệt đối, URL mọi danh mục cùng máy chủ với `base_url`; `categories` được sao chép và chỉ đọc. Lớp con thiếu `config` → `TypeError` khi khởi tạo.
+- `listing_url`: trang 1 là URL danh mục, từ trang 2 thêm/thay `?page=N` (giữ các tham số khác); trang có quy tắc khác thì ghi đè.
+- `crawl_category(category, max_pages, *, start_page=1, expect_items=False)`: `max_pages` là số thứ tự trang lớn nhất (tuyệt đối, nên tiếp tục từ `start_page=3` với `max_pages=5` chỉ tải trang 3–5). `start_page` để tiếp tục sau khi giải challenge. Dùng `next_url` của trang nếu cùng máy chủ với `base_url`, ngược lại dựng bằng `listing_url`. `expect_items=True` (pipeline đặt khi lượt thành công trước đó có sản phẩm) biến trang 1 rỗng thành challenge `soft_block`.
+- `fetch_detail` từ chối URL khác máy chủ của trang (`ValueError`, không gửi request). `live_search` cần `supports_live_search=True`, `query` không rỗng, `limit ≥ 1`.
+- Gặp challenge, các điều phối ném `ChallengeDetected` (mang `Challenge`, định nghĩa ở `scrapers/challenge.py`); pipeline bắt và đổi trạng thái (§4).
 
 ## 3. `Fetcher`
 
@@ -81,11 +91,11 @@ class BaseScraper(ABC):
 
 ## 4. Phát hiện challenge và chặn
 
-`ChallengeDetector` (dùng chung) trả về `Challenge(kind, site, url, prompt?, image_url?, token?)` khi:
+`detect_challenge(resp, site)` (hàm thuần trong `scrapers/challenge.py`, `BaseScraper.detect_challenge` gọi nó và lớp con có thể ghi đè) trả về `Challenge(kind, site, url, prompt?, image_url?, token?)` (DTO ở [04 §6](04-data-model.md#6-dto-miền-appdomaindtopy), `kind` là `ChallengeKind`) khi:
 
-- Mã 403, hoặc 429 sau retry.
-- Nội dung chứa dấu hiệu captcha: `captcha`, `cf-challenge`, `g-recaptcha`, `hcaptcha`, `Verify you are human`, `xác minh bạn không phải robot` (không phân biệt hoa thường).
-- Trang danh sách trả 200 nhưng parse được 0 sản phẩm ở trang 1 trong khi lượt trước có sản phẩm (nghi bị chặn mềm) → `kind="soft_block"`.
+- Mã 403 → `http_403`; mã 429 → `http_429` (Fetcher đã chờ `Retry-After` và thử lại một lần, nên 429 tới đây là kết quả cuối). Mã trạng thái được xét trước từ khóa. **Hợp đồng với Fetcher:** trả `FetchResponse` cho 403/429 thay vì ném lỗi; mọi trạng thái 4xx/5xx khác (404, 410, 5xx hết lượt retry) và chuyển hướng ra khỏi domain hoặc tới URL robots chặn do Fetcher xử lý (ném lỗi), scraper không kiểm tra lại nên không bao giờ nhận trang lỗi để parse thành "0 sản phẩm".
+- Nội dung chứa dấu hiệu captcha → `captcha`: `captcha`, `cf-challenge`, `g-recaptcha`, `hcaptcha`, `Verify you are human`, `xác minh bạn không phải robot` (không phân biệt hoa thường và dạng Unicode NFC/NFD). Quét toàn văn HTML nên có thể báo nhầm với trang thật có form reCAPTCHA; khi khảo sát thấy vậy, ghi đè `detect_challenge` của trang đó. Báo nhầm chỉ làm lượt dừng ở `BLOCKED`.
+- Trang danh sách trả 200 nhưng parse được 0 sản phẩm ở trang 1 trong khi lượt trước có sản phẩm (nghi bị chặn mềm) → `soft_block`. Detector không truy cập DB: `crawl_category(expect_items=...)` nhận cờ này từ pipeline.
 
 Xử lý trong pipeline:
 

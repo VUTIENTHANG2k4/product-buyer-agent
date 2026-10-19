@@ -8,7 +8,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, HttpUrl, StringConstraints, model_validator
 
-from app.domain.enums import Category, PriceType, SiteKey, StockStatus
+from app.domain.enums import Category, ChallengeKind, PriceType, SiteKey, StockStatus
 
 NonEmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 # Strict: không nhận bool hay chuỗi "27490000" cho số nguyên (parser phải chuẩn hóa trước).
@@ -49,6 +49,20 @@ class ProductDetail(BaseModel):
     raw_specs: dict[str, str] = Field(default_factory=dict)
     model_code_hint: str | None = None  # MPN/SKU từ JSON-LD nếu có
     brand_hint: str | None = None
+
+
+class Challenge(BaseModel):
+    """Dấu hiệu trang chặn bot hoặc đòi captcha (docs/06 §4); lưu JSON vào `ScrapeRun.challenge`.
+
+    `prompt` và `token` chỉ có ở mock-shop (luồng nhập đáp án HITL); trang thật chỉ có `kind`.
+    """
+
+    kind: ChallengeKind
+    site: SiteKey
+    url: HttpUrl
+    prompt: str | None = None
+    image_url: HttpUrl | None = None
+    token: str | None = None
 
 
 class SpecFilter(BaseModel):

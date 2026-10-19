@@ -39,7 +39,7 @@ def _code_enums() -> dict[str, type[StrEnum]]:
 
 
 def test_documented_table_was_parsed() -> None:
-    assert len(_documented_enums()) == 11
+    assert len(_documented_enums()) == 12
 
 
 def test_code_and_docs_define_the_same_enums() -> None:
