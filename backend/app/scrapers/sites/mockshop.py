@@ -120,7 +120,7 @@ class MockShopScraper(BaseScraper):
                 logger.warning(
                     "Bỏ qua thẻ sản phẩm không đọc được: %s", card.attributes.get("data-slug")
                 )
-        next_link = tree.css_first("a[rel=next]")
+        next_link = tree.css_first("a[rel~=next]")
         href = next_link.attributes.get("href") if next_link is not None else None
         next_url = clean_url(urljoin(page_url, href)) if href else None
         return ListingPage.model_validate(

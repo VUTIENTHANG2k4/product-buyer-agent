@@ -89,6 +89,16 @@ def detect_challenge(resp: FetchResponse, site: SiteKey) -> Challenge | None:
     return None
 
 
+def robots_block_challenge(site: SiteKey, robots_url: str, status: int) -> Challenge:
+    """robots.txt bị chặn (403, 429 hoặc trang challenge 5xx của CDN): `BLOCKED`, nghỉ 24 giờ.
+
+    Luôn là `http_403`/`http_429`, không bao giờ `captcha`: robots.txt không có form nhập đáp án
+    nên mock-shop cũng không được rơi vào `NEEDS_HUMAN`.
+    """
+    kind = ChallengeKind.http_429 if status == 429 else ChallengeKind.http_403
+    return _build(kind, site, robots_url)
+
+
 def soft_block_challenge(site: SiteKey, url: str) -> Challenge:
     """Nghi bị chặn mềm: trang 1 trả 200 nhưng 0 sản phẩm trong khi lượt trước có sản phẩm."""
     return _build(ChallengeKind.soft_block, site, url)

@@ -17,6 +17,17 @@ class RobotsUnavailable(RobotsDisallowed):
     """Không tải được robots.txt (lỗi mạng, 5xx): coi như không cho phép, thử lại sau."""
 
 
+class RobotsBlocked(RobotsUnavailable):
+    """robots.txt trả 403, 429 hoặc trang challenge của CDN: trang đang chặn ta.
+
+    Khác `RobotsUnavailable` thường (lỗi mạng, 5xx): pipeline coi đây là `BLOCKED` và nghỉ 24 giờ.
+    """
+
+    def __init__(self, message: str, *, url: str, status: int) -> None:
+        super().__init__(message, url=url)
+        self.status = status
+
+
 class OfflineModeError(FetchError):
     """`SCRAPER_OFFLINE_ONLY=true` nên không được truy cập domain ngoài mock-shop."""
 

@@ -31,6 +31,7 @@ from app.scrapers.http.errors import (
     HttpStatusError,
     OfflineModeError,
     RedirectError,
+    RobotsBlocked,
     RobotsDisallowed,
     RobotsUnavailable,
 )
@@ -323,7 +324,13 @@ class Fetcher:
                     url = target
                     continue
                 raise RobotsUnavailable("robots.txt redirects outside the domain", url=url)
-            return response.status_code, response.text
+            status = response.status_code
+            if status in (403, 429) or is_blocking_error_response(
+                status, response.headers, response.text
+            ):
+                # Không lưu vào cache: lượt thu thập dừng `BLOCKED` và nghỉ 24 giờ (docs/06 §4).
+                raise RobotsBlocked(f"robots.txt blocked (HTTP {status})", url=url, status=status)
+            return status, response.text
         raise RobotsUnavailable("robots.txt redirects too many times", url=url)
 
     # ---- kết quả ----

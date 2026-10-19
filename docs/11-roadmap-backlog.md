@@ -198,7 +198,7 @@ Xong khi:
 | T3.1 | Khảo sát GearVN + fixtures | T0.4, T2.1 | M | ✅ |
 | T3.2 | GearVNScraper | T3.1 | M | ✅ |
 | T3.3 | Chạy thật có kiểm soát | T3.2, T2.6 | S | ✅ |
-| T3.4 | `robots.txt` bị CDN challenge → `BLOCKED` (phát sinh từ QA M3) | T3.2 | S | ⬜ |
+| T3.4 | `robots.txt` bị CDN challenge → `BLOCKED` (phát sinh từ QA M3) | T3.2 | S | ✅ |
 
 **T3.1** — Dùng skill `add-scraper` (Pha A). Xong khi: `docs/sources/gearvn.md` điền đủ mục 3–7; URL danh mục 4 nhóm; quyết định `requires_js`; fixtures theo [06 §8](06-scraping-design.md#8-fixtures).
 **T3.2** — Xong khi: parse danh sách 4 nhóm, chi tiết, tìm kiếm; test trên fixture; coverage module ≥ 90%.
@@ -228,7 +228,7 @@ Xong khi:
 | T5.3 | LLM dự phòng + cache | T5.1, T6.1 | M | ⬜ |
 
 **T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
-**T5.2** — Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
+**T5.2** — Từ T3.4: matcher cũng phải xử lý cùng sản phẩm có `href` http và https (hai khóa URL khác nhau) và cùng URL ở hai nhóm. Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
 **T5.3** — Phụ thuộc T6.1 nằm ở M6 nhưng T6.1 chỉ cần T0.1, nên khi lập lượt M5 cần làm T6.1 trước hoặc hoãn T5.3 sang lượt M6. Bật/tắt bằng `LLM_EXTRACTOR_ENABLED`. Xong khi: chỉ gọi khi thiếu trường bắt buộc; kết quả validate bằng khung specs; cache theo hash; test với model giả; ghi số lần gọi vào log.
 
 ### M6 — Agent

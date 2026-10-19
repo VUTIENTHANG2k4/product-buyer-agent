@@ -46,8 +46,8 @@ from app.normalize.brand import UNKNOWN_BRAND, detect_brand
 from app.normalize.price import MAX_PRICE_VND, MIN_PRICE_VND
 from app.normalize.url import clean_url, host_key
 from app.scrapers.base import BaseScraper, SiteConfig
-from app.scrapers.challenge import ChallengeDetected
-from app.scrapers.http.errors import FetchError, FetchFailed
+from app.scrapers.challenge import ChallengeDetected, robots_block_challenge
+from app.scrapers.http.errors import FetchError, FetchFailed, RobotsBlocked
 from app.scrapers.http.types import FormFetcher
 from app.scrapers.registry import get_scraper
 
@@ -417,6 +417,9 @@ class ScrapePipeline:
                 progress.has_next = page.has_next
         except ChallengeDetected as detected:
             challenge = detected.challenge
+        except RobotsBlocked as blocked:
+            challenge = robots_block_challenge(context.site, blocked.url, blocked.status)
+            logger.warning("[run %s] robots.txt bị chặn (HTTP %s)", context.run_id, blocked.status)
         except FetchError as exc:
             error = _error_text(exc)
             logger.warning("[run %s] %s", context.run_id, error)
@@ -448,6 +451,8 @@ class ScrapePipeline:
                 progress.detail_requests += 1
                 try:
                     detail = await scraper.fetch_detail(str(item.url))
+                except RobotsBlocked:
+                    raise  # robots.txt hết hạn giữa lượt và bị chặn: dừng cả lượt như challenge
                 except (FetchError, ValueError) as exc:
                     logger.warning("Không tải được trang chi tiết (%s)", type(exc).__name__)
             prepared.append((item, detail))
