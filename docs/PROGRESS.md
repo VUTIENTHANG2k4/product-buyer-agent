@@ -1,11 +1,11 @@
 # Tiến độ dự án
 
-> Claude Code cập nhật file này ở bước `/done` của mỗi task. Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
+> Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
-- Task đang làm: –
+- Đang làm: – (milestone và task trong lượt)
 - Task kế tiếp đề xuất: T2.1 (Fetcher, đã đủ phụ thuộc; có việc dồn từ QA M0) hoặc T2.3/T2.5; T1.6 (S) làm trước T2.6, T1.7, T1.8 (S, không chặn); T0.9 (S) trước khi service đưa thời gian vào `details` lỗi. T3.1 (GearVN) sau M1–M2
 - Cập nhật lần cuối: 2026-10-19 — T2.2 xong trên nhánh `task/T2.2-base-scraper` (chưa merge); trước đó QA M1: 8 lỗi → T1.6–T1.8, 5 việc dồn vào T6.2/T2.6
 

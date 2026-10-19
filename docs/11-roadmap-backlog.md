@@ -5,10 +5,10 @@
 ## 1. Cách làm việc (Scrum rút gọn cho 1 người + Claude Code)
 
 - **Sprint 1 tuần**, mỗi sprint gắn với 1–2 milestone (bảng mục 3).
-- **Một task = một nhánh git = một phiên Claude Code** (hoặc vài phiên với `/clear` giữa chừng). Tên nhánh: `task/T2.6-pipeline`.
-- **Vòng lặp mỗi task** (chi tiết trong [CLAUDE.md](../CLAUDE.md)):
-  `/next` → Plan mode → `/plan-task <ID>` → code + test → `/check` → `/review` → sửa → `/done <ID>`.
-- **Cuối mỗi milestone:** gọi subagent `qa-tester`, chạy `make check` toàn bộ, cập nhật sơ đồ trong docs nếu kiến trúc thực tế khác thiết kế, `/clear`.
+- **Một milestone = một nhánh git = một kế hoạch** (một hoặc vài phiên Claude Code, `/clear` giữa hai task nếu cần). Tên nhánh: `milestone/M2-scrape-infra`. Mỗi task ít nhất một commit.
+- **Vòng lặp mỗi milestone** (chi tiết trong [CLAUDE.md](../CLAUDE.md)):
+  `/next` → Plan mode → `/plan-task <M>` → [code + test → `/done <task>`] × N → `/check` → `/review <M>` → sửa → `qa-tester` → `/done <M>`.
+- **Review và QA chỉ chạy một lần, cuối milestone**, trên toàn bộ diff. Cùng lúc cập nhật sơ đồ trong docs nếu kiến trúc thực tế khác thiết kế, rồi `/clear`.
 - **Thay đổi quyết định lớn** (thư viện, schema, phạm vi) → ghi ADR mới trong `docs/adr/`.
 - **Việc phát sinh** → thêm task mới vào cuối milestone liên quan với ID kế tiếp (ví dụ T2.7), ghi "Phát sinh từ T2.6".
 
@@ -17,14 +17,20 @@ Trạng thái: ⬜ Chưa làm · 🔄 Đang làm · ✅ Xong · ⛔ Bị chặn 
 
 ## 2. Definition of Done
 
-Một task chỉ được đánh ✅ khi **tất cả** đúng:
+**Task** được đánh ✅ (trong lượt milestone) khi:
 
 1. Mọi mục "Xong khi" của task đã đạt và kiểm chứng được (lệnh, test hoặc ảnh chụp).
-2. `make check` xanh (lint, type, test backend + frontend).
-3. Code mới có test; coverage không giảm dưới ngưỡng ở [09 §5](09-testing-strategy.md#5-ngưỡng-chất-lượng-cổng-ci).
-4. Subagent `code-reviewer` không còn vấn đề mức "Phải sửa".
-5. Tài liệu liên quan đã cập nhật nếu hành vi khác thiết kế (docs, `.env.example`, OpenAPI).
-6. `docs/PROGRESS.md` đã cập nhật; commit theo quy ước `feat(T2.6): …` / `fix(T…)` / `test(T…)` / `docs(T…)`.
+2. Code mới có test; test liên quan xanh.
+3. Tài liệu liên quan đã cập nhật nếu hành vi khác thiết kế (docs, `.env.example`, OpenAPI).
+4. Đã commit theo quy ước `feat(T2.6): …` / `fix(T…)` / `test(T…)` / `docs(T…)`.
+
+**Milestone** được đánh ✅ khi **tất cả** đúng:
+
+1. Mọi task trong lượt đã ✅ (task bị chặn/hoãn có lý do trong PROGRESS).
+2. `make check` xanh (lint, type, test backend + frontend); coverage không giảm dưới ngưỡng ở [09 §5](09-testing-strategy.md#5-ngưỡng-chất-lượng-cổng-ci).
+3. Subagent `code-reviewer` (soát cả milestone) không còn vấn đề mức "Phải sửa".
+4. Subagent `qa-tester` đã chạy; bug đã sửa hoặc thành task mới.
+5. `docs/PROGRESS.md` đã cập nhật.
 
 ## 3. Lộ trình
 
@@ -218,7 +224,7 @@ Xong khi:
 
 **T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
 **T5.2** — Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
-**T5.3** — Phụ thuộc T6.1 nằm ở M6 nhưng T6.1 chỉ cần T0.1, nên `/next` sẽ chọn T6.1 trước khi T5.3 sẵn sàng. Bật/tắt bằng `LLM_EXTRACTOR_ENABLED`. Xong khi: chỉ gọi khi thiếu trường bắt buộc; kết quả validate bằng khung specs; cache theo hash; test với model giả; ghi số lần gọi vào log.
+**T5.3** — Phụ thuộc T6.1 nằm ở M6 nhưng T6.1 chỉ cần T0.1, nên khi lập lượt M5 cần làm T6.1 trước hoặc hoãn T5.3 sang lượt M6. Bật/tắt bằng `LLM_EXTRACTOR_ENABLED`. Xong khi: chỉ gọi khi thiếu trường bắt buộc; kết quả validate bằng khung specs; cache theo hash; test với model giả; ghi số lần gọi vào log.
 
 ### M6 — Agent
 

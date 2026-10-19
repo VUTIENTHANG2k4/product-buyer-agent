@@ -31,16 +31,16 @@ AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt, l
 | `make test-live` | Test với trang thật (thủ công, cần người dùng cho phép) |
 | `make help` | Liệt kê mọi lệnh |
 
-## Quy trình làm một task (bắt buộc)
-1. `/next` — đọc PROGRESS + backlog, chọn task kế tiếp có đủ phụ thuộc, tạo nhánh `task/<ID>-<slug>`.
-2. Vào **Plan mode**, đọc mục tài liệu task chỉ định, rồi `/plan-task <ID>`: kế hoạch ngắn gồm file sẽ tạo/sửa, test sẽ viết, rủi ro. Chờ người dùng duyệt.
-3. Code **và** test cùng lúc, theo từng bước nhỏ; chạy test liên quan sau mỗi bước.
-4. `/check` — mọi kiểm tra xanh. Đỏ thì sửa, không bỏ qua, không tắt test.
-5. `/review` — subagent `code-reviewer` soát diff; sửa hết mục "Phải sửa".
-6. `/done <ID>` — đối chiếu "Xong khi", cập nhật backlog + PROGRESS, commit.
-7. Hết milestone: gọi subagent `qa-tester`, rồi đề nghị người dùng `/clear`.
+## Quy trình làm một milestone (bắt buộc)
+1. `/next [M<n>]` — đọc PROGRESS + backlog, chọn milestone kế tiếp, liệt kê task làm được theo thứ tự phụ thuộc, tạo nhánh `milestone/<ID>-<slug>`.
+2. Vào **Plan mode**, đọc mục tài liệu các task chỉ định, rồi `/plan-task <M ID>`: **một** kế hoạch cho cả milestone (từng task: file, test, "Xong khi" → bằng chứng; câu hỏi gom lên đầu). Chờ người dùng duyệt một lần.
+3. Làm lần lượt từng task theo kế hoạch: code **và** test cùng lúc, chạy test liên quan sau mỗi bước; xong task thì `/done <task ID>` (đối chiếu "Xong khi", đánh ✅, commit riêng). Không review từng task.
+4. Hết task: `/check` — mọi kiểm tra xanh. Đỏ thì sửa, không bỏ qua, không tắt test.
+5. `/review <M ID>` — subagent `code-reviewer` soát toàn bộ diff của milestone; sửa hết mục "Phải sửa".
+6. Subagent `qa-tester` cho milestone; bug → task mới (test đỏ giữ bằng `xfail(strict=True)`) hoặc sửa ngay nếu nhỏ.
+7. `/done <M ID>` — cổng chất lượng, cập nhật PROGRESS, commit; đề nghị người dùng merge rồi `/clear`.
 
-Không làm nhiều task trong một lần. Gặp việc ngoài task → ghi thành task mới trong backlog, không tự mở rộng phạm vi.
+Một lượt chỉ làm một milestone. Phiên dài quá thì `/clear` giữa hai task được (PROGRESS ghi task đang làm). Gặp việc ngoài milestone → ghi thành task mới trong backlog, không tự mở rộng phạm vi.
 
 ## Quy tắc bắt buộc
 **Chung**
@@ -71,16 +71,16 @@ Không làm nhiều task trong một lần. Gặp việc ngoài task → ghi th�
 - Không xóa/skip test để cho xanh. Không giảm ngưỡng coverage.
 
 **Git**
-- Commit: `feat(T2.6): …`, `fix(T…)`, `test(T…)`, `docs(T…)`, `chore(T…)`. Một task = một nhánh.
+- Commit: `feat(T2.6): …`, `fix(T…)`, `test(T…)`, `docs(T…)`, `chore(T…)`; sửa sau review/QA dùng ID milestone (`fix(M2): …`). Một milestone = một nhánh, mỗi task ít nhất một commit.
 - Không push, merge, rebase khi người dùng chưa yêu cầu.
 
 ## Kiến trúc tóm tắt
 `api` → `agent` → `agent/tools` → `services` → `db/repositories`; `services/scrape_service` → `scrapers/pipeline` → `scrapers/sites` + `normalize` → `db/repositories`. Mọi module được import `domain`, `config`; `db` không import gì khác. Trong `scrapers/` chỉ `pipeline.py` được import `db`. Chi tiết và sơ đồ: `docs/03-architecture.md`.
 
 ## Skills của dự án
-- Quy trình (gọi bằng `/tên`): `next`, `plan-task`, `check`, `review`, `done`, `eval`.
+- Quy trình (gọi bằng `/tên`): `next`, `plan-task`, `check`, `review`, `done`, `eval` (tham số là ID milestone; `done` nhận cả ID task).
 - Kiến thức (Claude tự dùng khi phù hợp): `add-scraper`, `add-category`, `agent-tool`, `ui-screen`, `write-tests`.
-- Subagent: `code-reviewer` (soát diff), `qa-tester` (test biên cuối milestone).
+- Subagent: `code-reviewer` (soát diff cả milestone), `qa-tester` (test biên cuối milestone).
 
 ## Giao tiếp
 - Trả lời người dùng bằng tiếng Việt; code, tên biến, commit message bằng tiếng Anh (trừ nội dung hiển thị cho người dùng).
