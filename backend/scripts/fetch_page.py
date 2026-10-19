@@ -57,7 +57,11 @@ async def fetch_to_file(site: SiteKey, url: str, out: Path, *, allow_online: boo
     if challenge is not None:
         logger.error("Trang trả challenge %s: dừng, không lưu file.", challenge.kind)
         return EXIT_BLOCKED
-    await asyncio.to_thread(_write, out, response.text)
+    try:
+        await asyncio.to_thread(_write, out, response.text)
+    except OSError as error:
+        logger.error("Không ghi được file %s: %s", out, type(error).__name__)
+        return EXIT_FAILED
     logger.info("Đã lưu %d ký tự từ %s vào %s", len(response.text), response.final_url, out)
     return EXIT_OK
 

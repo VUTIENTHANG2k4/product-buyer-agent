@@ -27,6 +27,10 @@ class ValidationFailed(AppError):
     default_message = "Dữ liệu gửi lên không hợp lệ."
 
 
+class InvalidScrapeRequest(ValidationFailed, ValueError):
+    """Yêu cầu thu thập sai (`max_pages` < 1, nhóm không thuộc trang...). Vừa là `ValueError`."""
+
+
 class NotFound(AppError):
     code = "NOT_FOUND"
     status_code = 404

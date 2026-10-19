@@ -6,7 +6,7 @@ import respx
 from pydantic import ValidationError
 
 from app.config import Settings
-from app.scrapers.http.errors import FetchFailed
+from app.scrapers.http.errors import FetchFailed, RedirectError
 from app.scrapers.http.fetcher import Fetcher
 
 
@@ -42,11 +42,15 @@ def test_non_local_or_malformed_mock_shop_urls_are_rejected(url: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "error",
-    [httpx.DecodingError("bad gzip"), httpx.UnsupportedProtocol("x"), httpx.InvalidURL("x")],
+    ("error", "expected"),
+    [
+        (httpx.DecodingError("bad gzip"), FetchFailed),
+        (httpx.InvalidURL("x"), RedirectError),  # chỉ phát sinh từ Location hỏng: không retry
+        (httpx.UnsupportedProtocol("x"), RedirectError),
+    ],
 )
-async def test_other_httpx_errors_become_fetch_failed_instead_of_escaping(
-    error: Exception,
+async def test_other_httpx_errors_become_fetch_errors_instead_of_escaping(
+    error: Exception, expected: type[Exception]
 ) -> None:
     settings = Settings(
         scraper_offline_only=False, scraper_min_delay_seconds=0, scraper_max_retries=0
@@ -59,6 +63,6 @@ async def test_other_httpx_errors_become_fetch_failed_instead_of_escaping(
         router.get("https://shop.example/robots.txt").respond(404)
         router.get("https://shop.example/p").mock(side_effect=error)
         fetcher = Fetcher(settings, sleep=no_sleep, jitter=lambda: 0.0)
-        with pytest.raises(FetchFailed):
+        with pytest.raises(expected):
             await fetcher.get("https://shop.example/p")
         await fetcher.aclose()

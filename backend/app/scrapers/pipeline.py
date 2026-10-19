@@ -17,6 +17,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
+from urllib.parse import urlsplit
 
 from pydantic import ValidationError
 from sqlalchemy import text
@@ -36,14 +37,15 @@ from app.domain.enums import Category, ChallengeKind, ScrapeStatus, ScrapeTrigge
 from app.domain.errors import (
     ChallengeFailed,
     ChallengeNotPending,
+    InvalidScrapeRequest,
     RunNotFound,
     ScrapeAlreadyRunning,
     SiteCooldown,
 )
 from app.normalize.brand import UNKNOWN_BRAND, detect_brand
 from app.normalize.price import MAX_PRICE_VND, MIN_PRICE_VND
-from app.normalize.url import clean_url
-from app.scrapers.base import BaseScraper
+from app.normalize.url import clean_url, host_key
+from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.challenge import ChallengeDetected
 from app.scrapers.http.errors import FetchError, FetchFailed
 from app.scrapers.http.types import FormFetcher
@@ -97,6 +99,7 @@ class _Progress:
     upserted: int = 0
     price_changes: int = 0
     changed_ids: list[int] = field(default_factory=list)
+    seen_urls: set[str] = field(default_factory=set)  # URL đã gặp trong lượt (khử trùng)
     unsafe: int = 0  # lỗi không phải 'hết giá': thẻ hỏng, lỗi lưu → cấm tắt offer không thấy
     has_next: bool = False  # trang cuối đã tải còn trang sau (bị cắt bởi max_pages)
     detail_requests: int = 0
@@ -121,6 +124,10 @@ class _RunContext:
 
 class UnpricedItem(ValueError):
     """Mục không có giá dùng được (che, ngoài miền, 0): offer cũ của nó coi như hết bán."""
+
+
+class InvalidItemUrl(ValueError):
+    """Liên kết của mục trỏ ra ngoài trang hoặc về chính trang danh sách: không lưu thành offer."""
 
 
 # ---- gắn offer vào product (tạm thời, M5 thay bằng matcher) ----
@@ -151,6 +158,23 @@ def resolve_product_interim(
     if product.id is None:  # pragma: no cover - flush luôn gán id
         raise RuntimeError("product has no id after flush")
     return product.id
+
+
+def _url_key(item: ListingItem) -> str | None:
+    """URL đã làm sạch của mục, hoặc `None` nếu không làm sạch được (mục sẽ lỗi ở bước lưu)."""
+    try:
+        return clean_url(str(item.url))
+    except ValueError:
+        return None
+
+
+def _check_item_url(config: SiteConfig, url: str) -> None:
+    """URL mục phải cùng máy chủ với trang và không phải trang danh sách/trang chủ."""
+    if host_key(url) != host_key(config.base_url):
+        raise InvalidItemUrl(f"item URL is outside {config.base_url}")
+    listing_paths = {urlsplit(page).path or "/" for page in config.categories.values()} | {"/"}
+    if (urlsplit(url).path or "/") in listing_paths:
+        raise InvalidItemUrl("item URL points to a listing page, not a product")
 
 
 def _lock_key(site: SiteKey, category: Category) -> int:
@@ -199,6 +223,8 @@ class ScrapePipeline:
         trước) được ghi vào `ScrapeRun` và trả về trong kết quả thay vì ném ra.
         """
         scraper = get_scraper(site, self._fetcher)
+        if category not in scraper.config.categories:
+            raise InvalidScrapeRequest(f"{site} has no category {category}")
         limit = self._limit(max_pages)
         context = await asyncio.to_thread(
             self._start_run, site, category, trigger, scraper.config.is_mock
@@ -240,7 +266,7 @@ class ScrapePipeline:
     def _limit(self, max_pages: int | None) -> int:
         limit = max_pages if max_pages is not None else self._default_max_pages
         if limit < 1:
-            raise ValueError(f"max_pages must be >= 1, got {limit}")
+            raise InvalidScrapeRequest(f"max_pages must be >= 1, got {limit}")
         return limit
 
     # ---- vòng đời ScrapeRun (chạy trong thread) ----
@@ -314,7 +340,7 @@ class ScrapePipeline:
             ):
                 raise ChallengeNotPending(details={"run_id": run_id, "status": run.status.value})
             if limit < run.pages_fetched + 1:
-                raise ValueError(
+                raise InvalidScrapeRequest(
                     f"max_pages={limit} is below the page to resume from ({run.pages_fetched + 1})"
                 )
             previous = runs.latest_succeeded(run.site, run.category)
@@ -366,6 +392,7 @@ class ScrapePipeline:
         error: str | None = None
         challenge: Challenge | None = None
         crashed = False
+        page_number = start_page - 1
         try:
             async for page in scraper.crawl_category(
                 context.category,
@@ -373,8 +400,20 @@ class ScrapePipeline:
                 start_page=start_page,
                 expect_items=context.expect_items,
             ):
+                page_number += 1
+                if not page.items and not page.skipped and page_number > 1:
+                    # Trang sau trang đầu được trỏ tới bằng "Trang sau" mà trống: HTML lỗi hoặc chặn
+                    # mềm, không phải hết danh mục. Dừng và không tắt offer nào.
+                    error = (
+                        f"Trang {page_number} trả về 200 nhưng không có sản phẩm "
+                        "(nghi bị chặn mềm hoặc HTML lỗi)."
+                    )
+                    logger.warning("[run %s] %s", context.run_id, error)
+                    break
                 prepared = await self._prepare_items(scraper, page.items, progress)
-                await asyncio.to_thread(self._save_page, context, progress, prepared, page.skipped)
+                await asyncio.to_thread(
+                    self._save_page, scraper.config, context, progress, prepared, page.skipped
+                )
                 progress.has_next = page.has_next
         except ChallengeDetected as detected:
             challenge = detected.challenge
@@ -417,6 +456,7 @@ class ScrapePipeline:
     # ---- lưu một trang (chạy trong thread) ----
     def _save_page(
         self,
+        config: SiteConfig,
         context: _RunContext,
         progress: _Progress,
         prepared: list[tuple[ListingItem, ProductDetail | None]],
@@ -425,13 +465,19 @@ class ScrapePipeline:
         moment = self._now()
         parsed = failed = upserted = changes = unsafe = 0
         changed: list[int] = []
+        seen = set(progress.seen_urls)
         with self._session_factory() as session:
             for item, detail in prepared:
                 parsed += 1
+                key = _url_key(item)
+                if key is not None and key in seen:
+                    continue  # cùng URL xuất hiện lại trong lượt: bản đầu tiên thắng
+                if key is not None:
+                    seen.add(key)
                 try:
                     with session.begin_nested():
                         offer_id, price_changed = self._save_item(
-                            session, context.category, item, detail, moment
+                            session, config, context.category, item, detail, moment
                         )
                 except (ValueError, ValidationError, SQLAlchemyError) as exc:
                     failed += 1
@@ -462,6 +508,7 @@ class ScrapePipeline:
             runs.update_counters(_require_run(runs, context.run_id), **totals)
             session.commit()
         progress.pages += 1
+        progress.seen_urls = seen
         progress.parsed += parsed
         progress.failed += failed
         progress.unsafe += unsafe
@@ -472,6 +519,7 @@ class ScrapePipeline:
     def _save_item(
         self,
         session: Session,
+        config: SiteConfig,
         category: Category,
         item: ListingItem,
         detail: ProductDetail | None,
@@ -481,6 +529,7 @@ class ScrapePipeline:
         if item.price is None or not MIN_PRICE_VND <= item.price <= MAX_PRICE_VND:
             raise UnpricedItem(f"price {item.price!r} is missing or out of range")
         url = clean_url(str(item.url))
+        _check_item_url(config, url)
         offers = OfferRepository(session)
         existing = offers.get_by_url(url)
         product_id = self._resolver(session, category, item, detail)

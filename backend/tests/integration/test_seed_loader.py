@@ -251,7 +251,9 @@ class TestSeedDatabase:
         self, db_session: Session, tmp_path: Path
     ) -> None:
         seed_database(db_session, "dev", now=NOW, fixtures_dir=write_fixtures(tmp_path))
-        offer = db_session.exec(select(Offer).where(Offer.site == SiteKey.gearvn)).first()
+        offer = db_session.exec(
+            select(Offer).where(Offer.site == SiteKey.gearvn).order_by(col(Offer.id))
+        ).first()
         assert offer is not None and offer.id is not None
 
         points = PriceHistoryRepository(db_session).list_for_offer(offer.id)

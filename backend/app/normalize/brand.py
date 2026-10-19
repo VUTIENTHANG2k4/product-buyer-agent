@@ -40,9 +40,17 @@ _PREFIX = re.compile(
 
 
 def _fold(text: str) -> str:
-    """NFC, chữ thường, bỏ dấu tiếng Việt để khớp cả khi trang viết không dấu."""
-    nfd = unicodedata.normalize("NFD", text.casefold().replace("đ", "d"))
-    return "".join(c for c in nfd if not unicodedata.combining(c)).strip()
+    """Chữ thường, NFKD (kể cả chữ toàn chiều rộng), bỏ dấu và ký tự định dạng vô hình.
+
+    Nhờ đó "Ａｃｅｒ", "A​cer" và "Chuột" (có dấu hay không) đều so khớp được.
+    """
+    nfkd = unicodedata.normalize("NFKD", text.casefold().replace("đ", "d"))
+    kept = (c for c in nfkd if not unicodedata.combining(c) and unicodedata.category(c) != "Cf")
+    return "".join(kept).strip()
+
+
+# Nhãn khuyến mãi ở đầu tên: "[Mới 100%] ...", "(Hàng chính hãng) ..."
+_LEADING_TAGS = re.compile(r"^(?:\s*(?:\[[^\]]*\]|\([^)]*\)))+\s*")
 
 
 def _alias_pattern(alias: str) -> re.Pattern[str]:
@@ -60,7 +68,7 @@ def detect_brand(title: str) -> str:
 
     Chỉ so khớp ở đầu tên để "Bàn phím cho MacBook" không bị gán nhầm cho Apple.
     """
-    text = _fold(title)
+    text = _LEADING_TAGS.sub("", _fold(title))
     for _ in range(4):  # bỏ lần lượt "Laptop gaming ..." / "Chuột không dây ..."
         stripped = _PREFIX.sub("", text)
         if stripped == text:

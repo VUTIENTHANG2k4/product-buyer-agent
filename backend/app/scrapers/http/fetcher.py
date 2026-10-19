@@ -6,6 +6,7 @@ Scraper chỉ biết `PageFetcher`; không ai khác được tạo `httpx.AsyncC
 
 import asyncio
 import logging
+import math
 import random
 import ssl
 import time
@@ -22,6 +23,7 @@ import certifi
 import httpx
 
 from app.config import Settings
+from app.normalize.url import host_key
 from app.scrapers.http.errors import (
     FetchFailed,
     FormNotAllowed,
@@ -52,12 +54,12 @@ def _ssl_context() -> ssl.SSLContext:
 
 
 def _netloc(url: str) -> str:
-    return urlsplit(url).netloc.lower()
+    """`host[:port]` chuẩn hóa (chữ thường, bỏ cổng mặc định, IDN → punycode): khóa domain."""
+    return host_key(url)
 
 
 def _origin(url: str) -> str:
-    parts = urlsplit(url)
-    return f"{parts.scheme.lower()}://{parts.netloc.lower()}"
+    return f"{urlsplit(url).scheme.lower()}://{host_key(url)}"
 
 
 class Fetcher:
@@ -181,9 +183,14 @@ class Fetcher:
     # ---- kiểm tra trước khi gửi ----
     @staticmethod
     def _require_http(url: str) -> None:
-        parts = urlsplit(url)
-        if parts.scheme.lower() not in ("http", "https") or not parts.netloc:
-            raise RedirectError(f"not an absolute http(s) URL: {url[:80]!r}", url=url)
+        try:
+            parts = urlsplit(url)
+            host_key(url)  # http/https tuyệt đối, cổng hợp lệ, host hợp lệ
+        except ValueError as exc:
+            raise RedirectError(f"not an absolute http(s) URL: {url[:80]!r}", url=url) from exc
+        if parts.username is not None or parts.password is not None:
+            # Không đăng nhập (docs/02 §3): userinfo sẽ thành header Authorization.
+            raise RedirectError("URLs with credentials are not allowed", url=url)
 
     def _is_mock(self, url: str) -> bool:
         return _netloc(url) == self._mock_host
@@ -243,7 +250,13 @@ class Fetcher:
             failure: str
             try:
                 response = await self._client(url).get(url)
-            except (httpx.RequestError, httpx.InvalidURL) as exc:
+            except (httpx.InvalidURL, httpx.UnsupportedProtocol) as exc:
+                # URL của ta đã được kiểm tra, nên chỉ có thể do `Location` hỏng/lạ (javascript:,
+                # mailto:...): httpx dựng yêu cầu chuyển hướng ngay trong .get(). Không retry.
+                raise RedirectError(
+                    f"invalid redirect target ({type(exc).__name__})", url=url
+                ) from exc
+            except httpx.RequestError as exc:
                 failure = f"{type(exc).__name__}: {exc}"
             else:
                 status = response.status_code
@@ -279,6 +292,8 @@ class Fetcher:
                     seconds = (parsedate_to_datetime(value) - self._wall_now()).total_seconds()
                 except (TypeError, ValueError):
                     seconds = 0.0
+        if math.isnan(seconds):  # "nan" coi như thiếu header; "inf" rơi xuống nhánh quá lớn
+            seconds = 0.0
         if seconds > RATE_LIMIT_MAX_WAIT_S:
             return None
         return max(seconds, RATE_LIMIT_MIN_WAIT_S)

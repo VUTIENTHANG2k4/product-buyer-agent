@@ -197,7 +197,10 @@ class RealScraper(BaseScraper):
         key=SiteKey.gearvn,
         base_url="https://shop.example",
         min_delay_s=5.0,
-        categories={Category.laptop: "https://shop.example/c/laptop"},
+        categories={
+            Category.laptop: "https://shop.example/c/laptop",
+            Category.mouse: "https://shop.example/c/mouse",
+        },
     )
 
     def parse_listing(self, html: str, category: Category, page_url: str) -> ListingPage:

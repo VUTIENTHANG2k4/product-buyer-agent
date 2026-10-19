@@ -51,8 +51,27 @@ def _product_token(user_agent: str) -> str:
 @dataclass(frozen=True)
 class _Rule:
     allow: bool
-    pattern: str
-    regex: re.Pattern[str]
+    pattern: str  # đã chuẩn hóa percent-encoding
+    pieces: tuple[str, ...]  # pattern tách theo '*'
+    anchored: bool  # kết thúc bằng '$'
+
+    def matches(self, target: str) -> bool:
+        """Khớp glob tuyến tính (không dùng regex nên không bị backtracking với nhiều '*')."""
+        first, *rest = self.pieces
+        if not target.startswith(first):
+            return False
+        if not rest:
+            return target == first if self.anchored else True
+        position = len(first)
+        *middle, last = rest
+        for piece in middle:
+            found = target.find(piece, position)
+            if found < 0:
+                return False
+            position = found + len(piece)
+        if self.anchored:
+            return len(target) - len(last) >= position and target.endswith(last)
+        return target.find(last, position) >= 0
 
 
 @dataclass(frozen=True)
@@ -74,7 +93,7 @@ class RobotsRules:
         target = _normalize_path(target)
         best: _Rule | None = None
         for rule in self.rules:
-            if not rule.regex.match(target):
+            if not rule.matches(target):
                 continue
             if best is None:
                 best = rule
@@ -90,11 +109,10 @@ ALLOW_ALL = RobotsRules()
 DISALLOW_ALL = RobotsRules(disallow_all=True)
 
 
-def _compile(pattern: str) -> re.Pattern[str]:
+def _build_rule(allow: bool, pattern: str) -> _Rule:
     anchored = pattern.endswith("$")
     body = pattern[:-1] if anchored else pattern
-    regex = ".*".join(re.escape(piece) for piece in body.split("*"))
-    return re.compile(regex + ("$" if anchored else ""))
+    return _Rule(allow, pattern, tuple(body.split("*")), anchored)
 
 
 @dataclass
@@ -135,7 +153,7 @@ def parse_robots(text: str, user_agent: str) -> RobotsRules:
         if key in ("allow", "disallow"):
             if value:  # "Disallow:" rỗng nghĩa là không cấm gì
                 pattern = _normalize_path(value)
-                current.rules.append(_Rule(key == "allow", pattern, _compile(pattern)))
+                current.rules.append(_build_rule(key == "allow", pattern))
         elif key == "crawl-delay":
             try:
                 delay = float(value)
