@@ -97,8 +97,16 @@ class _Progress:
     upserted: int = 0
     price_changes: int = 0
     changed_ids: list[int] = field(default_factory=list)
+    unsafe: int = 0  # lỗi không phải 'hết giá': thẻ hỏng, lỗi lưu → cấm tắt offer không thấy
     has_next: bool = False  # trang cuối đã tải còn trang sau (bị cắt bởi max_pages)
     detail_requests: int = 0
+
+
+@dataclass(frozen=True)
+class _Verdict:
+    status: ScrapeStatus
+    message: str | None
+    deactivate: bool = False
 
 
 @dataclass(frozen=True)
@@ -109,6 +117,10 @@ class _RunContext:
     started_at: datetime
     expect_items: bool
     previous_items: int | None  # items_parsed của lượt SUCCEEDED gần nhất
+
+
+class UnpricedItem(ValueError):
+    """Mục không có giá dùng được (che, ngoài miền, 0): offer cũ của nó coi như hết bán."""
 
 
 # ---- gắn offer vào product (tạm thời, M5 thay bằng matcher) ----
@@ -205,22 +217,24 @@ class ScrapePipeline:
         án sai: lượt vẫn `NEEDS_HUMAN`, thử lại được). Phải dùng cùng `Fetcher` với lượt đầu nếu
         muốn giữ cookie phiên; một tiến trình mới vẫn được vì cookie lấy lại từ chính lần gửi này.
         """
-        context, progress, challenge = await asyncio.to_thread(self._load_paused, run_id)
+        limit = self._limit(max_pages)
+        context, progress, challenge = await asyncio.to_thread(self._claim_paused, run_id, limit)
         scraper = get_scraper(context.site, self._fetcher)
-        url, data = scraper.challenge_submission(challenge, answer)
-        response = await self._fetcher.post_form(url, data)
+        try:
+            url, data = scraper.challenge_submission(challenge, answer)
+            response = await self._fetcher.post_form(url, data)
+            if response.status >= 400 and response.status != 400:
+                raise FetchFailed(f"challenge endpoint returned HTTP {response.status}", url=url)
+        except BaseException:
+            # Lượt đã chuyển sang RUNNING để chặn resume đồng thời: trả lại để thử đáp án khác.
+            await asyncio.shield(asyncio.to_thread(self._release_paused, run_id, challenge))
+            raise
         if response.status == 400:
+            await asyncio.to_thread(self._release_paused, run_id, challenge)
             raise ChallengeFailed()
-        if response.status >= 400:
-            raise FetchFailed(f"challenge endpoint returned HTTP {response.status}", url=url)
-        await asyncio.to_thread(self._mark_running, run_id)
         logger.info("[run %s] đáp án đúng, tiếp tục từ trang %s", run_id, progress.pages + 1)
         return await self._crawl(
-            scraper,
-            context,
-            progress,
-            start_page=progress.pages + 1,
-            max_pages=self._limit(max_pages),
+            scraper, context, progress, start_page=progress.pages + 1, max_pages=limit
         )
 
     def _limit(self, max_pages: int | None) -> int:
@@ -275,14 +289,34 @@ class ScrapePipeline:
         )
         return moment - run.started_at < stale_after
 
-    def _load_paused(self, run_id: int) -> tuple[_RunContext, _Progress, Challenge]:
+    def _claim_paused(self, run_id: int, limit: int) -> tuple[_RunContext, _Progress, Challenge]:
+        """Chiếm lượt `NEEDS_HUMAN` (chuyển sang RUNNING) dưới khóa (site, category).
+
+        Hai `resume` đồng thời không cùng chiếm được; lượt quá hạn (đã cho phép lượt mới chạy) và
+        `max_pages` nhỏ hơn trang cần tiếp tục bị từ chối trước khi đổi bất cứ thứ gì.
+        """
+        moment = self._now()
         with self._session_factory() as session:
             runs = ScrapeRunRepository(session)
-            run = runs.get(run_id)
-            if run is None:
+            peek = runs.get(run_id)
+            if peek is None:
                 raise RunNotFound(details={"run_id": run_id})
-            if run.status is not ScrapeStatus.NEEDS_HUMAN or run.challenge is None:
+            session.execute(
+                text("SELECT pg_advisory_xact_lock(:key)"),
+                {"key": _lock_key(peek.site, peek.category)},
+            )
+            session.refresh(peek)  # đọc lại trạng thái sau khi có khóa
+            run = peek
+            if (
+                run.status is not ScrapeStatus.NEEDS_HUMAN
+                or run.challenge is None
+                or moment - run.started_at >= NEEDS_HUMAN_STALE_AFTER
+            ):
                 raise ChallengeNotPending(details={"run_id": run_id, "status": run.status.value})
+            if limit < run.pages_fetched + 1:
+                raise ValueError(
+                    f"max_pages={limit} is below the page to resume from ({run.pages_fetched + 1})"
+                )
             previous = runs.latest_succeeded(run.site, run.category)
             context = _RunContext(
                 run_id=run_id,
@@ -296,16 +330,27 @@ class ScrapePipeline:
                 pages=run.pages_fetched,
                 parsed=run.items_parsed,
                 failed=run.items_failed,
+                # Không biết lỗi trước khi dừng là loại nào: coi mọi lỗi cũ là không an toàn.
+                unsafe=run.items_failed,
                 upserted=run.offers_upserted,
                 price_changes=run.price_changes,
             )
-            return context, progress, Challenge.model_validate(run.challenge)
+            challenge = Challenge.model_validate(run.challenge)
+            runs.set_status(run, ScrapeStatus.RUNNING, now=moment)
+            session.commit()
+            return context, progress, challenge
 
-    def _mark_running(self, run_id: int) -> None:
+    def _release_paused(self, run_id: int, challenge: Challenge) -> None:
+        """Trả lượt về `NEEDS_HUMAN` (đáp án sai hoặc lỗi khi gửi đáp án)."""
         with self._session_factory() as session:
             runs = ScrapeRunRepository(session)
             run = _require_run(runs, run_id)
-            runs.set_status(run, ScrapeStatus.RUNNING, now=self._now())
+            runs.set_status(
+                run,
+                ScrapeStatus.NEEDS_HUMAN,
+                challenge=challenge.model_dump(mode="json"),
+                now=self._now(),
+            )
             session.commit()
 
     # ---- vòng lặp thu thập ----
@@ -336,6 +381,14 @@ class ScrapePipeline:
         except FetchError as exc:
             error = _error_text(exc)
             logger.warning("[run %s] %s", context.run_id, error)
+        except asyncio.CancelledError:
+            # Task bị huỷ giữa lượt: đóng lượt lại thay vì để RUNNING tới khi quá hạn.
+            await asyncio.shield(
+                asyncio.to_thread(
+                    self._finish, scraper, context, progress, None, "Lượt thu thập bị huỷ.", True
+                )
+            )
+            raise
         except Exception as exc:
             crashed = True
             error = _error_text(exc)
@@ -370,7 +423,7 @@ class ScrapePipeline:
         skipped: int,
     ) -> None:
         moment = self._now()
-        parsed = failed = upserted = changes = 0
+        parsed = failed = upserted = changes = unsafe = 0
         changed: list[int] = []
         with self._session_factory() as session:
             for item, detail in prepared:
@@ -382,6 +435,8 @@ class ScrapePipeline:
                         )
                 except (ValueError, ValidationError, SQLAlchemyError) as exc:
                     failed += 1
+                    if not isinstance(exc, UnpricedItem):
+                        unsafe += 1
                     logger.warning(
                         "[run %s] không lưu được mục (%s): %s",
                         context.run_id,
@@ -395,6 +450,7 @@ class ScrapePipeline:
                     changed.append(offer_id)
             parsed += skipped  # thẻ parser không đọc được vẫn là mục đã thấy
             failed += skipped
+            unsafe += skipped
             totals = {
                 "pages_fetched": progress.pages + 1,
                 "items_parsed": progress.parsed + parsed,
@@ -408,6 +464,7 @@ class ScrapePipeline:
         progress.pages += 1
         progress.parsed += parsed
         progress.failed += failed
+        progress.unsafe += unsafe
         progress.upserted += upserted
         progress.price_changes += changes
         progress.changed_ids.extend(changed)
@@ -422,7 +479,7 @@ class ScrapePipeline:
     ) -> tuple[int, bool]:
         """Lưu một mục; trả (offer_id, giá có đổi không). Ném `ValueError` nếu mục không hợp lệ."""
         if item.price is None or not MIN_PRICE_VND <= item.price <= MAX_PRICE_VND:
-            raise ValueError(f"price {item.price!r} is missing or out of range")
+            raise UnpricedItem(f"price {item.price!r} is missing or out of range")
         url = clean_url(str(item.url))
         offers = OfferRepository(session)
         existing = offers.get_by_url(url)
@@ -474,7 +531,8 @@ class ScrapePipeline:
         crashed: bool,
     ) -> PipelineResult:
         moment = self._now()
-        status, message = self._decide(scraper, context, progress, challenge, error, crashed)
+        verdict = self._decide(scraper, context, progress, challenge, error, crashed)
+        status, message = verdict.status, verdict.message
         with self._session_factory() as session:
             runs = ScrapeRunRepository(session)
             run = _require_run(runs, context.run_id)
@@ -486,8 +544,8 @@ class ScrapePipeline:
                 offers_upserted=progress.upserted,
                 price_changes=progress.price_changes,
             )
-            if status is ScrapeStatus.SUCCEEDED:
-                # Chỉ lượt đầy đủ, sạch lỗi mới được tắt offer không còn thấy (docs/06 §7 bước 3).
+            if verdict.deactivate:
+                # Chỉ lượt đầy đủ và đáng tin mới được tắt offer không còn thấy (docs/06 §7).
                 gone = OfferRepository(session).deactivate_unseen(
                     context.site, context.category, context.started_at
                 )
@@ -530,15 +588,15 @@ class ScrapePipeline:
         challenge: Challenge | None,
         error: str | None,
         crashed: bool,
-    ) -> tuple[ScrapeStatus, str | None]:
+    ) -> _Verdict:
         if challenge is not None:
             # Chỉ mock-shop có luồng nhập đáp án, và chỉ cho captcha; mọi trường hợp khác là chặn.
             human = scraper.config.is_mock and challenge.kind is ChallengeKind.captcha
-            return (ScrapeStatus.NEEDS_HUMAN if human else ScrapeStatus.BLOCKED), None
+            return _Verdict(ScrapeStatus.NEEDS_HUMAN if human else ScrapeStatus.BLOCKED, None)
         if error is not None:
             if crashed or progress.pages == 0:
-                return ScrapeStatus.FAILED, error
-            return ScrapeStatus.PARTIAL, error
+                return _Verdict(ScrapeStatus.FAILED, error)
+            return _Verdict(ScrapeStatus.PARTIAL, error)
         warnings: list[str] = []
         ratio = progress.failed / progress.parsed if progress.parsed else 0.0
         if ratio > FAILED_RATIO_LIMIT:
@@ -547,7 +605,10 @@ class ScrapePipeline:
                 f"({ratio:.0%}), có thể trang đã đổi giao diện."
             )
         previous = context.previous_items
-        if previous and progress.parsed < previous * DROP_RATIO_LIMIT and not progress.has_next:
+        dropped = bool(
+            previous and progress.parsed < previous * DROP_RATIO_LIMIT and not progress.has_next
+        )
+        if dropped:
             warnings.append(
                 f"Cảnh báo chất lượng: số sản phẩm giảm từ {previous} xuống {progress.parsed}."
             )
@@ -557,8 +618,11 @@ class ScrapePipeline:
         if ratio > FAILED_RATIO_LIMIT or capped:
             if capped:
                 warnings.append("Dừng ở giới hạn số trang, chưa đủ danh mục.")
-            return ScrapeStatus.PARTIAL, " ".join(warnings)
-        return ScrapeStatus.SUCCEEDED, " ".join(warnings) or None
+            return _Verdict(ScrapeStatus.PARTIAL, " ".join(warnings))
+        # Không tắt offer khi: không thấy mục nào (có thể trang rỗng bất thường), số sản phẩm
+        # giảm mạnh (trang đổi giao diện?) hoặc có mục lỗi mà lỗi đó không phải "hết giá".
+        safe = progress.parsed > 0 and not dropped and progress.unsafe == 0
+        return _Verdict(ScrapeStatus.SUCCEEDED, " ".join(warnings) or None, deactivate=safe)
 
 
 def _require_id(run: ScrapeRun) -> int:

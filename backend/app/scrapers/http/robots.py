@@ -5,6 +5,7 @@ nên Fetcher tự phân tích theo RFC 9309: nhóm theo User-agent, quy tắc d�
 """
 
 import asyncio
+import logging
 import math
 import re
 import time
@@ -14,8 +15,37 @@ from urllib.parse import urlsplit
 
 from app.scrapers.http.errors import RobotsUnavailable
 
+logger = logging.getLogger(__name__)
+
 ROBOTS_TTL_SECONDS = 24 * 3600
+MAX_CRAWL_DELAY_SECONDS = 300.0  # Crawl-delay lớn hơn bị cắt (kèm cảnh báo) để lượt không treo
+_PERCENT = re.compile(r"%([0-9a-fA-F]{2})")
+_UNRESERVED = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
 MAX_ROBOTS_CHARS = 500 * 1024  # RFC 9309: bỏ phần vượt quá 500 KiB
+
+
+def _normalize_path(value: str) -> str:
+    """Chuẩn hóa percent-encoding để `/%7Euser` và `/~user` là một (RFC 9309 §2.2.2).
+
+    Ký tự không phải ASCII được mã hóa UTF-8 thành `%XX`; `%XX` của ký tự không dành riêng được
+    giải mã, còn lại viết hoa hex.
+    """
+    encoded = "".join(
+        char if ord(char) < 128 else "".join(f"%{byte:02X}" for byte in char.encode("utf-8"))
+        for char in value
+    )
+
+    def fix(match: re.Match[str]) -> str:
+        char = chr(int(match.group(1), 16))
+        return char if char in _UNRESERVED else f"%{match.group(1).upper()}"
+
+    return _PERCENT.sub(fix, encoded)
+
+
+def _product_token(user_agent: str) -> str:
+    """Tên sản phẩm trong User-Agent: `ProductBuyerAgent/0.1 (...)` → `productbuyeragent`."""
+    parts = re.split(r"[/\s]", user_agent.strip(), maxsplit=1)
+    return parts[0].lower()
 
 
 @dataclass(frozen=True)
@@ -41,6 +71,7 @@ class RobotsRules:
         target = parts.path or "/"
         if parts.query:
             target = f"{target}?{parts.query}"
+        target = _normalize_path(target)
         best: _Rule | None = None
         for rule in self.rules:
             if not rule.regex.match(target):
@@ -76,9 +107,12 @@ class _Group:
 def parse_robots(text: str, user_agent: str) -> RobotsRules:
     """Quy tắc áp dụng cho `user_agent` (chuỗi User-Agent đầy đủ của dự án).
 
-    Chọn nhóm có tên agent dài nhất nằm trong User-Agent; không có thì nhóm `*`; không có nhóm
-    nào thì cho phép tất cả. Nhiều nhóm cùng tên được gộp.
+    Chọn nhóm có tên agent trùng tên sản phẩm của User-Agent (phần trước `/`, không phân biệt hoa
+    thường); không có thì nhóm `*`; không có nhóm nào thì cho phép tất cả. Nhiều nhóm cùng tên
+    được gộp. BOM UTF-8 ở đầu file bị bỏ (nếu không dòng `User-agent` đầu tiên bị bỏ qua và cả
+    file thành "cho phép tất cả").
     """
+    text = text.lstrip("\ufeff")
     groups: list[_Group] = []
     current: _Group | None = None
     reading_agents = False
@@ -92,7 +126,7 @@ def parse_robots(text: str, user_agent: str) -> RobotsRules:
             if not reading_agents or current is None:
                 current = _Group()
                 groups.append(current)
-            current.agents.append(value.lower())
+            current.agents.append(_product_token(value))
             reading_agents = True
             continue
         reading_agents = False
@@ -100,23 +134,28 @@ def parse_robots(text: str, user_agent: str) -> RobotsRules:
             continue
         if key in ("allow", "disallow"):
             if value:  # "Disallow:" rỗng nghĩa là không cấm gì
-                current.rules.append(_Rule(key == "allow", value, _compile(value)))
+                pattern = _normalize_path(value)
+                current.rules.append(_Rule(key == "allow", pattern, _compile(pattern)))
         elif key == "crawl-delay":
             try:
                 delay = float(value)
             except ValueError:
                 continue
             if math.isfinite(delay) and delay >= 0:
-                current.crawl_delay = delay
+                if delay > MAX_CRAWL_DELAY_SECONDS:
+                    logger.warning(
+                        "Crawl-delay %s giây quá lớn, cắt còn %s", delay, MAX_CRAWL_DELAY_SECONDS
+                    )
+                current.crawl_delay = min(delay, MAX_CRAWL_DELAY_SECONDS)
 
-    ua = user_agent.lower()
+    token = _product_token(user_agent)
     best_len = -1
     selected: list[_Group] = []
     for group in groups:
         for agent in group.agents:
             if agent == "*":
                 matched = 0
-            elif agent and agent in ua:
+            elif agent and agent == token:
                 matched = len(agent)
             else:
                 continue

@@ -96,6 +96,64 @@ def test_root_url_without_path_is_matched_as_slash() -> None:
     assert not allowed("User-agent: *\nDisallow: /$", "")
 
 
+# --- Ca biên từ review M2 ---------------------------------------------------------------------
+
+
+def test_utf8_bom_at_the_start_does_not_hide_the_first_directive() -> None:
+    robots = "﻿User-agent: *\nDisallow: /\n"
+    assert not allowed(robots, "/c/laptop")
+
+
+@pytest.mark.parametrize(
+    ("pattern", "path"),
+    [
+        ("/%7Euser", "/~user/x"),  # pattern mã hóa, URL không
+        ("/~user", "/%7Euser/x"),  # ngược lại
+        ("/%7euser", "/%7Euser/x"),  # khác hoa/thường của hex
+        ("/Đồ", "/%C4%90%E1%BB%93"),  # ký tự Unicode thô so với dạng %XX
+        ("/%C4%90%E1%BB%93", "/Đồ"),
+    ],
+)
+def test_percent_encoding_is_normalised_before_matching(pattern: str, path: str) -> None:
+    assert not allowed(f"User-agent: *\nDisallow: {pattern}", path)
+
+
+def test_encoded_reserved_characters_are_not_decoded() -> None:
+    robots = "User-agent: *\nDisallow: /a%2Fb"
+    assert not allowed(robots, "/a%2fb")
+    assert allowed(robots, "/a/b")  # %2F là ký tự đặt riêng, không đồng nghĩa với "/"
+
+
+@pytest.mark.parametrize("agent", ["o", "a", "bot", "example", "lien-he", "do-an-sinh-vien"])
+def test_agent_names_that_are_only_substrings_of_our_user_agent_do_not_match(agent: str) -> None:
+    robots = f"User-agent: {agent}\nDisallow: /\n\nUser-agent: *\nDisallow: /admin"
+    assert allowed(robots, "/c/laptop")
+    assert not allowed(robots, "/admin")  # nhóm `*` vẫn áp dụng cho ta
+
+
+def test_agent_line_with_a_version_still_matches_our_product_token() -> None:
+    assert not allowed("User-agent: ProductBuyerAgent/1.0\nDisallow: /x", "/x")
+
+
+def test_user_agent_matching_is_case_insensitive() -> None:
+    assert not allowed("USER-AGENT: PRODUCTBUYERAGENT\nDisallow: /x", "/x")
+
+
+def test_huge_crawl_delay_is_capped() -> None:
+    from app.scrapers.http.robots import MAX_CRAWL_DELAY_SECONDS
+
+    rules = parse_robots("User-agent: *\nCrawl-delay: 1000000000", UA)
+    assert rules.crawl_delay == MAX_CRAWL_DELAY_SECONDS
+
+
+def test_rules_that_do_not_start_with_a_slash_or_star_never_match_normal_paths() -> None:
+    assert allowed("User-agent: *\nDisallow: admin", "/admin")
+
+
+def test_crlf_line_endings_are_handled() -> None:
+    assert not allowed("User-agent: *\r\nDisallow: /x\r\n", "/x")
+
+
 class Loader:
     def __init__(self, *results: tuple[int, str] | Exception) -> None:
         self.results = list(results)

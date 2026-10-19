@@ -4,6 +4,7 @@ Mỗi test dùng `db_session` (rollback cuối test); pipeline mở session riê
 nên `commit()` của nó chỉ giải phóng savepoint.
 """
 
+import asyncio
 import re
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
@@ -34,7 +35,7 @@ from app.domain.errors import (
 )
 from app.mock_shop.main import create_app
 from app.scrapers.base import BaseScraper, SiteConfig
-from app.scrapers.http.errors import HttpStatusError
+from app.scrapers.http.errors import FetchFailed, HttpStatusError
 from app.scrapers.http.fetcher import Fetcher
 from app.scrapers.http.types import FetchResponse
 from app.scrapers.pipeline import (
@@ -942,3 +943,281 @@ async def test_a_run_is_serialised_per_site_and_category_even_with_the_same_fetc
     for _ in range(2):  # lần lượt, cùng pipeline: không bị coi là "đang chạy"
         result = await pipe.run(SiteKey.mockshop, Category.mouse, ScrapeTrigger.test)
         assert result.status is ScrapeStatus.SUCCEEDED
+
+
+# --- Bổ sung sau review M2 ---------------------------------------------------------------------
+
+
+def _stale_offer(db_session: Session, **overrides: Any) -> Offer:
+    product = make_product(category=Category.laptop)
+    db_session.add(product)
+    db_session.flush()
+    assert product.id is not None
+    offer = make_offer(
+        product.id, site=SiteKey.mockshop, scraped_at=NOW - timedelta(days=1), **overrides
+    )
+    db_session.add(offer)
+    db_session.flush()
+    return offer
+
+
+async def test_unpriced_only_failures_still_allow_deactivating_the_gone_offer(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    stale = _stale_offer(db_session)
+    cards = [card(s, f"Laptop Acer Mock {s}") for s in "abcdefghi"]
+    cards.append(card("z", "Laptop Acer Mock Z", "Liên hệ"))  # 1/10 = 10% ≤ 20%
+
+    result = await pipeline(factory, ScriptedFetcher({LAPTOP: page(listing(cards))}), clock).run(
+        SiteKey.mockshop, Category.laptop, ScrapeTrigger.test
+    )
+
+    assert (result.status, result.items_failed) == (ScrapeStatus.SUCCEEDED, 1)
+    db_session.refresh(stale)
+    assert stale.is_active is False
+
+
+async def test_a_save_error_blocks_deactivation_because_the_failed_item_may_still_be_listed(
+    db_session: Session,
+    factory: Callable[[], Session],
+    clock: Clock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stale = _stale_offer(db_session)
+    cards = [card(s, f"Laptop Acer Mock {s}") for s in "abcdefghij"]
+    original = OfferRepository.upsert
+
+    def flaky(self: OfferRepository, data: OfferUpsert, *, now: datetime | None = None) -> Any:
+        if data.title.endswith("j"):
+            self._session.execute(text("SELECT 1/0"))
+        return original(self, data, now=now)
+
+    monkeypatch.setattr(OfferRepository, "upsert", flaky)
+
+    result = await pipeline(factory, ScriptedFetcher({LAPTOP: page(listing(cards))}), clock).run(
+        SiteKey.mockshop, Category.laptop, ScrapeTrigger.test
+    )
+
+    assert (result.status, result.items_failed) == (ScrapeStatus.SUCCEEDED, 1)  # 10% ≤ 20%
+    db_session.refresh(stale)
+    assert stale.is_active is True
+
+
+async def test_an_unreadable_card_blocks_deactivation(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    stale = _stale_offer(db_session)
+    cards = [card(s, f"Laptop Acer Mock {s}") for s in "abcdefghij"]
+    html = listing(cards).replace(
+        '<a class="product-link" href="/p/j">', '<a class="broken" href="/p/j">'
+    )
+
+    result = await pipeline(factory, ScriptedFetcher({LAPTOP: page(html)}), clock).run(
+        SiteKey.mockshop, Category.laptop, ScrapeTrigger.test
+    )
+
+    assert (result.status, result.items_failed) == (ScrapeStatus.SUCCEEDED, 1)
+    db_session.refresh(stale)
+    assert stale.is_active is True
+
+
+async def test_an_empty_first_page_never_deactivates_existing_offers(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    existing = _stale_offer(db_session)
+    fetcher = ScriptedFetcher({LAPTOP: page(mockshop_fixture("listing_empty.html"))})
+
+    result = await pipeline(factory, fetcher, clock).run(
+        SiteKey.mockshop, Category.laptop, ScrapeTrigger.test
+    )
+
+    assert (result.status, result.items_parsed) == (ScrapeStatus.SUCCEEDED, 0)
+    db_session.refresh(existing)
+    assert existing.is_active is True
+
+
+async def test_a_sharp_drop_in_item_count_never_deactivates_existing_offers(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    existing = _stale_offer(db_session)
+    runs = ScrapeRunRepository(db_session)
+    previous = runs.create(
+        SiteKey.mockshop, Category.laptop, ScrapeTrigger.test, now=NOW - timedelta(days=1)
+    )
+    runs.update_counters(previous, items_parsed=100)
+    runs.set_status(previous, ScrapeStatus.SUCCEEDED, now=NOW - timedelta(days=1))
+    html = listing([card("a", "Laptop Acer Mock A"), card("b", "Laptop Acer Mock B")])
+
+    result = await pipeline(factory, ScriptedFetcher({LAPTOP: page(html)}), clock).run(
+        SiteKey.mockshop, Category.laptop, ScrapeTrigger.test
+    )
+
+    assert result.status is ScrapeStatus.SUCCEEDED
+    db_session.refresh(existing)
+    assert existing.is_active is True
+
+
+async def test_a_resumed_run_with_earlier_failures_does_not_deactivate(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    pipe = pipeline(factory, mock_fetcher(captcha_after=1), clock)
+    paused = await pipe.run(SiteKey.mockshop, Category.laptop, ScrapeTrigger.test)
+    assert paused.items_failed == 1  # thẻ "Liên hệ" ở trang 1
+    stale = _stale_offer(db_session)
+    assert paused.challenge is not None and paused.challenge.prompt is not None
+    code = re.search(r"[A-Z2-9]{5}$", paused.challenge.prompt)
+    assert code
+
+    done = await pipe.resume(paused.run_id, code.group(0))
+
+    assert done.status is ScrapeStatus.SUCCEEDED
+    db_session.refresh(stale)
+    assert stale.is_active is True  # không biết lỗi cũ là loại nào → thận trọng
+
+
+# --- resume: chiếm lượt, hết hạn, đáp án ------------------------------------------------------
+
+
+class RecordingFetcher(ScriptedFetcher):
+    """ScriptedFetcher có thể chạy mã tùy ý khi nhận form (để quan sát trạng thái lượt)."""
+
+    def __init__(self, pages: dict[str, FetchResponse | Exception]) -> None:
+        super().__init__(pages)
+        self.on_post: Callable[[], FetchResponse | Exception] | None = None
+
+    async def post_form(self, url: str, data: Any) -> FetchResponse:
+        self.posted.append((url, dict(data)))
+        if self.on_post is None:
+            return FetchResponse(url=url, final_url=url, status=200, text="ok")
+        outcome = self.on_post()
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+
+async def _paused(
+    factory: Callable[[], Session], clock: Clock, fetcher: RecordingFetcher
+) -> tuple[ScrapePipeline, PipelineResult]:
+    pipe = pipeline(factory, fetcher, clock)
+    result = await pipe.run(SiteKey.mockshop, Category.laptop, ScrapeTrigger.test)
+    assert result.status is ScrapeStatus.NEEDS_HUMAN
+    return pipe, result
+
+
+def _captcha_fetcher() -> RecordingFetcher:
+    return RecordingFetcher({LAPTOP: page(mockshop_fixture("captcha.html"))})
+
+
+async def test_resume_claims_the_run_before_sending_the_answer(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    fetcher = _captcha_fetcher()
+    pipe, paused = await _paused(factory, clock, fetcher)
+    seen: list[ScrapeStatus] = []
+
+    def observe() -> FetchResponse:
+        seen.append(run_row(db_session, paused).status)
+        return FetchResponse(url="u", final_url="u", status=400, text="sai")
+
+    fetcher.on_post = observe
+    with pytest.raises(ChallengeFailed):
+        await pipe.resume(paused.run_id, "ZZZZZ")
+
+    assert seen == [ScrapeStatus.RUNNING]  # lúc đó resume thứ hai sẽ bị từ chối
+    run = run_row(db_session, paused)
+    assert run.status is ScrapeStatus.NEEDS_HUMAN and run.finished_at is None
+    assert run.challenge is not None and run.challenge["kind"] == "captcha"
+
+
+async def test_a_run_already_claimed_by_another_resume_is_rejected(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    fetcher = _captcha_fetcher()
+    pipe, paused = await _paused(factory, clock, fetcher)
+    ScrapeRunRepository(db_session).set_status(run_row(db_session, paused), ScrapeStatus.RUNNING)
+
+    with pytest.raises(ChallengeNotPending) as error:
+        await pipe.resume(paused.run_id, "AAAAA")
+
+    assert error.value.details["status"] == "RUNNING"
+    assert fetcher.posted == []  # đáp án không được gửi khi không chiếm được lượt
+
+
+async def test_resume_of_a_stale_waiting_run_is_rejected_without_sending_the_answer(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    fetcher = _captcha_fetcher()
+    pipe, paused = await _paused(factory, clock, fetcher)
+    clock.now = NOW + NEEDS_HUMAN_STALE_AFTER  # đúng ngưỡng: lượt mới được phép chạy
+
+    with pytest.raises(ChallengeNotPending):
+        await pipe.resume(paused.run_id, "AAAAA")
+
+    assert fetcher.posted == []
+    assert run_row(db_session, paused).status is ScrapeStatus.NEEDS_HUMAN
+
+
+async def test_resume_with_a_page_limit_below_the_resume_page_is_rejected_untouched(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    pipe = pipeline(factory, mock_fetcher(captcha_after=1), clock)
+    paused = await pipe.run(SiteKey.mockshop, Category.laptop, ScrapeTrigger.test)
+    assert paused.pages_fetched == 1
+
+    with pytest.raises(ValueError, match="max_pages"):
+        await pipe.resume(paused.run_id, "ABCDE", max_pages=1)  # cần ít nhất trang 2
+
+    run = run_row(db_session, paused)
+    assert run.status is ScrapeStatus.NEEDS_HUMAN and run.challenge is not None
+
+
+async def test_a_network_error_while_sending_the_answer_keeps_the_run_waiting(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    fetcher = _captcha_fetcher()
+    pipe, paused = await _paused(factory, clock, fetcher)
+    fetcher.on_post = lambda: FetchFailed("down", url="u")
+
+    with pytest.raises(FetchFailed):
+        await pipe.resume(paused.run_id, "AAAAA")
+
+    run = run_row(db_session, paused)
+    assert run.status is ScrapeStatus.NEEDS_HUMAN and run.challenge is not None
+
+
+async def test_a_server_error_from_the_challenge_endpoint_is_not_a_wrong_answer(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    fetcher = _captcha_fetcher()
+    pipe, paused = await _paused(factory, clock, fetcher)
+    fetcher.on_post = lambda: FetchResponse(url="u", final_url="u", status=500, text="oops")
+
+    with pytest.raises(FetchFailed):
+        await pipe.resume(paused.run_id, "AAAAA")
+
+    assert run_row(db_session, paused).status is ScrapeStatus.NEEDS_HUMAN
+
+
+async def test_cancelling_a_run_closes_it_instead_of_leaving_it_running(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    started = asyncio.Event()
+
+    class Hanging(ScriptedFetcher):
+        async def get(self, url: str) -> FetchResponse:
+            started.set()
+            await asyncio.Event().wait()
+            raise AssertionError("unreachable")
+
+    pipe = pipeline(factory, Hanging({}), clock)
+    task = asyncio.create_task(pipe.run(SiteKey.mockshop, Category.laptop, ScrapeTrigger.test))
+    await asyncio.wait_for(started.wait(), timeout=5)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    db_session.expire_all()
+    run = db_session.exec(select(ScrapeRun)).one()
+    assert run.status is ScrapeStatus.FAILED
+    assert run.error_message == "Lượt thu thập bị huỷ."
+    assert run.finished_at is not None

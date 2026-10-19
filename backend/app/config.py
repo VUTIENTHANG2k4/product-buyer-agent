@@ -4,6 +4,7 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
+from urllib.parse import urlsplit
 
 from pydantic import (
     AfterValidator,
@@ -12,6 +13,7 @@ from pydantic import (
     PositiveInt,
     SecretStr,
     StringConstraints,
+    field_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -40,6 +42,9 @@ def _check_user_agent(value: str) -> str:
 UserAgent = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1), AfterValidator(_check_user_agent)
 ]
+
+
+LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
 class Settings(BaseSettings):
@@ -82,6 +87,15 @@ class Settings(BaseSettings):
     mock_shop_url: str = "http://localhost:8100"
     mock_shop_captcha_after: int = 5
     mock_shop_delay_seconds: float = 1
+
+    @field_validator("mock_shop_url")
+    @classmethod
+    def _mock_shop_is_local(cls, value: str) -> str:
+        """Mock-shop được miễn robots/ngoại tuyến/độ trễ trang thật nên chỉ được ở máy cục bộ."""
+        parts = urlsplit(value)
+        if parts.scheme not in ("http", "https") or parts.hostname not in LOCAL_HOSTS:
+            raise ValueError("must be an http(s) URL on localhost, 127.0.0.1 or ::1")
+        return value.rstrip("/")
 
     # Lịch chạy
     scheduler_enabled: bool = False

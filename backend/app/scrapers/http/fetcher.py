@@ -167,7 +167,7 @@ class Fetcher:
         await self._pace(url, crawl_delay)
         try:
             response = await self._mock.post(url, data=dict(data))
-        except httpx.TransportError as exc:
+        except (httpx.RequestError, httpx.InvalidURL) as exc:
             raise FetchFailed(f"{type(exc).__name__}: {exc}", url=url) from exc
         return FetchResponse(
             url=url,
@@ -243,7 +243,7 @@ class Fetcher:
             failure: str
             try:
                 response = await self._client(url).get(url)
-            except httpx.TransportError as exc:
+            except (httpx.RequestError, httpx.InvalidURL) as exc:
                 failure = f"{type(exc).__name__}: {exc}"
             else:
                 status = response.status_code
@@ -291,7 +291,7 @@ class Fetcher:
             await self._pace(url, None)
             try:
                 response = await self._client(url).get(url)
-            except httpx.TransportError as exc:
+            except (httpx.RequestError, httpx.InvalidURL) as exc:
                 raise RobotsUnavailable(
                     f"cannot fetch robots.txt ({type(exc).__name__})", url=url
                 ) from exc
