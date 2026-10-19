@@ -178,7 +178,7 @@ Xong khi:
 | T2.1 | Fetcher (robots, độ trễ, retry, offline, raw cache) + `scripts/fetch_page.py` | T0.1, T0.6, T2.2 | M | ✅ |
 | T2.2 | BaseScraper, SiteConfig, registry, ChallengeDetector | T1.1 | S | ✅ |
 | T2.3 | Mock-shop | T0.1 | M | ✅ |
-| T2.4 | MockShopScraper | T2.2, T2.3 | S | ⬜ |
+| T2.4 | MockShopScraper | T2.2, T2.3 | S | ✅ |
 | T2.5 | Chuẩn hóa cơ bản: giá, URL, hãng | T1.1 | S | ✅ |
 | T2.6 | Pipeline + `scrape_service` + vòng đời ScrapeRun + HITL + `make scrape` | T1.4, T2.1, T2.4, T2.5 | L | ⬜ |
 

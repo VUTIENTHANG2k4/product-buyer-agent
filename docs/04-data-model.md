@@ -304,6 +304,7 @@ class ListingPage(BaseModel):
     items: list[ListingItem]
     has_next: bool
     next_url: HttpUrl | None
+    skipped: int                       # số thẻ không parse được (mặc định 0); pipeline cộng vào items_failed
 
 class ProductDetail(BaseModel):        # đầu ra parser trang chi tiết
     url: HttpUrl

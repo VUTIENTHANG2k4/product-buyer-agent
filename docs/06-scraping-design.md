@@ -180,6 +180,8 @@ Cảnh báo chất lượng: tỷ lệ parse thành công < 80% hoặc số sả
 - Mỗi trang tối thiểu: 1 trang danh sách mỗi nhóm, 1 trang danh sách cuối (không còn trang sau), 2 trang chi tiết, 1 trang tìm kiếm (nếu tầng 2).
 - Xóa nội dung không cần (script quảng cáo lớn) để file < 500 KB; không chứa dữ liệu cá nhân.
 - Tên: `listing_<category>_p<n>.html`, `detail_<slug>.html`, `search_<query>.html`.
+- Fixture của mock-shop (`tests/fixtures/mockshop/`) sinh bằng `uv run python -m scripts.save_mockshop_fixtures` (gọi mock-shop qua ASGI, không mạng); một test so fixture với mock-shop hiện tại nên sửa mock-shop xong phải chạy lại lệnh này.
+- Parser nhận thẻ không đọc được thì bỏ qua và đếm vào `ListingPage.skipped`; pipeline cộng vào `items_failed`.
 - Test parser khẳng định: số sản phẩm, sản phẩm đầu tiên đầy đủ trường, `has_next` đúng, mọi giá là số nguyên dương hoặc `None`.
 
 ## 9. Lệnh

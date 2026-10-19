@@ -41,6 +41,7 @@ class ListingPage(BaseModel):
     items: list[ListingItem] = Field(default_factory=list)
     has_next: bool = False
     next_url: HttpUrl | None = None
+    skipped: int = Field(default=0, ge=0, strict=True)  # thẻ sản phẩm không đọc được, bị bỏ qua
 
 
 class ProductDetail(BaseModel):
