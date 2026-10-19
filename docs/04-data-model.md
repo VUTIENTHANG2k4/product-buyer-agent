@@ -201,6 +201,7 @@ Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.spe
 | `AlertStatus` | `active`, `triggered`, `paused` |
 | `AgentRunStatus` | `running`, `succeeded`, `needs_clarification`, `failed` |
 | `MessageRole` | `user`, `assistant` (lời gọi tool nằm trong `agent_run.events`, không nằm ở bảng tin nhắn) |
+| `ChallengeKind` | `http_403`, `http_429`, `captcha`, `soft_block` (chỉ nằm trong JSON của cột scrape_run.challenge, không có cột riêng nên không có CHECK) |
 
 **Giá dùng để so sánh** (`effective_price`) của một offer: lấy `price` nếu `price_type` ∈ {`regular`, `sale`, `flash`}; nếu `member` thì vẫn hiển thị nhưng mặc định so sánh bằng `list_price` khi có, kèm nhãn "giá thành viên". Giá bị che (ví dụ flash sale sắp diễn ra hiển thị "2*.**0.000") **không lưu**.
 
@@ -309,6 +310,14 @@ class ProductDetail(BaseModel):        # đầu ra parser trang chi tiết
     raw_specs: dict[str, str]
     model_code_hint: str | None        # MPN/SKU từ JSON-LD nếu có
     brand_hint: str | None
+
+class Challenge(BaseModel):           # dấu hiệu bị chặn/captcha (06 §4); lưu vào scrape_run.challenge
+    kind: ChallengeKind
+    site: SiteKey
+    url: HttpUrl                       # URL của trang gặp challenge
+    prompt: str | None                 # đề bài (chỉ mock-shop)
+    image_url: HttpUrl | None
+    token: str | None                  # mã gắn với form captcha (chỉ mock-shop)
 
 class SpecFilter(BaseModel):
     field: str                         # tên trường trong khung specs, ví dụ "gpu_rank", "ram_gb"

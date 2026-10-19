@@ -6,8 +6,8 @@
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
 - Task đang làm: –
-- Task kế tiếp đề xuất: T1.6 (S, làm trước T2.6) rồi T1.7, T1.8 (S, không chặn); T0.9 (S) trước khi service đưa thời gian vào `details` lỗi. M2: T2.2/T2.3/T2.5 làm được ngay, T2.1 chờ T2.2. T3.1 (GearVN) sau M1–M2
-- Cập nhật lần cuối: 2026-10-17 — T1.5 đã merge vào main và push (`3176bda`); QA M1 xong: 8 lỗi → T1.6–T1.8, 5 việc dồn vào T6.2/T2.6
+- Task kế tiếp đề xuất: T2.1 (Fetcher, đã đủ phụ thuộc; có việc dồn từ QA M0) hoặc T2.3/T2.5; T1.6 (S) làm trước T2.6, T1.7, T1.8 (S, không chặn); T0.9 (S) trước khi service đưa thời gian vào `details` lỗi. T3.1 (GearVN) sau M1–M2
+- Cập nhật lần cuối: 2026-10-19 — T2.2 xong trên nhánh `task/T2.2-base-scraper` (chưa merge); trước đó QA M1: 8 lỗi → T1.6–T1.8, 5 việc dồn vào T6.2/T2.6
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -31,7 +31,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 100% (1298 pass + 38 xfail đã biết của T0.9/T2.1/T1.6–T1.8/T6.2, ngưỡng 80% trong `make test-be`, ~75 giây) | 2026-10-17 |
+| Coverage backend | 100% (1418 pass + 38 xfail đã biết của T0.9/T2.1/T1.6–T1.8/T6.2, ngưỡng 80% trong `make test-be`, ~55 giây) | 2026-10-19 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
@@ -55,3 +55,4 @@
 - 2026-10-17 (T1.4): repository đồng bộ, nhận `Session`, chỉ `flush` (không commit), thời gian truyền qua `now`; chi tiết ở docs/04 §3. Test repository ở `backend/tests/integration/repositories/` (tên file `test_repo_*.py` để không trùng basename). Dùng `session.exec`; truy vấn nhiều cột dùng `sqlalchemy.select` + `session.execute`. Cột `xmax` trong `upsert` là thủ thuật PostgreSQL để biết dòng mới (đã kiểm trên PG 17).
 - 2026-10-17 (T1.5): script trong `backend/scripts/` chạy bằng `python -m scripts.<tên>` từ `backend/` (chạy `python scripts/x.py` không import được `app`); Makefile `scrape`/`eval` còn gọi kiểu cũ, T2.6/T6.6 sửa. `make seed FIXTURE=dev|eval|e2e [RESET=1]`: `--reset` xóa sạch DB nên bắt buộc `--yes`. Dữ liệu ở `backend/tests/fixtures/seed/*.json` (tên "Mock", URL `.example`), sinh một lần rồi sửa tay; mỗi profile mô tả ở docs/09 §3. `make check` giờ chạy mypy cả `scripts/`. Test `test_seed_data.py` giữ một transaction suốt module: đừng gộp test seed khác vào cùng module.
 - 2026-10-17 (QA M1): 26 `xfail(strict=True)` mới trong `*_m1.py` (8 lỗi → T1.6–T1.8; 3 ca cần quyết định thiết kế dồn vào T6.2); XPASS báo đỏ, khi đó gỡ dấu xfail. Rủi ro chưa xử lý: bảng hạng GPU thiếu RTX 3070/3070 Ti/3080; seed rất "sạch" (T6.6 nên thêm vài sản phẩm thiếu specs/hết hàng cố ý).
+- 2026-10-19 (T2.2): `BaseScraper` chỉ phụ thuộc Protocol `PageFetcher` (`scrapers/http/types.py`); T2.1 phải trả response cho 403/429 và ném lỗi cho mọi 4xx/5xx khác, chuyển hướng ra ngoài domain, robots chặn (06 §4). Từ khóa captcha quét toàn văn nên có thể báo nhầm trang thật có reCAPTCHA: kiểm fixture ở T3.1/T4.x, ghi đè `detect_challenge` nếu cần. Pipeline (T2.6) truyền `expect_items` (từ `latest_succeeded`) và `start_page` (HITL); lưu `Challenge` bằng `model_dump(mode="json")`. Kiểm host so khớp theo `netloc` (kèm cổng): `www.x` khác `x`, `http` và `https` coi như cùng host.

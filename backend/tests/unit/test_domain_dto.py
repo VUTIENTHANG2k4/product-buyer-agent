@@ -5,8 +5,15 @@ from typing import Any
 import pytest
 from pydantic import HttpUrl, ValidationError
 
-from app.domain.dto import ListingItem, ListingPage, ProductDetail, QueryIntent, SpecFilter
-from app.domain.enums import Category, PriceType, SiteKey, StockStatus
+from app.domain.dto import (
+    Challenge,
+    ListingItem,
+    ListingPage,
+    ProductDetail,
+    QueryIntent,
+    SpecFilter,
+)
+from app.domain.enums import Category, ChallengeKind, PriceType, SiteKey, StockStatus
 
 
 def _item(**overrides: Any) -> ListingItem:
@@ -379,3 +386,41 @@ def test_product_detail_round_trips_through_json() -> None:
         }
     )
     assert ProductDetail.model_validate(detail.model_dump(mode="json")) == detail
+
+
+# --- Challenge ------------------------------------------------------------------------------
+
+
+def test_challenge_roundtrips_through_json_for_scrape_run_storage() -> None:
+    challenge = Challenge(
+        kind=ChallengeKind.captcha,
+        site=SiteKey.mockshop,
+        url=HttpUrl("http://127.0.0.1:8100/c/laptop"),
+        prompt="AB3XZ",
+        token="tok-1",
+    )
+    stored = challenge.model_dump(mode="json")
+    assert stored["kind"] == "captcha"
+    assert stored["site"] == "mockshop"
+    assert Challenge.model_validate(stored) == challenge
+
+
+def test_challenge_optional_fields_default_to_none() -> None:
+    challenge = Challenge.model_validate(
+        {"kind": "http_403", "site": "gearvn", "url": "https://gearvn.example/"}
+    )
+    assert (challenge.prompt, challenge.image_url, challenge.token) == (None, None, None)
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"kind": "captcha!", "site": "gearvn", "url": "https://gearvn.example/"},
+        {"kind": "captcha", "site": "shopee", "url": "https://gearvn.example/"},
+        {"kind": "captcha", "site": "gearvn", "url": "not a url"},
+        {"kind": "captcha", "site": "gearvn", "url": "https://gearvn.example/", "image_url": "x"},
+    ],
+)
+def test_challenge_rejects_invalid_values(bad: dict[str, str]) -> None:
+    with pytest.raises(ValidationError):
+        Challenge.model_validate(bad)

@@ -84,3 +84,10 @@ class AgentRunStatus(StrEnum):
 class MessageRole(StrEnum):
     user = "user"
     assistant = "assistant"
+
+
+class ChallengeKind(StrEnum):
+    http_403 = "http_403"
+    http_429 = "http_429"
+    captcha = "captcha"
+    soft_block = "soft_block"
