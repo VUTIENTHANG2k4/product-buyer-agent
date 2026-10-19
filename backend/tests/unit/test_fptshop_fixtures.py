@@ -1,4 +1,4 @@
-"""Fixture FPT Shop (T4.1, docs/06 §8): kích thước, không dữ liệu cá nhân, robots.txt cho URL dùng."""
+"""Fixture FPT Shop (T4.1, docs/06 §8): kích thước, không dữ liệu cá nhân, robots.txt cho URL."""
 
 import re
 from pathlib import Path
