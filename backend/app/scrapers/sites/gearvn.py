@@ -131,7 +131,7 @@ class GearVNScraper(BaseScraper):
                 logger.warning(
                     "Bỏ qua thẻ sản phẩm không đọc được: %s", card.attributes.get("href")
                 )
-        next_link = tree.css_first("link[rel=next]")
+        next_link = tree.css_first("link[rel~=next]")
         href = next_link.attributes.get("href") if next_link is not None else None
         next_url: str | None = None
         if href:

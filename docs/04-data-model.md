@@ -272,12 +272,12 @@ Kiểu dữ liệu chặt như DTO §6: số nguyên strict (không nhận bool/
 
 Để hiểu "RTX 4060 trở lên", mỗi `gpu_model` được ánh xạ sang một số thứ hạng trong `app/normalize/specs/gpu_rank.py`. Đây là **thứ tự xấp xỉ do dự án tự định nghĩa** để lọc, không phải điểm benchmark; cần rà soát khi thêm GPU mới và có test bảo vệ thứ tự.
 
-Giá trị khởi tạo (càng lớn càng mạnh): `Integrated` 0 · `RTX 2050` 10 · `RTX 3050` 20 · `RTX 3050 Ti` 22 · `RTX 4050` 30 · `RTX 3060` 32 · `RTX 5050` 34 · `RTX 4060` 40 · `RTX 5060` 45 · `RTX 4070` 50 · `RTX 5070` 55 · `RTX 5070 Ti` 60 · `RTX 4080` 70 · `RTX 5080` 75 · `RTX 4090` 80 · `RTX 5090` 85. GPU không có trong bảng → `null` và không thỏa bộ lọc theo hạng.
+Giá trị khởi tạo (càng lớn càng mạnh): `Integrated` 0 · `RTX 2050` 10 · `RTX 3050` 20 · `RTX 3050 Ti` 22 · `RTX 4050` 30 · `RTX 3060` 32 · `RTX 5050` 34 · `RTX 3070` 38 · `RTX 4060` 40 · `RTX 3070 Ti` 42 · `RTX 5060` 45 · `RTX 4070` 50 · `RTX 3080` 52 · `RTX 5070` 55 · `RTX 5070 Ti` 60 · `RTX 4080` 70 · `RTX 5080` 75 · `RTX 4090` 80 · `RTX 5090` 85. GPU không có trong bảng → `null` và không thỏa bộ lọc theo hạng.
 
 **Chuẩn hóa tên GPU** (`normalize_gpu_name`, chạy trước khi tra bảng). `LaptopSpecs` đưa `gpu_model` về tên chuẩn khi dựng model; `gpu_rank` là trường dẫn xuất chỉ đọc (`computed_field`), tính từ `gpu_model` mỗi lần truy cập nên luôn khớp kể cả khi `gpu_model` bị gán lại. `gpu_rank` vẫn có trong `model_dump()` để lọc JSONB; giá trị `gpu_rank` truyền vào khi parse bị bỏ qua.
 
-- Không phân biệt hoa/thường; bỏ `GeForce`, `NVIDIA`, `™`, `®`, `Laptop GPU`, dung lượng VRAM. Chấp nhận `RTX4060`, `rtx 4060`, `RTX-4060`, `RTX_4060`, `GeForceRTX4060`. `"GeForce RTX4060 8GB"` → `RTX 4060`.
-- Dạng chuẩn: `RTX <4 chữ số>`, `GTX <3-4 chữ số>`, `RX <4 chữ số>[M|S]`, kèm hậu tố đứng riêng từ `Ti`, `XT`, `Super` theo thứ tự đó (ví dụ `RTX 3050 Ti`, `RX 7600M XT`, `RX 6700S`). `"RTX 4060 TIGER"` vẫn ra `RTX 4060`. RTX workstation (`RTX 4000 Ada`) không được nhận.
+- Không phân biệt hoa/thường; chuỗi vào được đưa về Unicode NFKC trước (chữ số toàn chiều rộng `４０６０` → `4060`; `™` thành `TM` dính liền được bỏ, nên `RTX™ 4060` và `RTXTM 4060` cho cùng kết quả; chữ số Ả Rập không được nhận); bỏ `GeForce`, `NVIDIA`, `™`, `®`, `Laptop GPU`, dung lượng VRAM. Chấp nhận `RTX4060`, `rtx 4060`, `RTX-4060`, `RTX_4060`, `GeForceRTX4060`. `"GeForce RTX4060 8GB"` → `RTX 4060`.
+- Dạng chuẩn: `RTX <4 chữ số>`, `GTX <3-4 chữ số>`, `RX <4 chữ số>[M|S]`, kèm hậu tố đứng riêng từ `Ti`, `XT`/`XTX`, `Super` theo thứ tự đó (ví dụ `RTX 3050 Ti`, `RX 7600M XT`, `RX 7900 XTX`, `RX 6700S`). Chữ số luôn là ASCII `0-9`. `"RTX 4060 TIGER"` vẫn ra `RTX 4060`. RTX workstation (`RTX 4000 Ada`) không được nhận.
 - GPU tích hợp (`Integrated`, `Onboard`, `UHD`, `Iris`, `Intel Graphics`, `Arc Graphics`, `Radeon Graphics`, `Radeon <3-4 số>M|S`, `Apple M<số>`) → `Integrated`. GPU rời được xét trước, nên `Radeon RX 7600M` không bị coi là tích hợp. Intel Arc rời (`Arc A370M`) và `GeForce MX` cố ý không nằm trong danh sách: chưa có hạng, nên `None`.
 - Tên nhận ra nhưng chưa có trong bảng (GTX, RX, `RTX 4070 Ti`, `RTX 4070 Super`…) giữ nguyên tên chuẩn, `gpu_rank = null`.
 - Chuỗi nhắc tới nhiều GPU rời **khác nhau** (`"RTX 4050 (up to RTX 4060)"`) là mơ hồ → `normalize_gpu_name` trả `None`. Chuỗi không phải GPU cũng trả `None`; khi đó `LaptopSpecs` giữ nguyên chuỗi đã bỏ khoảng trắng đầu/cuối và `gpu_rank = null`.
@@ -305,6 +305,7 @@ class ListingPage(BaseModel):
     has_next: bool
     next_url: HttpUrl | None
     skipped: int                       # số thẻ không parse được (mặc định 0); pipeline cộng vào items_failed
+    pagination_loop: bool              # mặc định False; crawl_category đặt True khi trang sau quay về URL đã tải
 
 class ProductDetail(BaseModel):        # đầu ra parser trang chi tiết
     url: HttpUrl
@@ -357,7 +358,7 @@ class QueryIntent(BaseModel):          # đầu ra planner
 | Việc | Quy tắc | Module |
 | --- | --- | --- |
 | Giá | Bỏ ký tự không phải số trong `27.490.000₫`, `27,490,000 đ` → `27490000`. Chuỗi có `*` hoặc `?` → `None`. Giá < 10.000 hoặc > 500.000.000 → `None` + cảnh báo log. Chuẩn hóa NFKC (chữ số toàn chiều rộng); chỉ lấy **số đầu tiên** (huy hiệu "-5%", "Trả góp 0%", "3 cái" đi kèm bị bỏ); số đứng sau dấu âm → `None`; có từ hai số trông như giá (khoảng giá, giá cũ + giá mới) → `None` vì không biết số nào là giá bán | `normalize/price.py` |
-| URL | Bỏ `utm_*`, `fbclid`, `gclid`, `srsltid`, userinfo, fragment; giữ đường dẫn gốc. Bỏ cổng mặc định (`:443` với https, `:80` với http), host về chữ thường và IDN → punycode (khớp `HttpUrl` của DTO). Không phải http/https tuyệt đối, có khoảng trắng/ký tự điều khiển, hoặc dài hơn 2000 ký tự → `ValueError` (pipeline tính vào `items_failed`). Không sắp xếp lại tham số truy vấn | `normalize/url.py` |
+| URL | Bỏ `utm_*`, `fbclid`, `gclid`, `srsltid`, userinfo, fragment; giữ đường dẫn gốc. Bỏ cổng mặc định (`:443` với https, `:80` với http), host về chữ thường và IDN → punycode (khớp `HttpUrl` của DTO). Không phải http/https tuyệt đối, có khoảng trắng/ký tự điều khiển, hoặc dài hơn 2000 ký tự → `ValueError` (pipeline tính vào `items_failed`). Chuỗi truy vấn giữ nguyên mã hóa gốc (`%20` không thành `+`; chỉ ký tự ngoài ASCII được mã hóa `%XX`, `?a` thành `?a=`) và được **sắp ổn định theo tên tham số** nên `?a=1&b=2` và `?b=2&a=1` là một khóa; các giá trị của cùng một tham số giữ thứ tự xuất hiện (T2.7e; offer cũ có query có thể đổi khóa) | `normalize/url.py` |
 | Hãng | So khớp danh sách hãng đã biết (ASUS, Acer, Lenovo, MSI, HP, Dell, Gigabyte, Apple, Logitech, Razer, Corsair, SteelSeries, HyperX, Akko, DareU, E-Dra, Rapoo…) ở đầu tên, sau khi bỏ tiền tố loại sản phẩm ("Laptop", "Chuột không dây"…), không phân biệt hoa/thường và dấu, NFKD (chữ toàn chiều rộng), bỏ ký tự vô hình (U+200B) và nhãn `[...]`/`(...)` ở đầu tên. Không nhận ra → `"Unknown"` (vì `product.brand` NOT NULL) | `normalize/brand.py` |
 | Mã model | Ưu tiên MPN/SKU từ JSON-LD; nếu không có, regex mẫu mã theo hãng (ví dụ `FX608JHI-TU209W`, `AN515-57-5669`, `83JE00PEVN`); viết hoa, bỏ khoảng trắng | `normalize/model_code.py` |
 | Thông số | Bộ luật regex theo nhóm trên `title` + `raw_specs` (ví dụ `RTX\s?(\d{4})(\s?Ti)?`, `(\d+)\s?GB` gần từ "RAM") | `normalize/specs/<category>.py` |

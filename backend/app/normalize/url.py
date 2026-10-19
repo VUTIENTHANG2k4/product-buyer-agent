@@ -1,11 +1,15 @@
 """Làm sạch URL sản phẩm để dùng làm khóa tự nhiên của `Offer` (docs/04 §7)."""
 
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+import re
+from urllib.parse import quote, unquote_plus, urlsplit, urlunsplit
 
 MAX_URL_LENGTH = 2000
 _TRACKING_PARAMS = frozenset({"fbclid", "gclid", "srsltid"})
 _TRACKING_PREFIXES = ("utm_",)
 _DEFAULT_PORTS = {"http": 80, "https": 443}
+# Ký tự được giữ nguyên trong chuỗi truy vấn; `%` giữ nguyên các `%XX` có sẵn.
+_QUERY_SAFE = "%!$'()*+,;=:@/?[]-._~"
+_PERCENT_ESCAPE = re.compile(r"%[0-9a-fA-F]{2}")
 
 
 def host_key(url: str) -> str:
@@ -29,10 +33,35 @@ def host_key(url: str) -> str:
     return host if port is None or port == _DEFAULT_PORTS[scheme] else f"{host}:{port}"
 
 
+def _clean_query(query: str) -> str:
+    """Bỏ tham số theo dõi, giữ nguyên mã hóa gốc của phần còn lại và sắp theo tên tham số.
+
+    Không giải mã rồi mã hóa lại (`%20` không thành `+`); chỉ mã hóa `%XX` cho ký tự ngoài ASCII
+    hoặc không an toàn, và `?a` thành `?a=`. Sắp ổn định theo tên nên `?a=1&b=2` và
+    `?b=2&a=1` là một khóa, còn các giá trị của cùng một tham số giữ thứ tự xuất hiện.
+    """
+    kept: list[tuple[str, str]] = []
+    for segment in query.split("&"):
+        if not segment:
+            continue
+        name = segment.partition("=")[0]
+        key = unquote_plus(name).lower()
+        if key in _TRACKING_PARAMS or key.startswith(_TRACKING_PREFIXES):
+            continue
+        if "=" not in segment:
+            segment += "="
+        encoded = quote(segment, safe=_QUERY_SAFE)
+        # `%c3%a9` và `%C3%A9` là một byte: viết hoa hex để không thành hai khóa.
+        kept.append((name, _PERCENT_ESCAPE.sub(lambda match: match.group().upper(), encoded)))
+    kept.sort(key=lambda pair: pair[0])
+    return "&".join(segment for _, segment in kept)
+
+
 def clean_url(url: str) -> str:
     """Bỏ `utm_*`, `fbclid`, `gclid`, `srsltid`, userinfo, fragment và cổng mặc định.
 
-    Host về chữ thường (IDN → punycode). Ném `ValueError` khi không phải URL http/https tuyệt
+    Chuỗi truy vấn giữ mã hóa gốc và được sắp theo tên tham số (xem `_clean_query`). Host về chữ
+    thường (IDN → punycode). Ném `ValueError` khi không phải URL http/https tuyệt
     đối, có khoảng trắng/ký tự điều khiển, hoặc dài hơn `MAX_URL_LENGTH` ký tự (khóa UNIQUE của
     `offer.url` không nhận URL quá dài).
     """
@@ -43,12 +72,7 @@ def clean_url(url: str) -> str:
         raise ValueError("URL contains spaces or control characters")
     parts = urlsplit(text)
     netloc = host_key(text)
-    query = [
-        (key, value)
-        for key, value in parse_qsl(parts.query, keep_blank_values=True)
-        if key.lower() not in _TRACKING_PARAMS and not key.lower().startswith(_TRACKING_PREFIXES)
-    ]
-    cleaned = urlunsplit((parts.scheme.lower(), netloc, parts.path, urlencode(query), ""))
-    if len(cleaned) > MAX_URL_LENGTH:  # urlencode có thể nở ra (ký tự %xx)
+    cleaned = urlunsplit((parts.scheme.lower(), netloc, parts.path, _clean_query(parts.query), ""))
+    if len(cleaned) > MAX_URL_LENGTH:
         raise ValueError(f"URL longer than {MAX_URL_LENGTH} characters")
     return cleaned

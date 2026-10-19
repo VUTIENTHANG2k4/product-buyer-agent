@@ -235,8 +235,15 @@ class RobotsCache:
 
     def _interpret(self, origin: str, status: int, text: str) -> RobotsRules:
         if 200 <= status < 300:
+            if len(text) > MAX_ROBOTS_CHARS:
+                # RFC 9309 cho phép bỏ phần vượt 500 KiB, nhưng quy tắc nằm ở phần bị bỏ sẽ thành
+                # "được phép". Không xác minh được thì không tải (docs/02 §3).
+                raise RobotsUnavailable(
+                    "robots.txt is larger than 500 KiB", url=f"{origin}/robots.txt"
+                )
             return parse_robots(text, self._user_agent)
         if status in (401, 403):
+            # Fetcher đã đổi 403 thành `RobotsBlocked` trước khi tới đây; còn 401 và bộ tải khác.
             return DISALLOW_ALL  # thận trọng, giống urllib.robotparser
         if 400 <= status < 500 and status != 429:
             return ALLOW_ALL  # 404/410...: không có robots.txt, được phép theo chuẩn

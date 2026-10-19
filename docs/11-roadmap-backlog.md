@@ -155,8 +155,8 @@ Xong khi:
 | T1.4 | Repositories | T1.2 | M | ✅ |
 | T1.5 | Seed script + dữ liệu seed hư cấu | T1.4, T1.3 | M | ✅ |
 | T1.6 | Chặn giá trị PostgreSQL không lưu được ở `OfferUpsert`/`ProductQuery` (phát sinh từ QA M1) | T1.4 | S | ✅ |
-| T1.7 | Seed: file JSON hỏng/sai mã hóa báo `SeedDataError` gọn (phát sinh từ QA M1) | T1.5 | S | ⬜ |
-| T1.8 | `normalize_gpu_name`: chữ số ASCII, hậu tố `XTX`, dạng Unicode (phát sinh từ QA M1) | T1.3 | S | ⬜ |
+| T1.7 | Seed: file JSON hỏng/sai mã hóa báo `SeedDataError` gọn (phát sinh từ QA M1) | T1.5 | S | ✅ |
+| T1.8 | `normalize_gpu_name`: chữ số ASCII, hậu tố `XTX`, dạng Unicode (phát sinh từ QA M1) | T1.3 | S | ✅ |
 
 **T1.1** — [04 §4, §6](04-data-model.md#4-enum). Xong khi: mọi enum và DTO có trong `app/domain/`; test validate (`QueryIntent.limit` 1..20, `SpecFilter.op` hợp lệ, URL chuẩn).
 **T1.2** — [04 §2–3](04-data-model.md#2-sơ-đồ-quan-hệ-erd). Ghi chú từ review T1.1: URL trong DTO là `HttpUrl`, ghi cột bằng `str(url)`; giá nên là `BIGINT` hoặc có `CHECK` cận trên vì DTO chưa chặn giá quá lớn. Xong khi: 12 bảng như ERD, ràng buộc và chỉ mục đúng §3; migration đầu tiên; test `alembic upgrade head` trên DB PostgreSQL rỗng; cột JSON là `JSONB` (GIN trên `product.specs`), enum là `VARCHAR` + `CHECK`, thời gian `TIMESTAMP WITH TIME ZONE`, unique một phần cho `product` ([ADR-0007](adr/0007-postgresql.md)); `conftest.py` có fixture session PostgreSQL rollback mỗi test ([09 §4](09-testing-strategy.md#4-cấu-hình-pytest)).
@@ -181,7 +181,8 @@ Xong khi:
 | T2.4 | MockShopScraper | T2.2, T2.3 | S | ✅ |
 | T2.5 | Chuẩn hóa cơ bản: giá, URL, hãng | T1.1 | S | ✅ |
 | T2.6 | Pipeline + `scrape_service` + vòng đời ScrapeRun + HITL + `make scrape` | T1.4, T2.1, T2.4, T2.5 | L | ✅ |
-| T2.7 | Củng cố Fetcher/mock-shop sau review M2 (phát sinh từ T2.6) | T2.6 | S | ⬜ |
+| T2.7 | Củng cố Fetcher/mock-shop sau review M2 (phát sinh từ T2.6) | T2.6 | S | ✅ |
+| T2.8 | Hủy/lấy lại token cho lượt `NEEDS_HUMAN` (tách từ T2.7g; làm cùng T7.4) | T2.7, T7.4 | S | ⬜ |
 
 **T2.1** — [06 §3](06-scraping-design.md#3-fetcher). Xong khi: test với `respx`: URL bị robots chặn không gửi request; độ trễ thực tế ≥ cấu hình (đồng hồ giả); 2 domain chạy song song không chờ nhau; retry 5xx với backoff; 403 không retry; 429 tôn trọng `Retry-After`; offline mode chặn domain thật; robots.txt không tải được → không cho phép; mock-shop dùng `MOCK_SHOP_DELAY_SECONDS`, không jitter; theo hợp đồng `PageFetcher` ([06 §4](06-scraping-design.md#4-phát-hiện-challenge-và-chặn)): trả response cho 403/429, ném lỗi cho mọi 4xx/5xx khác và cho chuyển hướng ra ngoài domain hoặc tới URL robots chặn. `scripts/fetch_page.py --site --url --out [--allow-online]` lưu một trang qua Fetcher ([06 §8](06-scraping-design.md#8-fixtures)). **Việc dồn từ QA M0 lần hai (lỗi 3–5, Fetcher là nơi chúng có tác động thật):** (a) vá thêm `socket.socket.sendto` và `BaseProactorEventLoop.sock_sendto` trong `backend/tests/conftest.py` cùng `gethostbyaddr`/`getnameinfo`/`getfqdn`, rồi gỡ `xfail` của `test_udp_sendto_to_a_disallowed_address_is_blocked`, `test_asyncio_udp_sock_sendto_to_a_disallowed_address_is_blocked` và `test_hostname_lookup_through_gethostbyaddr_or_getfqdn_is_blocked` trong `test_network_guard_m0b.py`; (b) `SCRAPER_USER_AGENT` từ chối ký tự điều khiển (NUL, BEL, DEL, CR/LF) và chuỗi chỉ gồm ký tự độ rộng 0 (U+200B) ngay lúc khởi động, rồi gỡ `xfail` của `test_user_agent_with_control_or_invisible_only_content_is_rejected_at_startup` trong `test_config_m0b.py` (h11 hiện chỉ báo `LocalProtocolError` ở request đầu tiên).
 **T2.2** — [06 §2, §4](06-scraping-design.md#2-giao-diện-basescraper). Xong khi: lớp trừu tượng và registry; `ChallengeDetector` có test cho từng dấu hiệu (403, 429, từ khóa captcha, soft block).
@@ -189,7 +190,9 @@ Xong khi:
 **T2.4** — Xong khi: scraper mock-shop parse danh sách (JSON-LD + HTML), chi tiết, tìm kiếm; fixture lưu từ mock-shop; test parser.
 **T2.5** — [04 §7](04-data-model.md#7-quy-tắc-chuẩn-hóa). Xong khi: `parse_price` (gồm giá bị che → None), `clean_url`, `detect_brand`; ≥ 20 ca test tham số hóa. Từ review T1.2: `clean_url` nên từ chối URL quá dài (> 2000 ký tự) vì `offer.url` có UNIQUE (btree lỗi với khóa > ~2,7 KB). Từ review T1.1: `clean_url` bỏ cả userinfo (`user:pw@`) và fragment, vì `HttpUrl` ở DTO chấp nhận chúng; `parse_price` trả `int` (DTO không nhận chuỗi/float).
 **T2.6** — [06 §7](06-scraping-design.md#7-pipeline-appscraperspipelinepy), [03 §5.2](03-architecture.md#52-thu-thập-định-kỳ). Xong khi: test integration chạy pipeline với mock-shop (ASGI transport): lượt đầy đủ → `SUCCEEDED` với số liệu đúng; gặp captcha → `NEEDS_HUMAN` → `resume(answer)` → `SUCCEEDED`; lỗi một item → `items_failed` tăng, lượt không dừng; giá đổi → thêm `PriceHistory` và trả `offer_id`; trang thật bị chặn → `BLOCKED` và tạm nghỉ 24 giờ; `make scrape SITE=mockshop CAT=laptop` chạy được. Từ review T1.4: `OfferRepository.upsert` ghi đè cả `None`/`{}` nên pipeline phải gộp `raw_specs`/`rating` (từ trang chi tiết) trước khi gọi; repo đồng bộ nên bọc `asyncio.to_thread`; pipeline sở hữu transaction (repo không commit). Từ QA M1: bọc savepoint cho từng mục để lỗi lưu một mục chỉ tính vào `items_failed`; kiểm giá 0 (repo chấp nhận, sẽ đứng đầu `price_asc`; `parse_price` của T2.5 phải trả `None` khi < 10.000); mỗi (site, category) chỉ một lượt vì `record_snapshot` không khóa.
-**T2.7** — Phát sinh từ review M2 (mục "Gợi ý", không chặn). Xong khi: (a) `MockShopScraper.config` không đọc `get_settings()` lúc import (dựng `SiteConfig` khi tạo scraper hoặc đọc env lười) để import `registry` không cần đủ biến môi trường; (b) `Fetcher` từ chối/cắt phản hồi lớn hơn ~5 MB trước khi ghi raw cache; (c) ✅ (làm ở T3.2) HTTP 503/5xx kèm dấu hiệu challenge (Cloudflare) của trang thật được coi là `BLOCKED` có thời gian nghỉ thay vì `FAILED`; (d) test song song hai domain ở mức `Fetcher` chứng minh domain B không bị chặn khi domain A đang chờ (hiện chỉ có test ở mức `DomainRateLimiter`); (e) `clean_url` giữ nguyên mã hóa query gốc (không đổi `%20` thành `+`) và cân nhắc sắp xếp tham số để `?a=1&b=2` và `?b=2&a=1` là một khóa; (f) test khẳng định `BaseScraper.detect_challenge` mặc định không bao giờ trích đáp án captcha; (g) từ QA M2: thao tác hủy/lấy lại token cho lượt `NEEDS_HUMAN` khi mock-shop đã reset (hiện `resume` luôn `CHALLENGE_FAILED` và lượt mới phải chờ 1 giờ); `Retry-After` của HTTP 503 chưa được tôn trọng; robots.txt vượt 500 KiB bị cắt theo RFC 9309 nhưng làm phần sau fail-open; thông điệp "Dừng ở giới hạn số trang" hiện cũng dùng cho vòng lặp `next_url`.
+**T2.7** — Phát sinh từ review M2 (mục "Gợi ý", không chặn). Xong khi: (a) `MockShopScraper.config` không đọc `get_settings()` lúc import (dựng `SiteConfig` khi tạo scraper hoặc đọc env lười) để import `registry` không cần đủ biến môi trường; (b) `Fetcher` từ chối/cắt phản hồi lớn hơn ~5 MB trước khi ghi raw cache; (c) ✅ (làm ở T3.2) HTTP 503/5xx kèm dấu hiệu challenge (Cloudflare) của trang thật được coi là `BLOCKED` có thời gian nghỉ thay vì `FAILED`; (d) test song song hai domain ở mức `Fetcher` chứng minh domain B không bị chặn khi domain A đang chờ (hiện chỉ có test ở mức `DomainRateLimiter`); (e) `clean_url` giữ nguyên mã hóa query gốc (không đổi `%20` thành `+`) và cân nhắc sắp xếp tham số để `?a=1&b=2` và `?b=2&a=1` là một khóa; (f) test khẳng định `BaseScraper.detect_challenge` mặc định không bao giờ trích đáp án captcha; (g) từ QA M2 (làm ở M3b, trừ phần hủy token): `Retry-After` của HTTP 503 được tôn trọng; robots.txt vượt 500 KiB là fail-closed; vòng lặp `next_url` có thông điệp riêng (`ListingPage.pagination_loop`); thao tác hủy/lấy lại token cho lượt `NEEDS_HUMAN` khi mock-shop đã reset (hiện `resume` luôn `CHALLENGE_FAILED` và lượt mới phải chờ 1 giờ) **tách thành T2.8**.
+
+**T2.8** — Phát sinh từ T2.7(g) (cần thiết kế API nên làm cùng T7.4). Xong khi: có thao tác hủy lượt `NEEDS_HUMAN` (hoặc lấy lại `token` mới khi mock-shop đã reset) để lượt mới chạy ngay thay vì chờ 1 giờ và `resume` không mãi `CHALLENGE_FAILED`; test ở pipeline và endpoint admin; cập nhật 06 §4 và 07.
 
 ### M3 — GearVN
 
@@ -198,7 +201,7 @@ Xong khi:
 | T3.1 | Khảo sát GearVN + fixtures | T0.4, T2.1 | M | ✅ |
 | T3.2 | GearVNScraper | T3.1 | M | ✅ |
 | T3.3 | Chạy thật có kiểm soát | T3.2, T2.6 | S | ✅ |
-| T3.4 | `robots.txt` bị CDN challenge → `BLOCKED` (phát sinh từ QA M3) | T3.2 | S | ⬜ |
+| T3.4 | `robots.txt` bị CDN challenge → `BLOCKED` (phát sinh từ QA M3) | T3.2 | S | ✅ |
 
 **T3.1** — Dùng skill `add-scraper` (Pha A). Xong khi: `docs/sources/gearvn.md` điền đủ mục 3–7; URL danh mục 4 nhóm; quyết định `requires_js`; fixtures theo [06 §8](06-scraping-design.md#8-fixtures).
 **T3.2** — Xong khi: parse danh sách 4 nhóm, chi tiết, tìm kiếm; test trên fixture; coverage module ≥ 90%.
@@ -228,7 +231,7 @@ Xong khi:
 | T5.3 | LLM dự phòng + cache | T5.1, T6.1 | M | ⬜ |
 
 **T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
-**T5.2** — Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
+**T5.2** — Từ T3.4: matcher cũng phải xử lý cùng sản phẩm có `href` http và https (hai khóa URL khác nhau) và cùng URL ở hai nhóm. Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
 **T5.3** — Phụ thuộc T6.1 nằm ở M6 nhưng T6.1 chỉ cần T0.1, nên khi lập lượt M5 cần làm T6.1 trước hoặc hoãn T5.3 sang lượt M6. Bật/tắt bằng `LLM_EXTRACTOR_ENABLED`. Xong khi: chỉ gọi khi thiếu trường bắt buộc; kết quả validate bằng khung specs; cache theo hash; test với model giả; ghi số lần gọi vào log.
 
 ### M6 — Agent

@@ -13,9 +13,12 @@ DOC_TABLE = {
     "RTX 4050": 30,
     "RTX 3060": 32,
     "RTX 5050": 34,
+    "RTX 3070": 38,
     "RTX 4060": 40,
+    "RTX 3070 Ti": 42,
     "RTX 5060": 45,
     "RTX 4070": 50,
+    "RTX 3080": 52,
     "RTX 5070": 55,
     "RTX 5070 Ti": 60,
     "RTX 4080": 70,
@@ -33,9 +36,12 @@ RANK_ORDER = [
     "RTX 4050",
     "RTX 3060",
     "RTX 5050",
+    "RTX 3070",
     "RTX 4060",
+    "RTX 3070 Ti",
     "RTX 5060",
     "RTX 4070",
+    "RTX 3080",
     "RTX 5070",
     "RTX 5070 Ti",
     "RTX 4080",
@@ -156,3 +162,7 @@ def test_rank_order_protects_intended_relations() -> None:
     assert gpu_rank("RTX 3050 Ti") > gpu_rank("RTX 3050")  # type: ignore[operator]
     assert gpu_rank("RTX 5070 Ti") > gpu_rank("RTX 5070")  # type: ignore[operator]
     assert gpu_rank("RTX 2050") > gpu_rank("Integrated")  # type: ignore[operator]
+    # Laptop RTX 3070 xấp xỉ RTX 4060; 3070 Ti vượt 4060 nên thỏa "RTX 4060 trở lên".
+    assert gpu_rank("RTX 3060") < gpu_rank("RTX 3070") < gpu_rank("RTX 4060")  # type: ignore[operator]
+    assert gpu_rank("RTX 3070 Ti") > gpu_rank("RTX 4060")  # type: ignore[operator]
+    assert gpu_rank("RTX 4070") < gpu_rank("RTX 3080") < gpu_rank("RTX 4080")  # type: ignore[operator]

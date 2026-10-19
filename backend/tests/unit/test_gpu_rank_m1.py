@@ -58,15 +58,6 @@ def test_normalize_gpu_name_returns_none_instead_of_guessing(raw: str) -> None:
     assert gpu_rank(raw) is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1: regex dùng `\\d` (Unicode) nên chữ số toàn chiều rộng/Ả Rập được nhận và tên "
-        "'chuẩn' chứa chữ số không phải ASCII ('RTX ４０６０') -> gpu_model lưu vào specs sai dạng "
-        "chuẩn, gpu_rank = null. Dùng [0-9] hoặc NFKC trước khi so khớp (kết quả đúng: 'RTX 4060' "
-        "hoặc None)."
-    ),
-)
 @pytest.mark.parametrize(
     "raw",
     [
@@ -81,16 +72,10 @@ def test_normalize_gpu_name_returns_only_ascii_canonical_names(raw: str) -> None
     assert name is None or name == "RTX 4060"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1: 'AMD Radeon RX 7900 XTX' được chuẩn hóa thành 'RX 7900' (bỏ mất 'XTX' vì hậu tố "
-        "chỉ nhận XT đứng riêng) trong khi 'RX 7900 XT' giữ nguyên: hai GPU khác nhau bị gộp/đặt "
-        "tên sai. Nên trả None hoặc 'RX 7900 XTX'."
-    ),
-)
 def test_normalize_gpu_name_does_not_drop_letters_of_a_suffix() -> None:
-    assert normalize_gpu_name("AMD Radeon RX 7900 XTX") in (None, "RX 7900 XTX")
+    assert normalize_gpu_name("AMD Radeon RX 7900 XTX") == "RX 7900 XTX"
+    assert normalize_gpu_name("amd radeon rx7900xtx") == "RX 7900 XTX"
+    assert normalize_gpu_name("AMD Radeon RX 7900 XT") == "RX 7900 XT"
 
 
 @pytest.mark.parametrize(
@@ -114,21 +99,9 @@ def test_normalize_gpu_name_is_idempotent(raw: str) -> None:
     assert gpu_rank(once) == gpu_rank(raw)
 
 
-_NFK_REASON = (
-    "QA M1: NFKC/NFKD đổi '™' thành 'TM' dính liền ('RTXTM 4060') nên GPU không được nhận "
-    "(None). Nếu tầng chuẩn hóa chữ phía trước dùng NFKC (phổ biến) thì mọi tên 'RTX™ 4060' "
-    "mất hạng. Cần bỏ 'TM' sau RTX/GeForce hoặc quy định dùng NFC."
-)
-
-
 @pytest.mark.parametrize(
     "form",
-    [
-        "NFC",
-        "NFD",
-        pytest.param("NFKC", marks=pytest.mark.xfail(strict=True, reason=_NFK_REASON)),
-        pytest.param("NFKD", marks=pytest.mark.xfail(strict=True, reason=_NFK_REASON)),
-    ],
+    ["NFC", "NFD", "NFKC", "NFKD"],
 )
 def test_unicode_form_of_the_input_does_not_change_the_result(form: str) -> None:
     raw = "NVIDIA® GeForce RTX™ 4060 Laptop GPU – Đồ họa rời"
@@ -200,3 +173,46 @@ def test_laptop_specs_ambiguous_gpu_is_kept_raw_and_unranked_in_the_json_dump() 
 
     assert dumped["gpu_model"] == "RTX 4050 (up to RTX 4060)"
     assert dumped["gpu_rank"] is None
+
+
+def test_fullwidth_digits_and_nfkc_trademark_text_resolve_to_the_canonical_name() -> None:
+    assert normalize_gpu_name("RTX ４０６０") == "RTX 4060"
+    assert normalize_gpu_name("GeForce RTXTM4060") == "RTX 4060"
+    assert (
+        gpu_rank("ＮＶＩＤＩＡ ＧｅＦｏｒｃｅ ＲＴＸ™ ３０７０ Ｔｉ")
+        == gpu_rank("RTX 3070 Ti")
+        == 42
+    )
+
+
+def test_new_ranked_gpus_are_recognised_with_spacing_and_case_noise() -> None:
+    assert gpu_rank("GeForce RTX3070 8GB") == 38
+    assert gpu_rank("rtx 3070ti") == 42
+    assert gpu_rank("NVIDIA GeForce RTX 3080 Laptop GPU 16GB") == 52
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        pytest.param("Intel® Arc™ Graphics", "Integrated", id="arc-trademark"),
+        pytest.param("Intel® Iris™ Xe Graphics", "Integrated", id="iris-trademark"),
+        pytest.param("UHD™ Graphics", "Integrated", id="uhd-trademark"),
+        pytest.param("AMD Radeon™ Graphics", "Integrated", id="radeon-trademark"),
+        pytest.param("RTX 4060℠", "RTX 4060", id="service-mark-glued"),
+        pytest.param("GeForce RTX™ 4060®", "RTX 4060", id="rtx-trademark-registered"),
+    ],
+)
+@pytest.mark.parametrize("form", ["NFC", "NFKC", "NFKD"])
+def test_trademark_symbols_never_hide_a_gpu_name_in_any_unicode_form(
+    raw: str, expected: str, form: str
+) -> None:
+    assert normalize_gpu_name(unicodedata.normalize(form, raw)) == expected
+
+
+def test_overlong_input_is_rejected_quickly_instead_of_normalized() -> None:
+    started = time.perf_counter()
+
+    assert normalize_gpu_name("ﬃ" * 1_000_000) is None
+    assert normalize_gpu_name("RTX 4060 " + "x" * 600) is None
+    assert normalize_gpu_name("RTX 4060 " + "x" * 400) == "RTX 4060"
+    assert time.perf_counter() - started < 1.0

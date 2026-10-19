@@ -46,8 +46,8 @@ from app.normalize.brand import UNKNOWN_BRAND, detect_brand
 from app.normalize.price import MAX_PRICE_VND, MIN_PRICE_VND
 from app.normalize.url import clean_url, host_key
 from app.scrapers.base import BaseScraper, SiteConfig
-from app.scrapers.challenge import ChallengeDetected
-from app.scrapers.http.errors import FetchError, FetchFailed
+from app.scrapers.challenge import ChallengeDetected, robots_block_challenge
+from app.scrapers.http.errors import FetchError, FetchFailed, RobotsBlocked
 from app.scrapers.http.types import FormFetcher
 from app.scrapers.registry import get_scraper
 
@@ -102,6 +102,7 @@ class _Progress:
     seen_urls: set[str] = field(default_factory=set)  # URL đã gặp trong lượt (khử trùng)
     unsafe: int = 0  # lỗi không phải 'hết giá': thẻ hỏng, lỗi lưu → cấm tắt offer không thấy
     has_next: bool = False  # trang cuối đã tải còn trang sau (bị cắt bởi max_pages)
+    loop: bool = False  # trang sau trỏ về URL đã tải (vòng lặp phân trang)
     detail_requests: int = 0
 
 
@@ -415,8 +416,12 @@ class ScrapePipeline:
                     self._save_page, scraper.config, context, progress, prepared, page.skipped
                 )
                 progress.has_next = page.has_next
+                progress.loop = page.pagination_loop
         except ChallengeDetected as detected:
             challenge = detected.challenge
+        except RobotsBlocked as blocked:
+            challenge = robots_block_challenge(context.site, blocked.url, blocked.status)
+            logger.warning("[run %s] robots.txt bị chặn (HTTP %s)", context.run_id, blocked.status)
         except FetchError as exc:
             error = _error_text(exc)
             logger.warning("[run %s] %s", context.run_id, error)
@@ -448,6 +453,8 @@ class ScrapePipeline:
                 progress.detail_requests += 1
                 try:
                     detail = await scraper.fetch_detail(str(item.url))
+                except RobotsBlocked:
+                    raise  # robots.txt hết hạn giữa lượt và bị chặn: dừng cả lượt như challenge
                 except (FetchError, ValueError) as exc:
                     logger.warning("Không tải được trang chi tiết (%s)", type(exc).__name__)
             prepared.append((item, detail))
@@ -665,7 +672,9 @@ class ScrapePipeline:
             logger.warning("[run %s] %s", context.run_id, " ".join(warnings))
         capped = progress.has_next
         if ratio > FAILED_RATIO_LIMIT or capped:
-            if capped:
+            if progress.loop:
+                warnings.append("Phân trang lặp lại URL đã tải, dừng; chưa đủ danh mục.")
+            elif capped:
                 warnings.append("Dừng ở giới hạn số trang, chưa đủ danh mục.")
             return _Verdict(ScrapeStatus.PARTIAL, " ".join(warnings))
         # Không tắt offer khi: không thấy mục nào (có thể trang rỗng bất thường), số sản phẩm
