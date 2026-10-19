@@ -197,11 +197,11 @@ Xong khi:
 | --- | --- | --- | --- | --- |
 | T3.1 | Khảo sát GearVN + fixtures | T0.4, T2.1 | M | ✅ |
 | T3.2 | GearVNScraper | T3.1 | M | ✅ |
-| T3.3 | Chạy thật có kiểm soát | T3.2, T2.6 | S | ⬜ |
+| T3.3 | Chạy thật có kiểm soát | T3.2, T2.6 | S | ✅ |
 
 **T3.1** — Dùng skill `add-scraper` (Pha A). Xong khi: `docs/sources/gearvn.md` điền đủ mục 3–7; URL danh mục 4 nhóm; quyết định `requires_js`; fixtures theo [06 §8](06-scraping-design.md#8-fixtures).
 **T3.2** — Xong khi: parse danh sách 4 nhóm, chi tiết, tìm kiếm; test trên fixture; coverage module ≥ 90%.
-**T3.3** — **Người dùng tự bật** `SCRAPER_OFFLINE_ONLY=false`. Xong khi: `make scrape SITE=gearvn CAT=<nhóm> PAGES=1` cho 4 nhóm đều `SUCCEEDED`; tỷ lệ parse ≥ 90%; ghi kết quả vào `docs/sources/gearvn.md`.
+**T3.3** — **Người dùng tự bật** `SCRAPER_OFFLINE_ONLY=false`. Xong khi: `make scrape SITE=gearvn CAT=<nhóm> PAGES=1` cho 4 nhóm đều `SUCCEEDED` (hoặc `PARTIAL` chỉ vì chạm giới hạn `PAGES=1` khi còn trang sau, đã chốt với người dùng ngày 2026-10-19 vì mỗi nhóm có 8–27 trang; không `FAILED`/`BLOCKED`); tỷ lệ parse ≥ 90%; ghi kết quả vào `docs/sources/gearvn.md`.
 
 ### M4 — Hoàng Hà + Laptop88
 

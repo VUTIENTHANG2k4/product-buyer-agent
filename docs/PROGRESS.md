@@ -5,8 +5,8 @@
 
 ## Trạng thái
 - Sprint hiện tại: 3 (M3 GearVN đang làm, nhánh `milestone/M3-gearvn`)
-- Đang làm: M3 — T3.1 ✅, T3.2 ✅ → T3.3 (chạy thật, người dùng tự bật `SCRAPER_OFFLINE_ONLY=false`)
-- Task kế tiếp đề xuất: T3.3 chạy thật GearVN (cần người dùng tự đặt `SCRAPER_OFFLINE_ONLY=false`; `PAGES=1` cho `PARTIAL` vì còn trang sau, xem `docs/sources/gearvn.md` mục 7). Việc nhỏ chưa chặn: T1.7, T1.8, T2.7 (S; mục (c) đã xong)
+- Đang làm: M3 — T3.1–T3.3 ✅; còn `/check`, `/review M3`, `qa-tester`, `/done M3`
+- Task kế tiếp đề xuất: hoàn tất M3 (check → review → QA → done), sau đó M4 (T4.1 chờ giảng viên về Hoàng Hà; T4.3/T4.4 chờ Laptop88). Việc nhỏ chưa chặn: T1.7, T1.8, T2.7 (S; mục (c) đã xong)
 - Cập nhật lần cuối: 2026-10-19 — M2 xong (T1.6, T2.1, T2.3–T2.6, T0.9; review + QA đã xử lý, còn T2.7), đã merge vào main; mở nhánh M3
 
 ## Milestone

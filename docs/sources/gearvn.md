@@ -89,4 +89,17 @@ Trang chủ (2 MB) chỉ dùng để tìm URL danh mục, không lưu. Chưa có
 - Số lượng: bàn phím 27 trang; với độ trễ 5–6 s một lượt đầy đủ mất vài phút (xem `SCRAPER_MAX_LISTING_PAGES`).
 - Tình trạng kho: thẻ danh sách luôn `StockStatus.unknown` (kể cả "Liên hệ tư vấn"); `availability` của trang chi tiết chưa được đọc vì `ProductDetail` không có trường tồn kho.
 - 503 kèm trang chờ Cloudflare (`cf-mitigated: challenge`…) được Fetcher trả ngay và coi là challenge → `BLOCKED` và nghỉ 24 giờ (T2.7c); chưa gặp trên GearVN, chỉ có test với phản hồi giả.
-- (T3.3) Kết quả chạy thật: chưa chạy.
+- **Kết quả chạy thật (T3.3, 2026-10-19)**, `make scrape SITE=gearvn CAT=<nhóm> PAGES=1`, bot dự án, `SCRAPER_OFFLINE_ONLY=false` do người dùng tự đặt (đã nhắc đặt lại `true`):
+
+  | Nhóm | Trạng thái | Trang | Mục đọc được | Lỗi | Offer | Có thông số có nhãn |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | laptop | PARTIAL (giới hạn trang) | 1 | 20 | 0 | 20 | 19 |
+  | mouse | PARTIAL (giới hạn trang) | 1 | 20 | 0 | 20 | 18 |
+  | keyboard | PARTIAL (giới hạn trang) | 1 | 20 | 0 | 20 | 14 |
+  | headset | PARTIAL (giới hạn trang) | 1 | 20 | 0 | 20 | 16 |
+
+  - Tỷ lệ parse 80/80 = 100% (ngưỡng ≥ 90%); không `FAILED`, `BLOCKED`, captcha, 403 hay 429. `PARTIAL` chỉ vì `PAGES=1` mà còn trang sau (đã chốt với người dùng là chấp nhận).
+  - 80 offer có URL duy nhất, không có giá ≤ 0: 70 `sale` (giá gốc + giá bán) và 10 `regular`. Chưa lượt nào gặp thẻ "Liên hệ tư vấn" (chỉ nằm ở trang cuối nhóm chuột).
+  - Mỗi lượt tải đủ 20 trang chi tiết (giới hạn của pipeline) nên 67/80 offer có `raw_specs` có nhãn; phần còn lại cần thêm lượt hoặc đọc chip trên thẻ (xem điểm đầu của mục này).
+  - `detect_brand` chưa nhận ra 12/80 sản phẩm (hãng `Unknown`, ví dụ HyperWork, Pulsar): xem lại ở M5 (chuẩn hóa hãng).
+  - Chưa chạy lượt đầy đủ (57 trang danh sách) và chưa kiểm tra trang giữa chừng có cả `rel=prev` lẫn `rel=next`.
