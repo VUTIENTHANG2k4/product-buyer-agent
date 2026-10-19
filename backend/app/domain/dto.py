@@ -11,8 +11,9 @@ from pydantic import BaseModel, Field, HttpUrl, StringConstraints, model_validat
 from app.domain.enums import Category, ChallengeKind, PriceType, SiteKey, StockStatus
 
 NonEmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+INT8_MAX = 2**63 - 1  # cận trên BIGINT của PostgreSQL: vượt thì CSDL ném DataError
 # Strict: không nhận bool hay chuỗi "27490000" cho số nguyên (parser phải chuẩn hóa trước).
-Vnd = Annotated[int, Field(ge=0, strict=True)]
+Vnd = Annotated[int, Field(ge=0, le=INT8_MAX, strict=True)]
 FiniteFloat = Annotated[float, Field(allow_inf_nan=False)]
 
 
@@ -80,6 +81,12 @@ class SpecFilter(BaseModel):
 
     @model_validator(mode="after")
     def _value_matches_op(self) -> Self:
+        if (
+            isinstance(self.value, int)
+            and not isinstance(self.value, bool)
+            and abs(self.value) > INT8_MAX
+        ):
+            raise ValueError("integer value is out of the 64-bit range")
         is_list = isinstance(self.value, list)
         is_number = isinstance(self.value, int | float) and not isinstance(self.value, bool)
         if self.op in ("in", "contains_any") and not is_list:

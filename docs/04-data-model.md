@@ -349,6 +349,7 @@ class QueryIntent(BaseModel):          # đầu ra planner
 - `SpecFilter`: `in`/`contains_any` cần `value` là list; `gte`/`lte` cần số (không phải bool, không NaN/inf); `eq`/`contains` cần giá trị đơn.
 - Giá trị mặc định: `tier=1`, `sort="relevance"`, `limit=10`, `needs_clarification=False`, các list rỗng, `price_type`/`stock_status` là `unknown`, `category_hint=other`.
 - `HttpUrl` không phải `str`: lớp lưu trữ (T1.2/T1.4) ghi `str(url)`. DTO chỉ kiểm tra URL hợp lệ, không bỏ tham số theo dõi, userinfo hay fragment; việc đó là của `clean_url` (T2.5).
+- Giá trị PostgreSQL không lưu được bị chặn ngay ở DTO (T1.6): `Vnd`, `ProductQuery.offset` và số nguyên của `SpecFilter` nằm trong miền BIGINT (≤ 2^63 − 1); `OfferUpsert` từ chối `url` dài hơn 2.704 byte (giới hạn chỉ mục UNIQUE) và ký tự NUL trong `url`, `title`, `site_sku`, `raw_specs`. Cận trên nghiệp vụ của giá (500.000.000) là của `parse_price` (T2.5).
 
 ## 7. Quy tắc chuẩn hóa
 

@@ -7,7 +7,7 @@ Quy ước chung của mọi repository: nhận `Session` qua `__init__`, chỉ 
 from datetime import datetime
 from typing import Any, NamedTuple
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import ColumnElement, case, column, func, literal_column, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, col, select
@@ -15,6 +15,20 @@ from sqlmodel import Session, col, select
 from app.db.models import Offer, Product, utc_now
 from app.domain.dto import FiniteFloat, NonEmptyStr, Vnd
 from app.domain.enums import Category, MatchMethod, PriceType, SiteKey, StockStatus
+
+# Chỉ mục btree của UNIQUE (url) từ chối khóa lớn hơn ~2.704 byte (ProgramLimitExceeded).
+MAX_URL_BYTES = 2704
+
+
+def _contains_nul(value: Any) -> bool:
+    """Có ký tự NUL ở bất kỳ chuỗi nào (kể cả khóa) trong cấu trúc lồng nhau không."""
+    if isinstance(value, str):
+        return "\x00" in value
+    if isinstance(value, dict):
+        return any(_contains_nul(key) or _contains_nul(item) for key, item in value.items())
+    if isinstance(value, list | tuple):
+        return any(_contains_nul(item) for item in value)
+    return False
 
 
 def effective_price() -> ColumnElement[int]:
@@ -49,6 +63,20 @@ class OfferUpsert(BaseModel):
     raw_specs: dict[str, Any] = Field(default_factory=dict)
     match_method: MatchMethod = MatchMethod.new
     match_score: FiniteFloat | None = Field(default=None, ge=0, le=1)
+
+    @field_validator("url")
+    @classmethod
+    def _url_fits_unique_index(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > MAX_URL_BYTES:
+            raise ValueError(f"url is longer than {MAX_URL_BYTES} bytes")
+        return value
+
+    @field_validator("url", "title", "site_sku", "raw_specs")
+    @classmethod
+    def _no_nul_characters(cls, value: Any) -> Any:
+        if _contains_nul(value):
+            raise ValueError("NUL character is not storable in PostgreSQL text/JSONB")
+        return value
 
 
 class UpsertResult(NamedTuple):

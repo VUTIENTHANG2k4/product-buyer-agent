@@ -196,16 +196,6 @@ def test_offer_upsert_strips_url_and_title_whitespace(db_session: Session) -> No
     assert (offer.url, offer.title) == ("https://m.example/strip", "Mock")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1: OfferUpsert không chặn giá trị mà PostgreSQL từ chối: URL > 2704 byte "
-        "(ProgramLimitExceeded do chỉ mục unique uq_offer_url), ký tự NUL trong title/raw_specs "
-        "(DataError), giá > BIGINT (DataError). Lỗi CSDL làm hỏng cả transaction của lượt thu "
-        "thập thay vì chỉ tính một mục vào items_failed. Cần kiểm tra ở OfferUpsert (max_length "
-        "URL, loại NUL, giá <= 500.000.000) hoặc pipeline bọc savepoint từng mục."
-    ),
-)
 @pytest.mark.parametrize(
     "changes",
     [

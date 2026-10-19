@@ -13,7 +13,7 @@ from sqlmodel import Session, col, select
 
 from app.db.models import Offer, Product
 from app.db.repositories.offers import effective_price
-from app.domain.dto import SpecFilter, Vnd
+from app.domain.dto import INT8_MAX, SpecFilter, Vnd
 from app.domain.enums import Category, SiteKey
 
 ProductSort = Literal["price_asc", "price_desc", "rating_desc"]
@@ -32,7 +32,7 @@ class ProductQuery(BaseModel):
     spec_filters: list[SpecFilter] = Field(default_factory=list)
     sort: ProductSort = "price_asc"
     limit: int = Field(default=20, ge=1, le=100, strict=True)
-    offset: int = Field(default=0, ge=0, strict=True)
+    offset: int = Field(default=0, ge=0, le=INT8_MAX, strict=True)
 
 
 class ProductHit(NamedTuple):

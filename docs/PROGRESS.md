@@ -5,7 +5,7 @@
 
 ## Trạng thái
 - Sprint hiện tại: 1 (M0 Nền tảng · M1 Dữ liệu)
-- Đang làm: – (milestone và task trong lượt)
+- Đang làm: M2 Hạ tầng thu thập (nhánh `milestone/M2-scrape-infra`). Thứ tự: T1.6 → T2.5 → T2.1 → T2.3 → T2.4 → T2.6 (T2.2 đã xong)
 - Task kế tiếp đề xuất: T2.1 (Fetcher, đã đủ phụ thuộc; có việc dồn từ QA M0) hoặc T2.3/T2.5; T1.6 (S) làm trước T2.6, T1.7, T1.8 (S, không chặn); T0.9 (S) trước khi service đưa thời gian vào `details` lỗi. T3.1 (GearVN) sau M1–M2
 - Cập nhật lần cuối: 2026-10-19 — T2.2 xong trên nhánh `task/T2.2-base-scraper` (chưa merge); trước đó QA M1: 8 lỗi → T1.6–T1.8, 5 việc dồn vào T6.2/T2.6
 
@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | M0 Nền tảng | ✅ | Đã qua `qa-tester` 2 lần; còn T0.9 (tùy chọn, không chặn M1) |
 | M1 Dữ liệu | ✅ | Đã qua `qa-tester` (còn T1.6–T1.8, không chặn M2) |
-| M2 Hạ tầng thu thập | ⬜ | |
+| M2 Hạ tầng thu thập | 🔄 | Nhánh `milestone/M2-scrape-infra` |
 | M3 GearVN | ⬜ | T0.4 đã duyệt: GearVN được dùng |
 | M4 Hoàng Hà + Laptop88 | ⬜ | |
 | M5 Chuẩn hóa & ghép | ⬜ | |
