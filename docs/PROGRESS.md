@@ -4,10 +4,10 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Sprint hiện tại: 3 (M3 GearVN đang làm, nhánh `milestone/M3-gearvn`)
-- Đang làm: M3 — T3.1–T3.3 ✅; còn `/check`, `/review M3`, `qa-tester`, `/done M3`
-- Task kế tiếp đề xuất: hoàn tất M3 (check → review → QA → done), sau đó M4 (T4.1 chờ giảng viên về Hoàng Hà; T4.3/T4.4 chờ Laptop88). Việc nhỏ chưa chặn: T1.7, T1.8, T2.7 (S; mục (c) đã xong)
-- Cập nhật lần cuối: 2026-10-19 — M2 xong (T1.6, T2.1, T2.3–T2.6, T0.9; review + QA đã xử lý, còn T2.7), đã merge vào main; mở nhánh M3
+- Sprint hiện tại: 3 (M3 xong; M4 Hoàng Hà + Laptop88 kế tiếp)
+- Đang làm: – (M3 xong trên nhánh `milestone/M3-gearvn`, chờ người dùng merge)
+- Task kế tiếp đề xuất: M4 — T4.1 chờ giảng viên về Hoàng Hà, T4.3/T4.4 chờ Laptop88 (xem mục chặn); nếu chưa có phản hồi, làm việc nhỏ T3.4, T1.7, T1.8, T2.7 (còn lại) hoặc đổi sang M5. T3.3 đã chạy thật: nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true`
+- Cập nhật lần cuối: 2026-10-19 — M3 xong (T3.1–T3.3 + T2.7c; review + QA đã xử lý, còn T3.4). Chưa merge
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -15,7 +15,7 @@
 | M0 Nền tảng | ✅ | Đã qua `qa-tester` 2 lần; T0.9 đã xong (trong M2) |
 | M1 Dữ liệu | ✅ | Đã qua `qa-tester` (còn T1.6–T1.8, không chặn M2) |
 | M2 Hạ tầng thu thập | ✅ | Qua `code-reviewer` + `qa-tester` (còn T2.7, không chặn M3) |
-| M3 GearVN | 🔄 | T0.4 đã duyệt: GearVN được dùng |
+| M3 GearVN | ✅ | Qua `code-reviewer` + `qa-tester` (còn T3.4, không chặn M4); chạy thật 4 nhóm `PAGES=1` 80/80 mục parse đúng |
 | M4 Hoàng Hà + Laptop88 | ⬜ | |
 | M5 Chuẩn hóa & ghép | ⬜ | |
 | M6 Agent | ⬜ | |
@@ -31,7 +31,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,45% (2034 pass + 18 xfail đã biết của T1.7/T1.8/T6.2, ngưỡng 80% trong `make test-be`, ~70 giây) | 2026-10-19 |
+| Coverage backend | 99,51% (2375 pass + 18 xfail đã biết của T1.7/T1.8/T6.2, ngưỡng 80% trong `make test-be`, ~2 phút) | 2026-10-19 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
@@ -54,6 +54,6 @@
 - 2026-10-17 (T1.4): repository đồng bộ, nhận `Session`, chỉ `flush` (không commit), thời gian truyền qua `now`; chi tiết ở docs/04 §3. Test repository ở `backend/tests/integration/repositories/` (tên file `test_repo_*.py` để không trùng basename). Dùng `session.exec`; truy vấn nhiều cột dùng `sqlalchemy.select` + `session.execute`. Cột `xmax` trong `upsert` là thủ thuật PostgreSQL để biết dòng mới (đã kiểm trên PG 17).
 - 2026-10-17 (T1.5): script trong `backend/scripts/` chạy bằng `python -m scripts.<tên>` từ `backend/` (chạy `python scripts/x.py` không import được `app`); Makefile `eval` còn gọi kiểu cũ (T6.6 sửa). `make seed FIXTURE=dev|eval|e2e [RESET=1]`: `--reset` xóa sạch DB nên bắt buộc `--yes`. Dữ liệu ở `backend/tests/fixtures/seed/*.json` (tên "Mock", URL `.example`), sinh một lần rồi sửa tay; mỗi profile mô tả ở docs/09 §3. `make check` giờ chạy mypy cả `scripts/`. Test `test_seed_data.py` giữ một transaction suốt module: đừng gộp test seed khác vào cùng module.
 - 2026-10-17 (QA M1): 26 `xfail(strict=True)` mới trong `*_m1.py` (8 lỗi → T1.6–T1.8; 3 ca cần quyết định thiết kế dồn vào T6.2); XPASS báo đỏ, khi đó gỡ dấu xfail. Rủi ro chưa xử lý: bảng hạng GPU thiếu RTX 3070/3070 Ti/3080; seed rất "sạch" (T6.6 nên thêm vài sản phẩm thiếu specs/hết hàng cố ý).
-
 - 2026-10-19 (M2): mọi request qua `Fetcher` (`scrapers/http/`, robots.txt tự phân tích hỗ trợ `*`/`$`, `post_form` chỉ mock-shop); `MOCK_SHOP_URL` chỉ nhận localhost. Pipeline ở `scrapers/pipeline.py`, gọi qua `ScrapeService` (hook `on_price_changes` cho M9); `resolve_product_interim` tạm thay matcher đến T5.2. `make scrape SITE=mockshop CAT=laptop` cần `make db-up`, `make migrate`, `make mock-shop`; lượt mockshop tắt các offer `mockshop` cùng nhóm không còn trong mock-shop (kể cả dữ liệu `make seed`). Fixture mock-shop sinh bằng `python -m scripts.save_mockshop_fixtures` (có test báo lệch). selectolax 1.0.0 chỉ có `selectolax.lexbor`.
 - 2026-10-19 (công cụ): công cụ Write/Edit giải mã chuỗi `\uXXXX` trong nội dung (regex có `\u00a0` thành ký tự thật): kiểm lại bằng `grep` sau khi ghi. Heredoc lồng nhau trong Bash dễ lỗi nháy: dùng Write cho file dài. Console Windows/pipe là cp1252: script in tiếng Việt phải đổi stdout sang UTF-8 (`scripts.scrape.configure_console`).
+- 2026-10-19 (M3): `GearVNScraper` đọc thẻ `a.product-card` theo `data-slot`, chi tiết theo JSON-LD `additionalProperty`; `raw_specs` của danh sách để rỗng nên pipeline tải chi tiết (20/lượt; 13/80 sản phẩm GearVN không có thông số có nhãn). `PAGES=1` luôn cho `PARTIAL`; lượt đầy đủ nhóm chuột cũng `PARTIAL` (thẻ ngừng kinh doanh tính là lỗi). Chi tiết `docs/sources/gearvn.md` mục 7.
