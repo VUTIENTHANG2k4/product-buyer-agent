@@ -3,11 +3,13 @@
 from app.domain.enums import SiteKey
 from app.scrapers.base import BaseScraper
 from app.scrapers.http.types import PageFetcher
+from app.scrapers.sites.fptshop import FptShopScraper
 from app.scrapers.sites.gearvn import GearVNScraper
 from app.scrapers.sites.mockshop import MockShopScraper
 
 SCRAPERS: dict[SiteKey, type[BaseScraper]] = {
     SiteKey.gearvn: GearVNScraper,
+    SiteKey.fptshop: FptShopScraper,
     SiteKey.mockshop: MockShopScraper,
 }
 

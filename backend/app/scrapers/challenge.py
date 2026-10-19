@@ -4,6 +4,7 @@ Chỉ phát hiện và báo; không bao giờ giải captcha. Pipeline quyết �
 `BLOCKED` (trang thật).
 """
 
+import re
 import unicodedata
 from collections.abc import Mapping
 
@@ -24,6 +25,18 @@ _CAPTCHA_MARKERS = (
 def _fold(text: str) -> str:
     """Đưa về NFC + chữ thường để khớp không phân biệt hoa/thường và dạng Unicode của tiếng Việt."""
     return unicodedata.normalize("NFC", text).casefold()
+
+
+# Thân `<script>` nội tuyến (biến môi trường Next.js, JSON-LD, mã theo dõi...) hay chứa chữ như
+# `NEXT_PUBLIC_CAPTCHA_KEY` trên trang bình thường. Chỉ bỏ phần thân; thẻ mở (kể cả `src`) vẫn
+# được giữ nên widget reCAPTCHA/hCaptcha thật (div, iframe, `<script src=...>`) vẫn bị phát hiện.
+# Thẻ `<script>` không đóng thì không khớp, giữ nguyên để không bỏ sót.
+_SCRIPT_BODY = re.compile(r"(<script\b[^>]*>).*?(</script\s*>)", re.IGNORECASE | re.DOTALL)
+
+
+def _captcha_text(text: str) -> str:
+    """Thân trang đã bỏ nội dung script nội tuyến, dùng để tìm từ khóa captcha."""
+    return _fold(_SCRIPT_BODY.sub(r"\1\2", text))
 
 
 _FOLDED_MARKERS = tuple(_fold(marker) for marker in _CAPTCHA_MARKERS)
@@ -50,9 +63,9 @@ def is_blocking_error_response(status: int, headers: Mapping[str, str], text: st
     lowered = {name.lower(): value.lower() for name, value in headers.items()}
     if lowered.get("cf-mitigated") == "challenge":
         return True
-    body = _fold(text)
-    if any(marker in body for marker in _FOLDED_MARKERS):
+    if any(marker in _captcha_text(text) for marker in _FOLDED_MARKERS):
         return True
+    body = _fold(text)
     return "cloudflare" in lowered.get("server", "") and any(
         marker in body for marker in _CLOUDFLARE_INTERSTITIAL
     )
@@ -83,8 +96,7 @@ def detect_challenge(resp: FetchResponse, site: SiteKey) -> Challenge | None:
         return _build(ChallengeKind.http_429, site, resp.final_url)
     if is_blocking_error_response(resp.status, resp.headers, resp.text):
         return _build(ChallengeKind.captcha, site, resp.final_url)
-    body = _fold(resp.text)
-    if any(marker in body for marker in _FOLDED_MARKERS):
+    if any(marker in _captcha_text(resp.text) for marker in _FOLDED_MARKERS):
         return _build(ChallengeKind.captcha, site, resp.final_url)
     return None
 
