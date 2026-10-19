@@ -31,6 +31,7 @@ from app.scrapers.http.errors import (
     HttpStatusError,
     OfflineModeError,
     RedirectError,
+    ResponseTooLarge,
     RobotsBlocked,
     RobotsDisallowed,
     RobotsUnavailable,
@@ -46,7 +47,10 @@ MAX_REDIRECTS = 5
 RATE_LIMIT_MIN_WAIT_S = 60.0  # docs/06 §3: chờ 429 tối thiểu 60 giây
 RATE_LIMIT_MAX_WAIT_S = 600.0  # Retry-After lớn hơn thì không chờ, coi là bị chặn
 BACKOFF_BASE_S = 5.0  # chờ 5 · 2^n giây trước lần retry thứ n (n = 0, 1, …)
+MAX_RESPONSE_BYTES = 5 * 1024 * 1024  # thân phản hồi lớn hơn (sau giải nén) bị từ chối
 _REDIRECTS = frozenset({301, 302, 303, 307, 308})
+# Thân đã đọc xong và giải nén, nên bỏ các header mô tả thân gốc khi dựng lại phản hồi.
+_BODY_HEADERS = frozenset({"content-encoding", "content-length", "transfer-encoding"})
 
 
 @lru_cache(maxsize=1)
@@ -62,6 +66,38 @@ def _netloc(url: str) -> str:
 
 def _origin(url: str) -> str:
     return f"{urlsplit(url).scheme.lower()}://{host_key(url)}"
+
+
+async def _get_bounded(client: httpx.AsyncClient, url: str) -> httpx.Response:
+    """GET đọc thân theo luồng; vượt `MAX_RESPONSE_BYTES` (sau giải nén) thì `ResponseTooLarge`.
+
+    Kiểm `Content-Length` trước để khỏi tải thân khổng lồ, rồi cộng dồn từng đoạn vì header có thể
+    dối hoặc vắng (chunked). Trả `httpx.Response` mới chứa thân đã đọc.
+    """
+    async with client.stream("GET", url) as response:
+        declared = response.headers.get("content-length", "")
+        if declared.isdigit() and int(declared) > MAX_RESPONSE_BYTES:
+            raise ResponseTooLarge(f"Content-Length {declared} exceeds the limit", url=url)
+        chunks: list[bytes] = []
+        size = 0
+        async for chunk in response.aiter_bytes():
+            size += len(chunk)
+            if size > MAX_RESPONSE_BYTES:
+                raise ResponseTooLarge(
+                    f"response body exceeds {MAX_RESPONSE_BYTES // (1024 * 1024)} MB", url=url
+                )
+            chunks.append(chunk)
+        headers = [
+            (name, value)
+            for name, value in response.headers.multi_items()
+            if name.lower() not in _BODY_HEADERS
+        ]
+        return httpx.Response(
+            response.status_code,
+            headers=headers,
+            content=b"".join(chunks),
+            request=response.request,
+        )
 
 
 class Fetcher:
@@ -250,8 +286,9 @@ class Fetcher:
         while True:
             await self._pace(url, crawl_delay)
             failure: str
+            retry_after: float | None = None
             try:
-                response = await self._client(url).get(url)
+                response = await _get_bounded(self._client(url), url)
             except (httpx.InvalidURL, httpx.UnsupportedProtocol) as exc:
                 # URL của ta đã được kiểm tra, nên chỉ có thể do `Location` hỏng/lạ (javascript:,
                 # mailto:...): httpx dựng yêu cầu chuyển hướng ngay trong .get(). Không retry.
@@ -280,15 +317,24 @@ class Fetcher:
                 if status < 500:
                     raise HttpStatusError(f"HTTP {status}", url=url, status=status)
                 failure = f"HTTP {status}"
+                if status == 503:
+                    retry_after = self._retry_after_seconds(response)
             if retries >= self._settings.scraper_max_retries:
                 raise FetchFailed(f"{failure} after {retries} retries", url=url)
             backoff = self._backoff_base_s * (2**retries)
+            if retry_after is not None:
+                if retry_after > RATE_LIMIT_MAX_WAIT_S:
+                    # Máy chủ xin chờ quá lâu: không đợi, lượt dừng ở lỗi này (như 429 quá lớn).
+                    raise FetchFailed(
+                        f"{failure}, Retry-After {retry_after:.0f} s is too long", url=url
+                    )
+                backoff = max(backoff, retry_after)
             retries += 1
             logger.warning("Lỗi tải %s (%s), thử lại sau %.0f giây", _netloc(url), failure, backoff)
             await self._sleep(backoff)
 
-    def _rate_limit_wait(self, response: httpx.Response) -> float | None:
-        """Giây cần chờ sau 429 (tối thiểu 60); `None` nếu `Retry-After` quá lớn để chờ."""
+    def _retry_after_seconds(self, response: httpx.Response) -> float:
+        """Giây trong `Retry-After` (số giây hoặc ngày giờ HTTP); thiếu, hỏng, âm hoặc `nan` → 0."""
         value = str(response.headers.get("retry-after", "")).strip()
         seconds = 0.0
         if value:
@@ -300,7 +346,12 @@ class Fetcher:
                 except (TypeError, ValueError):
                     seconds = 0.0
         if math.isnan(seconds):  # "nan" coi như thiếu header; "inf" rơi xuống nhánh quá lớn
-            seconds = 0.0
+            return 0.0
+        return max(seconds, 0.0)
+
+    def _rate_limit_wait(self, response: httpx.Response) -> float | None:
+        """Giây cần chờ sau 429 (tối thiểu 60); `None` nếu `Retry-After` quá lớn để chờ."""
+        seconds = self._retry_after_seconds(response)
         if seconds > RATE_LIMIT_MAX_WAIT_S:
             return None
         return max(seconds, RATE_LIMIT_MIN_WAIT_S)
@@ -312,7 +363,9 @@ class Fetcher:
         for _ in range(3):
             await self._pace(url, None)
             try:
-                response = await self._client(url).get(url)
+                response = await _get_bounded(self._client(url), url)
+            except ResponseTooLarge as exc:
+                raise RobotsUnavailable("robots.txt is too large to read", url=url) from exc
             except (httpx.RequestError, httpx.InvalidURL) as exc:
                 raise RobotsUnavailable(
                     f"cannot fetch robots.txt ({type(exc).__name__})", url=url

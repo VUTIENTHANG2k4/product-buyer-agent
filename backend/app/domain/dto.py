@@ -42,6 +42,8 @@ class ListingPage(BaseModel):
     has_next: bool = False
     next_url: HttpUrl | None = None
     skipped: int = Field(default=0, ge=0, strict=True)  # thẻ sản phẩm không đọc được, bị bỏ qua
+    # `crawl_category` đặt khi trang sau trỏ về URL đã tải (vòng lặp phân trang): parser không đặt.
+    pagination_loop: bool = False
 
 
 class ProductDetail(BaseModel):

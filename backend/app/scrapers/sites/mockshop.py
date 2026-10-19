@@ -11,7 +11,7 @@ from urllib.parse import urlencode, urljoin
 from pydantic import ValidationError
 from selectolax.lexbor import LexborHTMLParser, LexborNode
 
-from app.config import get_settings
+from app.config import get_mock_shop_url
 from app.domain.dto import Challenge, ListingItem, ListingPage, ProductDetail
 from app.domain.enums import Category, ChallengeKind, PriceType, SiteKey, StockStatus
 from app.normalize.price import parse_price
@@ -22,7 +22,7 @@ from app.scrapers.parsing import json_ld_objects, node_text
 
 logger = logging.getLogger(__name__)
 
-_BASE_URL = get_settings().mock_shop_url.rstrip("/")
+_BASE_URL = get_mock_shop_url()
 
 
 def _ld_products_by_url(page_url: str, objects: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:

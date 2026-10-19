@@ -305,6 +305,7 @@ class ListingPage(BaseModel):
     has_next: bool
     next_url: HttpUrl | None
     skipped: int                       # số thẻ không parse được (mặc định 0); pipeline cộng vào items_failed
+    pagination_loop: bool              # mặc định False; crawl_category đặt True khi trang sau quay về URL đã tải
 
 class ProductDetail(BaseModel):        # đầu ra parser trang chi tiết
     url: HttpUrl
@@ -357,7 +358,7 @@ class QueryIntent(BaseModel):          # đầu ra planner
 | Việc | Quy tắc | Module |
 | --- | --- | --- |
 | Giá | Bỏ ký tự không phải số trong `27.490.000₫`, `27,490,000 đ` → `27490000`. Chuỗi có `*` hoặc `?` → `None`. Giá < 10.000 hoặc > 500.000.000 → `None` + cảnh báo log. Chuẩn hóa NFKC (chữ số toàn chiều rộng); chỉ lấy **số đầu tiên** (huy hiệu "-5%", "Trả góp 0%", "3 cái" đi kèm bị bỏ); số đứng sau dấu âm → `None`; có từ hai số trông như giá (khoảng giá, giá cũ + giá mới) → `None` vì không biết số nào là giá bán | `normalize/price.py` |
-| URL | Bỏ `utm_*`, `fbclid`, `gclid`, `srsltid`, userinfo, fragment; giữ đường dẫn gốc. Bỏ cổng mặc định (`:443` với https, `:80` với http), host về chữ thường và IDN → punycode (khớp `HttpUrl` của DTO). Không phải http/https tuyệt đối, có khoảng trắng/ký tự điều khiển, hoặc dài hơn 2000 ký tự → `ValueError` (pipeline tính vào `items_failed`). Không sắp xếp lại tham số truy vấn | `normalize/url.py` |
+| URL | Bỏ `utm_*`, `fbclid`, `gclid`, `srsltid`, userinfo, fragment; giữ đường dẫn gốc. Bỏ cổng mặc định (`:443` với https, `:80` với http), host về chữ thường và IDN → punycode (khớp `HttpUrl` của DTO). Không phải http/https tuyệt đối, có khoảng trắng/ký tự điều khiển, hoặc dài hơn 2000 ký tự → `ValueError` (pipeline tính vào `items_failed`). Chuỗi truy vấn giữ nguyên mã hóa gốc (`%20` không thành `+`; chỉ ký tự ngoài ASCII được mã hóa `%XX`, `?a` thành `?a=`) và được **sắp ổn định theo tên tham số** nên `?a=1&b=2` và `?b=2&a=1` là một khóa; các giá trị của cùng một tham số giữ thứ tự xuất hiện (T2.7e; offer cũ có query có thể đổi khóa) | `normalize/url.py` |
 | Hãng | So khớp danh sách hãng đã biết (ASUS, Acer, Lenovo, MSI, HP, Dell, Gigabyte, Apple, Logitech, Razer, Corsair, SteelSeries, HyperX, Akko, DareU, E-Dra, Rapoo…) ở đầu tên, sau khi bỏ tiền tố loại sản phẩm ("Laptop", "Chuột không dây"…), không phân biệt hoa/thường và dấu, NFKD (chữ toàn chiều rộng), bỏ ký tự vô hình (U+200B) và nhãn `[...]`/`(...)` ở đầu tên. Không nhận ra → `"Unknown"` (vì `product.brand` NOT NULL) | `normalize/brand.py` |
 | Mã model | Ưu tiên MPN/SKU từ JSON-LD; nếu không có, regex mẫu mã theo hãng (ví dụ `FX608JHI-TU209W`, `AN515-57-5669`, `83JE00PEVN`); viết hoa, bỏ khoảng trắng | `normalize/model_code.py` |
 | Thông số | Bộ luật regex theo nhóm trên `title` + `raw_specs` (ví dụ `RTX\s?(\d{4})(\s?Ti)?`, `(\d+)\s?GB` gần từ "RAM") | `normalize/specs/<category>.py` |

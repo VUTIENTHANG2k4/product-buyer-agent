@@ -13,7 +13,6 @@ from pydantic import (
     PositiveInt,
     SecretStr,
     StringConstraints,
-    field_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -47,15 +46,40 @@ UserAgent = Annotated[
 LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 
 
+def _check_mock_shop_url(value: str) -> str:
+    """Mock-shop được miễn robots/ngoại tuyến/độ trễ trang thật nên chỉ được ở máy cục bộ."""
+    parts = urlsplit(value)
+    if parts.scheme not in ("http", "https") or parts.hostname not in LOCAL_HOSTS:
+        raise ValueError("must be an http(s) URL on localhost, 127.0.0.1 or ::1")
+    return value.rstrip("/")
+
+
+MockShopUrl = Annotated[str, AfterValidator(_check_mock_shop_url)]
+
+_ENV_CONFIG = SettingsConfigDict(
+    env_file=ENV_FILE,
+    env_file_encoding="utf-8",
+    env_ignore_empty=True,
+    extra="ignore",
+)
+
+
+class MockShopLocation(BaseSettings):
+    """Chỉ `MOCK_SHOP_URL`, không có biến bắt buộc nào khác.
+
+    `SiteConfig` của mock-shop cần địa chỉ lúc import module; đọc cả `Settings` thì import
+    `app.scrapers.registry` đòi đủ biến môi trường (DATABASE_URL, SCRAPER_USER_AGENT…).
+    """
+
+    model_config = _ENV_CONFIG
+
+    mock_shop_url: MockShopUrl = "http://localhost:8100"
+
+
 class Settings(BaseSettings):
     """Mọi biến trong `.env.example`. Tên field = tên biến (không phân biệt hoa thường)."""
 
-    model_config = SettingsConfigDict(
-        env_file=ENV_FILE,
-        env_file_encoding="utf-8",
-        env_ignore_empty=True,
-        extra="ignore",
-    )
+    model_config = _ENV_CONFIG
 
     # LLM
     llm_provider: Literal["gemini", "openai", "fake"] = "gemini"
@@ -84,18 +108,9 @@ class Settings(BaseSettings):
     scraper_offline_only: bool = True
 
     # Mock-shop
-    mock_shop_url: str = "http://localhost:8100"
+    mock_shop_url: MockShopUrl = "http://localhost:8100"
     mock_shop_captcha_after: int = 5
     mock_shop_delay_seconds: float = 1
-
-    @field_validator("mock_shop_url")
-    @classmethod
-    def _mock_shop_is_local(cls, value: str) -> str:
-        """Mock-shop được miễn robots/ngoại tuyến/độ trễ trang thật nên chỉ được ở máy cục bộ."""
-        parts = urlsplit(value)
-        if parts.scheme not in ("http", "https") or parts.hostname not in LOCAL_HOSTS:
-            raise ValueError("must be an http(s) URL on localhost, 127.0.0.1 or ::1")
-        return value.rstrip("/")
 
     # Lịch chạy
     scheduler_enabled: bool = False
@@ -121,3 +136,9 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+@lru_cache
+def get_mock_shop_url() -> str:
+    """Địa chỉ mock-shop (không có dấu `/` cuối), đọc nhẹ mà không cần đủ cấu hình."""
+    return MockShopLocation().mock_shop_url

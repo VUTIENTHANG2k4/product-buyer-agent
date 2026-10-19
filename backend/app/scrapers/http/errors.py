@@ -50,3 +50,7 @@ class FormNotAllowed(FetchError):
 
 class FetchFailed(FetchError):
     """Hết lượt retry vì lỗi mạng, timeout hoặc 5xx."""
+
+
+class ResponseTooLarge(FetchError):
+    """Thân phản hồi (sau giải nén) vượt giới hạn: từ chối, không cắt và không ghi raw cache."""

@@ -5,7 +5,7 @@
 
 ## Trạng thái
 - Sprint hiện tại: 3 (M3 xong; M4 Hoàng Hà + Laptop88 kế tiếp)
-- Đang làm: lượt dọn việc nhỏ trong lúc M4 bị chặn (nhánh `milestone/M3b-cleanup`): T1.7, T1.8, T3.4 ✅; còn T2.7 (a, b, d, e, f + phần nhỏ của g; hủy token → T2.8). M3 đã merge vào `main`
+- Đang làm: lượt dọn việc nhỏ trong lúc M4 bị chặn (nhánh `milestone/M3b-cleanup`): T1.7, T1.8, T3.4, T2.7 ✅ (hủy token tách thành T2.8, làm cùng T7.4). M3 đã merge vào `main`
 - Task kế tiếp đề xuất: M4 — T4.1 chờ giảng viên về Hoàng Hà, T4.3/T4.4 chờ Laptop88 (xem mục chặn); nếu chưa có phản hồi, làm việc nhỏ T3.4, T1.7, T1.8, T2.7 (còn lại) hoặc đổi sang M5. T3.3 đã chạy thật: nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true`
 - Cập nhật lần cuối: 2026-10-19 — M3 xong (T3.1–T3.3 + T2.7c; review + QA đã xử lý, còn T3.4). Chưa merge
 

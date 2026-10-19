@@ -125,8 +125,8 @@ class BaseScraper(ABC):
             page = self.parse_listing(resp.text, category, resp.final_url)
             if page_no == 1 and expect_items and not page.items:
                 raise ChallengeDetected(soft_block_challenge(self.config.key, resp.final_url))
-            yield page
             if not page.has_next:
+                yield page
                 return
             next_url = str(page.next_url) if page.next_url is not None else None
             if next_url is not None and _host(next_url) == base_host:
@@ -134,8 +134,11 @@ class BaseScraper(ABC):
             else:
                 url = self.listing_url(category, page_no + 1)
             if url in visited:
+                # Trang sau trỏ về trang đã tải: báo vòng lặp, không để lượt ghi là "chạm giới hạn".
+                yield page.model_copy(update={"pagination_loop": True})
                 return
             visited.add(url)
+            yield page
 
     async def fetch_detail(self, url: str) -> ProductDetail:
         """Tải và parse trang chi tiết; `url` phải thuộc domain của trang."""

@@ -102,6 +102,7 @@ class _Progress:
     seen_urls: set[str] = field(default_factory=set)  # URL đã gặp trong lượt (khử trùng)
     unsafe: int = 0  # lỗi không phải 'hết giá': thẻ hỏng, lỗi lưu → cấm tắt offer không thấy
     has_next: bool = False  # trang cuối đã tải còn trang sau (bị cắt bởi max_pages)
+    loop: bool = False  # trang sau trỏ về URL đã tải (vòng lặp phân trang)
     detail_requests: int = 0
 
 
@@ -415,6 +416,7 @@ class ScrapePipeline:
                     self._save_page, scraper.config, context, progress, prepared, page.skipped
                 )
                 progress.has_next = page.has_next
+                progress.loop = page.pagination_loop
         except ChallengeDetected as detected:
             challenge = detected.challenge
         except RobotsBlocked as blocked:
@@ -670,7 +672,9 @@ class ScrapePipeline:
             logger.warning("[run %s] %s", context.run_id, " ".join(warnings))
         capped = progress.has_next
         if ratio > FAILED_RATIO_LIMIT or capped:
-            if capped:
+            if progress.loop:
+                warnings.append("Phân trang lặp lại URL đã tải, dừng; chưa đủ danh mục.")
+            elif capped:
                 warnings.append("Dừng ở giới hạn số trang, chưa đủ danh mục.")
             return _Verdict(ScrapeStatus.PARTIAL, " ".join(warnings))
         # Không tắt offer khi: không thấy mục nào (có thể trang rỗng bất thường), số sản phẩm
