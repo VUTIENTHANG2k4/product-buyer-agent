@@ -5,6 +5,7 @@
 """
 
 import re
+import unicodedata
 from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Final
@@ -21,9 +22,12 @@ GPU_RANKS: Final[Mapping[str, int]] = MappingProxyType(
         "RTX 4050": 30,
         "RTX 3060": 32,
         "RTX 5050": 34,
+        "RTX 3070": 38,
         "RTX 4060": 40,
+        "RTX 3070 Ti": 42,
         "RTX 5060": 45,
         "RTX 4070": 50,
+        "RTX 3080": 52,
         "RTX 5070": 55,
         "RTX 5070 Ti": 60,
         "RTX 4080": 70,
@@ -38,11 +42,11 @@ GPU_RANKS: Final[Mapping[str, int]] = MappingProxyType(
 # workstation ("RTX 4000 Ada") bị loại bằng lookahead vì không phải dòng GeForce trong bảng hạng.
 _DISCRETE = re.compile(
     r"\b(?:"
-    r"(?P<rtx>rtx)[\s_-]*(?P<rtx_num>\d{4})(?!\s*ada\b)"
-    r"|(?P<gtx>gtx)[\s_-]*(?P<gtx_num>\d{3,4})"
-    r"|(?P<rx>rx)[\s_-]*(?P<rx_num>\d{4})(?P<rx_suffix>[ms])?"
+    r"(?P<rtx>rtx)[\s_-]*(?P<rtx_num>[0-9]{4})(?!\s*ada\b)"
+    r"|(?P<gtx>gtx)[\s_-]*(?P<gtx_num>[0-9]{3,4})"
+    r"|(?P<rx>rx)[\s_-]*(?P<rx_num>[0-9]{4})(?P<rx_suffix>[ms])?"
     r")"
-    r"(?:\s*(?P<ti>ti))?(?:\s*(?P<xt>xt))?(?:\s*(?P<super>super))?\b",
+    r"(?:\s*(?P<ti>ti))?(?:\s*(?P<xt>xtx?))?(?:\s*(?P<super>super))?\b",
     re.IGNORECASE,
 )
 
@@ -50,7 +54,13 @@ _DISCRETE = re.compile(
 # ("Arc A370M") và MX ("GeForce MX550") cố ý không nằm đây: chưa có hạng, nên là `None`.
 _INTEGRATED = re.compile(
     r"\b(?:integrated|on-?board|uhd|iris|intel\s+graphics|arc\s+graphics|radeon\s+graphics"
-    r"|radeon\s+\d{3,4}[ms]|apple\s+m\d)\b",
+    r"|radeon\s+[0-9]{3,4}[ms]|apple\s+m[0-9])\b",
+    re.IGNORECASE,
+)
+
+
+_TRADEMARK_TM = re.compile(
+    r"(?<![a-z])(rtx|gtx|rx|geforce|radeon|nvidia|amd|intel)tm(?![a-z])|(?<=[0-9])tm(?![a-z])",
     re.IGNORECASE,
 )
 
@@ -62,7 +72,11 @@ def normalize_gpu_name(raw: str) -> str | None:
     `"RTX 4050 (up to RTX 4060)"`). Tên nhận ra nhưng chưa có hạng (GTX, RX, Super…) vẫn được chuẩn
     hóa; `gpu_rank` mới là nơi quyết định có hạng hay không.
     """
-    text = re.sub(r"geforce|[™®]", " ", raw, flags=re.IGNORECASE)
+    # NFKC đưa chữ số toàn chiều rộng về ASCII nhưng đổi `™` thành `TM` dính liền vào từ đứng trước
+    # ("RTX™" → "RTXTM"), nên bỏ `TM` đó trước khi tìm tên.
+    text = unicodedata.normalize("NFKC", raw)
+    text = _TRADEMARK_TM.sub(r"\1 ", text)
+    text = re.sub(r"geforce|[™®]", " ", text, flags=re.IGNORECASE)
     names = {_canonical(match) for match in _DISCRETE.finditer(text)}
     if len(names) == 1:
         return names.pop()
@@ -80,7 +94,7 @@ def _canonical(match: re.Match[str]) -> str:
         name = f"GTX {match['gtx_num']}"
     else:
         name = f"RX {match['rx_num']}{(match['rx_suffix'] or '').upper()}"
-    for group, label in (("ti", "Ti"), ("xt", "XT"), ("super", "Super")):
+    for group, label in (("ti", "Ti"), ("xt", (match["xt"] or "").upper()), ("super", "Super")):
         if match[group]:
             name = f"{name} {label}"
     return name
