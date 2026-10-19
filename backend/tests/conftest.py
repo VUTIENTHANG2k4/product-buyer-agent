@@ -153,6 +153,37 @@ def disable_network(
         check_host(host)
         return real_gethostbyname_ex(host)
 
+    real_gethostbyaddr = socket.gethostbyaddr
+    real_getnameinfo = socket.getnameinfo
+    real_sendto = socket.socket.sendto
+
+    def check_reverse(host: str | bytes | None) -> None:
+        """Tra ngược IP -> tên cũng gửi truy vấn DNS: chỉ cho loopback và địa chỉ được phép."""
+        if isinstance(host, bytes):
+            host = host.decode("ascii", "replace")
+        address = (host or "").split("%", 1)[0]
+        try:
+            ip = ipaddress.ip_address(address)
+        except ValueError:
+            check_host(host)
+            return
+        if not ip.is_loopback and not any(ip_text == address for ip_text, *_ in allowed):
+            raise NetworkBlockedError(f"network bị chặn trong test: DNS ngược {host}")
+
+    def guarded_gethostbyaddr(host: str) -> tuple[str, list[str], list[str]]:
+        check_reverse(host)
+        return real_gethostbyaddr(host)
+
+    def guarded_getnameinfo(sockaddr: Any, flags: int) -> tuple[str, str]:
+        check_reverse(sockaddr[0])
+        return real_getnameinfo(sockaddr, flags)
+
+    def guarded_sendto(self: socket.socket, data: Any, *args: Any) -> int:
+        # sendto(data, address) hoặc sendto(data, flags, address); socket UNIX không có IP.
+        if self.family != af_unix:
+            check_connect(args[-1])
+        return real_sendto(self, data, *args)
+
     # Trên Windows asyncio mặc định dùng ProactorEventLoop: kết nối bằng ConnectEx chứ không gọi
     # socket.connect, nên phải chặn ở sock_connect (create_connection, open_connection và
     # httpx.AsyncClient đều đi qua đây). Loop Selector (Linux/macOS) đã bị chặn bởi socket.connect.
@@ -165,7 +196,20 @@ def disable_network(
             check_connect(address)
         return await real_sock_connect(self, sock, address)
 
+    real_sock_sendto = BaseProactorEventLoop.sock_sendto
+
+    async def guarded_sock_sendto(
+        self: BaseProactorEventLoop, sock: socket.socket, data: Any, address: Any = None
+    ) -> int:
+        if sock.family != af_unix and address is not None:
+            check_connect(address)
+        return await real_sock_sendto(self, sock, data, address)
+
     monkeypatch.setattr(BaseProactorEventLoop, "sock_connect", guarded_sock_connect)
+    monkeypatch.setattr(BaseProactorEventLoop, "sock_sendto", guarded_sock_sendto)
+    monkeypatch.setattr(socket.socket, "sendto", guarded_sendto)
+    monkeypatch.setattr(socket, "gethostbyaddr", guarded_gethostbyaddr)
+    monkeypatch.setattr(socket, "getnameinfo", guarded_getnameinfo)
     monkeypatch.setattr(socket.socket, "connect", guarded_connect)
     monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
     monkeypatch.setattr(socket, "socketpair", guarded_socketpair)

@@ -32,11 +32,6 @@ def _closed_loopback_port(kind: int = socket.SOCK_STREAM) -> int:
 # --- Lỗ hổng: UDP không đi qua connect ---
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="chốt chặn chỉ vá socket.connect: sendto() trên socket UDP chưa connect gửi được "
-    "tới địa chỉ không được phép",
-)
 def test_udp_sendto_to_a_disallowed_address_is_blocked() -> None:
     port = _closed_loopback_port(socket.SOCK_DGRAM)
     with (
@@ -46,10 +41,6 @@ def test_udp_sendto_to_a_disallowed_address_is_blocked() -> None:
         udp.sendto(b"x", ("127.0.0.1", port))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="loop.sock_sendto (asyncio) cũng không đi qua chốt chặn",
-)
 async def test_asyncio_udp_sock_sendto_to_a_disallowed_address_is_blocked() -> None:
     port = _closed_loopback_port(socket.SOCK_DGRAM)
     with (
@@ -63,14 +54,18 @@ async def test_asyncio_udp_sock_sendto_to_a_disallowed_address_is_blocked() -> N
 # --- Lỗ hổng: tra cứu tên ngược / getfqdn vẫn gửi truy vấn DNS ---
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="gethostbyaddr/getfqdn không được vá: tên lạ vẫn được gửi tới bộ phân giải DNS",
-)
-@pytest.mark.parametrize("lookup", [socket.gethostbyaddr, socket.getfqdn])
-def test_hostname_lookup_through_gethostbyaddr_or_getfqdn_is_blocked(lookup: Any) -> None:
+@pytest.mark.parametrize("lookup", ["gethostbyaddr", "getfqdn"])
+def test_hostname_lookup_through_gethostbyaddr_or_getfqdn_is_blocked(lookup: str) -> None:
+    # Tra hàm lúc chạy: tham chiếu lấy lúc thu thập test là hàm gốc, chưa bị vá bởi fixture.
     with pytest.raises(RuntimeError, match=BLOCKED):
-        lookup(UNLISTED_HOST)
+        getattr(socket, lookup)(UNLISTED_HOST)
+
+
+def test_reverse_lookup_of_a_public_ip_is_blocked() -> None:
+    with pytest.raises(RuntimeError, match=BLOCKED):
+        socket.getnameinfo(("8.8.8.8", 53), 0)
+    with pytest.raises(RuntimeError, match=BLOCKED):
+        socket.gethostbyaddr("8.8.8.8")
 
 
 # --- Đường đi đã được chặn, nhưng chưa có test ---

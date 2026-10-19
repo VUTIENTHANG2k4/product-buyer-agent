@@ -180,11 +180,6 @@ def test_very_long_user_agent_is_stored_unchanged(monkeypatch: pytest.MonkeyPatc
     assert _settings().scraper_user_agent == value
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="UserAgent chỉ strip + min_length: ký tự điều khiển (NUL làm h11 ném LocalProtocolError "
-    "ở request đầu tiên) và chuỗi chỉ gồm ký tự độ rộng 0 lọt qua lúc khởi động",
-)
 @pytest.mark.parametrize(
     "value", ["Bot\x00x", "Bot\x07x", "Bot\x7fx", "​"], ids=["nul", "bel", "del", "zwsp"]
 )

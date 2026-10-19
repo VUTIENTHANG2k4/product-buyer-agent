@@ -1,10 +1,18 @@
 """Cấu hình ứng dụng: nơi duy nhất đọc biến môi trường (docs/03 §8)."""
 
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import Field, NonNegativeInt, PositiveInt, SecretStr, StringConstraints
+from pydantic import (
+    AfterValidator,
+    Field,
+    NonNegativeInt,
+    PositiveInt,
+    SecretStr,
+    StringConstraints,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # backend/app/config.py -> thư mục gốc repo (nơi đặt file cấu hình môi trường)
@@ -14,8 +22,24 @@ ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 NonNegativeSeconds = Annotated[float, Field(ge=0, allow_inf_nan=False)]
 PositiveSeconds = Annotated[float, Field(gt=0, allow_inf_nan=False)]
 Port = Annotated[int, Field(ge=1, le=65535)]
+
+
 # User-Agent trung thực là bắt buộc (docs/02 §3): không nhận chuỗi rỗng hay toàn khoảng trắng.
-UserAgent = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+def _check_user_agent(value: str) -> str:
+    """Từ chối ký tự điều khiển (NUL, BEL, DEL, CR/LF…; tab được phép) và chuỗi toàn ký tự vô hình.
+
+    Nếu không, h11 chỉ báo `LocalProtocolError` ở request đầu tiên thay vì lúc khởi động.
+    """
+    if any(unicodedata.category(char) == "Cc" and char != "	" for char in value):
+        raise ValueError("must not contain control characters")
+    if all(unicodedata.category(char) in ("Cf", "Zs", "Zl", "Zp") for char in value):
+        raise ValueError("must contain visible characters")
+    return value
+
+
+UserAgent = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1), AfterValidator(_check_user_agent)
+]
 
 
 class Settings(BaseSettings):

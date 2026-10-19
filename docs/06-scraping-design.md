@@ -80,10 +80,10 @@ Chi tiết đã cài đặt (T2.2), khác hoặc chi tiết hơn bản phác ở
 
 | Chức năng | Chi tiết |
 | --- | --- |
-| robots.txt | `RobotsCache.allowed(url, user_agent)` dùng `urllib.robotparser`; tải `/robots.txt` một lần mỗi 24 giờ mỗi domain; không tải được (lỗi mạng) → coi như **không cho phép** và thử lại sau; 404 → cho phép (theo chuẩn). URL bị chặn → `RobotsDisallowed`, không request. |
+| robots.txt | `RobotsCache.rules(origin).allowed(url)`; bộ phân tích riêng (`scrapers/http/robots.py`, theo RFC 9309: nhóm theo User-agent, quy tắc dài nhất thắng, hòa thì Allow, hỗ trợ `*` và `$`) vì `urllib.robotparser` không hiểu `Disallow: /*?filter=` mà các trang dùng. Tải `/robots.txt` một lần mỗi 24 giờ mỗi domain (cũng qua độ trễ domain); không tải được (lỗi mạng, 5xx, 429) → **không cho phép** (`RobotsUnavailable`), không lưu cache nên lần sau thử lại; 404/410 → cho phép (theo chuẩn); 401/403 → cấm cả trang. URL bị chặn → `RobotsDisallowed`, không request. Chuyển hướng kiểm tra robots ở từng bước. |
 | Độ trễ | `DomainRateLimiter`: khóa asyncio mỗi domain; chờ đến khi `now - last_request >= delay`. Trang thật: `delay = max(SCRAPER_MIN_DELAY_SECONDS, robots.crawl_delay, site.min_delay_s)` cộng jitter 0–1 s. Mock-shop (`is_mock=True`): `delay = MOCK_SHOP_DELAY_SECONDS`, không jitter. Limiter nhận `clock` và `sleep` qua constructor để test dùng đồng hồ giả (không ngủ thật). |
-| Header | `User-Agent: SCRAPER_USER_AGENT`, `Accept-Language: vi-VN,vi;q=0.9`. Không cookie phiên trừ mock-shop sau khi giải challenge. |
-| Retry | Lỗi mạng, 5xx: retry tối đa `SCRAPER_MAX_RETRIES` với backoff 2^n · 5 s. 429: chờ theo `Retry-After` (tối thiểu 60 s), tối đa 1 lần, sau đó coi là chặn. 403: không retry, coi là chặn ngay (xem §4). |
+| Header | `User-Agent: SCRAPER_USER_AGENT`, `Accept-Language: vi-VN,vi;q=0.9`. Không cookie phiên trừ mock-shop sau khi giải challenge (trang thật dùng client có chính sách cookie rỗng; không dùng proxy từ biến môi trường). Chuyển hướng không tự theo mà kiểm tra từng bước: tối đa 5 lần, chỉ trong cùng `netloc` (đổi http→https được), ra ngoài domain hoặc scheme lạ → `RedirectError`. |
+| Retry | Lỗi mạng, 5xx: retry tối đa `SCRAPER_MAX_RETRIES` với backoff 2^n · 5 s. 429: chờ theo `Retry-After` (giây hoặc ngày giờ HTTP; tối thiểu 60 s), tối đa 1 lần, sau đó coi là chặn; `Retry-After` > 600 s thì không chờ, trả ngay 429. Các 4xx khác → `HttpStatusError`; hết lượt retry → `FetchFailed`. 403: không retry, coi là chặn ngay (xem §4). |
 | Timeout | `SCRAPER_TIMEOUT_SECONDS` |
 | Offline | `SCRAPER_OFFLINE_ONLY=true` → mọi domain không phải mock-shop bị từ chối với `OfflineModeError` |
 | Raw cache | Lưu HTML vào `backend/data/raw/<site>/<yyyymmdd>/<hash>.html` (giữ 7 ngày) để debug và tạo fixture |
