@@ -198,10 +198,13 @@ Xong khi:
 | T3.1 | Khảo sát GearVN + fixtures | T0.4, T2.1 | M | ✅ |
 | T3.2 | GearVNScraper | T3.1 | M | ✅ |
 | T3.3 | Chạy thật có kiểm soát | T3.2, T2.6 | S | ✅ |
+| T3.4 | `robots.txt` bị CDN challenge → `BLOCKED` (phát sinh từ QA M3) | T3.2 | S | ⬜ |
 
 **T3.1** — Dùng skill `add-scraper` (Pha A). Xong khi: `docs/sources/gearvn.md` điền đủ mục 3–7; URL danh mục 4 nhóm; quyết định `requires_js`; fixtures theo [06 §8](06-scraping-design.md#8-fixtures).
 **T3.2** — Xong khi: parse danh sách 4 nhóm, chi tiết, tìm kiếm; test trên fixture; coverage module ≥ 90%.
 **T3.3** — **Người dùng tự bật** `SCRAPER_OFFLINE_ONLY=false`. Xong khi: `make scrape SITE=gearvn CAT=<nhóm> PAGES=1` cho 4 nhóm đều `SUCCEEDED` (hoặc `PARTIAL` chỉ vì chạm giới hạn `PAGES=1` khi còn trang sau, đã chốt với người dùng ngày 2026-10-19 vì mỗi nhóm có 8–27 trang; không `FAILED`/`BLOCKED`); tỷ lệ parse ≥ 90%; ghi kết quả vào `docs/sources/gearvn.md`.
+
+**T3.4** — Phát sinh từ QA M3 (quan sát thiết kế, không chặn). `robots.txt` luôn là request đầu tiên: nếu CDN trả 403 thì `RobotsCache` cho `DISALLOW_ALL`, nếu 5xx thì ném `RobotsUnavailable`; cả hai ra `FAILED` thay vì `BLOCKED` nên không có thời gian nghỉ 24 giờ và lịch chạy sẽ gõ lại trang mỗi lượt (lệch tinh thần 02 §3 mục 7). Xong khi: robots.txt trả challenge (403 hoặc 5xx có dấu hiệu `is_blocking_error_response`) của trang thật → lượt `BLOCKED` kèm `SITE_COOLDOWN`; test ở mức Fetcher và pipeline; cập nhật 06 §3–§4. Cùng lúc cân nhắc: `rel="next prev"` nhiều token, `href` http thay https cho cùng sản phẩm (khóa URL khác nhau), cùng URL xuất hiện ở hai nhóm (M5).
 
 ### M4 — Hoàng Hà + Laptop88
 

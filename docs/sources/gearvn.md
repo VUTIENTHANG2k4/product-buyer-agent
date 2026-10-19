@@ -43,7 +43,7 @@ Thứ tự ưu tiên 06 §6 chỉ áp dụng được một phần: trang danh s
   - thông số rút gọn: `[data-slot=product-specs]` gồm các `span` con, mỗi chip có một biểu tượng SVG và giá trị trong `span.truncate`. **Chip không có nhãn** (ví dụ `Intel® UHD Graphics`, `15.6 inch`, `Core 5`, `512 GB`, `IPS`), số chip và thứ tự khác nhau giữa sản phẩm;
   - giá: xem mục 5; khuyến mãi quà tặng: `[data-slot=product-promotion]` (chỉ là văn bản, không phải giá);
   - không có điểm đánh giá, số lượt đánh giá, mã sản phẩm hay tình trạng kho trên thẻ.
-- Phân trang: `<link rel="next" href="…?page=N+1">` và `<link rel="prev">` ở `<head>`; trang cuối (mouse `?page=8`, 19 thẻ) chỉ có `rel="prev"` → `has_next = False`. `canonical` của trang N chứa `?page=N`.
+- Phân trang: `<link rel="next" href="…?page=N+1">` và `<link rel="prev">` ở `<head>` (scraper chỉ trả `next_url` khi cùng đường dẫn với trang hiện tại; nếu trỏ ra ngoài danh mục thì `has_next` vẫn đúng nhưng `next_url` rỗng và `crawl_category` tự dựng `?page=N+1`); trang cuối (mouse `?page=8`, 19 thẻ) chỉ có `rel="prev"` → `has_next = False`. `canonical` của trang N chứa `?page=N`.
 - Trang tìm kiếm `/search?q=<từ khóa>` (robots.txt cho phép, trang `noindex`): cùng thẻ `a.product-card`, 20 thẻ, không có `rel=next` (chưa kiểm tra phân trang của tìm kiếm; tầng 2 chỉ cần trang đầu).
 
 **Trang chi tiết** (`/products/<slug>`):
@@ -86,6 +86,7 @@ Trang chủ (2 MB) chỉ dùng để tìm URL danh mục, không lưu. Chưa có
 - Không có `mpn`: `model_code_hint` chỉ lấy `mpn` nếu trang có (hiện luôn `None`). `sku` của GearVN là mã nội bộ nên không dùng làm mã hãng; mã trong tên (ví dụ `AL15-53P-56QH`) để bộ trích xuất ở M5 xử lý. `site_sku` của `ListingItem` cũng `None` vì thẻ không có mã.
 - Không có đánh giá sao: `rating`, `rating_count` luôn `None`.
 - Trang cuối nhóm chuột gồm hầu hết sản phẩm ngừng kinh doanh (không giá): mỗi thẻ này tính vào `items_failed` (giá không đọc được) nên một lượt chạy **đầy đủ** nhóm chuột có thể kết thúc `PARTIAL` do tỷ lệ lỗi > 20% dù parse đúng; pipeline coi các mục "hết giá" là an toàn (không chặn việc tắt offer). Cân nhắc tách "không giá" khỏi "lỗi" ở pipeline khi chạy đầy đủ (M9).
+- Chuẩn hóa ở scraper: tiêu đề gộp khoảng trắng (giữ dấu cách giữa thẻ inline); nhãn và giá trị `additionalProperty` về NFC và bỏ ký tự NUL; `src` ảnh hỏng chỉ làm `image_url=None`; thẻ phải trỏ tới `/products/<slug>`; JSON-LD trong `@graph` được đọc, JSON-LD lồng quá sâu bị bỏ qua. Tiêu đề chưa NFC hay lọc ký tự điều khiển: để M5.
 - `robots.txt` không chặn agent AI, nhưng khảo sát chỉ dùng bot dự án (khoảng 10 trang, 2026-10-19). Không gọi `/api/`.
 - Số lượng: bàn phím 27 trang; với độ trễ 5–6 s một lượt đầy đủ mất vài phút (xem `SCRAPER_MAX_LISTING_PAGES`).
 - Tình trạng kho: thẻ danh sách luôn `StockStatus.unknown` (kể cả "Liên hệ tư vấn"); `availability` của trang chi tiết chưa được đọc vì `ProductDetail` không có trường tồn kho.

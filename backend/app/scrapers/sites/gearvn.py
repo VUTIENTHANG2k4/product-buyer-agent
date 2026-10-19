@@ -7,10 +7,11 @@ dùng JSON-LD `Product`. `parse_*` là hàm thuần; thẻ không đọc đượ
 
 import logging
 import re
+import unicodedata
 from typing import Any, ClassVar
 from urllib.parse import urlencode, urljoin, urlsplit
 
-from pydantic import ValidationError
+from pydantic import HttpUrl, TypeAdapter, ValidationError
 from selectolax.lexbor import LexborHTMLParser, LexborNode
 
 from app.domain.dto import ListingItem, ListingPage, ProductDetail
@@ -25,6 +26,7 @@ logger = logging.getLogger(__name__)
 _BASE_URL = "https://gearvn.com"
 # Giá hiển thị đúng dạng "24.990.000đ" (chữ đ thường): khuyến mãi như "300.000Đ" không khớp.
 _PRICE_TEXT = re.compile(r"^\d{1,3}(?:\.\d{3})+đ$")
+_HTTP_URL = TypeAdapter(HttpUrl)
 
 
 def _prices(card: LexborNode) -> list[int]:
@@ -51,6 +53,21 @@ def _image_src(card: LexborNode) -> str | None:
     return None
 
 
+def _image_url(page_url: str, src: str | None) -> str | None:
+    """URL ảnh tuyệt đối; `src` hỏng (javascript:, quá dài...) chỉ làm mất ảnh, không mất thẻ."""
+    if not src:
+        return None
+    try:
+        return str(_HTTP_URL.validate_python(urljoin(page_url, src)))
+    except (ValueError, ValidationError):
+        return None
+
+
+def _clean(text: str) -> str:
+    """NFC, bỏ ký tự NUL (PostgreSQL không lưu được) và khoảng trắng hai đầu."""
+    return unicodedata.normalize("NFC", text.replace("\x00", "")).strip()
+
+
 def _is_product(obj: dict[str, Any]) -> bool:
     kind = obj.get("@type")
     return kind == "Product" or (isinstance(kind, list) and "Product" in kind)
@@ -74,7 +91,7 @@ def _additional_properties(product: dict[str, Any]) -> dict[str, str]:
             continue
         if not isinstance(value, str | int | float):
             continue
-        label, text = name.strip(), str(value).strip()
+        label, text = _clean(name), _clean(str(value))
         if not label or not text:
             continue
         values = specs[label].split("; ") if label in specs else []
@@ -98,7 +115,8 @@ class GearVNScraper(BaseScraper):
     )
 
     def search_url(self, query: str) -> str:
-        return f"{_BASE_URL}/search?{urlencode({'q': query})}"
+        text = unicodedata.normalize("NFC", query).strip()
+        return f"{_BASE_URL}/search?{urlencode({'q': text})}"
 
     # ---- parse (hàm thuần) ----
     def parse_listing(self, html: str, category: Category, page_url: str) -> ListingPage:
@@ -121,10 +139,16 @@ class GearVNScraper(BaseScraper):
                 next_url = clean_url(urljoin(page_url, href))
             except ValueError:  # href lạ (javascript:, mailto:...): coi như hết trang
                 logger.warning("Liên kết trang sau không hợp lệ: %r", href[:80])
+        has_next = next_url is not None
+        if next_url is not None and urlsplit(next_url).path != urlsplit(page_url).path:
+            # Trang sau nằm ngoài danh mục này (/api/, giỏ hàng, nhóm khác): không theo; để
+            # `crawl_category` tự dựng URL trang sau bằng `listing_url`.
+            logger.warning("Bỏ qua liên kết trang sau ngoài danh mục: %s", next_url)
+            next_url = None
         return ListingPage.model_validate(
             {
                 "items": items,
-                "has_next": next_url is not None,
+                "has_next": has_next,
                 "next_url": next_url,
                 "skipped": skipped,
             }
@@ -135,7 +159,8 @@ class GearVNScraper(BaseScraper):
         if not href:
             raise ValueError("card without product link")
         url = clean_url(urljoin(page_url, href))
-        if urlsplit(url).path.split("/")[1:2] != ["products"]:
+        segments = urlsplit(url).path.split("/")[1:]
+        if len(segments) < 2 or segments[0] != "products" or not segments[1]:
             raise ValueError("card link is not a product page")
         content = card.css_first("[data-slot=product-card-content]")
         title = node_text(content.css_first("p")) if content is not None else ""
@@ -166,7 +191,7 @@ class GearVNScraper(BaseScraper):
                 "price": price,
                 "list_price": list_price,
                 "price_type": price_type,
-                "image_url": urljoin(page_url, image_src) if image_src else None,
+                "image_url": _image_url(page_url, image_src),
                 "category_hint": category,
             }
         )

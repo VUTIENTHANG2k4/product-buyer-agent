@@ -12,20 +12,28 @@ _LD_SELECTOR = 'script[type="application/ld+json"]'
 
 
 def json_ld_objects(tree: LexborHTMLParser) -> list[dict[str, Any]]:
-    """Mọi đối tượng JSON-LD (phẳng hóa danh sách); khối JSON hỏng bị bỏ qua."""
+    """Mọi đối tượng JSON-LD (phẳng hóa danh sách và `@graph`); khối JSON hỏng bị bỏ qua."""
     found: list[dict[str, Any]] = []
     for script in tree.css(_LD_SELECTOR):
         try:
             data = json.loads(script.text())
-        except ValueError:
+        except (ValueError, RecursionError):  # JSON hỏng hoặc lồng quá sâu
             logger.warning("JSON-LD không hợp lệ, bỏ qua")
             continue
-        found.extend(
-            item for item in (data if isinstance(data, list) else [data]) if isinstance(item, dict)
-        )
+        for item in data if isinstance(data, list) else [data]:
+            if not isinstance(item, dict):
+                continue
+            found.append(item)
+            graph = item.get("@graph")
+            if isinstance(graph, list):
+                found.extend(node for node in graph if isinstance(node, dict))
     return found
 
 
 def node_text(node: LexborNode | None) -> str:
-    """Văn bản đã cắt khoảng trắng của `node`; chuỗi rỗng nếu không có node."""
-    return node.text(strip=True) if node is not None else ""
+    """Văn bản của `node` với mọi chuỗi khoảng trắng/xuống dòng gộp thành một dấu cách.
+
+    Giữ nguyên khoảng trắng giữa các thẻ inline (`Chuột <b>Razer</b> <i>Viper</i>`), không chèn
+    thêm giữa chữ liền nhau (`Chu<b>ột</b>`). Chuỗi rỗng nếu không có node.
+    """
+    return " ".join(node.text().split()) if node is not None else ""
