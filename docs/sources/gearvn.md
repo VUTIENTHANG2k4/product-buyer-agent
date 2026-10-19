@@ -81,10 +81,12 @@ Lưu ngày 2026-10-19 bằng bot dự án qua Fetcher (robots.txt, độ trễ �
 Trang chủ (2 MB) chỉ dùng để tìm URL danh mục, không lưu. Chưa có fixture cho trang danh sách giữa chừng (có cả `rel=prev` và `rel=next`); T3.2 dựng trường hợp này từ trang 1 và trang cuối khi cần.
 
 ## 7. Vấn đề và lưu ý
-- **Thông số trên thẻ không có nhãn.** `ListingItem.raw_specs` là `nhãn → giá trị`, nên thẻ chỉ đưa được các giá trị không nhãn. Pipeline (06 §7, T2.6) chỉ tải trang chi tiết cho thẻ có `raw_specs` rỗng, tối đa 20 trang mỗi lượt. Phương án đề xuất cho T3.2: để `raw_specs` của danh sách rỗng và lấy thông số có nhãn từ JSON-LD `additionalProperty` ở trang chi tiết; tên sản phẩm của laptop đã chứa CPU/RAM/SSD/màn hình/hệ điều hành cho bộ trích xuất theo luật ở M5. Cần xem lại giới hạn 20 chi tiết/lượt khi thu thập đầy đủ.
-- Không có `mpn`: `model_code_hint` lấy từ `sku` của GearVN hoặc mã trong tên (ví dụ `AL15-53P-56QH`); quyết định ở T3.2/T5.2.
+- **Thông số trên thẻ không có nhãn.** `ListingItem.raw_specs` là `nhãn → giá trị`, nên thẻ chỉ đưa được các giá trị không nhãn. Pipeline (06 §7, T2.6) chỉ tải trang chi tiết cho thẻ có `raw_specs` rỗng, tối đa 20 trang mỗi lượt. **Đã chọn ở T3.2:** `raw_specs` của thẻ danh sách để rỗng (không nhét giá trị không nhãn) nên pipeline tải trang chi tiết và lấy thông số có nhãn từ JSON-LD `additionalProperty`; tên sản phẩm của laptop đã chứa CPU/RAM/SSD/màn hình/hệ điều hành cho bộ trích xuất theo luật ở M5. Hệ quả: một lượt có tối đa 20 trang chi tiết (mỗi trang ≥ 5 s) nên phần lớn sản phẩm của lượt đầy đủ chưa có thông số có nhãn; xem lại giới hạn này (hoặc đọc chip trên thẻ) ở T5.1/T5.2.
+- Không có `mpn`: `model_code_hint` chỉ lấy `mpn` nếu trang có (hiện luôn `None`). `sku` của GearVN là mã nội bộ nên không dùng làm mã hãng; mã trong tên (ví dụ `AL15-53P-56QH`) để bộ trích xuất ở M5 xử lý. `site_sku` của `ListingItem` cũng `None` vì thẻ không có mã.
 - Không có đánh giá sao: `rating`, `rating_count` luôn `None`.
 - Trang cuối nhóm chuột gồm hầu hết sản phẩm ngừng kinh doanh (không giá): lượt chạy đầy đủ sẽ có nhiều mục "hết giá" ở cuối danh mục; pipeline coi là an toàn (không chặn việc tắt offer).
 - `robots.txt` không chặn agent AI, nhưng khảo sát chỉ dùng bot dự án (khoảng 10 trang, 2026-10-19). Không gọi `/api/`.
 - Số lượng: bàn phím 27 trang; với độ trễ 5–6 s một lượt đầy đủ mất vài phút (xem `SCRAPER_MAX_LISTING_PAGES`).
+- Tình trạng kho: thẻ danh sách luôn `StockStatus.unknown` (kể cả "Liên hệ tư vấn"); `availability` của trang chi tiết chưa được đọc vì `ProductDetail` không có trường tồn kho.
+- 503 kèm trang chờ Cloudflare (`cf-mitigated: challenge`…) được Fetcher trả ngay và coi là challenge → `BLOCKED` và nghỉ 24 giờ (T2.7c); chưa gặp trên GearVN, chỉ có test với phản hồi giả.
 - (T3.3) Kết quả chạy thật: chưa chạy.

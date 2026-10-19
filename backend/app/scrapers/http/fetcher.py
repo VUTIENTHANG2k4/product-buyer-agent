@@ -24,6 +24,7 @@ import httpx
 
 from app.config import Settings
 from app.normalize.url import host_key
+from app.scrapers.challenge import is_blocking_error_response
 from app.scrapers.http.errors import (
     FetchFailed,
     FormNotAllowed,
@@ -270,6 +271,11 @@ class Fetcher:
                     continue
                 if status < 400 or status == 403:
                     return response  # 403: không retry, scraper báo challenge http_403
+                if is_blocking_error_response(status, response.headers, response.text):
+                    logger.warning(
+                        "HTTP %d của trang challenge từ %s, không thử lại", status, _netloc(url)
+                    )
+                    return response  # 5xx của CDN (Cloudflare…): scraper báo challenge, không retry
                 if status < 500:
                     raise HttpStatusError(f"HTTP {status}", url=url, status=status)
                 failure = f"HTTP {status}"

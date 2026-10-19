@@ -4,7 +4,6 @@ Thứ tự ưu tiên của docs/06 §6: JSON-LD (giá, tồn kho, mã, ảnh) r�
 rút gọn, tên). `parse_*` là hàm thuần; thẻ không đọc được bị bỏ qua, đếm vào `skipped`.
 """
 
-import json
 import logging
 from typing import Any, ClassVar
 from urllib.parse import urlencode, urljoin
@@ -19,26 +18,11 @@ from app.normalize.price import parse_price
 from app.normalize.url import clean_url
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.http.types import FetchResponse
+from app.scrapers.parsing import json_ld_objects, node_text
 
 logger = logging.getLogger(__name__)
 
 _BASE_URL = get_settings().mock_shop_url.rstrip("/")
-_LD_SELECTOR = 'script[type="application/ld+json"]'
-
-
-def _json_ld_objects(tree: LexborHTMLParser) -> list[dict[str, Any]]:
-    """Mọi đối tượng JSON-LD (phẳng hóa danh sách); khối JSON hỏng bị bỏ qua."""
-    found: list[dict[str, Any]] = []
-    for script in tree.css(_LD_SELECTOR):
-        try:
-            data = json.loads(script.text())
-        except ValueError:
-            logger.warning("JSON-LD không hợp lệ, bỏ qua")
-            continue
-        found.extend(
-            item for item in (data if isinstance(data, list) else [data]) if isinstance(item, dict)
-        )
-    return found
 
 
 def _ld_products_by_url(page_url: str, objects: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -59,10 +43,6 @@ def _ld_products_by_url(page_url: str, objects: list[dict[str, Any]]) -> dict[st
                 except ValueError:
                     continue
     return products
-
-
-def _text(node: LexborNode | None) -> str:
-    return node.text(strip=True) if node is not None else ""
 
 
 def _ld_price(product: dict[str, Any]) -> int | None:
@@ -129,7 +109,7 @@ class MockShopScraper(BaseScraper):
     # ---- parse (hàm thuần) ----
     def parse_listing(self, html: str, category: Category, page_url: str) -> ListingPage:
         tree = LexborHTMLParser(html)
-        ld_products = _ld_products_by_url(page_url, _json_ld_objects(tree))
+        ld_products = _ld_products_by_url(page_url, json_ld_objects(tree))
         items: list[ListingItem] = []
         skipped = 0
         for card in tree.css("li.product-card"):
@@ -168,8 +148,8 @@ class MockShopScraper(BaseScraper):
 
         price = _ld_price(ld_product) if ld_product else None
         if price is None:
-            price = parse_price(_text(card.css_first(".price")))
-        list_price = parse_price(_text(card.css_first(".old-price")))
+            price = parse_price(node_text(card.css_first(".price")))
+        list_price = parse_price(node_text(card.css_first(".old-price")))
         if list_price is not None and (price is None or list_price <= price):
             list_price = None
         price_type = PriceType.unknown
@@ -183,7 +163,7 @@ class MockShopScraper(BaseScraper):
             {
                 "site": SiteKey.mockshop,
                 "url": url,
-                "title": _text(card.css_first(".product-name")),
+                "title": node_text(card.css_first(".product-name")),
                 "price": price,
                 "list_price": list_price,
                 "price_type": price_type,
@@ -201,10 +181,10 @@ class MockShopScraper(BaseScraper):
         tree = LexborHTMLParser(html)
         raw_specs: dict[str, str] = {}
         for row in tree.css("table.specs tr"):
-            label, value = _text(row.css_first("th")), _text(row.css_first("td"))
+            label, value = node_text(row.css_first("th")), node_text(row.css_first("td"))
             if label and value:
                 raw_specs[label] = value
-        product = next((o for o in _json_ld_objects(tree) if o.get("@type") == "Product"), {})
+        product = next((o for o in json_ld_objects(tree) if o.get("@type") == "Product"), {})
         brand = product.get("brand")
         mpn = product.get("mpn") or product.get("sku")
         return ProductDetail.model_validate(
@@ -229,7 +209,7 @@ class MockShopScraper(BaseScraper):
         box = LexborHTMLParser(resp.text).css_first("div#captcha")
         if box is None:
             return challenge
-        code = _text(box)
+        code = node_text(box)
         return challenge.model_copy(
             update={
                 "prompt": f"Nhập mã xác minh hiển thị trên trang: {code}" if code else None,
