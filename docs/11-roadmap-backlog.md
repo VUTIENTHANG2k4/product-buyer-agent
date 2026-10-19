@@ -39,7 +39,7 @@ Trạng thái: ⬜ Chưa làm · 🔄 Đang làm · ✅ Xong · ⛔ Bị chặn 
 | 1 | M0 Nền tảng · M1 Dữ liệu | App rỗng chạy được, CI xanh, DB có dữ liệu seed |
 | 2 | M2 Hạ tầng thu thập | Thu thập mock-shop có phân trang + captcha giả + HITL |
 | 3 | M3 GearVN | Dữ liệu thật từ GearVN cho 4 nhóm |
-| 4 | M4 Hoàng Hà + Laptop88 | 3 nguồn lõi |
+| 4 | M4 FPT Shop + An Phát | 3 nguồn lõi (thay Hoàng Hà + Laptop88, ADR-0008) |
 | 5 | M5 Chuẩn hóa & ghép | Cùng một mẫu laptop gom giá từ nhiều trang |
 | 6 | M6 Agent | Hỏi bằng CLI/test, nhận bảng kết quả đúng; báo cáo eval đầu tiên |
 | 7 | M7 API | Toàn bộ chức năng qua REST + SSE |
@@ -50,7 +50,7 @@ Trạng thái: ⬜ Chưa làm · 🔄 Đang làm · ✅ Xong · ⛔ Bị chặn 
 ```mermaid
 flowchart LR
   M0[M0 Nền tảng] --> M1[M1 Dữ liệu] --> M2[M2 Hạ tầng thu thập]
-  M2 --> M3[M3 GearVN] --> M4[M4 Hoàng Hà + Laptop88]
+  M2 --> M3[M3 GearVN] --> M4[M4 FPT Shop + An Phát]
   M1 --> M5[M5 Chuẩn hóa]
   M3 --> M5
   M4 --> M5
@@ -209,18 +209,26 @@ Xong khi:
 
 **T3.4** — Phát sinh từ QA M3 (quan sát thiết kế, không chặn). `robots.txt` luôn là request đầu tiên: nếu CDN trả 403 thì `RobotsCache` cho `DISALLOW_ALL`, nếu 5xx thì ném `RobotsUnavailable`; cả hai ra `FAILED` thay vì `BLOCKED` nên không có thời gian nghỉ 24 giờ và lịch chạy sẽ gõ lại trang mỗi lượt (lệch tinh thần 02 §3 mục 7). Xong khi: robots.txt trả challenge (403 hoặc 5xx có dấu hiệu `is_blocking_error_response`) của trang thật → lượt `BLOCKED` kèm `SITE_COOLDOWN`; test ở mức Fetcher và pipeline; cập nhật 06 §3–§4. Cùng lúc cân nhắc: `rel="next prev"` nhiều token, `href` http thay https cho cùng sản phẩm (khóa URL khác nhau), cùng URL xuất hiện ở hai nhóm (M5).
 
-### M4 — Hoàng Hà + Laptop88
+### M4 — FPT Shop + An Phát
+
+Đổi nguồn ngày 2026-10-19: bỏ Hoàng Hà Mobile và Laptop88, thay bằng FPT Shop và An Phát ([ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)). T4.1 và T4.3 dùng skill `add-scraper` Pha A; kết luận điều khoản (T0.4) của hai trang mới do người dùng duyệt sau khi tự mở link đối chiếu, trước khi lưu fixture.
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T4.1 | Khảo sát Hoàng Hà + fixtures | T0.4, T2.1 | S | ⬜ |
-| T4.2 | HoangHaScraper (ánh xạ `price_type`) | T4.1, T2.2 | M | ⬜ |
-| T4.3 | Khảo sát Laptop88 + fixtures (không dùng Playwright MCP/WebFetch, xem [06 §8](06-scraping-design.md#8-fixtures)) | T0.4, T2.1 | S | ⬜ |
-| T4.4 | Laptop88Scraper | T4.3, T2.2 | M | ⬜ |
+| T4.0 | ADR-0008, cập nhật docs, thêm `fptshop`/`anphat` vào `SiteKey` + migration 0002 | – | S | 🔄 |
+| T4.1 | Khảo sát FPT Shop + fixtures (`docs/sources/fptshop.md`) | T4.0, T2.1 | S | ⬜ |
+| T4.2 | FptShopScraper (ánh xạ `price_type`) | T4.1, T2.2 | M | ⬜ |
+| T4.3 | Khảo sát An Phát + fixtures (`docs/sources/anphat.md`) | T4.0, T2.1 | S | ⬜ |
+| T4.4 | AnPhatScraper | T4.3, T2.2 | M | ⬜ |
 | T4.5 | Chạy thật có kiểm soát 2 nguồn | T4.2, T4.4, T2.6 | S | ⬜ |
+| T4.6 | Đổi seed/test từ `hoangha`/`laptop88` sang `fptshop`/`anphat`; cân nhắc gỡ giá trị cũ khỏi `SiteKey` bằng migration (không chặn M5) | T4.0 | S | ⬜ |
 
-**T4.2** — Xong khi: phân biệt giá niêm yết, giá hiện tại, giá thành viên, flash sale (giá bị che → không lưu); test cho từng loại. Xác minh Hoàng Hà có bán chuột/bàn phím/tai nghe hay không và ghi vào 02 §1.
-**T4.4** — Xong khi: `min_delay_s=10`, `supports_live_search=False`; không tạo URL có `specMap`/`filter`; đọc thông số rút gọn trên thẻ; test 4 nhóm.
+**T4.0** — Xong khi: ADR-0008 và mục lục ADR; docs 01–08, 11 và `.claude/rules/scraping.md` không còn coi Hoàng Hà/Laptop88 là nguồn; `docs/sources/hoangha.md`, `laptop88.md` đánh dấu không dùng; migration `0002` thêm hai giá trị vào CHECK `site` của `offer` và `scrape_run` (test nâng cấp từ 0001 giữ dữ liệu cũ, downgrade về 6 giá trị).
+**T4.1** — Xong khi: `fptshop.md` điền đủ mục 1–7; URL danh mục (nhóm nào FPT Shop bán, ghi vào 02 §1); quyết định `requires_js` (code chưa hỗ trợ JavaScript: HTML tĩnh phải có dữ liệu — JSON-LD, JSON nhúng hoặc thẻ sản phẩm — nếu không dừng và hỏi người dùng); fixtures theo [06 §8](06-scraping-design.md#8-fixtures); người dùng đã duyệt kết luận điều khoản.
+**T4.2** — Xong khi: phân biệt giá niêm yết, giá hiện tại, giá thành viên, flash sale (giá bị che → không lưu); test cho từng loại hiển thị thật của trang; coverage module ≥ 90%.
+**T4.3** — Xong khi: như T4.1 cho An Phát; ghi cách tìm trang điều khoản/chính sách (khảo sát sơ bộ: không có trang điều khoản sử dụng riêng) và `Crawl-delay: 5`.
+**T4.4** — Xong khi: `min_delay_s` khớp robots.txt (`Crawl-delay`) và khảo sát; không tạo URL robots.txt chặn; test 4 nhóm (hoặc các nhóm trang bán); coverage module ≥ 90%.
+**T4.5** — **Người dùng tự bật** `SCRAPER_OFFLINE_ONLY=false`. Xong khi: `make scrape SITE=<fptshop|anphat> CAT=<nhóm> PAGES=1` cho mọi nhóm đã khảo sát đều `SUCCEEDED` (hoặc `PARTIAL` chỉ vì `PAGES=1` khi còn trang sau); không `FAILED`/`BLOCKED`; tỷ lệ parse ≥ 90%; ghi kết quả vào `docs/sources/<site>.md` mục 7; nhắc người dùng đặt lại `SCRAPER_OFFLINE_ONLY=true`.
 
 ### M5 — Chuẩn hóa & ghép mẫu
 
@@ -324,6 +332,6 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 
 | ID | Task | Ước lượng | Trạng thái |
 | --- | --- | --- | --- |
-| X1 | Nhóm điện thoại: nâng Viettel Store và Nguyễn Kim thành trang lõi cho nhóm này ([02 §1](02-scope-and-sources.md#1-ma-trận-trang--nhóm-sản-phẩm)); `PhoneSpecs`, scraper Hoàng Hà/Viettel Store/Nguyễn Kim cho điện thoại, biến thể dung lượng | L | ⬜ |
+| X1 | Nhóm điện thoại: nâng Viettel Store và Nguyễn Kim thành trang lõi cho nhóm này ([02 §1](02-scope-and-sources.md#1-ma-trận-trang--nhóm-sản-phẩm)); `PhoneSpecs`, scraper FPT Shop/Viettel Store/Nguyễn Kim cho điện thoại, biến thể dung lượng | L | ⬜ |
 | X2 | Đổi trang lõi nếu một nguồn bị loại ở T0.4 (gợi ý: FPT Shop, HACOM) | L | ⬜ |
 | X3 | Xuất danh sách mua ra CSV / chia sẻ link | S | ⬜ |

@@ -9,6 +9,7 @@
 | [0005](0005-tiered-categories.md) | Phân tầng nhóm sản phẩm | Chấp nhận |
 | [0006](0006-mock-shop-hitl.md) | Mock-shop + human-in-the-loop | Chấp nhận |
 | [0007](0007-postgresql.md) | PostgreSQL (Docker) + SQLModel + Alembic, test trên Postgres thật | Chấp nhận |
+| [0008](0008-fptshop-anphat-replace-hoangha-laptop88.md) | FPT Shop + An Phát thay Hoàng Hà + Laptop88 làm trang lõi | Chấp nhận; thay một phần ADR-0005 |
 
 ## Quy tắc
 - ADR đã chấp nhận **không sửa** (hook `protect_files.py` chặn). Đổi quyết định = tạo ADR mới với số kế tiếp, ghi "Thay thế ADR-XXXX", rồi cập nhật bảng trên.

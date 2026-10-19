@@ -23,7 +23,7 @@ Mục tiêu đo được:
 
 - **Tầng 1 (hỗ trợ đầy đủ):** laptop (trọng tâm laptop gaming), chuột, bàn phím, tai nghe. Có chuẩn hóa thông số, lọc theo thông số, so sánh, ghép cùng mẫu giữa các trang, lịch sử giá.
 - **Tầng 2 (nhóm khác, hỗ trợ cơ bản):** tìm trực tiếp trên các trang cho phép tìm kiếm; trả tên, giá, link; gắn nhãn "chưa chuẩn hóa thông số"; không lọc theo thông số.
-- **Trang nguồn lõi:** GearVN, Hoàng Hà Mobile, Laptop88. Trang dùng cho tầng 2: GearVN, Viettel Store, Nguyễn Kim (và mock-shop khi dev/demo ở chế độ offline). Chi tiết và lý do ở [02](02-scope-and-sources.md).
+- **Trang nguồn lõi:** GearVN, FPT Shop, An Phát Computer (thay Hoàng Hà Mobile và Laptop88 từ ADR-0008). Trang dùng cho tầng 2: GearVN, Viettel Store, Nguyễn Kim (và mock-shop khi dev/demo ở chế độ offline). Chi tiết và lý do ở [02](02-scope-and-sources.md).
 - **Mock-shop:** trang giả lập nội bộ có phân trang và captcha giả để kiểm thử và trình diễn xử lý tình huống phức tạp.
 - Danh sách mua, cảnh báo giá qua email/Telegram, lịch thu thập định kỳ.
 - Ứng dụng web (React) + API (FastAPI), chạy cục bộ hoặc bằng Docker Compose.
@@ -35,7 +35,7 @@ Mục tiêu đo được:
 - Shopee, Tiki, Lazada, Phong Vũ, Thành Nhân, XGear, Sendo (lý do ở [02](02-scope-and-sources.md)).
 - Nhiều người dùng, đăng nhập, phân quyền (bản này là ứng dụng một người dùng chạy cục bộ).
 - Ứng dụng di động gốc (giao diện web có responsive cho điện thoại).
-- **Pha mở rộng (chỉ làm nếu còn thời gian):** điện thoại (Hoàng Hà, Viettel Store, Nguyễn Kim).
+- **Pha mở rộng (chỉ làm nếu còn thời gian):** điện thoại (FPT Shop, Viettel Store, Nguyễn Kim).
 
 ## 3. Tác nhân (actor)
 

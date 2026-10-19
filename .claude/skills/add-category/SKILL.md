@@ -8,7 +8,7 @@ argument-hint: "<category>"
 
 Tài liệu gốc: `docs/04-data-model.md` §5, §7; `docs/adr/0005-tiered-categories.md`.
 
-Điều kiện trước: nhóm có ít nhất 2 nguồn lõi cung cấp (`docs/02-scope-and-sources.md` §1). Với điện thoại (X1), Viettel Store và Nguyễn Kim được nâng thành trang lõi của nhóm (cùng Hoàng Hà) — cập nhật ma trận trong 02 §1 trước. Không đủ nguồn → giữ ở tầng 2, báo người dùng.
+Điều kiện trước: nhóm có ít nhất 2 nguồn lõi cung cấp (`docs/02-scope-and-sources.md` §1). Với điện thoại (X1), Viettel Store và Nguyễn Kim được nâng thành trang lõi của nhóm (cùng FPT Shop) — cập nhật ma trận trong 02 §1 trước. Không đủ nguồn → giữ ở tầng 2, báo người dùng.
 
 ## Các bước
 1. **Thiết kế khung** — thêm mục mới ở `docs/04-data-model.md` §5: bảng trường, kiểu, ví dụ, cột "Bắt buộc" (2–4 trường mà người dùng hay lọc). Người dùng duyệt nếu là nhóm mới.

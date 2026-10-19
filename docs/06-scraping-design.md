@@ -140,13 +140,15 @@ Chi tiết sau khảo sát ghi trong `docs/sources/<site>.md`. Thứ tự ưu ti
 2. **JSON nhúng của framework** (ví dụ `__NEXT_DATA__`, biến khởi tạo) nếu nằm trong HTML công khai.
 3. **Selector CSS** trên thẻ sản phẩm.
 
-Không gọi các endpoint API nội bộ mà robots.txt chặn (ví dụ `/api/` của GearVN, `/Ajax/` của Hoàng Hà).
+Không gọi các endpoint API nội bộ mà robots.txt chặn (ví dụ `/api/` của GearVN).
+
+Hoàng Hà Mobile và Laptop88 đã bị loại khỏi danh sách nguồn từ 2026-10-19 ([ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)); thay bằng `fptshop` và `anphat`.
 
 | Trang | Nhóm (tầng 1) | `min_delay_s` | `requires_js` | Tầng 2 | Ghi chú đã biết |
 | --- | --- | --- | --- | --- | --- |
 | `gearvn` | laptop, mouse, keyboard, headset | 5 | Không (HTML dựng sẵn ở máy chủ, T3.1) | Có | Danh sách không có JSON-LD sản phẩm (parse thẻ `a.product-card`), chi tiết có JSON-LD `Product` + `additionalProperty`; chip thông số trên thẻ không có nhãn; sản phẩm ngừng kinh doanh hiện "Liên hệ tư vấn" (không giá) |
-| `hoangha` | laptop | 5 | Xác định khi khảo sát | Không | Hiển thị nhiều loại giá (niêm yết, hiện tại, "Hoàng Hà Member chỉ từ", flash sale bị che) → map `price_type` cẩn thận |
-| `laptop88` | laptop, mouse, keyboard, headset | **10** | Xác định khi khảo sát | **Không** | Không dùng tham số `specMap`, `filter`. Thẻ sản phẩm có sẵn thông số rút gọn |
+| `fptshop` | Xác định ở T4.1 | 5 | Xác định ở T4.1 (nếu cần JavaScript mà HTML tĩnh không có dữ liệu thì dừng, xem ADR-0008) | Xác định ở T4.1 | Có thể có nhiều loại giá (niêm yết, giá hiện tại, thành viên, flash sale) → map `price_type` cẩn thận |
+| `anphat` | Xác định ở T4.3 (dự kiến cả 4 nhóm) | 5 (`Crawl-delay: 5`) | Xác định ở T4.3 | Xác định ở T4.3 | Chi tiết sau khảo sát |
 | `viettelstore` | (mở rộng) | 5 | Xác định khi khảo sát | Có | Tên điện thoại chứa dung lượng |
 | `nguyenkim` | (mở rộng) | 5 | Xác định khi khảo sát | Có | |
 | `mockshop` | cả 4 | `MOCK_SHOP_DELAY_SECONDS` | Không | Có (dev/test/demo) | Dùng cho test và demo |
@@ -190,7 +192,7 @@ Chi tiết đã cài đặt (T2.6; `app/scrapers/pipeline.py`, `app/services/scr
 
 - **Cách chuẩn:** `uv run python scripts/fetch_page.py --site <s> --url <url> --out tests/fixtures/<s>/<tên>.html --allow-online`. Script đi qua `Fetcher` (robots.txt, độ trễ, User-Agent trung thực của dự án). Cờ `--allow-online` cho phép đúng lệnh này truy cập trang thật kể cả khi `SCRAPER_OFFLINE_ONLY=true`; chỉ chạy khi người dùng đồng ý trong task khảo sát.
 - **Playwright MCP** (trình duyệt do Claude điều khiển) chỉ dùng để quan sát cách trang hiển thị (cần JavaScript hay không, vị trí phần tử) và chỉ trên trang **không** chặn agent AI trong robots.txt. Không dùng để tải hàng loạt.
-- **Laptop88** chặn rõ các agent AI truy cập thay người dùng (`ChatGPT-User`, `ClaudeBot`). Không dùng Playwright MCP hay WebFetch với trang này. Fixture lấy bằng `fetch_page.py` (bot thu thập của dự án, độ trễ 10 s) hoặc người dùng tự mở trang trong trình duyệt của mình và lưu HTML ("Save Page As… → HTML only") vào thư mục fixture.
+- **Trang chặn agent AI** (`ChatGPT-User`, `ClaudeBot`… trong robots.txt; hiện chưa có nguồn nào, Laptop88 đã bị loại ở ADR-0008): không dùng Playwright MCP hay WebFetch. Fixture lấy bằng `fetch_page.py` (bot thu thập của dự án, độ trễ theo trang) hoặc người dùng tự mở trang trong trình duyệt của mình và lưu HTML ("Save Page As… → HTML only") vào thư mục fixture.
 - Ngoài ra có thể lưu khi chạy pipeline: `scripts/scrape.py --site <s> --category <c> --save-fixture` (cần `SCRAPER_OFFLINE_ONLY=false`, người dùng chạy có chủ ý).
 - Mỗi trang tối thiểu: 1 trang danh sách mỗi nhóm, 1 trang danh sách cuối (không còn trang sau), 2 trang chi tiết, 1 trang tìm kiếm (nếu tầng 2).
 - Xóa nội dung không cần (script quảng cáo lớn) để file < 500 KB; không chứa dữ liệu cá nhân.

@@ -4,9 +4,9 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Sprint hiện tại: 3 (M3 và lượt dọn M3b xong; M4 Hoàng Hà + Laptop88 vẫn chờ giảng viên)
-- Đang làm: – (M3b xong trên nhánh `milestone/M3b-cleanup`, chờ người dùng merge)
-- Task kế tiếp đề xuất: M4 — T4.1 chờ giảng viên về Hoàng Hà, T4.3/T4.4 chờ Laptop88 (xem mục chặn). Nếu chưa có phản hồi: T6.1/T6.2 (chỉ cần T0.1/T1.4) hoặc phần GearVN của M5. Không còn việc nhỏ không chặn (T2.8 làm cùng T7.4). T3.3 đã chạy thật: nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true`
+- Sprint hiện tại: 4 (M3, M3b xong; M4 đang làm với nguồn mới FPT Shop + An Phát)
+- Đang làm: M4 trên nhánh `milestone/M4-fptshop-anphat` (đã đổi nguồn: FPT Shop + An Phát thay Hoàng Hà + Laptop88, 2026-10-19). Lượt này: T4.0 (ADR + docs), T4.1, T4.2, T4.3, T4.4, T4.5
+- Task kế tiếp đề xuất: T4.0 (code+docs xong, chờ chạy test migration cần Docker) → T4.1 (dừng chờ người dùng duyệt T0.4 FPT Shop). T2.8 làm cùng T7.4. T3.3 đã chạy thật: nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true`
 - Cập nhật lần cuối: 2026-10-19 — M3b xong (T1.7, T1.8, T3.4, T2.7; qua `code-reviewer`, bỏ qua `qa-tester`). Chưa merge
 
 ## Milestone
@@ -16,7 +16,7 @@
 | M1 Dữ liệu | ✅ | Đã qua `qa-tester`; T1.6–T1.8 xong (T1.7, T1.8 ở M3b) |
 | M2 Hạ tầng thu thập | ✅ | Qua `code-reviewer` + `qa-tester`; T2.7 xong ở M3b, còn T2.8 (cùng T7.4) |
 | M3 GearVN | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 4 nhóm `PAGES=1` 80/80 mục parse đúng. M3b (T1.7, T1.8, T3.4, T2.7) qua `code-reviewer`, **bỏ qua `qa-tester`** theo quyết định của người dùng |
-| M4 Hoàng Hà + Laptop88 | ⬜ | |
+| M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | 🔄 | Backlog sẽ viết lại ở T4.0 |
 | M5 Chuẩn hóa & ghép | ⬜ | |
 | M6 Agent | ⬜ | |
 | M7 API | ⬜ | |
@@ -26,7 +26,8 @@
 | M11 Hoàn thiện | ⬜ | |
 
 ## Bị chặn / cần người dùng quyết định
-- [ ] Hỏi giảng viên (từ T0.4): Hoàng Hà và Laptop88 đang "Cần hỏi giảng viên" (xem `docs/sources/`). T4.1 chờ Hoàng Hà; T4.3/T4.4 chờ Laptop88 (người dùng chưa kiểm tra footer laptop88.vn có trang quy chế/điều khoản riêng không). M3 (GearVN) không bị chặn.
+- [x] ~~Hỏi giảng viên về Hoàng Hà và Laptop88~~ — đã bỏ hai trang này, thay bằng FPT Shop + An Phát (2026-10-19, [ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)).
+- [ ] Người dùng duyệt kết luận T0.4 cho FPT Shop (T4.1) và An Phát (T4.3): tự mở link robots.txt + quy chế/điều khoản đối chiếu trước khi Claude lưu fixture.
 
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |

@@ -1,5 +1,7 @@
 # Nguồn: Laptop88 (`laptop88`)
 
+> **KHÔNG DÙNG từ 2026-10-19** ([ADR-0008](../adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)): chưa tìm được quy chế/điều khoản và robots.txt chặn bot AI; người dùng chọn thay bằng FPT Shop và An Phát. Giữ nội dung khảo sát dưới đây để tham khảo; không viết scraper.
+
 > Khảo sát ngày: 2026-10-17 (mục 1 xong; mục 2 chưa có điều khoản) · Người khảo sát: người dùng tự đọc và dán nội dung; Claude Code không truy cập trang này · Task: T0.4 (mục 1–2), T4.3 (mục 3–7)
 
 > **Lý do Claude Code không đọc trang này:** robots.txt của Laptop88 chặn `ClaudeBot` và `ChatGPT-User`; theo [02 §3.4](../02-scope-and-sources.md#3-chính-sách-tuân-thủ-bắt-buộc-trong-code) và `.claude/rules/scraping.md` mục 12, không dùng WebFetch hay Playwright MCP với trang này.
