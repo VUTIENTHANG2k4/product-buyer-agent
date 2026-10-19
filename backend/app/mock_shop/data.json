@@ -1,0 +1,1162 @@
+{
+  "products": [
+    {
+      "slug": "asus-mock-strix-15-x01-mk-la001",
+      "category": "laptop",
+      "name": "Laptop ASUS Mock Strix 15 X01",
+      "brand": "ASUS",
+      "sku": "MK-LA001",
+      "price": 15750000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.5,
+      "rating_count": 9,
+      "specs": {
+        "CPU": "Intel Core i5-13500H",
+        "RAM": "8GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4050 6GB",
+        "Màn hình": "16 inch FHD 165Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "acer-mock-nitro-16-x02-mk-la002",
+      "category": "laptop",
+      "name": "Laptop Acer Mock Nitro 16 X02",
+      "brand": "Acer",
+      "sku": "MK-LA002",
+      "price": 29400000,
+      "list_price": 32930000,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 65,
+      "specs": {
+        "CPU": "Intel Core i7-13700H",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4070 8GB",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "lenovo-mock-legion-17-x03-mk-la003",
+      "category": "laptop",
+      "name": "Laptop Lenovo Mock Legion 17 X03",
+      "brand": "Lenovo",
+      "sku": "MK-LA003",
+      "price": 16540000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.0,
+      "rating_count": 191,
+      "specs": {
+        "CPU": "AMD Ryzen 5 7640HS",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "1024GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 3050 4GB",
+        "Màn hình": "15.6 inch FHD 165Hz",
+        "Pin": "90Wh",
+        "Trọng lượng": "2.5 kg"
+      }
+    },
+    {
+      "slug": "msi-mock-katana-15-x04-mk-la004",
+      "category": "laptop",
+      "name": "Laptop MSI Mock Katana 15 X04",
+      "brand": "MSI",
+      "sku": "MK-LA004",
+      "price": 30190000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 3.9,
+      "rating_count": 192,
+      "specs": {
+        "CPU": "AMD Ryzen 7 7840HS",
+        "RAM": "32GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4060 8GB",
+        "Màn hình": "16 inch FHD 144Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "hp-mock-victus-16-x05-mk-la005",
+      "category": "laptop",
+      "name": "Laptop HP Mock Victus 16 X05",
+      "brand": "HP",
+      "sku": "MK-LA005",
+      "price": 14180000,
+      "list_price": null,
+      "in_stock": false,
+      "rating": 4.8,
+      "rating_count": 25,
+      "specs": {
+        "CPU": "Intel Core i9-13900HX",
+        "RAM": "8GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "Intel Iris Xe Graphics",
+        "Màn hình": "15.6 inch FHD 165Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "dell-mock-g15-17-x06-mk-la006",
+      "category": "laptop",
+      "name": "Laptop Dell Mock G15 17 X06",
+      "brand": "Dell",
+      "sku": "MK-LA006",
+      "price": 17500000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.4,
+      "rating_count": 11,
+      "specs": {
+        "CPU": "Intel Core i5-13500H",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "1024GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4050 6GB",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "90Wh",
+        "Trọng lượng": "2.5 kg"
+      }
+    },
+    {
+      "slug": "gigabyte-mock-aorus-15-x07-mk-la007",
+      "category": "laptop",
+      "name": "Laptop Gigabyte Mock Aorus 15 X07",
+      "brand": "Gigabyte",
+      "sku": "MK-LA007",
+      "price": 29400000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 3.8,
+      "rating_count": 58,
+      "specs": {
+        "CPU": "Intel Core i7-13700H",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4070 8GB",
+        "Màn hình": "16 inch FHD 165Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "asus-mock-strix-16-x08-mk-la008",
+      "category": "laptop",
+      "name": "Laptop ASUS Mock Strix 16 X08",
+      "brand": "ASUS",
+      "sku": "MK-LA008",
+      "price": 19840000,
+      "list_price": 22220000,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 157,
+      "specs": {
+        "CPU": "AMD Ryzen 5 7640HS",
+        "RAM": "32GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 3050 4GB",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "acer-mock-nitro-17-x09-mk-la009",
+      "category": "laptop",
+      "name": "Laptop Acer Mock Nitro 17 X09",
+      "brand": "Acer",
+      "sku": "MK-LA009",
+      "price": 22640000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 3.8,
+      "rating_count": 53,
+      "specs": {
+        "CPU": "AMD Ryzen 7 7840HS",
+        "RAM": "8GB DDR5",
+        "Ổ cứng": "1024GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4060 8GB",
+        "Màn hình": "15.6 inch FHD 165Hz",
+        "Pin": "90Wh",
+        "Trọng lượng": "2.5 kg"
+      }
+    },
+    {
+      "slug": "lenovo-mock-legion-15-x10-mk-la010",
+      "category": "laptop",
+      "name": "Laptop Lenovo Mock Legion 15 X10",
+      "brand": "Lenovo",
+      "sku": "MK-LA010",
+      "price": null,
+      "list_price": null,
+      "in_stock": true,
+      "rating": null,
+      "rating_count": 0,
+      "specs": {
+        "CPU": "Intel Core i9-13900HX",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "Intel Iris Xe Graphics",
+        "Màn hình": "16 inch FHD 144Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "msi-mock-katana-16-x11-mk-la011",
+      "category": "laptop",
+      "name": "Laptop MSI Mock Katana 16 X11",
+      "brand": "MSI",
+      "sku": "MK-LA011",
+      "price": 17500000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.4,
+      "rating_count": 59,
+      "specs": {
+        "CPU": "Intel Core i5-13500H",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4050 6GB",
+        "Màn hình": "15.6 inch FHD 165Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "hp-mock-victus-17-x12-mk-la012",
+      "category": "laptop",
+      "name": "Laptop HP Mock Victus 17 X12",
+      "brand": "HP",
+      "sku": "MK-LA012",
+      "price": 35280000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.3,
+      "rating_count": 74,
+      "specs": {
+        "CPU": "Intel Core i7-13700H",
+        "RAM": "32GB DDR5",
+        "Ổ cứng": "1024GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4070 8GB",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "90Wh",
+        "Trọng lượng": "2.5 kg"
+      }
+    },
+    {
+      "slug": "dell-mock-g15-15-x13-mk-la013",
+      "category": "laptop",
+      "name": "Laptop Dell Mock G15 15 X13",
+      "brand": "Dell",
+      "sku": "MK-LA013",
+      "price": 14880000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.7,
+      "rating_count": 4,
+      "specs": {
+        "CPU": "AMD Ryzen 5 7640HS",
+        "RAM": "8GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 3050 4GB",
+        "Màn hình": "16 inch FHD 165Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "gigabyte-mock-aorus-16-x14-mk-la014",
+      "category": "laptop",
+      "name": "Laptop Gigabyte Mock Aorus 16 X14",
+      "brand": "Gigabyte",
+      "sku": "MK-LA014",
+      "price": 25160000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 43,
+      "specs": {
+        "CPU": "AMD Ryzen 7 7840HS",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4060 8GB",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "asus-mock-strix-17-x15-mk-la015",
+      "category": "laptop",
+      "name": "Laptop ASUS Mock Strix 17 X15",
+      "brand": "ASUS",
+      "sku": "MK-LA015",
+      "price": 15750000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 90,
+      "specs": {
+        "CPU": "Intel Core i9-13900HX",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "1024GB SSD NVMe",
+        "Card đồ họa": "Intel Iris Xe Graphics",
+        "Màn hình": "15.6 inch FHD 165Hz",
+        "Pin": "90Wh",
+        "Trọng lượng": "2.5 kg"
+      }
+    },
+    {
+      "slug": "acer-mock-nitro-15-x16-mk-la016",
+      "category": "laptop",
+      "name": "Laptop Acer Mock Nitro 15 X16",
+      "brand": "Acer",
+      "sku": "MK-LA016",
+      "price": 21000000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 58,
+      "specs": {
+        "CPU": "Intel Core i5-13500H",
+        "RAM": "32GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4050 6GB",
+        "Màn hình": "16 inch FHD 144Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "lenovo-mock-legion-16-x17-mk-la017",
+      "category": "laptop",
+      "name": "Laptop Lenovo Mock Legion 16 X17",
+      "brand": "Lenovo",
+      "sku": "MK-LA017",
+      "price": 26460000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.9,
+      "rating_count": 89,
+      "specs": {
+        "CPU": "Intel Core i7-13700H",
+        "RAM": "8GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4070 8GB",
+        "Màn hình": "15.6 inch FHD 165Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "msi-mock-katana-17-x18-mk-la018",
+      "category": "laptop",
+      "name": "Laptop MSI Mock Katana 17 X18",
+      "brand": "MSI",
+      "sku": "MK-LA018",
+      "price": 16540000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 3.9,
+      "rating_count": 100,
+      "specs": {
+        "CPU": "AMD Ryzen 5 7640HS",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "1024GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 3050 4GB",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "90Wh",
+        "Trọng lượng": "2.5 kg"
+      }
+    },
+    {
+      "slug": "hp-mock-victus-15-x19-mk-la019",
+      "category": "laptop",
+      "name": "Laptop HP Mock Victus 15 X19",
+      "brand": "HP",
+      "sku": "MK-LA019",
+      "price": 25160000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 3.9,
+      "rating_count": 219,
+      "specs": {
+        "CPU": "AMD Ryzen 7 7840HS",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4060 8GB",
+        "Màn hình": "16 inch FHD 165Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "dell-mock-g15-16-x20-mk-la020",
+      "category": "laptop",
+      "name": "Laptop Dell Mock G15 16 X20",
+      "brand": "Dell",
+      "sku": "MK-LA020",
+      "price": 18900000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.2,
+      "rating_count": 70,
+      "specs": {
+        "CPU": "Intel Core i9-13900HX",
+        "RAM": "32GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "Intel Iris Xe Graphics",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "gigabyte-mock-aorus-17-x21-mk-la021",
+      "category": "laptop",
+      "name": "Laptop Gigabyte Mock Aorus 17 X21",
+      "brand": "Gigabyte",
+      "sku": "MK-LA021",
+      "price": 15750000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.7,
+      "rating_count": 189,
+      "specs": {
+        "CPU": "Intel Core i5-13500H",
+        "RAM": "8GB DDR5",
+        "Ổ cứng": "1024GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4050 6GB",
+        "Màn hình": "15.6 inch FHD 165Hz",
+        "Pin": "90Wh",
+        "Trọng lượng": "2.5 kg"
+      }
+    },
+    {
+      "slug": "asus-mock-strix-15-x22-mk-la022",
+      "category": "laptop",
+      "name": "Laptop ASUS Mock Strix 15 X22",
+      "brand": "ASUS",
+      "sku": "MK-LA022",
+      "price": 29400000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.3,
+      "rating_count": 34,
+      "specs": {
+        "CPU": "Intel Core i7-13700H",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4070 8GB",
+        "Màn hình": "16 inch FHD 144Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "acer-mock-nitro-16-x23-mk-la023",
+      "category": "laptop",
+      "name": "Laptop Acer Mock Nitro 16 X23",
+      "brand": "Acer",
+      "sku": "MK-LA023",
+      "price": 16540000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.9,
+      "rating_count": 99,
+      "specs": {
+        "CPU": "AMD Ryzen 5 7640HS",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 3050 4GB",
+        "Màn hình": "15.6 inch FHD 165Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "lenovo-mock-legion-17-x24-mk-la024",
+      "category": "laptop",
+      "name": "Laptop Lenovo Mock Legion 17 X24",
+      "brand": "Lenovo",
+      "sku": "MK-LA024",
+      "price": 30190000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 3.9,
+      "rating_count": 78,
+      "specs": {
+        "CPU": "AMD Ryzen 7 7840HS",
+        "RAM": "32GB DDR5",
+        "Ổ cứng": "1024GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4060 8GB",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "90Wh",
+        "Trọng lượng": "2.5 kg"
+      }
+    },
+    {
+      "slug": "msi-mock-katana-15-x25-mk-la025",
+      "category": "laptop",
+      "name": "Laptop MSI Mock Katana 15 X25",
+      "brand": "MSI",
+      "sku": "MK-LA025",
+      "price": 14180000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.7,
+      "rating_count": 161,
+      "specs": {
+        "CPU": "Intel Core i9-13900HX",
+        "RAM": "8GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "Intel Iris Xe Graphics",
+        "Màn hình": "16 inch FHD 165Hz",
+        "Pin": "56Wh",
+        "Trọng lượng": "2.1 kg"
+      }
+    },
+    {
+      "slug": "hp-mock-victus-16-x26-mk-la026",
+      "category": "laptop",
+      "name": "Laptop HP Mock Victus 16 X26",
+      "brand": "HP",
+      "sku": "MK-LA026",
+      "price": 17500000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.8,
+      "rating_count": 95,
+      "specs": {
+        "CPU": "Intel Core i5-13500H",
+        "RAM": "16GB DDR5",
+        "Ổ cứng": "512GB SSD NVMe",
+        "Card đồ họa": "NVIDIA GeForce RTX 4050 6GB",
+        "Màn hình": "15.6 inch FHD 144Hz",
+        "Pin": "70Wh",
+        "Trọng lượng": "2.3 kg"
+      }
+    },
+    {
+      "slug": "logitech-mock-mouse-m01-mk-mo001",
+      "category": "mouse",
+      "name": "Chuột Logitech Mock Mouse M01",
+      "brand": "Logitech",
+      "sku": "MK-MO001",
+      "price": 490000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.4,
+      "rating_count": 183,
+      "specs": {
+        "Kết nối": "Có dây",
+        "DPI tối đa": "8000",
+        "Số nút": "5",
+        "Trọng lượng": "58g"
+      }
+    },
+    {
+      "slug": "razer-mock-mouse-m02-mk-mo002",
+      "category": "mouse",
+      "name": "Chuột Razer Mock Mouse M02",
+      "brand": "Razer",
+      "sku": "MK-MO002",
+      "price": 890000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 3.9,
+      "rating_count": 172,
+      "specs": {
+        "Kết nối": "Không dây 2.4GHz",
+        "DPI tối đa": "12000",
+        "Số nút": "6",
+        "Trọng lượng": "63g"
+      }
+    },
+    {
+      "slug": "steelseries-mock-mouse-m03-mk-mo003",
+      "category": "mouse",
+      "name": "Chuột SteelSeries Mock Mouse M03",
+      "brand": "SteelSeries",
+      "sku": "MK-MO003",
+      "price": 1290000,
+      "list_price": 1440000,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 77,
+      "specs": {
+        "Kết nối": "Bluetooth + 2.4GHz",
+        "DPI tối đa": "16000",
+        "Số nút": "7",
+        "Trọng lượng": "80g"
+      }
+    },
+    {
+      "slug": "corsair-mock-mouse-m04-mk-mo004",
+      "category": "mouse",
+      "name": "Chuột Corsair Mock Mouse M04",
+      "brand": "Corsair",
+      "sku": "MK-MO004",
+      "price": 1990000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.9,
+      "rating_count": 221,
+      "specs": {
+        "Kết nối": "Có dây",
+        "DPI tối đa": "25600",
+        "Số nút": "8",
+        "Trọng lượng": "95g"
+      }
+    },
+    {
+      "slug": "dareu-mock-mouse-m05-mk-mo005",
+      "category": "mouse",
+      "name": "Chuột DareU Mock Mouse M05",
+      "brand": "DareU",
+      "sku": "MK-MO005",
+      "price": 490000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 28,
+      "specs": {
+        "Kết nối": "Không dây 2.4GHz",
+        "DPI tối đa": "8000",
+        "Số nút": "5",
+        "Trọng lượng": "58g"
+      }
+    },
+    {
+      "slug": "rapoo-mock-mouse-m06-mk-mo006",
+      "category": "mouse",
+      "name": "Chuột Rapoo Mock Mouse M06",
+      "brand": "Rapoo",
+      "sku": "MK-MO006",
+      "price": 890000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.2,
+      "rating_count": 119,
+      "specs": {
+        "Kết nối": "Bluetooth + 2.4GHz",
+        "DPI tối đa": "12000",
+        "Số nút": "6",
+        "Trọng lượng": "63g"
+      }
+    },
+    {
+      "slug": "logitech-mock-mouse-m07-mk-mo007",
+      "category": "mouse",
+      "name": "Chuột Logitech Mock Mouse M07",
+      "brand": "Logitech",
+      "sku": "MK-MO007",
+      "price": 1290000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.5,
+      "rating_count": 96,
+      "specs": {
+        "Kết nối": "Có dây",
+        "DPI tối đa": "16000",
+        "Số nút": "7",
+        "Trọng lượng": "80g"
+      }
+    },
+    {
+      "slug": "razer-mock-mouse-m08-mk-mo008",
+      "category": "mouse",
+      "name": "Chuột Razer Mock Mouse M08",
+      "brand": "Razer",
+      "sku": "MK-MO008",
+      "price": 1990000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.0,
+      "rating_count": 93,
+      "specs": {
+        "Kết nối": "Không dây 2.4GHz",
+        "DPI tối đa": "25600",
+        "Số nút": "8",
+        "Trọng lượng": "95g"
+      }
+    },
+    {
+      "slug": "steelseries-mock-mouse-m09-mk-mo009",
+      "category": "mouse",
+      "name": "Chuột SteelSeries Mock Mouse M09",
+      "brand": "SteelSeries",
+      "sku": "MK-MO009",
+      "price": 490000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.0,
+      "rating_count": 71,
+      "specs": {
+        "Kết nối": "Bluetooth + 2.4GHz",
+        "DPI tối đa": "8000",
+        "Số nút": "5",
+        "Trọng lượng": "58g"
+      }
+    },
+    {
+      "slug": "corsair-mock-mouse-m10-mk-mo010",
+      "category": "mouse",
+      "name": "Chuột Corsair Mock Mouse M10",
+      "brand": "Corsair",
+      "sku": "MK-MO010",
+      "price": 890000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 177,
+      "specs": {
+        "Kết nối": "Có dây",
+        "DPI tối đa": "12000",
+        "Số nút": "6",
+        "Trọng lượng": "63g"
+      }
+    },
+    {
+      "slug": "dareu-mock-mouse-m11-mk-mo011",
+      "category": "mouse",
+      "name": "Chuột DareU Mock Mouse M11",
+      "brand": "DareU",
+      "sku": "MK-MO011",
+      "price": 1290000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.5,
+      "rating_count": 158,
+      "specs": {
+        "Kết nối": "Không dây 2.4GHz",
+        "DPI tối đa": "16000",
+        "Số nút": "7",
+        "Trọng lượng": "80g"
+      }
+    },
+    {
+      "slug": "rapoo-mock-mouse-m12-mk-mo012",
+      "category": "mouse",
+      "name": "Chuột Rapoo Mock Mouse M12",
+      "brand": "Rapoo",
+      "sku": "MK-MO012",
+      "price": 1990000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.5,
+      "rating_count": 139,
+      "specs": {
+        "Kết nối": "Bluetooth + 2.4GHz",
+        "DPI tối đa": "25600",
+        "Số nút": "8",
+        "Trọng lượng": "95g"
+      }
+    },
+    {
+      "slug": "akko-mock-key-k01-mk-ke001",
+      "category": "keyboard",
+      "name": "Bàn phím Akko Mock Key K01",
+      "brand": "Akko",
+      "sku": "MK-KE001",
+      "price": 790000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 44,
+      "specs": {
+        "Kiểu": "Bàn phím màng",
+        "Layout": "Fullsize",
+        "Switch": "Blue",
+        "Kết nối": "Có dây"
+      }
+    },
+    {
+      "slug": "keychron-mock-key-k02-mk-ke002",
+      "category": "keyboard",
+      "name": "Bàn phím Keychron Mock Key K02",
+      "brand": "Keychron",
+      "sku": "MK-KE002",
+      "price": 1190000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.3,
+      "rating_count": 72,
+      "specs": {
+        "Kiểu": "Bàn phím cơ",
+        "Layout": "TKL",
+        "Switch": "Red",
+        "Kết nối": "Không dây 2.4GHz"
+      }
+    },
+    {
+      "slug": "logitech-mock-key-k03-mk-ke003",
+      "category": "keyboard",
+      "name": "Bàn phím Logitech Mock Key K03",
+      "brand": "Logitech",
+      "sku": "MK-KE003",
+      "price": 1790000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.9,
+      "rating_count": 166,
+      "specs": {
+        "Kiểu": "Bàn phím cơ",
+        "Layout": "75%",
+        "Switch": "Brown",
+        "Kết nối": "Bluetooth"
+      }
+    },
+    {
+      "slug": "razer-mock-key-k04-mk-ke004",
+      "category": "keyboard",
+      "name": "Bàn phím Razer Mock Key K04",
+      "brand": "Razer",
+      "sku": "MK-KE004",
+      "price": 2490000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 59,
+      "specs": {
+        "Kiểu": "Bàn phím cơ",
+        "Layout": "65%",
+        "Switch": "Silent",
+        "Kết nối": "Có dây"
+      }
+    },
+    {
+      "slug": "dareu-mock-key-k05-mk-ke005",
+      "category": "keyboard",
+      "name": "Bàn phím DareU Mock Key K05",
+      "brand": "DareU",
+      "sku": "MK-KE005",
+      "price": 790000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 218,
+      "specs": {
+        "Kiểu": "Bàn phím màng",
+        "Layout": "Fullsize",
+        "Switch": "Blue",
+        "Kết nối": "Không dây 2.4GHz"
+      }
+    },
+    {
+      "slug": "corsair-mock-key-k06-mk-ke006",
+      "category": "keyboard",
+      "name": "Bàn phím Corsair Mock Key K06",
+      "brand": "Corsair",
+      "sku": "MK-KE006",
+      "price": 1190000,
+      "list_price": null,
+      "in_stock": false,
+      "rating": 4.6,
+      "rating_count": 17,
+      "specs": {
+        "Kiểu": "Bàn phím cơ",
+        "Layout": "TKL",
+        "Switch": "Red",
+        "Kết nối": "Bluetooth"
+      }
+    },
+    {
+      "slug": "akko-mock-key-k07-mk-ke007",
+      "category": "keyboard",
+      "name": "Bàn phím Akko Mock Key K07",
+      "brand": "Akko",
+      "sku": "MK-KE007",
+      "price": 1790000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 11,
+      "specs": {
+        "Kiểu": "Bàn phím cơ",
+        "Layout": "75%",
+        "Switch": "Brown",
+        "Kết nối": "Có dây"
+      }
+    },
+    {
+      "slug": "keychron-mock-key-k08-mk-ke008",
+      "category": "keyboard",
+      "name": "Bàn phím Keychron Mock Key K08",
+      "brand": "Keychron",
+      "sku": "MK-KE008",
+      "price": 2490000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.7,
+      "rating_count": 105,
+      "specs": {
+        "Kiểu": "Bàn phím cơ",
+        "Layout": "65%",
+        "Switch": "Silent",
+        "Kết nối": "Không dây 2.4GHz"
+      }
+    },
+    {
+      "slug": "logitech-mock-key-k09-mk-ke009",
+      "category": "keyboard",
+      "name": "Bàn phím Logitech Mock Key K09",
+      "brand": "Logitech",
+      "sku": "MK-KE009",
+      "price": 790000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 57,
+      "specs": {
+        "Kiểu": "Bàn phím màng",
+        "Layout": "Fullsize",
+        "Switch": "Blue",
+        "Kết nối": "Bluetooth"
+      }
+    },
+    {
+      "slug": "razer-mock-key-k10-mk-ke010",
+      "category": "keyboard",
+      "name": "Bàn phím Razer Mock Key K10",
+      "brand": "Razer",
+      "sku": "MK-KE010",
+      "price": 1190000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.8,
+      "rating_count": 148,
+      "specs": {
+        "Kiểu": "Bàn phím cơ",
+        "Layout": "TKL",
+        "Switch": "Red",
+        "Kết nối": "Có dây"
+      }
+    },
+    {
+      "slug": "dareu-mock-key-k11-mk-ke011",
+      "category": "keyboard",
+      "name": "Bàn phím DareU Mock Key K11",
+      "brand": "DareU",
+      "sku": "MK-KE011",
+      "price": 1790000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.8,
+      "rating_count": 83,
+      "specs": {
+        "Kiểu": "Bàn phím cơ",
+        "Layout": "75%",
+        "Switch": "Brown",
+        "Kết nối": "Không dây 2.4GHz"
+      }
+    },
+    {
+      "slug": "hyperx-mock-head-h01-mk-he001",
+      "category": "headset",
+      "name": "Tai nghe HyperX Mock Head H01",
+      "brand": "HyperX",
+      "sku": "MK-HE001",
+      "price": 650000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.0,
+      "rating_count": 130,
+      "specs": {
+        "Kết nối": "Có dây 3.5mm",
+        "Driver": "40mm",
+        "Micro": "Có",
+        "Trọng lượng": "250g"
+      }
+    },
+    {
+      "slug": "sony-mock-head-h02-mk-he002",
+      "category": "headset",
+      "name": "Tai nghe Sony Mock Head H02",
+      "brand": "Sony",
+      "sku": "MK-HE002",
+      "price": 1390000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.2,
+      "rating_count": 237,
+      "specs": {
+        "Kết nối": "USB",
+        "Driver": "50mm",
+        "Micro": "Có, tháo rời",
+        "Trọng lượng": "300g"
+      }
+    },
+    {
+      "slug": "jbl-mock-head-h03-mk-he003",
+      "category": "headset",
+      "name": "Tai nghe JBL Mock Head H03",
+      "brand": "JBL",
+      "sku": "MK-HE003",
+      "price": 2190000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.5,
+      "rating_count": 39,
+      "specs": {
+        "Kết nối": "Không dây 2.4GHz",
+        "Driver": "53mm",
+        "Micro": "Có",
+        "Trọng lượng": "350g"
+      }
+    },
+    {
+      "slug": "razer-mock-head-h04-mk-he004",
+      "category": "headset",
+      "name": "Tai nghe Razer Mock Head H04",
+      "brand": "Razer",
+      "sku": "MK-HE004",
+      "price": 3490000,
+      "list_price": 3910000,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 66,
+      "specs": {
+        "Kết nối": "Bluetooth",
+        "Driver": "40mm",
+        "Micro": "Có, tháo rời",
+        "Trọng lượng": "250g"
+      }
+    },
+    {
+      "slug": "steelseries-mock-head-h05-mk-he005",
+      "category": "headset",
+      "name": "Tai nghe SteelSeries Mock Head H05",
+      "brand": "SteelSeries",
+      "sku": "MK-HE005",
+      "price": 650000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 140,
+      "specs": {
+        "Kết nối": "Có dây 3.5mm",
+        "Driver": "50mm",
+        "Micro": "Có",
+        "Trọng lượng": "300g"
+      }
+    },
+    {
+      "slug": "edifier-mock-head-h06-mk-he006",
+      "category": "headset",
+      "name": "Tai nghe Edifier Mock Head H06",
+      "brand": "Edifier",
+      "sku": "MK-HE006",
+      "price": 1390000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 152,
+      "specs": {
+        "Kết nối": "USB",
+        "Driver": "53mm",
+        "Micro": "Có, tháo rời",
+        "Trọng lượng": "350g"
+      }
+    },
+    {
+      "slug": "hyperx-mock-head-h07-mk-he007",
+      "category": "headset",
+      "name": "Tai nghe HyperX Mock Head H07",
+      "brand": "HyperX",
+      "sku": "MK-HE007",
+      "price": 2190000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.3,
+      "rating_count": 152,
+      "specs": {
+        "Kết nối": "Không dây 2.4GHz",
+        "Driver": "40mm",
+        "Micro": "Có",
+        "Trọng lượng": "250g"
+      }
+    },
+    {
+      "slug": "sony-mock-head-h08-mk-he008",
+      "category": "headset",
+      "name": "Tai nghe Sony Mock Head H08",
+      "brand": "Sony",
+      "sku": "MK-HE008",
+      "price": 3490000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.2,
+      "rating_count": 59,
+      "specs": {
+        "Kết nối": "Bluetooth",
+        "Driver": "50mm",
+        "Micro": "Có, tháo rời",
+        "Trọng lượng": "300g"
+      }
+    },
+    {
+      "slug": "jbl-mock-head-h09-mk-he009",
+      "category": "headset",
+      "name": "Tai nghe JBL Mock Head H09",
+      "brand": "JBL",
+      "sku": "MK-HE009",
+      "price": 650000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.9,
+      "rating_count": 38,
+      "specs": {
+        "Kết nối": "Có dây 3.5mm",
+        "Driver": "53mm",
+        "Micro": "Có",
+        "Trọng lượng": "350g"
+      }
+    },
+    {
+      "slug": "razer-mock-head-h10-mk-he010",
+      "category": "headset",
+      "name": "Tai nghe Razer Mock Head H10",
+      "brand": "Razer",
+      "sku": "MK-HE010",
+      "price": 1390000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.4,
+      "rating_count": 26,
+      "specs": {
+        "Kết nối": "USB",
+        "Driver": "40mm",
+        "Micro": "Có, tháo rời",
+        "Trọng lượng": "250g"
+      }
+    },
+    {
+      "slug": "steelseries-mock-head-h11-mk-he011",
+      "category": "headset",
+      "name": "Tai nghe SteelSeries Mock Head H11",
+      "brand": "SteelSeries",
+      "sku": "MK-HE011",
+      "price": 2190000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 223,
+      "specs": {
+        "Kết nối": "Không dây 2.4GHz",
+        "Driver": "50mm",
+        "Micro": "Có",
+        "Trọng lượng": "300g"
+      }
+    }
+  ]
+}

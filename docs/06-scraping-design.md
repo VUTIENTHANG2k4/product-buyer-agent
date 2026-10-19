@@ -123,6 +123,13 @@ Một ứng dụng FastAPI nhỏ chạy cổng 8100, dữ liệu từ `data.json
 
 Mock-shop cũng hỗ trợ tìm trực tiếp (tầng 2) để tầng 2 chạy được ở chế độ offline khi dev/test/demo.
 
+Chi tiết đã cài đặt (T2.3, `app/mock_shop/`; `create_app(captcha_after, slow_seconds, clock)` dựng app độc lập, `main.py` có sẵn `app` cho uvicorn):
+
+- Dữ liệu `data.json`: 60 sản phẩm (26 laptop = 3 trang 12/12/2, 12 chuột = đúng 1 trang đầy, 11 bàn phím, 11 tai nghe), tên dạng "Laptop ASUS Mock …", có ca biên cố ý: giá "Liên hệ" (không có `offers` trong JSON-LD), hết hàng, giảm giá (`old-price`).
+- Trang danh sách/tìm kiếm có cả JSON-LD `ItemList` và thẻ `li.product-card` (`.product-name`, `.price`, `.old-price`, `.stock`, `.rating`, `ul.mini-specs`); liên kết `rel="next"`/`rel="prev"` là đường dẫn tương đối; `page` < 1 hoặc không phải số → 422, nhóm lạ → 404.
+- Captcha: chỉ `/c/*`, `/p/*`, `/search` được đếm (không đếm `robots.txt`, `/captcha`, `/__control/*`). Request thứ `MOCK_SHOP_CAPTCHA_AFTER + 1` không có cookie hợp lệ trở đi nhận HTTP 200 với `<div id="captcha" data-token="…">MÃ</div>` và form POST `/captcha` gồm `token`, `answer` (`application/x-www-form-urlencoded`); mã (5 ký tự, không có I/O/0/1) giữ nguyên tới khi giải đúng. Đáp án không phân biệt hoa/thường; đúng → cookie `mock_pass` (`Max-Age=600`), đặt lại bộ đếm; sai hoặc sai `token` → 400, không cookie. `MOCK_SHOP_CAPTCHA_AFTER` phải ≥ 1.
+- `?fail=500|slow|empty` áp dụng cho `/c`, `/p`, `/search` (sau kiểm captcha) và được giữ trong liên kết phân trang; `slow` chờ `slow_seconds` (mặc định 5) rồi trả trang bình thường; giá trị khác → 422.
+
 ## 6. Chiến lược từng trang
 
 Chi tiết sau khảo sát ghi trong `docs/sources/<site>.md`. Thứ tự ưu tiên khi parse:
