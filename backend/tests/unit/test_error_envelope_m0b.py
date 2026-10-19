@@ -568,4 +568,4 @@ def test_secret_in_details_is_masked_and_keeps_the_409(client: TestClient) -> No
 
 def test_datetime_in_details_is_serialized_as_an_iso_string(client: TestClient) -> None:
     error = _envelope(client.get("/api/_t/details-datetime"), 409, "SITE_COOLDOWN")
-    assert error["details"] == {"retry_after": "2026-10-17T03:00:00Z"}
+    assert error["details"] == {"retry_after": "2026-10-17T03:00:00+00:00"}
