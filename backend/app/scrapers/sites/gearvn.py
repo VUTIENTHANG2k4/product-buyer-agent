@@ -8,7 +8,7 @@ dùng JSON-LD `Product`. `parse_*` là hàm thuần; thẻ không đọc đượ
 import logging
 import re
 from typing import Any, ClassVar
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode, urljoin, urlsplit
 
 from pydantic import ValidationError
 from selectolax.lexbor import LexborHTMLParser, LexborNode
@@ -70,7 +70,9 @@ def _additional_properties(product: dict[str, Any]) -> dict[str, str]:
         if not isinstance(prop, dict):
             continue
         name, value = prop.get("name"), prop.get("value")
-        if not isinstance(name, str) or not isinstance(value, str | int | float):
+        if not isinstance(name, str) or isinstance(value, bool):
+            continue
+        if not isinstance(value, str | int | float):
             continue
         label, text = name.strip(), str(value).strip()
         if not label or not text:
@@ -113,7 +115,12 @@ class GearVNScraper(BaseScraper):
                 )
         next_link = tree.css_first("link[rel=next]")
         href = next_link.attributes.get("href") if next_link is not None else None
-        next_url = clean_url(urljoin(page_url, href)) if href else None
+        next_url: str | None = None
+        if href:
+            try:
+                next_url = clean_url(urljoin(page_url, href))
+            except ValueError:  # href lạ (javascript:, mailto:...): coi như hết trang
+                logger.warning("Liên kết trang sau không hợp lệ: %r", href[:80])
         return ListingPage.model_validate(
             {
                 "items": items,
@@ -128,6 +135,8 @@ class GearVNScraper(BaseScraper):
         if not href:
             raise ValueError("card without product link")
         url = clean_url(urljoin(page_url, href))
+        if urlsplit(url).path.split("/")[1:2] != ["products"]:
+            raise ValueError("card link is not a product page")
         content = card.css_first("[data-slot=product-card-content]")
         title = node_text(content.css_first("p")) if content is not None else ""
         image_src = _image_src(card)
@@ -138,10 +147,13 @@ class GearVNScraper(BaseScraper):
         prices = _prices(card)
         price: int | None = None
         list_price: int | None = None
-        if card.css_first("[data-slot=product-discontinued-price]") is None and prices:
-            price = prices[-1]
-            if len(prices) > 1 and prices[0] > price:
-                list_price = prices[0]
+        if card.css_first("[data-slot=product-discontinued-price]") is None:
+            if len(prices) == 1:
+                price = prices[0]
+            elif len(prices) == 2 and prices[0] > prices[1]:
+                list_price, price = prices  # giá gốc gạch ngang rồi giá bán
+            elif prices:  # bố cục chưa gặp: không đoán giá nào là giá bán
+                logger.warning("Thẻ có %d giá không rõ nghĩa: %s", len(prices), url)
         price_type = PriceType.unknown
         if price is not None:
             price_type = PriceType.sale if list_price is not None else PriceType.regular

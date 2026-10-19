@@ -53,7 +53,7 @@ Thứ tự ưu tiên 06 §6 chỉ áp dụng được một phần: trang danh s
 - Trang có thêm khoảng 9 thẻ `a.product-card` "sản phẩm liên quan": parser chi tiết không được đọc chúng.
 
 ## 5. Loại giá hiển thị
-Kết quả đếm trên 5 trang danh sách đã lưu (119 thẻ):
+Kết quả đếm trên 6 trang đã lưu có thẻ sản phẩm (4 trang 1 + trang cuối chuột + trang tìm kiếm, tổng 119 thẻ):
 
 | Kiểu hiển thị trên thẻ | Số thẻ | `price` | `list_price` | `price_type` | Ghi chú |
 | --- | --- | --- | --- | --- | --- |
@@ -62,6 +62,7 @@ Kết quả đếm trên 5 trang danh sách đã lưu (119 thẻ):
 | `Liên hệ tư vấn` (`[data-slot=product-discontinued-price]`) | 18 | `None` | `None` | `unknown` | Sản phẩm ngừng kinh doanh: 18/19 thẻ của trang cuối chuột. Không đoán giá. |
 | Không thấy kiểu khác | – | – | – | – | Không có giá thành viên, flash sale hay giá bị che bằng dấu `***` trong các trang đã lưu. |
 
+- Quy tắc đọc giá của scraper (không đoán): đúng một giá → `regular`; đúng hai giá với giá đầu lớn hơn giá sau → `sale`; mọi bố cục khác (hai giá bằng nhau hoặc giá gốc thấp hơn, từ ba giá trở lên) → `price = None`, kèm log `WARNING`. Chưa gặp bố cục nào như vậy trên trang thật.
 - Các văn bản "Mua kèm giá ưu đãi: PRE-ORDER GIẢM NGAY 300.000Đ" và "Tặng …" trong `[data-slot=product-promotion]` là khuyến mãi kèm theo, **không** được đọc thành giá (viết hoa `Đ`, nằm trong khối khuyến mãi).
 - Chi tiết: `offers.price` là giá bán; `StrikethroughPrice` là giá gốc.
 - Tình trạng kho: thẻ danh sách không có (→ `StockStatus.unknown`); chi tiết có `availability`. Thẻ "Liên hệ tư vấn" chưa có dấu hiệu kho riêng.
@@ -84,7 +85,7 @@ Trang chủ (2 MB) chỉ dùng để tìm URL danh mục, không lưu. Chưa có
 - **Thông số trên thẻ không có nhãn.** `ListingItem.raw_specs` là `nhãn → giá trị`, nên thẻ chỉ đưa được các giá trị không nhãn. Pipeline (06 §7, T2.6) chỉ tải trang chi tiết cho thẻ có `raw_specs` rỗng, tối đa 20 trang mỗi lượt. **Đã chọn ở T3.2:** `raw_specs` của thẻ danh sách để rỗng (không nhét giá trị không nhãn) nên pipeline tải trang chi tiết và lấy thông số có nhãn từ JSON-LD `additionalProperty`; tên sản phẩm của laptop đã chứa CPU/RAM/SSD/màn hình/hệ điều hành cho bộ trích xuất theo luật ở M5. Hệ quả: một lượt có tối đa 20 trang chi tiết (mỗi trang ≥ 5 s) nên phần lớn sản phẩm của lượt đầy đủ chưa có thông số có nhãn; xem lại giới hạn này (hoặc đọc chip trên thẻ) ở T5.1/T5.2.
 - Không có `mpn`: `model_code_hint` chỉ lấy `mpn` nếu trang có (hiện luôn `None`). `sku` của GearVN là mã nội bộ nên không dùng làm mã hãng; mã trong tên (ví dụ `AL15-53P-56QH`) để bộ trích xuất ở M5 xử lý. `site_sku` của `ListingItem` cũng `None` vì thẻ không có mã.
 - Không có đánh giá sao: `rating`, `rating_count` luôn `None`.
-- Trang cuối nhóm chuột gồm hầu hết sản phẩm ngừng kinh doanh (không giá): lượt chạy đầy đủ sẽ có nhiều mục "hết giá" ở cuối danh mục; pipeline coi là an toàn (không chặn việc tắt offer).
+- Trang cuối nhóm chuột gồm hầu hết sản phẩm ngừng kinh doanh (không giá): mỗi thẻ này tính vào `items_failed` (giá không đọc được) nên một lượt chạy **đầy đủ** nhóm chuột có thể kết thúc `PARTIAL` do tỷ lệ lỗi > 20% dù parse đúng; pipeline coi các mục "hết giá" là an toàn (không chặn việc tắt offer). Cân nhắc tách "không giá" khỏi "lỗi" ở pipeline khi chạy đầy đủ (M9).
 - `robots.txt` không chặn agent AI, nhưng khảo sát chỉ dùng bot dự án (khoảng 10 trang, 2026-10-19). Không gọi `/api/`.
 - Số lượng: bàn phím 27 trang; với độ trễ 5–6 s một lượt đầy đủ mất vài phút (xem `SCRAPER_MAX_LISTING_PAGES`).
 - Tình trạng kho: thẻ danh sách luôn `StockStatus.unknown` (kể cả "Liên hệ tư vấn"); `availability` của trang chi tiết chưa được đọc vì `ProductDetail` không có trường tồn kho.
@@ -100,6 +101,6 @@ Trang chủ (2 MB) chỉ dùng để tìm URL danh mục, không lưu. Chưa có
 
   - Tỷ lệ parse 80/80 = 100% (ngưỡng ≥ 90%); không `FAILED`, `BLOCKED`, captcha, 403 hay 429. `PARTIAL` chỉ vì `PAGES=1` mà còn trang sau (đã chốt với người dùng là chấp nhận).
   - 80 offer có URL duy nhất, không có giá ≤ 0: 70 `sale` (giá gốc + giá bán) và 10 `regular`. Chưa lượt nào gặp thẻ "Liên hệ tư vấn" (chỉ nằm ở trang cuối nhóm chuột).
-  - Mỗi lượt tải đủ 20 trang chi tiết (giới hạn của pipeline) nên 67/80 offer có `raw_specs` có nhãn; phần còn lại cần thêm lượt hoặc đọc chip trên thẻ (xem điểm đầu của mục này).
+  - Pipeline đã thử tải trang chi tiết của cả 80 mục (20 mục/lượt, đúng giới hạn 20 trang chi tiết). 67/80 offer có `raw_specs` có nhãn; 13 offer còn lại (4 tai nghe, 6 bàn phím, 1 laptop, 2 chuột) **không** thiếu vì lỗi tải hay parser: trang chi tiết của chúng có JSON-LD `Product` nhưng không có `additionalProperty` và không có phần "Thông số kỹ thuật" nào trong HTML (đã kiểm hai trang thật). Đây là khoảng trống dữ liệu của GearVN; phần thông số của chúng chỉ có thể lấy từ tên sản phẩm hoặc chip trên thẻ (xem điểm đầu của mục này).
   - `detect_brand` chưa nhận ra 12/80 sản phẩm (hãng `Unknown`, ví dụ HyperWork, Pulsar): xem lại ở M5 (chuẩn hóa hãng).
   - Chưa chạy lượt đầy đủ (57 trang danh sách) và chưa kiểm tra trang giữa chừng có cả `rel=prev` lẫn `rel=next`.

@@ -1,7 +1,8 @@
 """T2.7(c): 5xx của trang challenge (Cloudflare…) là chặn, không phải lỗi máy chủ để retry.
 
-Fetcher trả ngay phản hồi (không gửi lại request), `detect_challenge` báo `captcha` và pipeline đổi
-thành `BLOCKED` kèm thời gian nghỉ. 5xx thường vẫn retry rồi `FetchFailed`.
+Fetcher trả ngay phản hồi (không gửi lại request) và `detect_challenge` báo `captcha`; pipeline đã
+có sẵn quy tắc challenge của trang thật → `BLOCKED` + nghỉ 24 giờ (test ở test_pipeline.py). 5xx
+thường vẫn retry rồi `FetchFailed`.
 """
 
 from collections.abc import Iterator
@@ -116,6 +117,12 @@ async def test_blocking_5xx_is_reported_as_challenge_by_the_detector(
             {"server": "cloudflare"}, "<h1>Bad gateway</h1>", id="cloudflare-origin-error"
         ),
         pytest.param({"cf-mitigated": "block"}, "", id="other-cf-mitigated-value"),
+        pytest.param(
+            {"server": "cloudflare"},
+            '<h1>Bad gateway</h1><script src="/cdn-cgi/challenge-platform/scripts/jsd/main.js">'
+            "</script>",
+            id="cloudflare-beacon-script-on-an-origin-error",
+        ),
     ],
 )
 async def test_ordinary_5xx_is_still_retried_then_fails(
@@ -155,6 +162,13 @@ async def test_server_error_that_recovers_is_not_treated_as_a_block(
         (503, {"server": "Cloudflare"}, "<title>JUST A MOMENT...</title>", True),
         (500, {}, "xác minh bạn không phải robot", True),
         (503, {"server": "nginx"}, "Just a moment", False),  # không phải Cloudflare
+        (502, {"server": "cloudflare"}, "/cdn-cgi/challenge-platform/scripts/jsd/main.js", False),
+        (
+            503,
+            {"server": "cloudflare"},
+            "/cdn-cgi/challenge-platform/h/b/orchestrate/chl_page/v1",
+            True,
+        ),
         (503, {}, "bảo trì hệ thống", False),
         (404, {"cf-mitigated": "challenge"}, "", False),  # 4xx do Fetcher/detector xử lý riêng
         (200, {"cf-mitigated": "challenge"}, "", False),

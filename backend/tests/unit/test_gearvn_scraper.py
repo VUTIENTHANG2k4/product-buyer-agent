@@ -172,6 +172,7 @@ def test_card_with_a_single_price_is_regular(scraper: GearVNScraper) -> None:
 
 
 def test_listing_item_counts_by_price_type_match_the_survey(scraper: GearVNScraper) -> None:
+    """Số đếm theo fixture lưu ngày 2026-10-19 (docs/sources/gearvn.md mục 5); đổi khi làm mới."""
     counts = {PriceType.sale: 0, PriceType.regular: 0, PriceType.unknown: 0}
     for category in CATEGORY_URLS:
         for item in listing(scraper, category)[0]:
@@ -213,17 +214,24 @@ def test_empty_listing_has_no_items_and_no_next() -> None:
         ),
         pytest.param(
             "<span>1.990.000đ</span><span>1.990.000đ</span>",
-            1_990_000,
             None,
-            PriceType.regular,
-            id="equal-prices-are-not-a-discount",
+            None,
+            PriceType.unknown,
+            id="equal-prices-are-ambiguous",
         ),
         pytest.param(
             "<span>1.500.000đ</span><span>1.990.000đ</span>",
-            1_990_000,
             None,
-            PriceType.regular,
-            id="list-below-sale-is-ignored",
+            None,
+            PriceType.unknown,
+            id="list-below-sale-is-ambiguous",
+        ),
+        pytest.param(
+            "<span>3.000.000đ</span><span>2.500.000đ</span><span>2.000.000đ</span>",
+            None,
+            None,
+            PriceType.unknown,
+            id="three-prices-are-ambiguous",
         ),
         pytest.param(
             '<span data-slot="product-discontinued-price">Liên hệ tư vấn</span>',
@@ -287,6 +295,26 @@ def test_cards_without_link_or_title_are_skipped_and_counted(scraper: GearVNScra
     )
     assert [str(item.url).rsplit("/", 1)[1] for item in page.items] == ["a", "d"]
     assert page.skipped == 2
+
+
+@pytest.mark.parametrize("href", ["#", "/collections/laptop", "/", "javascript:void(0)"])
+def test_card_that_does_not_link_to_a_product_page_is_skipped(
+    scraper: GearVNScraper, href: str
+) -> None:
+    page = parse_cards(scraper, card(href=href, body="<span>1.990.000đ</span>"))
+    assert (page.items, page.skipped) == ([], 1)
+
+
+@pytest.mark.parametrize("href", ["javascript:void(0)", "mailto:a@b.c", "http://[bad"])
+def test_unusable_rel_next_href_means_no_next_page_instead_of_a_failed_page(
+    scraper: GearVNScraper, href: str
+) -> None:
+    html = (
+        f'<html><head><link rel="next" href="{href}"></head><body>'
+        f"{card(body='<span>1.990.000đ</span>')}</body></html>"
+    )
+    page = scraper.parse_listing(html, Category.mouse, f"{BASE}/collections/chuot-may-tinh")
+    assert (len(page.items), page.has_next, page.next_url) == (1, False, None)
 
 
 def test_card_image_ignores_embedded_flag_graphics(scraper: GearVNScraper) -> None:
@@ -391,6 +419,14 @@ def test_detail_specs_skip_malformed_properties_and_merge_repeated_labels(
         "Số": "144",
         "Pin": "Pin sạc; Pin",  # "Pin" là chuỗi con của "Pin sạc" nhưng vẫn là giá trị khác
     }
+
+
+def test_detail_specs_ignore_boolean_values(scraper: GearVNScraper) -> None:
+    html = ld_page(
+        '{"@type": "Product", "additionalProperty": ['
+        '{"name": "RGB", "value": true}, {"name": "Có dây", "value": "Có"}]}'
+    )
+    assert scraper.parse_detail(html, f"{BASE}/products/a").raw_specs == {"Có dây": "Có"}
 
 
 def test_detail_specs_ignore_non_list_additional_property(scraper: GearVNScraper) -> None:

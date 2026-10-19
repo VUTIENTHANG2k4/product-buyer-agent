@@ -28,8 +28,15 @@ def _fold(text: str) -> str:
 
 _FOLDED_MARKERS = tuple(_fold(marker) for marker in _CAPTCHA_MARKERS)
 # Trang chờ của Cloudflare (thường kèm 503). Chỉ xét khi máy chủ là Cloudflare và mã là 5xx để
-# không báo nhầm trang bình thường có cụm "just a moment".
-_CLOUDFLARE_INTERSTITIAL = ("just a moment", "challenge-platform", "attention required")
+# không báo nhầm trang bình thường có cụm "just a moment". Không dùng "challenge-platform" trần:
+# Cloudflare chèn `/cdn-cgi/challenge-platform/.../main.js` cả vào trang bình thường và trang lỗi
+# của máy chủ gốc đi qua nó.
+_CLOUDFLARE_INTERSTITIAL = (
+    "just a moment",
+    "attention required",
+    "chl_page",
+    "cf-browser-verification",
+)
 
 
 def is_blocking_error_response(status: int, headers: Mapping[str, str], text: str) -> bool:
