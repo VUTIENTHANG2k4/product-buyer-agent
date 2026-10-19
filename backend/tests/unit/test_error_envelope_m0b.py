@@ -1,7 +1,6 @@
 """QA M0 lần hai: ca biên của định dạng lỗi chuẩn (T0.8) qua `create_app()` đầy đủ.
 
-Ba test `xfail(strict=True)` tái hiện lỗi thật đang có trong `app/api/errors.py`; khi sửa mã,
-XPASS (strict) sẽ báo lỗi và người sửa chỉ cần bỏ dấu xfail.
+Các ca biên này từng được giữ bằng `xfail(strict=True)` cho tới khi T0.9 vá `app/api/errors.py`.
 """
 
 import asyncio
@@ -222,11 +221,6 @@ def _envelope(response: httpx.Response, status: int, code: str) -> dict[str, Any
 # --- HTTPException không kèm câu riêng ---
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="docs/07 §1: HTTPException chỉ giữ thông điệp khi khác cụm chuẩn; "
-    "handler chỉ lọc cụm chuẩn cho 404/405 nên 403/400 trả 'Forbidden'/'Bad Request' tiếng Anh",
-)
 @pytest.mark.parametrize("path", ["/api/_t/http-403", "/api/_t/http-400-none"])
 def test_http_exception_without_own_message_gets_the_vietnamese_generic_message(
     client: TestClient, path: str
@@ -255,11 +249,6 @@ def test_http_exception_keeps_every_custom_header_next_to_the_envelope(
 # --- Chi tiết của AppError không serialize được ---
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="_error_response dùng JSONResponse trần: details chứa datetime/set làm handler "
-    "ném TypeError nên 409 của SiteCooldown biến thành 500; nên dùng jsonable_encoder",
-)
 @pytest.mark.parametrize("path", ["/api/_t/details-datetime", "/api/_t/details-set"])
 def test_app_error_with_datetime_or_set_details_keeps_its_own_status(
     client: TestClient, path: str
@@ -567,3 +556,16 @@ def test_error_responses_helper_describes_unknown_statuses_and_accepts_none() ->
     declared = error_responses(418)
     assert declared[418]["description"] == "Lỗi"
     assert declared[418]["model"].__name__ == "ErrorResponse"
+
+
+def test_secret_in_details_is_masked_and_keeps_the_409(client: TestClient) -> None:
+    response = client.get("/api/_t/details-secret")
+
+    error = _envelope(response, 409, "SITE_COOLDOWN")
+    assert error["details"] == {"token": "**********"}
+    assert SECRET not in response.text
+
+
+def test_datetime_in_details_is_serialized_as_an_iso_string(client: TestClient) -> None:
+    error = _envelope(client.get("/api/_t/details-datetime"), 409, "SITE_COOLDOWN")
+    assert error["details"] == {"retry_after": "2026-10-17T03:00:00Z"}

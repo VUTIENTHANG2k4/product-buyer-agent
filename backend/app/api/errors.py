@@ -5,6 +5,7 @@ from http import HTTPStatus
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.responses import JSONResponse, Response
@@ -52,7 +53,9 @@ def _error_response(
     details: dict[str, Any] | None = None,
     headers: dict[str, str] | None = None,
 ) -> JSONResponse:
-    body = {"error": {"code": code, "message": message, "details": details or {}}}
+    # jsonable_encoder: details có thể chứa datetime/set/SecretStr (ví dụ mốc hết thời gian nghỉ);
+    # SecretStr được che thành "**********", không lộ giá trị.
+    body = {"error": {"code": code, "message": message, "details": jsonable_encoder(details or {})}}
     return JSONResponse(body, status_code=status_code, headers=headers)
 
 
@@ -106,7 +109,7 @@ def register_error_handlers(app: FastAPI) -> None:
             code, message = known.code, custom or known.default_message
         else:
             code = f"HTTP_{exc.status_code}"
-            message = detail if isinstance(detail, str) and detail else _GENERIC_HTTP_MESSAGE
+            message = custom or _GENERIC_HTTP_MESSAGE
         return _error_response(
             exc.status_code, code, message, headers=dict(exc.headers) if exc.headers else None
         )
