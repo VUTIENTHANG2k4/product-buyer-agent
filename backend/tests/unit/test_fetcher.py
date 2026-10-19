@@ -13,6 +13,7 @@ import respx
 from app.config import Settings
 from app.scrapers.http.errors import (
     FetchFailed,
+    FormNotAllowed,
     HttpStatusError,
     OfflineModeError,
     RedirectError,
@@ -776,3 +777,83 @@ async def test_async_context_manager_closes_the_clients(
         await fetcher.get(f"{SHOP}/p")
     with pytest.raises(RuntimeError):
         await fetcher.get(f"{SHOP}/p")
+
+
+# --- post_form (đáp án captcha, chỉ mock-shop) ------------------------------------------------
+
+
+async def test_post_form_sends_urlencoded_data_to_the_mock_shop_and_returns_any_status(
+    http: respx.MockRouter, fake_time: FakeTime
+) -> None:
+    robots(http, MOCK, status=404)
+    route = http.post(f"{MOCK}/captcha").mock(
+        side_effect=[httpx.Response(400, text="sai"), httpx.Response(200, text="ok")]
+    )
+    settings = make_settings(mock_shop_delay_seconds=0)
+    fetcher = make_fetcher(fake_time, settings=settings)
+
+    wrong = await fetcher.post_form(f"{MOCK}/captcha", {"token": "t", "answer": "ZZZZZ"})
+    right = await fetcher.post_form(f"{MOCK}/captcha", {"token": "t", "answer": "ABCDE"})
+
+    assert (wrong.status, wrong.text) == (400, "sai")  # không ném lỗi, không retry
+    assert (right.status, right.text) == (200, "ok")
+    assert route.call_count == 2
+    request = route.calls[1].request
+    assert request.headers["content-type"] == "application/x-www-form-urlencoded"
+    assert request.content == b"token=t&answer=ABCDE"
+    assert request.headers["user-agent"] == make_settings().scraper_user_agent
+
+
+async def test_post_form_is_refused_for_real_sites_without_any_request(
+    http: respx.MockRouter, fake_time: FakeTime
+) -> None:
+    for settings in (make_settings(), make_settings(scraper_offline_only=True)):
+        with pytest.raises(FormNotAllowed) as error:
+            await make_fetcher(fake_time, settings=settings).post_form(
+                f"{SHOP}/captcha", {"a": "b"}
+            )
+        assert error.value.url == f"{SHOP}/captcha"
+    assert http.calls.call_count == 0
+
+
+async def test_post_form_rejects_non_http_urls(http: respx.MockRouter, fake_time: FakeTime) -> None:
+    with pytest.raises(RedirectError):
+        await make_fetcher(fake_time).post_form("ftp://localhost:8100/captcha", {})
+
+
+async def test_post_form_network_error_is_fetch_failed_and_not_retried(
+    http: respx.MockRouter, fake_time: FakeTime
+) -> None:
+    robots(http, MOCK, status=404)
+    route = http.post(f"{MOCK}/captcha").mock(side_effect=httpx.ConnectError("down"))
+    settings = make_settings(mock_shop_delay_seconds=0)
+
+    with pytest.raises(FetchFailed):
+        await make_fetcher(fake_time, settings=settings).post_form(f"{MOCK}/captcha", {"a": "b"})
+
+    assert route.call_count == 1
+
+
+async def test_post_form_respects_robots_and_the_mock_delay(
+    http: respx.MockRouter, fake_time: FakeTime
+) -> None:
+    robots(http, MOCK, text="User-agent: *\nDisallow: /captcha")
+    route = http.post(f"{MOCK}/captcha").respond(200)
+    with pytest.raises(RobotsDisallowed):
+        await make_fetcher(fake_time).post_form(f"{MOCK}/captcha", {"a": "b"})
+    assert route.call_count == 0
+
+
+async def test_cookie_set_by_post_form_is_sent_on_later_gets(
+    http: respx.MockRouter, fake_time: FakeTime
+) -> None:
+    robots(http, MOCK, status=404)
+    http.post(f"{MOCK}/captcha").respond(200, headers={"Set-Cookie": "mock_pass=abc; Path=/"})
+    page = http.get(f"{MOCK}/c/laptop").respond(200, text="ok")
+    settings = make_settings(mock_shop_delay_seconds=0)
+    fetcher = make_fetcher(fake_time, settings=settings)
+
+    await fetcher.post_form(f"{MOCK}/captcha", {"token": "t", "answer": "A"})
+    await fetcher.get(f"{MOCK}/c/laptop")
+
+    assert page.calls.last.request.headers["cookie"] == "mock_pass=abc"
