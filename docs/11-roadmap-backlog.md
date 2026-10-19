@@ -219,7 +219,7 @@ Xong khi:
 | T4.0b | Sửa `detect_challenge`: bỏ thân `<script>` nội tuyến khỏi vùng khớp từ khóa captcha (FPT Shop báo nhầm), test hai chiều | T4.0 | S | ✅ |
 | T4.1 | Khảo sát FPT Shop + fixtures (`docs/sources/fptshop.md`) | T4.0, T2.1 | S | ✅ |
 | T4.2 | FptShopScraper (ánh xạ `price_type`) | T4.1, T2.2 | M | ✅ |
-| T4.3 | Khảo sát An Phát + fixtures (`docs/sources/anphat.md`) | T4.0, T2.1 | S | ⬜ |
+| T4.3 | Khảo sát An Phát + fixtures (`docs/sources/anphat.md`) | T4.0, T2.1 | S | ✅ |
 | T4.4 | AnPhatScraper | T4.3, T2.2 | M | ⬜ |
 | T4.5 | Chạy thật có kiểm soát 2 nguồn | T4.2, T4.4, T2.6 | S | ⬜ |
 | T4.6 | Đổi seed/test từ `hoangha`/`laptop88` sang `fptshop`/`anphat`; cân nhắc gỡ giá trị cũ khỏi `SiteKey` bằng migration (không chặn M5) | T4.0 | S | ⬜ |
