@@ -195,7 +195,7 @@ Xong khi:
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T3.1 | Khảo sát GearVN + fixtures | T0.4, T2.1 | M | ⬜ |
+| T3.1 | Khảo sát GearVN + fixtures | T0.4, T2.1 | M | ✅ |
 | T3.2 | GearVNScraper | T3.1 | M | ⬜ |
 | T3.3 | Chạy thật có kiểm soát | T3.2, T2.6 | S | ⬜ |
 

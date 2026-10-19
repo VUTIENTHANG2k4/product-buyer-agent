@@ -4,10 +4,10 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Sprint hiện tại: 2 (M2 xong; M3 GearVN kế tiếp)
-- Đang làm: – (M2 xong trên nhánh `milestone/M2-scrape-infra`, chờ người dùng merge)
-- Task kế tiếp đề xuất: M3 GearVN, bắt đầu T3.1 (khảo sát; cần người dùng đồng ý chạy `fetch_page.py --allow-online`) → T3.2; T3.3 cần người dùng tự đặt `SCRAPER_OFFLINE_ONLY=false`. Việc nhỏ chưa chặn: T1.7, T1.8, T2.7 (S)
-- Cập nhật lần cuối: 2026-10-19 — M2 xong (T1.6, T2.1, T2.3–T2.6, T0.9; review + QA đã xử lý, còn T2.7). Chưa merge
+- Sprint hiện tại: 3 (M3 GearVN đang làm, nhánh `milestone/M3-gearvn`)
+- Đang làm: M3 — T3.1 ✅ → T3.2 (GearVNScraper, đang làm) → T3.3 (chạy thật, người dùng tự bật `SCRAPER_OFFLINE_ONLY=false`)
+- Task kế tiếp đề xuất: T3.2 GearVNScraper (bản khung `enabled=False` đã đăng ký ở T3.1; quyết định `raw_specs` danh sách rỗng hay không, xem `docs/sources/gearvn.md` mục 7) → T3.3. Việc nhỏ chưa chặn: T1.7, T1.8, T2.7 (S; mục (c) làm trong T3.2)
+- Cập nhật lần cuối: 2026-10-19 — M2 xong (T1.6, T2.1, T2.3–T2.6, T0.9; review + QA đã xử lý, còn T2.7), đã merge vào main; mở nhánh M3
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -15,7 +15,7 @@
 | M0 Nền tảng | ✅ | Đã qua `qa-tester` 2 lần; T0.9 đã xong (trong M2) |
 | M1 Dữ liệu | ✅ | Đã qua `qa-tester` (còn T1.6–T1.8, không chặn M2) |
 | M2 Hạ tầng thu thập | ✅ | Qua `code-reviewer` + `qa-tester` (còn T2.7, không chặn M3) |
-| M3 GearVN | ⬜ | T0.4 đã duyệt: GearVN được dùng |
+| M3 GearVN | 🔄 | T0.4 đã duyệt: GearVN được dùng |
 | M4 Hoàng Hà + Laptop88 | ⬜ | |
 | M5 Chuẩn hóa & ghép | ⬜ | |
 | M6 Agent | ⬜ | |

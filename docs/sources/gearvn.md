@@ -1,6 +1,6 @@
 # Nguồn: GearVN (`gearvn`)
 
-> Khảo sát ngày: 2026-10-17 (mục 1–2) · Người khảo sát: Claude Code + người dùng (cách lấy trang: xem mục 6) · Task: T0.4 (mục 1–2), T3.1 (mục 3–7)
+> Khảo sát ngày: 2026-10-17 (mục 1–2), 2026-10-19 (mục 3–7) · Người khảo sát: Claude Code + người dùng (cách lấy trang: xem mục 6) · Task: T0.4 (mục 1–2), T3.1 (mục 3–7)
 
 ## 1. robots.txt
 - Ngày đọc: 2026-10-17 (`https://gearvn.com/robots.txt`). Giống bảng [02 §2](../02-scope-and-sources.md#2-kết-quả-robotstxt-đọc-ngày-2026-10-16), không có thay đổi.
@@ -16,22 +16,75 @@
 - Có điều khoản về thu thập tự động không? **Không tìm thấy.**
   - Điều khoản dịch vụ chỉ có 3 mục: 1. Giới thiệu (gồm quyền đổi điều khoản không cần báo trước), 2. Hướng dẫn sử dụng website (độ tuổi, năng lực hành vi, từ chối quảng cáo qua email), 3. Thanh toán. Không có đoạn nào về bot, crawler, scraping, sao chép nội dung hay sở hữu trí tuệ.
   - Chính sách bảo mật chỉ nói về thu thập và sử dụng thông tin cá nhân của khách hàng.
-- Kết luận (đề xuất, chờ người dùng duyệt): **Được dùng**, theo 02 §3 (robots.txt, độ trễ, không chạm `/api/`, giỏ hàng, thanh toán).
+- Kết luận (đã duyệt ở T0.4, ghi trong PROGRESS): **Được dùng**, theo 02 §3 (robots.txt, độ trễ, không chạm `/api/`, giỏ hàng, thanh toán).
 - Ghi chú về cách đọc: công cụ đọc trang trả về tóm tắt và trích ngắn, không phải toàn văn. Kết luận "không tìm thấy" dựa trên danh sách mục và nội dung công cụ trả về; người dùng nên mở 2 link trên đối chiếu nhanh.
 
 ## 3. Danh mục theo nhóm
+Khảo sát 2026-10-19 (T3.1): URL lấy từ menu trang chủ; các trang đã lưu ở mục 6.
+
 | Nhóm | URL danh mục | Phân trang (cách tạo URL trang 2, 3) | Số sản phẩm ước tính |
 | --- | --- | --- | --- |
-| (T3.1) | | | |
+| laptop | `https://gearvn.com/collections/laptop` | `?page=N` (20 thẻ/trang) | 210 (11 trang) |
+| mouse | `https://gearvn.com/collections/chuot-may-tinh` | `?page=N` | 159 (8 trang) |
+| keyboard | `https://gearvn.com/collections/ban-phim-may-tinh` | `?page=N` | 522 (27 trang) |
+| headset | `https://gearvn.com/collections/tai-nghe-may-tinh` | `?page=N` | 205 (11 trang) |
+
+- `/collections/laptop` là danh mục laptop tổng (cả gaming lẫn văn phòng), nên `Category.laptop` gồm cả hai; các bộ sưu tập theo dòng GPU ở [02 §5](../02-scope-and-sources.md#5-url-danh-mục-đã-biết-cần-xác-minh-trong-task-khảo-sát) là tập con, không dùng. Chuột và "Lót chuột" cùng nằm trong `chuot-may-tinh` (menu ghi "Chuột + Lót chuột"): tên sản phẩm là cách phân biệt, việc lọc để sau.
+- Con số ước tính lấy từ dòng "N kết quả" của trang 1 (không phải lời hứa của trang). `robots.txt` không chặn `?page=` nên URL phân trang là hợp lệ (có test).
+- `requires_js`: **False**. Trang dựng sẵn ở máy chủ: thẻ sản phẩm nằm trong HTML tĩnh, không cần Playwright, không cần gọi `/api/`.
 
 ## 4. Cấu trúc dữ liệu
-(T3.1)
+Thứ tự ưu tiên 06 §6 chỉ áp dụng được một phần: trang danh sách **không có** JSON-LD sản phẩm, nên danh sách parse bằng selector, còn chi tiết dùng JSON-LD.
+
+**Trang danh sách** (`/collections/<slug>?page=N`, cũng là cấu trúc của trang tìm kiếm):
+- JSON-LD chỉ có `CollectionPage` (khoảng giá `AggregateOffer`) và `BreadcrumbList`; không có `ItemList`/`Product`.
+- Mỗi sản phẩm là một thẻ `a.product-card[href="/products/<slug>"]` (20 thẻ/trang). Trong thẻ (nên chọn theo thuộc tính `data-slot` thay vì lớp Tailwind, vì lớp là chuỗi tiện ích dài và dễ đổi):
+  - tên: thẻ `p` trong `[data-slot=product-card-content]`; ảnh: `img[src]` (CDN `cdn.hstatic.net`);
+  - thông số rút gọn: `[data-slot=product-specs]` gồm các `span` con, mỗi chip có một biểu tượng SVG và giá trị trong `span.truncate`. **Chip không có nhãn** (ví dụ `Intel® UHD Graphics`, `15.6 inch`, `Core 5`, `512 GB`, `IPS`), số chip và thứ tự khác nhau giữa sản phẩm;
+  - giá: xem mục 5; khuyến mãi quà tặng: `[data-slot=product-promotion]` (chỉ là văn bản, không phải giá);
+  - không có điểm đánh giá, số lượt đánh giá, mã sản phẩm hay tình trạng kho trên thẻ.
+- Phân trang: `<link rel="next" href="…?page=N+1">` và `<link rel="prev">` ở `<head>`; trang cuối (mouse `?page=8`, 19 thẻ) chỉ có `rel="prev"` → `has_next = False`. `canonical` của trang N chứa `?page=N`.
+- Trang tìm kiếm `/search?q=<từ khóa>` (robots.txt cho phép, trang `noindex`): cùng thẻ `a.product-card`, 20 thẻ, không có `rel=next` (chưa kiểm tra phân trang của tìm kiếm; tầng 2 chỉ cần trang đầu).
+
+**Trang chi tiết** (`/products/<slug>`):
+- JSON-LD `Product`: `name`, `brand.name`, `category`, `image[]`, `sku` (mã nội bộ của GearVN, ví dụ `LAP-ACER-ASPIRE-LITE-AL15-53P-56QH`; **không có `mpn`**), `offers.price` (giá bán, số nguyên VND), `offers.priceSpecification` với `priceType = StrikethroughPrice` (giá gốc, chỉ có khi đang giảm), `offers.availability` (`https://schema.org/InStock`…).
+- `additionalProperty[]`: danh sách `{name, value}` **có nhãn** (ví dụ `Card đồ họa`, `Dung lượng RAM`, `Dung lượng SSD`, `Tấm nền`; chuột: `Cảm biến (Sensor)`, `Độ phân giải (DPI)`, `Trọng lượng`). Các chip của thẻ danh sách là phần đầu của danh sách này (cùng giá trị) nhưng thẻ không cho biết nhãn.
+- Không có `<table>` thông số, không có `aggregateRating`: chưa có điểm đánh giá để lấy.
+- Trang có thêm khoảng 9 thẻ `a.product-card` "sản phẩm liên quan": parser chi tiết không được đọc chúng.
 
 ## 5. Loại giá hiển thị
-(T3.1)
+Kết quả đếm trên 5 trang danh sách đã lưu (119 thẻ):
+
+| Kiểu hiển thị trên thẻ | Số thẻ | `price` | `list_price` | `price_type` | Ghi chú |
+| --- | --- | --- | --- | --- | --- |
+| Một giá | 13 | giá đó | `None` | `regular` | |
+| Giá gốc gạch ngang + nhãn `-N%` + giá bán | 88 | giá bán (số sau) | giá gốc (số trước) | `sale` | Nhãn `-N%` (hoặc "Giảm N%" ở góc ảnh) là giảm giá công khai, không phải giá thành viên. |
+| `Liên hệ tư vấn` (`[data-slot=product-discontinued-price]`) | 18 | `None` | `None` | `unknown` | Sản phẩm ngừng kinh doanh: 18/19 thẻ của trang cuối chuột. Không đoán giá. |
+| Không thấy kiểu khác | – | – | – | – | Không có giá thành viên, flash sale hay giá bị che bằng dấu `***` trong các trang đã lưu. |
+
+- Các văn bản "Mua kèm giá ưu đãi: PRE-ORDER GIẢM NGAY 300.000Đ" và "Tặng …" trong `[data-slot=product-promotion]` là khuyến mãi kèm theo, **không** được đọc thành giá (viết hoa `Đ`, nằm trong khối khuyến mãi).
+- Chi tiết: `offers.price` là giá bán; `StrikethroughPrice` là giá gốc.
+- Tình trạng kho: thẻ danh sách không có (→ `StockStatus.unknown`); chi tiết có `availability`. Thẻ "Liên hệ tư vấn" chưa có dấu hiệu kho riêng.
 
 ## 6. Fixtures đã lưu
-(T3.1)
+Lưu ngày 2026-10-19 bằng bot dự án qua Fetcher (robots.txt, độ trễ ≥ 5 s, User-Agent trung thực; một tiến trình cho cả lượt) trong `backend/tests/fixtures/gearvn/`. Đã bỏ `<script>` (trừ JSON-LD), `<style>`, nội dung SVG và ảnh `data:` để dưới 500 KB; DOM còn nguyên. Còn lại thông tin liên hệ của doanh nghiệp ở chân trang và JSON-LD `Organization` (email `cskh@gearvn.com`, mã số thuế); không có dữ liệu cá nhân (test `test_gearvn_fixtures.py` kiểm).
+
+| File | Nội dung |
+| --- | --- |
+| `robots.txt` | Bản gốc, 168 ký tự |
+| `listing_laptop_p1.html`, `listing_mouse_p1.html`, `listing_keyboard_p1.html`, `listing_headset_p1.html` | Trang 1 của 4 nhóm (20 thẻ, có `rel=next`) |
+| `listing_mouse_p8.html` | Trang cuối: 19 thẻ, chỉ `rel=prev`, 18 thẻ "Liên hệ tư vấn" |
+| `detail_laptop-acer-aspire-lite-15-al15-53p-56qh.html` | Laptop đang giảm 20% (có `StrikethroughPrice`) |
+| `detail_chuot-gaming-khong-day-logitech-pro-x3-superstrike-lightspeed-black.html` | Chuột đang giảm 16%, có khuyến mãi PRE-ORDER |
+| `search_chuot_razer.html` | `/search?q=chuot+razer` (20 thẻ) |
+
+Trang chủ (2 MB) chỉ dùng để tìm URL danh mục, không lưu. Chưa có fixture cho trang danh sách giữa chừng (có cả `rel=prev` và `rel=next`); T3.2 dựng trường hợp này từ trang 1 và trang cuối khi cần.
 
 ## 7. Vấn đề và lưu ý
-(T3.1)
+- **Thông số trên thẻ không có nhãn.** `ListingItem.raw_specs` là `nhãn → giá trị`, nên thẻ chỉ đưa được các giá trị không nhãn. Pipeline (06 §7, T2.6) chỉ tải trang chi tiết cho thẻ có `raw_specs` rỗng, tối đa 20 trang mỗi lượt. Phương án đề xuất cho T3.2: để `raw_specs` của danh sách rỗng và lấy thông số có nhãn từ JSON-LD `additionalProperty` ở trang chi tiết; tên sản phẩm của laptop đã chứa CPU/RAM/SSD/màn hình/hệ điều hành cho bộ trích xuất theo luật ở M5. Cần xem lại giới hạn 20 chi tiết/lượt khi thu thập đầy đủ.
+- Không có `mpn`: `model_code_hint` lấy từ `sku` của GearVN hoặc mã trong tên (ví dụ `AL15-53P-56QH`); quyết định ở T3.2/T5.2.
+- Không có đánh giá sao: `rating`, `rating_count` luôn `None`.
+- Trang cuối nhóm chuột gồm hầu hết sản phẩm ngừng kinh doanh (không giá): lượt chạy đầy đủ sẽ có nhiều mục "hết giá" ở cuối danh mục; pipeline coi là an toàn (không chặn việc tắt offer).
+- `robots.txt` không chặn agent AI, nhưng khảo sát chỉ dùng bot dự án (khoảng 10 trang, 2026-10-19). Không gọi `/api/`.
+- Số lượng: bàn phím 27 trang; với độ trễ 5–6 s một lượt đầy đủ mất vài phút (xem `SCRAPER_MAX_LISTING_PAGES`).
+- (T3.3) Kết quả chạy thật: chưa chạy.

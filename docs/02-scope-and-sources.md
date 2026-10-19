@@ -56,7 +56,7 @@ Nguồn: `https://<domain>/robots.txt` của từng trang. **robots.txt có th�
 
 | Trang | Nhóm | URL đã thấy |
 | --- | --- | --- |
-| GearVN | Laptop gaming | `https://gearvn.com/collections/laptop-rtx-40-series`, `https://gearvn.com/collections/laptop-gaming-rtx-50-series` (bộ sưu tập theo dòng GPU; cần tìm danh mục "Laptop Gaming" tổng) |
+| GearVN | Laptop / Chuột / Bàn phím / Tai nghe | Đã xác minh ở T3.1 (2026-10-19): `https://gearvn.com/collections/laptop`, `/collections/chuot-may-tinh`, `/collections/ban-phim-may-tinh`, `/collections/tai-nghe-may-tinh` (danh mục tổng; bộ sưu tập theo dòng GPU là tập con nên không dùng). Chi tiết: [sources/gearvn.md](sources/gearvn.md) |
 | Hoàng Hà Mobile | Laptop gaming | `https://hoanghamobile.com/laptop/laptop-gaming` |
 | Viettel Store | Chuột / Tai nghe | `https://viettelstore.vn/phu-kien/chuot-pkid010005001.html`, `https://viettelstore.vn/phu-kien/tai-nghe-pkid010005005.html` |
 | Nguyễn Kim | Laptop / Điện thoại | `https://www.nguyenkim.com/laptop.c`, `https://www.nguyenkim.com/dien-thoai.c` |

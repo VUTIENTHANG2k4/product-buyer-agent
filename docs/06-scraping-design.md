@@ -142,7 +142,7 @@ Không gọi các endpoint API nội bộ mà robots.txt chặn (ví dụ `/api/
 
 | Trang | Nhóm (tầng 1) | `min_delay_s` | `requires_js` | Tầng 2 | Ghi chú đã biết |
 | --- | --- | --- | --- | --- | --- |
-| `gearvn` | laptop, mouse, keyboard, headset | 5 | Xác định khi khảo sát | Có | Bộ sưu tập theo dòng GPU có thể rỗng; tìm danh mục tổng |
+| `gearvn` | laptop, mouse, keyboard, headset | 5 | Không (HTML dựng sẵn ở máy chủ, T3.1) | Có | Danh sách không có JSON-LD sản phẩm (parse thẻ `a.product-card`), chi tiết có JSON-LD `Product` + `additionalProperty`; chip thông số trên thẻ không có nhãn; sản phẩm ngừng kinh doanh hiện "Liên hệ tư vấn" (không giá) |
 | `hoangha` | laptop | 5 | Xác định khi khảo sát | Không | Hiển thị nhiều loại giá (niêm yết, hiện tại, "Hoàng Hà Member chỉ từ", flash sale bị che) → map `price_type` cẩn thận |
 | `laptop88` | laptop, mouse, keyboard, headset | **10** | Xác định khi khảo sát | **Không** | Không dùng tham số `specMap`, `filter`. Thẻ sản phẩm có sẵn thông số rút gọn |
 | `viettelstore` | (mở rộng) | 5 | Xác định khi khảo sát | Có | Tên điện thoại chứa dung lượng |
