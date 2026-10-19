@@ -5,8 +5,8 @@
 
 ## Trạng thái
 - Sprint hiện tại: 4 (M3, M3b xong; M4 đang làm với nguồn mới FPT Shop + An Phát)
-- Đang làm: M4 trên nhánh `milestone/M4-fptshop-anphat` (đã đổi nguồn: FPT Shop + An Phát thay Hoàng Hà + Laptop88, 2026-10-19). Lượt này: T4.0 ✅, T4.0b ✅, T4.1 ✅, T4.2 ✅, T4.3 ✅, T4.4 ✅, T4.5 (chờ người dùng bật chạy thật)
-- Task kế tiếp đề xuất: T4.5 (chạy thật có kiểm soát FPT Shop + An Phát): người dùng tự đặt `SCRAPER_OFFLINE_ONLY=false` trong `.env`, chạy `make db-up`, `make migrate`, rồi `make scrape SITE=<fptshop|anphat> CAT=<nhóm> PAGES=1`; xong nhớ đặt lại `true`.
+- Đang làm: M4 trên nhánh `milestone/M4-fptshop-anphat` (đã đổi nguồn: FPT Shop + An Phát thay Hoàng Hà + Laptop88, 2026-10-19). Lượt này: T4.0 ✅, T4.0b ✅, T4.1 ✅, T4.2 ✅, T4.3 ✅, T4.4 ✅, T4.5 ✅ (8 lượt `PAGES=1`: 194 offer, 100% parse, không BLOCKED)
+- Task kế tiếp đề xuất: cuối milestone M4: `/check` → `/review M4` → (hỏi) `qa-tester` → `/done M4`. Người dùng đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-19 — M3b xong (T1.7, T1.8, T3.4, T2.7; qua `code-reviewer`, bỏ qua `qa-tester`). Chưa merge
 
 ## Milestone
