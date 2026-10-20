@@ -35,7 +35,9 @@ flowchart LR
 | Timeout mỗi lần gọi LLM | 30 s | Retry 1 lần |
 | Ngôn ngữ trả lời | Theo ngôn ngữ người dùng (mặc định tiếng Việt) | |
 
-`app/agent/llm.py` có hàm `get_chat_model(role: Literal["planner","executor","extractor"]) -> BaseChatModel`. Test dùng model giả của LangChain (ví dụ `GenericFakeChatModel`) hoặc lớp `ScriptedChatModel` tự viết trả về các tool call định sẵn.
+`app/agent/llm.py` có hàm `get_chat_model(role: Literal["planner","executor","extractor"]) -> BaseChatModel`; thiếu khóa API của nhà cung cấp được chọn thì ném `LlmUnavailable` (503 `LLM_UNAVAILABLE`). Test dùng lớp `ScriptedChatModel` (`app/agent/testing.py`, cũng là model của `LLM_PROVIDER=fake`): phát lần lượt phản hồi định sẵn (văn bản, `AIMessage` kèm tool call, đối tượng cho `with_structured_output`, hoặc exception); hết kịch bản thì ném `ScriptExhausted`.
+
+Phiên bản đã tra Context7 và khóa (2026-10-20): `langchain==1.4.6` (`create_agent`, `bind_tools`), `langchain-core==1.6.11`, `langgraph==1.2.15`, `langchain-google-genai==4.4.2` (`ChatGoogleGenerativeAI`: tham số `api_key`, `request_timeout`, `retries`), `langchain-openai==1.7.2` (`ChatOpenAI`: `api_key`, `timeout`, `max_retries`).
 
 ## 3. Hợp đồng tool
 

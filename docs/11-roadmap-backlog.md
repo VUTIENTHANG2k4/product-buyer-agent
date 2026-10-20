@@ -255,7 +255,7 @@ Xong khi:
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T6.1 | LLM factory + `ScriptedChatModel` | T0.1 | S | ⬜ |
+| T6.1 | LLM factory + `ScriptedChatModel` | T0.1 | S | ✅ |
 | T6.2 | Services: catalog, compare, shopping_list, alert (CRUD) | T1.4 | M | ⬜ |
 | T6.3 | Planner + prompt | T6.1, T1.1 | M | ⬜ |
 | T6.4 | 8 tool | T6.2 | M | ⬜ |
