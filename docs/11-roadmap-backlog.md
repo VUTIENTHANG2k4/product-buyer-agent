@@ -258,7 +258,7 @@ Xong khi:
 | T6.1 | LLM factory + `ScriptedChatModel` | T0.1 | S | ✅ |
 | T6.2 | Services: catalog, compare, shopping_list, alert (CRUD) | T1.4 | M | ✅ |
 | T6.3 | Planner + prompt | T6.1, T1.1 | M | ✅ |
-| T6.4 | 8 tool | T6.2 | M | ⬜ |
+| T6.4 | 8 tool | T6.2 | M | ✅ |
 | T6.5 | Executor + sự kiện + guardrail + bộ nhớ hội thoại | T6.3, T6.4 | L | ⬜ |
 | T6.6 | Eval harness + báo cáo cơ sở | T6.5, T1.5 | M | ⬜ |
 
