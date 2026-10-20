@@ -1,0 +1,521 @@
+# Golden trích xuất thông số (mouse): tiêu đề thật lấy từ fixture, kỳ vọng rà tay (docs/04 §7).
+# Trường bắt buộc vắng khỏi `expect` nghĩa là tiêu đề/bảng thông số không nói rõ (không suy đoán).
+- id: gearvn-mouse-01
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột gaming không dây Logitech Pro X3 Superstrike Lightspeed Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-02
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột gaming không dây Logitech Pro X3 Superstrike Lightspeed Pink
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-03
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột Gaming Predator Cestus 330 (PMW920)
+  expect: {}
+- id: gearvn-mouse-04
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột AKKO AG ONE 8K Joy of Life
+  expect: {}
+- id: gearvn-mouse-05
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột gaming không dây Logitech G304 X Superlight Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-06
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột Razer Basilisk V3 Pro 35K Phantom Green Edition
+  expect: {}
+- id: gearvn-mouse-07
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây HyperWork Silentium MS01 Đen
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-08
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây HyperWork Silentium MS01 Trắng
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-09
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây HyperWork Silentium Gen 2 MS01 Đen
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-10
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây HyperWork Silentium Gen 2 MS01 Trắng
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-11
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây HyperWork Macro MS02 Đen
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-12
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột MSI VERSA WIRELESS MLG EDITION
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-13
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây Logitech Signature Comfort M840 L White
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-14
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây AKKO Nest Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-15
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây AKKO Nest White
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-16
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây AKKO Dash V9 Max Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-17
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột không dây AKKO Dash V9 Max White
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-18
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Bộ bàn phím và chuột không dây Dell KM3322W
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-19
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột gaming Acer Predator Cestus 330
+  expect: {}
+- id: gearvn-mouse-20
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột gaming không dây Predator Cestus 353
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-21
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Rapoo M300 Silent Wireless Dark Grey
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-22
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar Xlite Wireless V2 Blue
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-23
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar X2 Red
+  expect: {}
+- id: gearvn-mouse-24
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar X2 Super Clear Edition
+  expect: {}
+- id: gearvn-mouse-25
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar Xlite Wireless V2 Mini Pink
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-26
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar X2 Aim Trainer Pack
+  expect: {}
+- id: gearvn-mouse-27
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Rapoo Gaming V280 RGB
+  expect: {}
+- id: gearvn-mouse-28
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Steelseries Aerox 3 Wireless Snow Edition
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-29
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar Xlite Wireless V2 White
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-30
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar Xlite Wireless V2 Mini White
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-31
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar Xlite Wireless V2 Mini Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-32
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar Xlite Wireless V2 Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-33
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar X2 Mini White
+  expect: {}
+- id: gearvn-mouse-34
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar X2 Mini Black
+  expect: {}
+- id: gearvn-mouse-35
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Pulsar X2 Black
+  expect: {}
+- id: gearvn-mouse-36
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Asus Rog Keris Wireless Aimpoint White
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-37
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Bluetooth Silent Rapoo M650 Lucky Cat
+  expect:
+    connection:
+    - bluetooth
+- id: gearvn-mouse-38
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột Logitech G502 Lightspeed Wireless Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-mouse-39
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p8.html
+  title: Chuột công thái học E-Dra EM605W White
+  expect: {}
+- id: anphat-mouse-01
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G102 Gen2 LightSync
+  expect: {}
+- id: anphat-mouse-02
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G502 HERO
+  expect: {}
+- id: anphat-mouse-03
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột không dây Logitech Signature Comfort M840 L Wireless Bluetooth - Than chì - 910-007735
+  expect:
+    connection:
+    - bluetooth
+- id: anphat-mouse-04
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột không dây công thái học Logitech Lift Vertical Ergonomic Graphite (910-006479) WIRELESS/BLUETOOTH
+  expect:
+    connection:
+    - wireless_2_4
+    - bluetooth
+- id: anphat-mouse-05
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G304 X Superlight Black
+  expect: {}
+- id: anphat-mouse-06
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G304 X Superlight White
+  expect: {}
+- id: anphat-mouse-07
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột không dây Logitech SIGNATURE M650L Wireless/Bluetooth - màu đen 910-006247
+  expect:
+    connection:
+    - wireless_2_4
+    - bluetooth
+- id: anphat-mouse-08
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột không dây Logitech SIGNATURE M650L Wireless/Bluetooth - màu trắng nhạt
+  expect:
+    connection:
+    - wireless_2_4
+    - bluetooth
+- id: anphat-mouse-09
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột không dây Logitech SIGNATURE M650 Wireless/Bluetooth - màu trắng nhạt
+  expect:
+    connection:
+    - wireless_2_4
+    - bluetooth
+- id: anphat-mouse-10
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột không dây Logitech SIGNATURE M650 Wireless/Bluetooth - màu hồng
+  expect:
+    connection:
+    - wireless_2_4
+    - bluetooth
+- id: anphat-mouse-11
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G Pro X2 SUPERSTRIKE
+  expect: {}
+- id: anphat-mouse-12
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột MCHOSE K7 Ultra Rose Red
+  expect: {}
+- id: anphat-mouse-13
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G Pro X3 SUPERSTRIKE Midnight Black
+  expect: {}
+- id: anphat-mouse-14
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G Pro X Superlight 2 Wireless White
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-15
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G Pro X Superlight 2 Wireless
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-16
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G Pro X Superlight Wireless
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-17
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK A9 NB Ultra Black
+  expect: {}
+- id: anphat-mouse-18
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột DareU EM911T Wireless Magenta
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-19
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G304 X LightSpeed White
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-20
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G304 X LightSpeed Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-21
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột DareU LM130S Black
+  expect: {}
+- id: anphat-mouse-22
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK GHOST Extreme+ Purple
+  expect: {}
+- id: anphat-mouse-23
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK Z1 V2 Ultimate+ Orange
+  expect: {}
+- id: anphat-mouse-24
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK GHOST Extreme+ Black
+  expect: {}
+- id: anphat-mouse-25
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK GHOST Ultimate+ Silver
+  expect: {}
+- id: anphat-mouse-26
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK GHOST Ultimate+ Black
+  expect: {}
+- id: anphat-mouse-27
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK X1 V2 Ultimate+ Silver
+  expect: {}
+- id: anphat-mouse-28
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK X1 V2 Ultimate+ Red
+  expect: {}
+- id: anphat-mouse-29
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK X1 V2 Ultimate+ White
+  expect: {}
+- id: anphat-mouse-30
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột ATK X1 V2 Ultimate+ Black
+  expect: {}
+- id: anphat-mouse-31
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột MSI Clutch GM40 GAMING (White/Black)
+  expect: {}
+- id: anphat-mouse-32
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột Mionix Castor
+  expect: {}
+- id: anphat-mouse-33
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột Gigabyte Aorus M5
+  expect: {}
+- id: anphat-mouse-34
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột Mionix Naos 7000
+  expect: {}
+- id: anphat-mouse-35
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột Gigabyte Aorus M2
+  expect: {}
+- id: anphat-mouse-36
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột không dây Mofii G018 Xanh
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-37
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột Infinity Shadow White - Gaming Mouse
+  expect: {}
+- id: anphat-mouse-38
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột không dây Microsoft PL2 ARC
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-39
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột Microsoft IE3.0 Legend
+  expect: {}
+- id: anphat-mouse-40
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: MOUSE SCANNER MSC 10E
+  expect: {}
+- id: anphat-mouse-41
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột không dây E-Blue EMS609
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-42
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p12.html
+  title: Chuột không dây E-Blue EMS601
+  expect:
+    connection:
+    - wireless_2_4
+- id: fptshop-mouse-01
+  site: fptshop
+  fixture: fixtures/fptshop/detail_chuot-khong-day-elecom-m-ir07dr.html
+  title: Chuột không dây Elecom M-IR07DR
+  expect:
+    connection:
+    - bluetooth
+- id: gearvn-mouse-40-detail
+  site: gearvn
+  fixture: fixtures/gearvn/listing_mouse_p1.html
+  title: Chuột gaming không dây Logitech Pro X3 Superstrike Lightspeed Black
+  detail_fixture: fixtures/gearvn/detail_chuot-gaming-khong-day-logitech-pro-x3-superstrike-lightspeed-black.html
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-mouse-43-detail
+  site: anphat
+  fixture: fixtures/anphat/listing_mouse_p1.html
+  title: Chuột Logitech G102 Gen2 LightSync
+  detail_fixture: fixtures/anphat/detail_chuot-logitech-g102-lightsync.html
+  expect:
+    connection:
+    - wired

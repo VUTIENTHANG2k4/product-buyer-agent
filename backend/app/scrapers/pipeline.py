@@ -5,15 +5,15 @@ trang danh sách được lưu trong một transaction, từng mục trong một
 tính vào `items_failed`. Repository đồng bộ nên mọi thao tác CSDL chạy qua `asyncio.to_thread`.
 Pipeline KHÔNG gọi `app.services`; đánh giá cảnh báo giá do `scrape_service` làm với kết quả trả về.
 
-Khác biệt tạm thời so với thiết kế cuối (M5 thay thế): chưa trích thông số bằng luật/LLM và chưa có
-matcher, nên `resolve_product_interim` tạo một `Product` cho mỗi offer mới (offer đã có thì dùng lại
-sản phẩm của nó, nhờ đó chạy lại không nhân đôi).
+Gắn offer vào `Product` (`resolve_product`): offer đã có giữ nguyên sản phẩm của nó (chạy lại không
+nhân đôi); offer mới được trích thông số theo luật rồi ghép bằng `model_code` hoặc tên
+(`normalize.matcher`), không ghép được thì tạo `Product` mới.
 """
 
 import asyncio
 import hashlib
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any
@@ -33,7 +33,14 @@ from app.db.repositories import (
     ScrapeRunRepository,
 )
 from app.domain.dto import Challenge, ListingItem, ProductDetail
-from app.domain.enums import Category, ChallengeKind, ScrapeStatus, ScrapeTrigger, SiteKey
+from app.domain.enums import (
+    Category,
+    ChallengeKind,
+    MatchMethod,
+    ScrapeStatus,
+    ScrapeTrigger,
+    SiteKey,
+)
 from app.domain.errors import (
     ChallengeFailed,
     ChallengeNotPending,
@@ -43,8 +50,12 @@ from app.domain.errors import (
     SiteCooldown,
 )
 from app.normalize.brand import UNKNOWN_BRAND, detect_brand
+from app.normalize.extract import extract_specs, merge_specs, specs_confidence
+from app.normalize.matcher import Candidate, decide_match
+from app.normalize.model_code import extract_model_code
+from app.normalize.names import canonical_name
 from app.normalize.price import MAX_PRICE_VND, MIN_PRICE_VND
-from app.normalize.url import clean_url, host_key
+from app.normalize.url import clean_url, host_key, scheme_twin
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.challenge import ChallengeDetected, robots_block_challenge
 from app.scrapers.http.errors import FetchError, FetchFailed, RobotsBlocked
@@ -64,7 +75,6 @@ DEFAULT_MAX_DETAIL_REQUESTS = 20  # giới hạn số trang chi tiết tải th�
 _ACTIVE = (ScrapeStatus.PENDING, ScrapeStatus.RUNNING, ScrapeStatus.NEEDS_HUMAN)
 
 SessionFactory = Callable[[], Session]
-ProductResolver = Callable[[Session, Category, ListingItem, ProductDetail | None], int]
 
 
 @dataclass(frozen=True)
@@ -131,42 +141,129 @@ class InvalidItemUrl(ValueError):
     """Liên kết của mục trỏ ra ngoài trang hoặc về chính trang danh sách: không lưu thành offer."""
 
 
-# ---- gắn offer vào product (tạm thời, M5 thay bằng matcher) ----
-def resolve_product_interim(
-    session: Session, category: Category, item: ListingItem, detail: ProductDetail | None
-) -> int:
-    """`product_id` cho `item`: dùng lại sản phẩm của offer đã có, nếu không thì tạo mới.
+# ---- gắn offer vào product ----
+@dataclass(frozen=True)
+class Resolution:
+    """Product mà một offer thuộc về và cách ghép (lưu vào `offer.match_method/match_score`)."""
 
-    Sản phẩm mới có `model_code=None`, `specs={}` và `specs_confidence=0` (chưa trích thông số).
+    product_id: int
+    method: MatchMethod
+    score: float | None
+
+
+ProductResolver = Callable[
+    [Session, Category, ListingItem, ProductDetail | None, Mapping[str, str]], Resolution
+]
+
+
+def find_existing_offer(offers: OfferRepository, url: str) -> Offer | None:
+    """Offer đã lưu của `url` (đã qua `clean_url`), kể cả khi trước đó trang dùng scheme còn lại.
+
+    Cùng một sản phẩm khi thì `http://…` khi thì `https://…` là một offer, giữ URL đã lưu đầu tiên.
     """
-    existing = OfferRepository(session).get_by_url(clean_url(str(item.url)))
+    return offers.get_by_url(url) or offers.get_by_url(scheme_twin(url))
+
+
+def resolve_product(
+    session: Session,
+    category: Category,
+    item: ListingItem,
+    detail: ProductDetail | None,
+    raw_specs: Mapping[str, str] | None = None,
+) -> Resolution:
+    """Product cho `item`: giữ sản phẩm của offer đã có, nếu không thì ghép hoặc tạo mới.
+
+    `raw_specs` là bảng thông số đã gộp (offer cũ, thẻ, chi tiết); mặc định gộp thẻ + chi tiết.
+    Thông số trích bằng luật chỉ điền thêm trường còn thiếu cho sản phẩm đã có, không ghi đè.
+    """
+    raw = (
+        dict(raw_specs)
+        if raw_specs is not None
+        else {**item.raw_specs, **(detail.raw_specs if detail is not None else {})}
+    )
+    extraction = extract_specs(category, item.title, raw)
+    products = ProductRepository(session)
+    existing = find_existing_offer(OfferRepository(session), clean_url(str(item.url)))
     if existing is not None:
-        return existing.product_id
+        product = products.get(existing.product_id)
+        if product is not None and product.category is category:
+            _enrich(products, product, category, extraction.specs, None)
+        elif product is not None:
+            logger.info(
+                "Offer đã thuộc nhóm %s, không gộp thông số nhóm %s", product.category, category
+            )
+        return Resolution(existing.product_id, existing.match_method, existing.match_score)
+
     brand = detect_brand(item.title)
     if brand == UNKNOWN_BRAND and detail is not None and detail.brand_hint:
         brand = detect_brand(detail.brand_hint)
-    product = ProductRepository(session).add(
+    code = extract_model_code(category, item.title, detail.model_code_hint if detail else None)
+    name = canonical_name(item.title, category)
+    candidates = [
+        Candidate(_require_product_id(p), p.canonical_name, p.model_code, p.specs)
+        for p in products.list_by_brand(category, brand)
+    ]
+    decision = decide_match(category, brand, code, name, extraction.specs, candidates)
+    if decision.product_id is not None:
+        matched = products.get(decision.product_id)
+        if matched is None:  # pragma: no cover - ứng viên vừa đọc trong cùng transaction
+            raise RuntimeError("matched product disappeared")
+        _enrich(products, matched, category, extraction.specs, code)
+        return Resolution(decision.product_id, decision.method, decision.score)
+    product = products.add(
         Product(
             category=category,
             brand=brand,
-            model_code=None,
-            canonical_name=item.title.strip(),
-            specs={},
-            specs_confidence=0.0,
+            model_code=None if decision.code_taken else code,
+            canonical_name=name,
+            specs=extraction.specs,
+            specs_confidence=extraction.confidence,
             image_url=str(item.image_url) if item.image_url else None,
         )
     )
+    return Resolution(_require_product_id(product), MatchMethod.new, None)
+
+
+def _enrich(
+    products: ProductRepository,
+    product: Product,
+    category: Category,
+    specs: Mapping[str, Any],
+    model_code: str | None,
+) -> None:
+    """Điền thông số và mã model còn thiếu cho sản phẩm đã có (không ghi đè giá trị cũ)."""
+    conflicts = [
+        name
+        for name, value in specs.items()
+        if name != "gpu_rank" and name in product.specs and product.specs[name] != value
+    ]
+    if conflicts:
+        logger.warning("Product %s: thông số mâu thuẫn %s, giữ giá trị cũ", product.id, conflicts)
+    merged = merge_specs(category, product.specs, specs)
+    if merged != product.specs:
+        products.update_specs(product, merged, specs_confidence(category, merged))
+    if (
+        model_code is not None
+        and product.model_code is None
+        and products.find_by_model_key(category, product.brand, model_code) is None
+    ):
+        products.set_model_code(product, model_code)
+
+
+def _require_product_id(product: Product) -> int:
     if product.id is None:  # pragma: no cover - flush luôn gán id
         raise RuntimeError("product has no id after flush")
     return product.id
 
 
 def _url_key(item: ListingItem) -> str | None:
-    """URL đã làm sạch của mục, hoặc `None` nếu không làm sạch được (mục sẽ lỗi ở bước lưu)."""
+    """URL đã làm sạch của mục (http và https của cùng URL cho cùng khóa), hoặc `None` nếu không
+    làm sạch được (mục sẽ lỗi ở bước lưu)."""
     try:
-        return clean_url(str(item.url))
+        url = clean_url(str(item.url))
     except ValueError:
         return None
+    return min(url, scheme_twin(url))
 
 
 def _check_item_url(config: SiteConfig, url: str) -> None:
@@ -198,7 +295,7 @@ class ScrapePipeline:
         *,
         default_max_pages: int = 3,
         max_detail_requests: int = DEFAULT_MAX_DETAIL_REQUESTS,
-        resolver: ProductResolver = resolve_product_interim,
+        resolver: ProductResolver = resolve_product,
         now: Callable[[], datetime] = utc_now,
     ) -> None:
         self._session_factory = session_factory
@@ -538,8 +635,11 @@ class ScrapePipeline:
         url = clean_url(str(item.url))
         _check_item_url(config, url)
         offers = OfferRepository(session)
-        existing = offers.get_by_url(url)
-        product_id = self._resolver(session, category, item, detail)
+        existing = find_existing_offer(offers, url)
+        if existing is not None:
+            url = (
+                existing.url
+            )  # giữ URL đã lưu (có thể là bản http/https còn lại của cùng sản phẩm)
 
         # `upsert` ghi đè cả None/{}: gộp với dữ liệu đã có để lượt không tải chi tiết không xóa nó.
         raw_specs: dict[str, Any] = {}
@@ -548,6 +648,7 @@ class ScrapePipeline:
         raw_specs.update(item.raw_specs)
         if detail is not None:
             raw_specs.update(detail.raw_specs)
+        resolution = self._resolver(session, category, item, detail, raw_specs)
         rating = item.rating if item.rating is not None else (existing.rating if existing else None)
         rating_count = (
             item.rating_count
@@ -558,7 +659,7 @@ class ScrapePipeline:
 
         result = offers.upsert(
             OfferUpsert(
-                product_id=product_id,
+                product_id=resolution.product_id,
                 site=item.site,
                 url=url,
                 title=item.title,
@@ -570,6 +671,8 @@ class ScrapePipeline:
                 rating=rating,
                 rating_count=rating_count,
                 raw_specs=raw_specs,
+                match_method=resolution.method,
+                match_score=resolution.score,
             ),
             now=moment,
         )

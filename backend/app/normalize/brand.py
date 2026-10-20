@@ -1,7 +1,8 @@
 """Nhận diện hãng từ tên sản phẩm (docs/04 §7)."""
 
 import re
-import unicodedata
+
+from app.normalize.text import fold as _fold
 
 UNKNOWN_BRAND = "Unknown"  # `product.brand` NOT NULL nên cần giá trị dự phòng
 
@@ -11,6 +12,7 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Acer", ("acer", "predator", "nitro", "aspire", "swift")),
     ("Lenovo", ("lenovo", "thinkpad", "ideapad", "legion", "loq", "yoga")),
     ("MSI", ("msi",)),
+    ("HyperX", ("hyperx", "hp hyperx")),  # trước HP: "HP HyperX Cloud…" là tai nghe HyperX
     ("HP", ("hp", "hewlett packard", "victus", "omen", "pavilion")),
     ("Dell", ("dell", "alienware", "inspiron", "latitude", "xps")),
     ("Gigabyte", ("gigabyte", "aorus")),
@@ -21,7 +23,6 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Razer", ("razer",)),
     ("Corsair", ("corsair",)),
     ("SteelSeries", ("steelseries",)),
-    ("HyperX", ("hyperx",)),
     ("Akko", ("akko",)),
     ("DareU", ("dareu", "dare-u", "dare u")),
     ("E-Dra", ("e-dra", "edra")),
@@ -30,23 +31,28 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Edifier", ("edifier",)),
     ("JBL", ("jbl",)),
     ("Anker", ("anker",)),
+    ("AULA", ("aula",)),
+    ("ATK", ("atk",)),
+    ("Pulsar", ("pulsar",)),
+    ("MCHOSE", ("mchose",)),
+    ("HyperWork", ("hyperwork",)),
+    ("Mionix", ("mionix",)),
+    ("Microsoft", ("microsoft",)),
+    ("Elecom", ("elecom",)),
+    ("E-Blue", ("e-blue", "eblue")),
+    ("Mofii", ("mofii",)),
+    ("LG", ("lg",)),
+    ("Thunderobot", ("thunderobot",)),
+    ("Jabra", ("jabra",)),
+    ("Blaupunkt", ("blaupunkt",)),
 )
 
 # Tiền tố loại sản phẩm/tính năng ở đầu tên (đã bỏ dấu), bỏ dần trước khi tìm hãng.
 _PREFIX = re.compile(
-    r"^(?:laptop|chuot|ban phim|tai nghe|co|gaming|game|khong day|mechanical|wireless)"
+    r"^(?:laptop|chuot|mouse|ban phim|keyboard|tai nghe|headset|micro|co|gaming|game|khong day"
+    r"|cong thai hoc|true wireless|bluetooth|silent|mechanical|wireless)"
     r"(?![a-z0-9])\s*"
 )
-
-
-def _fold(text: str) -> str:
-    """Chữ thường, NFKD (kể cả chữ toàn chiều rộng), bỏ dấu và ký tự định dạng vô hình.
-
-    Nhờ đó "Ａｃｅｒ", "A​cer" và "Chuột" (có dấu hay không) đều so khớp được.
-    """
-    nfkd = unicodedata.normalize("NFKD", text.casefold().replace("đ", "d"))
-    kept = (c for c in nfkd if not unicodedata.combining(c) and unicodedata.category(c) != "Cf")
-    return "".join(kept).strip()
 
 
 # Nhãn khuyến mãi ở đầu tên: "[Mới 100%] ...", "(Hàng chính hãng) ..."
@@ -69,7 +75,7 @@ def detect_brand(title: str) -> str:
     Chỉ so khớp ở đầu tên để "Bàn phím cho MacBook" không bị gán nhầm cho Apple.
     """
     text = _LEADING_TAGS.sub("", _fold(title))
-    for _ in range(4):  # bỏ lần lượt "Laptop gaming ..." / "Chuột không dây ..."
+    for _ in range(6):  # bỏ lần lượt "Laptop gaming ..." / "Chuột không dây ..."
         stripped = _PREFIX.sub("", text)
         if stripped == text:
             break
@@ -78,3 +84,16 @@ def detect_brand(title: str) -> str:
         if any(pattern.match(text) for pattern in patterns):
             return name
     return UNKNOWN_BRAND
+
+
+# Cách viết tên công ty ngoài tên chuẩn: "HP HyperX Cloud…", "Logi MX…", "Dare-U EK87".
+_COMPANY_EXTRA: dict[str, tuple[str, ...]] = {
+    "HyperX": ("hp",),
+    "Logitech": ("logi",),
+    "DareU": ("dare-u",),
+}
+
+
+def brand_words(brand: str) -> frozenset[str]:
+    """Các từ (đã `fold`) chỉ tên công ty của `brand`, để bỏ khỏi tên khi so sánh hai sản phẩm."""
+    return frozenset({_fold(brand), *_COMPANY_EXTRA.get(brand, ())})
