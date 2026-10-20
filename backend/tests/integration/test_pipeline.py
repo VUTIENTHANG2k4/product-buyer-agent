@@ -254,7 +254,15 @@ async def test_saved_offers_and_products_carry_the_scraped_data(
     assert offer.raw_specs["CPU"].startswith("Intel")
     assert (product.category, product.brand, product.model_code) == (Category.laptop, "ASUS", None)
     assert product.canonical_name == "Laptop ASUS Mock Strix 15 X01"
-    assert (product.specs, product.specs_confidence) == ({}, 0.0)
+    # Thông số trích bằng luật từ thẻ danh sách (thẻ mock-shop không có GPU nên còn thiếu 1/4).
+    assert product.specs == {
+        "cpu_model": "i5-13500H",
+        "cpu_vendor": "intel",
+        "ram_gb": 8,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+    }
+    assert product.specs_confidence == pytest.approx(0.37)
 
 
 async def test_rerun_is_idempotent_and_adds_no_duplicate_rows(

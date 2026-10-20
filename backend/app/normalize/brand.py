@@ -1,7 +1,8 @@
 """Nhận diện hãng từ tên sản phẩm (docs/04 §7)."""
 
 import re
-import unicodedata
+
+from app.normalize.text import fold as _fold
 
 UNKNOWN_BRAND = "Unknown"  # `product.brand` NOT NULL nên cần giá trị dự phòng
 
@@ -37,16 +38,6 @@ _PREFIX = re.compile(
     r"^(?:laptop|chuot|ban phim|tai nghe|co|gaming|game|khong day|mechanical|wireless)"
     r"(?![a-z0-9])\s*"
 )
-
-
-def _fold(text: str) -> str:
-    """Chữ thường, NFKD (kể cả chữ toàn chiều rộng), bỏ dấu và ký tự định dạng vô hình.
-
-    Nhờ đó "Ａｃｅｒ", "A​cer" và "Chuột" (có dấu hay không) đều so khớp được.
-    """
-    nfkd = unicodedata.normalize("NFKD", text.casefold().replace("đ", "d"))
-    kept = (c for c in nfkd if not unicodedata.combining(c) and unicodedata.category(c) != "Cf")
-    return "".join(kept).strip()
 
 
 # Nhãn khuyến mãi ở đầu tên: "[Mới 100%] ...", "(Hàng chính hãng) ..."

@@ -1,0 +1,345 @@
+# Golden trích xuất thông số (headset): tiêu đề thật lấy từ fixture, kỳ vọng rà tay (docs/04 §7).
+# Trường bắt buộc vắng khỏi `expect` nghĩa là tiêu đề/bảng thông số không nói rõ (không suy đoán).
+- id: gearvn-headset-01
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe Logitech PRO X3 Lightspeed Magenta
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-02
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe Logitech PRO X3 Lightspeed White
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-03
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe Logitech PRO X3 Lightspeed Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-04
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai Nghe Gaming Không Dây Predator Galea 550 (PHR235)
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-05
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud Stinger 3 Black
+  expect: {}
+- id: gearvn-headset-06
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe HP HYPERX Cloud Earbuds III S Black
+  expect:
+    form: in_ear
+- id: gearvn-headset-07
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe HP HYPERX Cloud Earbuds III S Red
+  expect:
+    form: in_ear
+- id: gearvn-headset-08
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe HP HYPERX Cloud Earbuds III Red
+  expect:
+    form: in_ear
+- id: gearvn-headset-09
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe HP HYPERX Cloud Earbuds III Black
+  expect:
+    form: in_ear
+- id: gearvn-headset-10
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe Razer Hammerhead V3 X HyperSpeed
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-11
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Phụ kiện hộp đựng tai nghe Usams
+  expect: {}
+- id: gearvn-headset-12
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe gaming không dây Logitech Astro A20 X
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-13
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe gaming Acer Predator Galea 550 Wireless
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-14
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe Razer Hammerhead V3 HyperSpeed Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-15
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe Razer BlackShark V3 White
+  expect: {}
+- id: gearvn-headset-16
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe gaming không dây Akko Verge S9 Ultra White
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-17
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe gaming không dây Akko Verge S9 Ultra Black Red
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-18
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe gaming không dây Akko Verge S9 Ultra Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-19
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe ASUS ROG Cetra Open Wireless Gaming Earbuds
+  expect:
+    form: in_ear
+    connection:
+    - wireless_2_4
+- id: gearvn-headset-20
+  site: gearvn
+  fixture: fixtures/gearvn/listing_headset_p1.html
+  title: Tai nghe ASUS ROG Kithara Gaming
+  expect: {}
+- id: anphat-headset-01
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Razer BlackShark V3 Pro CS2 Counter-Strike 2 Edition
+  expect: {}
+- id: anphat-headset-02
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Logitech G Pro X3 LightSpeed Magenta
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-03
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Logitech G321 LightSpeed White
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-04
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Logitech G321 LightSpeed Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-05
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Logitech G Pro X3 LightSpeed Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-06
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud Flight 2 Wireless
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-07
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Razer Kraken V3 X USB
+  expect:
+    connection:
+    - usb
+- id: anphat-headset-08
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Micro HyperX SoloCast 2
+  expect: {}
+- id: anphat-headset-09
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud Earbuds III Black
+  expect:
+    form: in_ear
+- id: anphat-headset-10
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud Earbuds III Red
+  expect:
+    form: in_ear
+- id: anphat-headset-11
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud III Black
+  expect: {}
+- id: anphat-headset-12
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud III Red
+  expect: {}
+- id: anphat-headset-13
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Logitech G325 LightSpeed White
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-14
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Logitech G325 LightSpeed Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-15
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe True Wireless Blaupunkt LITE ONE BAT1001
+  expect:
+    form: tws
+    connection:
+    - wireless_2_4
+- id: anphat-headset-16
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud Stinger 2 Core
+  expect: {}
+- id: anphat-headset-17
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe ATK N9 Ultra Wireless Starry Blue
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-18
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe ATK N9 Ultra Wireless Stellar Purple
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-19
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Razer Hammerhead V3 HyperSpeed
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-20
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Razer Hammerhead V3 X HyperSpeed
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-21
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Jabra Evolve 20 Stereo MS USB C/A Adapter
+  expect:
+    connection:
+    - usb
+- id: anphat-headset-22
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud III S Wireless Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-23
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud Earbuds III S Black
+  expect:
+    form: in_ear
+- id: anphat-headset-24
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe HyperX Cloud Earbuds III S Red
+  expect:
+    form: in_ear
+- id: anphat-headset-25
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe E-Dra EH497W Triple Mode
+  expect:
+    connection:
+    - usb
+    - wireless_2_4
+    - bluetooth
+- id: anphat-headset-26
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe ATK N9 Ultra Wireless Stellar Pink
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-27
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe ATK N9 Ultra Wireless Stellar Orange
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-28
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe ATK N9 Pro Wireless White
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-29
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe ATK N9 Pro Wireless Black
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-headset-30
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Razer Hammerhead V3 White
+  expect: {}
+- id: fptshop-headset-01
+  site: fptshop
+  fixture: fixtures/fptshop/detail_tai-nghe-corsair-hs50-pro-stereo.html
+  title: Tai nghe Corsair HS50 PRO Stereo
+  expect:
+    connection:
+    - wired_3_5
+- id: anphat-headset-31-detail
+  site: anphat
+  fixture: fixtures/anphat/listing_headset_p1.html
+  title: Tai nghe Logitech G Pro X3 LightSpeed Magenta
+  detail_fixture: fixtures/anphat/detail_tai-nghe-logitech-g-pro-x3-lightspeed-magenta.html
+  expect:
+    connection:
+    - wired_3_5
+    - wireless_2_4
+    - bluetooth

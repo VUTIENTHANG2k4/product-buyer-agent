@@ -5,9 +5,9 @@ trang danh sách được lưu trong một transaction, từng mục trong một
 tính vào `items_failed`. Repository đồng bộ nên mọi thao tác CSDL chạy qua `asyncio.to_thread`.
 Pipeline KHÔNG gọi `app.services`; đánh giá cảnh báo giá do `scrape_service` làm với kết quả trả về.
 
-Khác biệt tạm thời so với thiết kế cuối (M5 thay thế): chưa trích thông số bằng luật/LLM và chưa có
-matcher, nên `resolve_product_interim` tạo một `Product` cho mỗi offer mới (offer đã có thì dùng lại
-sản phẩm của nó, nhờ đó chạy lại không nhân đôi).
+Khác biệt tạm thời so với thiết kế cuối (T5.2 thay thế): chưa có matcher, nên
+`resolve_product_interim` tạo một `Product` cho mỗi offer mới (offer đã có thì dùng lại sản phẩm của
+nó, nhờ đó chạy lại không nhân đôi). Thông số đã được trích bằng luật (T5.1).
 """
 
 import asyncio
@@ -43,6 +43,7 @@ from app.domain.errors import (
     SiteCooldown,
 )
 from app.normalize.brand import UNKNOWN_BRAND, detect_brand
+from app.normalize.extract import extract_specs, merge_specs, specs_confidence
 from app.normalize.price import MAX_PRICE_VND, MIN_PRICE_VND
 from app.normalize.url import clean_url, host_key
 from app.scrapers.base import BaseScraper, SiteConfig
@@ -131,28 +132,37 @@ class InvalidItemUrl(ValueError):
     """Liên kết của mục trỏ ra ngoài trang hoặc về chính trang danh sách: không lưu thành offer."""
 
 
-# ---- gắn offer vào product (tạm thời, M5 thay bằng matcher) ----
+# ---- gắn offer vào product (tạm thời, T5.2 thay bằng matcher) ----
 def resolve_product_interim(
     session: Session, category: Category, item: ListingItem, detail: ProductDetail | None
 ) -> int:
     """`product_id` cho `item`: dùng lại sản phẩm của offer đã có, nếu không thì tạo mới.
 
-    Sản phẩm mới có `model_code=None`, `specs={}` và `specs_confidence=0` (chưa trích thông số).
+    Thông số trích bằng luật (`extract_specs`) từ tiêu đề + `raw_specs` của thẻ và trang chi tiết;
+    offer đã có thì chỉ điền thêm trường còn thiếu cho sản phẩm của nó.
     """
+    raw_specs = {**item.raw_specs, **(detail.raw_specs if detail is not None else {})}
+    extraction = extract_specs(category, item.title, raw_specs)
+    products = ProductRepository(session)
     existing = OfferRepository(session).get_by_url(clean_url(str(item.url)))
     if existing is not None:
+        product = products.get(existing.product_id)
+        if product is not None:
+            merged = merge_specs(category, product.specs, extraction.specs)
+            if merged != product.specs:
+                products.update_specs(product, merged, specs_confidence(category, merged))
         return existing.product_id
     brand = detect_brand(item.title)
     if brand == UNKNOWN_BRAND and detail is not None and detail.brand_hint:
         brand = detect_brand(detail.brand_hint)
-    product = ProductRepository(session).add(
+    product = products.add(
         Product(
             category=category,
             brand=brand,
             model_code=None,
             canonical_name=item.title.strip(),
-            specs={},
-            specs_confidence=0.0,
+            specs=extraction.specs,
+            specs_confidence=extraction.confidence,
             image_url=str(item.image_url) if item.image_url else None,
         )
     )

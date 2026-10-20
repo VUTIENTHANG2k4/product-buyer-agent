@@ -1,0 +1,466 @@
+# Golden trích xuất thông số (laptop): tiêu đề thật lấy từ fixture, kỳ vọng rà tay (docs/04 §7).
+# Trường bắt buộc vắng khỏi `expect` nghĩa là tiêu đề/bảng thông số không nói rõ (không suy đoán).
+- id: gearvn-laptop-01
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Acer Swift Air 14 AI SFA14-I31-55NR (Core 5-320/ 12GB/ 512GB/ 14" FHD+ IPS 120Hz/ Pink/ Win 11)
+  expect:
+    cpu_model: Core 5 320
+    ram_gb: 12
+    storage_gb: 512
+- id: gearvn-laptop-02
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Acer Aspire 7 A715-59G-59RD (Core 5-210H/ RTX 3050 4GB/ 16GB/ 512GB/ 15.6" FHD/ Win 11)
+  expect:
+    cpu_model: Core 5 210H
+    gpu_model: RTX 3050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 20
+- id: gearvn-laptop-03
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)
+  expect:
+    cpu_model: Core 5 120U
+    ram_gb: 8
+    storage_gb: 512
+- id: gearvn-laptop-04
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Acer Nitro ProPanel ANV15-52-556L (Core 5-210H/ RTX 5050 8GB/ 16GB/ 512GB/ 15.6" FHD/ Win 11)
+  expect:
+    cpu_model: Core 5 210H
+    gpu_model: RTX 5050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 34
+- id: gearvn-laptop-05
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming ASUS V16 V3607VJ-TK189W (Core 5-210H/ RTX 3050 6GB/ 16GB/ 512GB/ 16" WUXGA 144Hz/ Win 11)
+  expect:
+    cpu_model: Core 5 210H
+    gpu_model: RTX 3050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 20
+- id: gearvn-laptop-06
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Acer Aspire Lite 15 AL15-410P-R1W8 (Ryzen 5-3500U/ 8GB/ 512GB/ 15.6" FHD IPS/ Win 11)
+  expect:
+    cpu_model: Ryzen 5 3500U
+    ram_gb: 8
+    storage_gb: 512
+- id: gearvn-laptop-07
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Acer Aspire Lite 14 AL14-53M-53E8 (Core 5-120U/ 16GB/ 512GB/ 14" FHD+ IPS/ Win 11)
+  expect:
+    cpu_model: Core 5 120U
+    ram_gb: 16
+    storage_gb: 512
+- id: gearvn-laptop-08
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Acer Swift Go 14 AI SFG14-75-5264 (Ultra 5-226V/ 16GB/ 512GB/ 14.0" FHD+ OLED/ Win 11)
+  expect:
+    cpu_model: Core Ultra 5 226V
+    ram_gb: 16
+    storage_gb: 512
+- id: gearvn-laptop-09
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Acer Aspire 7 A715-59G-53RH (Core 5-210H/ RTX 4050 6GB/ 16GB/ 512GB/ 15.6" FHD IPS 144Hz/ Win 11)
+  expect:
+    cpu_model: Core 5 210H
+    gpu_model: RTX 4050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 30
+- id: gearvn-laptop-10
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Acer Nitro ProPanel ANV15-52-50VA (Core 5-210H/ RTX 3050/ 16GB/ 512GB/ 15.6" FHD/ Win 11)
+  expect:
+    cpu_model: Core 5 210H
+    gpu_model: RTX 3050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 20
+- id: gearvn-laptop-11
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Lenovo LOQ 15ARP10E 83S0006RVN (Ryzen 7-7735HS/ RTX 3050 6GB/ 16GB/ 1TB/ 15.6" FHD/ Win 11)
+  expect:
+    cpu_model: Ryzen 7 7735HS
+    gpu_model: RTX 3050
+    ram_gb: 16
+    storage_gb: 1000
+    gpu_rank: 20
+- id: gearvn-laptop-12
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Acer Nitro ProPanel ANV15-42-R5EF (Ryzen 5 7640HS/ RTX 4050 6GB/ 16GB/ 512GB/ 15.6" FHD/ Win 11)
+  expect:
+    cpu_model: Ryzen 5 7640HS
+    gpu_model: RTX 4050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 30
+- id: gearvn-laptop-13
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Gigabyte Eagle GL6J EAGLE-9LJR2VNF93SH (Ryzen 5 7533HS/ RTX 3050 6GB/ 16GB/ 512GB/ 16" FHD+/ Win 11)
+  expect:
+    cpu_model: Ryzen 5 7533HS
+    gpu_model: RTX 3050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 20
+- id: gearvn-laptop-14
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Gigabyte Eagle GL6J EAGLE-9MJR2VNF93SH (Ryzen 5 7533HS/ RTX 4050 6GB/ 16GB/ 512GB/ 16" FHD+/ Win 11)
+  expect:
+    cpu_model: Ryzen 5 7533HS
+    gpu_model: RTX 4050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 30
+- id: gearvn-laptop-15
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming ASUS TUF Gaming A16 FA607NUQ-RL007W (Ryzen 7-170/ RTX 4050 6GB/ 16GB/ 512GB/ 16" FHD 144Hz/ Win 11)
+  expect:
+    cpu_model: Ryzen 7 170
+    gpu_model: RTX 4050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 30
+- id: gearvn-laptop-16
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Acer Nitro ProPanel ANV15-42-R9EH (Ryzen 7 7445HS/ RTX 4050 6GB/ 16GB/ 512GB/ 15.6" FHD/ Win 11)
+  expect:
+    cpu_model: Ryzen 7 7445HS
+    gpu_model: RTX 4050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 30
+- id: gearvn-laptop-17
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop gaming Acer Nitro ProPanel ANV15-52-78MD (Core 7-240H/ RTX 5050 8GB/ 16GB/ 512GB/ 15.6" FHD/ Win 11)
+  expect:
+    cpu_model: Core 7 240H
+    gpu_model: RTX 5050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 34
+- id: gearvn-laptop-18
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Asus ExpertBook P3 P3406CCAP-U516W (Ultra 5-225H/ 16GB/ 512GB/ 14" WUXGA / Win 11)
+  expect:
+    cpu_model: Core Ultra 5 225H
+    ram_gb: 16
+    storage_gb: 512
+- id: gearvn-laptop-19
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Asus ExpertBook P3 G1 P3406CCAP-U516S8W (Ultra 5-225H/ 16GB/ 512GB/ 14" WUXGA/ Win 11)
+  expect:
+    cpu_model: Core Ultra 5 225H
+    ram_gb: 16
+    storage_gb: 512
+- id: gearvn-laptop-20
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Acer Swift Air 14 SFA14-I31-52BV (Core 5-320/ 12GB/ 512GB/ 14" FHD+ IPS 120Hz/ Green/ Win 11)
+  expect:
+    cpu_model: Core 5 320
+    ram_gb: 12
+    storage_gb: 512
+- id: anphat-laptop-01
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop HP VICTUS 15-fa2452TX D44VLPA (Intel Core i5-13420H | RTX 3050 6GB | 15.6 inch FHD 144Hz | 16GB | 512GB | Win 11 | Đen)
+  expect:
+    cpu_model: i5-13420H
+    gpu_model: RTX 3050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 20
+- id: anphat-laptop-02
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Thunderobot T-Book15A (AMD Ryzen 3 - 3200U | AMD Radeon Vega 3 | 15.6 inch | FHD | IPS | LCD | 8 GB | 512GB | Windows 11 Pro | Xám)
+  expect:
+    cpu_model: Ryzen 3 3200U
+    gpu_model: Integrated
+    ram_gb: 8
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-03
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Gigabyte Gaming A16 CMHI2VN893SH (Intel Core i7-13620H | RTX 4050 6GB | 16GB | 512GB | 16 inch IPS WUXGA | Win 11 | Đen)
+  expect:
+    cpu_model: i7-13620H
+    gpu_model: RTX 4050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 30
+- id: anphat-laptop-04
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop LG Gram Book 15U50U-G.AV55A5 (Intel Core Ultra5-115U | Intel Graphics | 15.6-inch FHD | 16GB | 512GB | Windows 11 Home | Bạc)
+  expect:
+    cpu_model: Core Ultra 5 115U
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-05
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Asus ROG Zephyrus G16 GU606AM-TB032W (Intel Core Ultra 9 386H | RTX 5060 | 16 inch 2.5K OLED 240Hz | 32GB | 1TB | Win 11 | Xám)
+  expect:
+    cpu_model: Core Ultra 9 386H
+    gpu_model: RTX 5060
+    ram_gb: 32
+    storage_gb: 1000
+    gpu_rank: 45
+- id: anphat-laptop-06
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop ASUS Vivobook Go 15 E1504FA-BQ5962W (Ryzen 5 40 | 16GB | 512GB | AMD Radeon | 15.6 inch FHD | Win 11 | Đen)
+  expect:
+    cpu_model: Ryzen 5 40
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-07
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop ASUS Vivobook 14 X1407CA-LY203W (Intel Core Ultra 5 Processor 225H | Intel Graphics | 14 inch WUXGA | 16GB | 512GB | Win 11 | Bạc)
+  expect:
+    cpu_model: Core Ultra 5 225H
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-08
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Asus ROG Zephyrus DUO 16 GX651AX-SR050WS (Core Ultra 9 386H | RTX 5090 | 16-inch 3K cảm ứng | 64GB | 2TB | Windows 11 | Xám)
+  expect:
+    cpu_model: Core Ultra 9 386H
+    gpu_model: RTX 5090
+    ram_gb: 64
+    storage_gb: 2000
+    gpu_rank: 85
+- id: anphat-laptop-09
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop ASUS ExpertBook B3 B3405CCA-LY0080W (Intel Core Ultra 7 255H | Intel Graphics | 14 inch WUXGA | 16GB | 512GB | Win 11 | Xám)
+  expect:
+    cpu_model: Core Ultra 7 255H
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-10
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop HP 15-fd1289TU C2CV8PA (Intel Core Ultra 7 155H | 16GB | 512GB | Intel Arc | 15.6 inch FHD IPS | Win 11 | Bạc)
+  expect:
+    cpu_model: Core Ultra 7 155H
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-11
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Lenovo Yoga Slim 7 14ILL11 83R0003BVN (Intel Core Ultra 5 226V | 14 inch WUXGA OLED | 16GB | 512GB | Win 11 | Office | Trắng kem)
+  expect:
+    cpu_model: Core Ultra 5 226V
+    ram_gb: 16
+    storage_gb: 512
+- id: anphat-laptop-12
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Lenovo LOQ 15IRX9 83DV01MCVN (Intel Core i7-14650HX | RTX 4050 6GB GDDR6 | 15.6 inch FHD | 16GB | 512GB | Windows 11 | Xám)
+  expect:
+    cpu_model: i7-14650HX
+    gpu_model: RTX 4050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 30
+- id: anphat-laptop-13
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop ASUS ExpertBook P1503CVAY-308D4256-63WS (Intel Core 3 100U | Intel Graphics | 15.6 inch FHD | 8GB | 256GB | Win 11 | Xám)
+  expect:
+    cpu_model: Core 3 100U
+    gpu_model: Integrated
+    ram_gb: 8
+    storage_gb: 256
+    gpu_rank: 0
+- id: anphat-laptop-14
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Lenovo LOQ 15IRH11E 83Y9003YVN (Intel Core 7 230H | RTX 3050 6GB | 15.3 inch WUXGA 165Hz | 8GB | 512GB | Win 11 | Xám)
+  expect:
+    cpu_model: Core 7 230H
+    gpu_model: RTX 3050
+    ram_gb: 8
+    storage_gb: 512
+    gpu_rank: 20
+- id: anphat-laptop-15
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop ASUS ExpertBook P3 G1 P3606CCAP-U716W (Intel Core Ultra 7 255H | Intel Graphics | 16 inch WUXGA 60Hz | 16GB | 512GB | Win 11 | Xám)
+  expect:
+    cpu_model: Core Ultra 7 255H
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-16
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop MSI Cyborg 15 Max C13WE-422VN (Intel Core i7-13620H | RTX 5050 | 15.6 inch FHD 144Hz | 16GB | 512GB | Win 11 | Xám)
+  expect:
+    cpu_model: i7-13620H
+    gpu_model: RTX 5050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 34
+- id: anphat-laptop-17
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop HP Elitebook 8 G1i Next Gen AI 47 TOPS D85ZNAT (Intel Core Ultra 7-258V | Intel Arc Graphics | 14 inch WUXGA | 32 GB | 512 GB | Windows 11 Home 64 | Bạc)
+  expect:
+    cpu_model: Core Ultra 7 258V
+    gpu_model: Integrated
+    ram_gb: 32
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-18
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop HP 250R G10 C3SH7AT (Intel Core 5 120U | 16GB | 512GB | Intel Graphics | 15.6 inch FHD IPS | Win 11 | Bạc)
+  expect:
+    cpu_model: Core 5 120U
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-19
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Dell Inspiron 14 5441 5MNK1 (Snapdragon X Plus X1P-64-100 | 16GB | 512GB | Qualcom Adreno | 14 inch FHD+ | Win 11 | Office 24 | Xám)
+  expect:
+    cpu_model: Snapdragon X Plus X1P-64-100
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-20
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Dell XPS 13 9350 71100521 (Intel Core Ultra 5 226V | 16GB | 1TB | Intel Arc | 13.4 inch QHD 2.5K 120Hz | Win 11 | Office | Đen)
+  expect:
+    cpu_model: Core Ultra 5 226V
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 1000
+    gpu_rank: 0
+- id: anphat-laptop-21
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Dell XPS 13 DX13260- DX3C5376W1 (Intel Core 5 320 | 16GB | 512GB | Intel Graphics | 13.4 inch 2.5K | Cảm ứng | Win 11 | Office | Sky)
+  expect:
+    cpu_model: Core 5 320
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-22
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop Dell XPS 13 DX13260 - 71102177 (Intel Core 5 320 | 16GB | 512GB | Intel Graphics | 13.4 inch 2.5K Cảm ứng | Win 11 | OfficeH24+365 | Sky)
+  expect:
+    cpu_model: Core 5 320
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-23
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop MSI Modern 16S G3MG-016VN (Intel Core 7 350 | 16GB | 1TB | Intel Graphics | 16 inch FHD + 120Hz | Win 11 | Xám)
+  expect:
+    cpu_model: Core 7 350
+    gpu_model: Integrated
+    ram_gb: 16
+    storage_gb: 1000
+    gpu_rank: 0
+- id: anphat-laptop-24
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop ASUS TUF Gaming A15 FA506NCG-HN329W (AMD Ryzen™ 7 8845HS | RTX 3050 4GB | 15.6 inch FHD 144Hz | 16GB | 512GB | Win 11 | Đen)
+  expect:
+    cpu_model: Ryzen 7 8845HS
+    gpu_model: RTX 3050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 20
+- id: fptshop-laptop-01
+  site: fptshop
+  fixture: fixtures/fptshop/detail_laptop-acer-aspire-lite-14-al14-44p-r0sp-r7-7730u.html
+  title: Laptop Acer Aspire Lite 14 AL14-44P-R0SP R7 7730U/8GB/512GB/14.5" FHD/Win11
+  expect:
+    cpu_model: Ryzen 7 7730U
+    gpu_model: Integrated
+    ram_gb: 8
+    storage_gb: 512
+    gpu_rank: 0
+- id: fptshop-laptop-02
+  site: fptshop
+  fixture: fixtures/fptshop/detail_laptop-asus-tuf-gaming-16-fx610jh-tu008w-i5-14450hx.html
+  title: Laptop Asus TUF Gaming 16 FX610JH-TU008W i5-14450HX/16GB/512GB/16"/Nvidia Geforce RTX5050 8GB/Win 11
+  expect:
+    cpu_model: i5-14450HX
+    gpu_model: RTX 5050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 34
+- id: gearvn-laptop-21-detail
+  site: gearvn
+  fixture: fixtures/gearvn/listing_laptop_p1.html
+  title: Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)
+  detail_fixture: fixtures/gearvn/detail_laptop-acer-aspire-lite-15-al15-53p-56qh.html
+  expect:
+    cpu_model: Core 5 120U
+    gpu_model: Integrated
+    ram_gb: 8
+    storage_gb: 512
+    gpu_rank: 0
+- id: anphat-laptop-25-detail
+  site: anphat
+  fixture: fixtures/anphat/listing_laptop_p1.html
+  title: Laptop HP VICTUS 15-fa2452TX D44VLPA (Intel Core i5-13420H | RTX 3050 6GB | 15.6 inch FHD 144Hz | 16GB | 512GB | Win 11 | Đen)
+  detail_fixture: fixtures/anphat/detail_laptop-hp-victus-15-fa2452tx-d44vlpa.html
+  expect:
+    cpu_model: i5-13420H
+    gpu_model: RTX 3050
+    ram_gb: 16
+    storage_gb: 512
+    gpu_rank: 20

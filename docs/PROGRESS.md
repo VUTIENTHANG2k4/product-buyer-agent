@@ -4,9 +4,9 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Đang làm: (–) M4 đã xong, nhánh `milestone/M4-fptshop-anphat` chờ người dùng merge
-- Task kế tiếp đề xuất: M5 (Chuẩn hóa & ghép) sau khi merge M4; T4.6–T4.8 không chặn. Người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-20 — M4 xong (T4.0–T4.5, qua `code-reviewer` + `qa-tester`). Chưa merge
+- Đang làm: M5 trên nhánh `milestone/M5-normalize-match` — T5.1 ✅, đang làm T5.2 (T5.3 hoãn sang M6 vì cần T6.1; T4.6 không gộp)
+- Task kế tiếp đề xuất: `/plan-task M5` trong Plan mode. Người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-10-20 — M4 đã merge vào main; bắt đầu M5
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -16,7 +16,7 @@
 | M2 Hạ tầng thu thập | ✅ | Qua `code-reviewer` + `qa-tester`; T2.7 xong ở M3b, còn T2.8 (cùng T7.4) |
 | M3 GearVN | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 4 nhóm `PAGES=1` 80/80 mục parse đúng. M3b (T1.7, T1.8, T3.4, T2.7) qua `code-reviewer`, **bỏ qua `qa-tester`** theo quyết định của người dùng |
 | M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). Backlog: T4.6 (seed/test), T4.7, T4.8 |
-| M5 Chuẩn hóa & ghép | ⬜ | |
+| M5 Chuẩn hóa & ghép | 🔄 | Nhánh `milestone/M5-normalize-match` |
 | M6 Agent | ⬜ | |
 | M7 API | ⬜ | |
 | M8 Frontend | ⬜ | Có thêm T8.9, T8.10 (từ QA M0) |

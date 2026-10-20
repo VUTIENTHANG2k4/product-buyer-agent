@@ -237,9 +237,9 @@ Xong khi:
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T5.1 | Bộ trích xuất thông số theo luật (4 nhóm) + golden test | T1.3, T3.2, T4.2, T4.4 | L | ⬜ |
+| T5.1 | Bộ trích xuất thông số theo luật (4 nhóm) + golden test | T1.3, T3.2, T4.2, T4.4 | L | ✅ |
 | T5.2 | Trích `model_code` + matcher + golden pairs | T5.1 | M | ⬜ |
-| T5.3 | LLM dự phòng + cache | T5.1, T6.1 | M | ⬜ |
+| T5.3 | LLM dự phòng + cache (hoãn sang lượt M6, người dùng đồng ý 2026-10-20) | T5.1, T6.1 | M | ⬜ |
 
 **T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
 **T5.2** — Từ T3.4: matcher cũng phải xử lý cùng sản phẩm có `href` http và https (hai khóa URL khác nhau) và cùng URL ở hai nhóm. Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).

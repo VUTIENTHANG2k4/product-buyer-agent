@@ -1,0 +1,348 @@
+# Golden trích xuất thông số (keyboard): tiêu đề thật lấy từ fixture, kỳ vọng rà tay (docs/04 §7).
+# Trường bắt buộc vắng khỏi `expect` nghĩa là tiêu đề/bảng thông số không nói rõ (không suy đoán).
+- id: gearvn-keyboard-01
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2X White
+  expect:
+    switch_type: magnetic
+- id: gearvn-keyboard-02
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2X Red
+  expect:
+    switch_type: magnetic
+- id: gearvn-keyboard-03
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2X Black
+  expect:
+    switch_type: magnetic
+- id: gearvn-keyboard-04
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2 White
+  expect:
+    switch_type: magnetic
+- id: gearvn-keyboard-05
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2 Red
+  expect:
+    switch_type: magnetic
+- id: gearvn-keyboard-06
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2 Black
+  expect:
+    switch_type: magnetic
+- id: gearvn-keyboard-07
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím cơ gaming không dây DareU Flex 75 White Black 3 Mode Pegasus switch
+  expect:
+    connection:
+    - wired
+    - wireless_2_4
+    - bluetooth
+    switch_type: mechanical
+- id: gearvn-keyboard-08
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím cơ gaming không dây DareU Flex 75 Black Grey 3 Mode Pegasus switch
+  expect:
+    connection:
+    - wired
+    - wireless_2_4
+    - bluetooth
+    switch_type: mechanical
+- id: gearvn-keyboard-09
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím gaming ASUS ROG Azoth 96 HE White
+  expect:
+    switch_type: magnetic
+- id: gearvn-keyboard-10
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím gaming ASUS ROG Azoth 96 HE Black
+  expect:
+    switch_type: magnetic
+- id: gearvn-keyboard-11
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím Logitech G316 X 98 RGB Trắng Tactile
+  expect:
+    switch_type: mechanical
+- id: gearvn-keyboard-12
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím Logitech G316 X 98 RGB Đen Tactile
+  expect:
+    switch_type: mechanical
+- id: gearvn-keyboard-13
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím không dây HyperWork Core Type CT01 Đen
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-keyboard-14
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím không dây HyperWork SilentKey TS01 Trắng
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-keyboard-15
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím không dây HyperWork SilentKey Mini TS01M Trắng
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-keyboard-16
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím không dây HyperWork SilentKey TS01 Đen
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-keyboard-17
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím không dây HyperWork HyperOne Gen 3 Plus Đen
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-keyboard-18
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím không dây HyperWork HyperOne Gen 3 Plus Trắng
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-keyboard-19
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím không dây AKKO 5087 V3 Prunus Lannesiana Akko Piano Pro
+  expect:
+    connection:
+    - wireless_2_4
+- id: gearvn-keyboard-20
+  site: gearvn
+  fixture: fixtures/gearvn/listing_keyboard_p1.html
+  title: Bàn phím không dây AKKO 5087 V3 Black&Gray Gradient Botany
+  expect:
+    connection:
+    - wireless_2_4
+- id: anphat-keyboard-01
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ AULA F75 Grey White Milk White switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-02
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ AULA F75 Black Grey Milk White switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-03
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím không dây Logitech Pebble KEYS 2 K380s WIRELESS/BLUETOOTH màu đen 920-011753
+  expect:
+    connection:
+    - wireless_2_4
+    - bluetooth
+- id: anphat-keyboard-04
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech Alto Keys K98M Wireless
+  expect:
+    connection:
+    - wireless_2_4
+    switch_type: mechanical
+- id: anphat-keyboard-05
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G512 X 98 TMR White Tactile switch
+  expect:
+    switch_type: magnetic
+- id: anphat-keyboard-06
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G512 X 98 TMR Black Tactile switch
+  expect:
+    switch_type: magnetic
+- id: anphat-keyboard-07
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G512 X 75 TMR White Tactile switch
+  expect:
+    switch_type: magnetic
+- id: anphat-keyboard-08
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G512 X 75 TMR Black Tactile switch
+  expect:
+    switch_type: magnetic
+- id: anphat-keyboard-09
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Asus ROG Azoth Extreme Edition 20 NX Snow switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-10
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G Pro X2 Rapid Magenta
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-11
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G Pro X2 Rapid White
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-12
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G316 X 98 Black
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-13
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G316 X 98 White
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-14
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G515 LightSpeed TKL Wireless Tactile switch
+  expect:
+    connection:
+    - wireless_2_4
+    switch_type: mechanical
+- id: anphat-keyboard-15
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G Pro X TKL LightSpeed Wireless Tactile switch
+  expect:
+    connection:
+    - wireless_2_4
+    switch_type: mechanical
+- id: anphat-keyboard-16
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G Pro X2 Rapid Black
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-17
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G413 SE TKL
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-18
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G316 X 75 White
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-19
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Logitech G316 X 75 Black
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-20
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ AULA F75 3 Mode Iced Berry Star Vector switch
+  expect:
+    connection:
+    - wired
+    - wireless_2_4
+    - bluetooth
+    switch_type: mechanical
+- id: anphat-keyboard-21
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ Razer Reclusa X Mini 65%
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-22
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím DareU LK135 (Bàn phím chống nước)
+  expect: {}
+- id: anphat-keyboard-23
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ DareU FLEX 75 Shadowfold Pegasus switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-24
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ AULA H108 Yellow Purple Silent Cotton Candy Switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-25
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ AULA H108 White Black Silent Cotton Candy Switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-26
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ AULA H108 Black White Purple Silent Cotton Candy Switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-27
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ ATK RS6 Air Pink Iceblade switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-28
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ ATK RS6 Air Black Iceblade switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-29
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ DareU FLEX 75 White Black Pegasus switch
+  expect:
+    switch_type: mechanical
+- id: anphat-keyboard-30
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ E-DRA EK375W White Linear switch
+  expect:
+    switch_type: mechanical
+- id: fptshop-keyboard-01
+  site: fptshop
+  fixture: fixtures/fptshop/detail_ban-phim-co-khong-day-mchose-g75-pro-v2.html
+  title: Bàn phím cơ không dây MCHOSE G75 Pro V2
+  expect:
+    connection:
+    - bluetooth
+    switch_type: mechanical
+- id: anphat-keyboard-31-detail
+  site: anphat
+  fixture: fixtures/anphat/listing_keyboard_p1.html
+  title: Bàn phím cơ AULA F75 Grey White Milk White switch
+  detail_fixture: fixtures/anphat/detail_ban-phim-co-aula-f75-grey-white-milk-white-switch.html
+  expect:
+    connection:
+    - wired
+    - wireless_2_4
+    - bluetooth
+    switch_type: mechanical
