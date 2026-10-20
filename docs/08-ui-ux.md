@@ -52,7 +52,7 @@ flowchart LR
 │   Gợi ý:  [Laptop gaming dưới 25 triệu]  [Chuột không dây < 1 triệu] │
 │           [Bàn phím cơ TKL switch Red]   [Tai nghe có mic dưới 2 triệu]│
 │                                                                      │
-│   Nguồn: GearVN · Hoàng Hà Mobile · Laptop88   Cập nhật: 2 giờ trước  │
+│   Nguồn: GearVN · FPT Shop · An Phát          Cập nhật: 2 giờ trước  │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 

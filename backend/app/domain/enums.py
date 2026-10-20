@@ -18,8 +18,10 @@ class Category(StrEnum):
 
 class SiteKey(StrEnum):
     gearvn = "gearvn"
-    hoangha = "hoangha"
-    laptop88 = "laptop88"
+    hoangha = "hoangha"  # không dùng từ ADR-0008; giữ cho dữ liệu seed và test cũ
+    laptop88 = "laptop88"  # như trên
+    fptshop = "fptshop"
+    anphat = "anphat"
     viettelstore = "viettelstore"
     nguyenkim = "nguyenkim"
     mockshop = "mockshop"

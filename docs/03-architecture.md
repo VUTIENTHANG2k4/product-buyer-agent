@@ -17,7 +17,7 @@
 flowchart TB
   user([Người mua / Quản trị viên])
   system[Product Buyer Agent]
-  shops[(Trang bán lẻ<br/>GearVN, Hoàng Hà, Laptop88,<br/>Viettel Store, Nguyễn Kim)]
+  shops[(Trang bán lẻ<br/>GearVN, FPT Shop, An Phát,<br/>Viettel Store, Nguyễn Kim)]
   llm[Dịch vụ LLM<br/>Gemini / OpenAI]
   notify[Kênh thông báo<br/>SMTP, Telegram]
   user -- "yêu cầu tiếng Việt, xem so sánh" --> system
@@ -87,7 +87,7 @@ flowchart TB
   subgraph scraping[app/scrapers]
     base[base.py BaseScraper]
     fetcher[http/fetcher.py<br/>robots, rate limit, retry]
-    sites[sites/gearvn.py, hoangha.py,<br/>laptop88.py, viettelstore.py,<br/>nguyenkim.py, mockshop.py]
+    sites[sites/gearvn.py, fptshop.py,<br/>anphat.py, viettelstore.py,<br/>nguyenkim.py, mockshop.py]
     pipeline[pipeline.py]
   end
   subgraph normalize[app/normalize]

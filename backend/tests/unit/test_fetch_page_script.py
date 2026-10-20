@@ -8,9 +8,10 @@ import pytest
 import respx
 
 from app.config import get_settings
-from app.domain.dto import ListingPage
+from app.domain.dto import Challenge, ListingPage
 from app.domain.enums import Category, SiteKey
 from app.scrapers.base import BaseScraper, SiteConfig
+from app.scrapers.http.types import FetchResponse
 from app.scrapers.registry import SCRAPERS
 from scripts.fetch_page import EXIT_BLOCKED, EXIT_FAILED, EXIT_OK, main
 
@@ -109,6 +110,35 @@ def test_captcha_page_is_reported_as_blocked(http: respx.MockRouter, tmp_path: P
     out = tmp_path / "x.html"
 
     assert run("mockshop", f"{MOCK}/c", out) == EXIT_BLOCKED
+    assert not out.exists()
+
+
+def test_scraper_override_of_detect_challenge_decides_whether_a_page_is_saved(
+    http: respx.MockRouter, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Trang có form đăng ký chứa chữ captcha (An Phát) được lưu khi scraper của trang cho phép."""
+
+    class LenientScraper(RealScraper):
+        def detect_challenge(self, resp: FetchResponse) -> Challenge | None:
+            return None
+
+    monkeypatch.setitem(SCRAPERS, SiteKey.gearvn, LenientScraper)
+    http.get(f"{SHOP}/robots.txt").respond(404)
+    http.get(f"{SHOP}/p").respond(200, text='<input name="register_captcha"><h1>Chuột</h1>')
+    out = tmp_path / "x.html"
+
+    assert run("gearvn", f"{SHOP}/p", out, "--allow-online") == EXIT_OK
+    assert "<h1>Chuột</h1>" in out.read_text(encoding="utf-8")
+
+
+def test_default_detector_still_blocks_a_captcha_page_on_a_real_site(
+    http: respx.MockRouter, tmp_path: Path
+) -> None:
+    http.get(f"{SHOP}/robots.txt").respond(404)
+    http.get(f"{SHOP}/p").respond(200, text='<input name="register_captcha">')
+    out = tmp_path / "x.html"
+
+    assert run("gearvn", f"{SHOP}/p", out, "--allow-online") == EXIT_BLOCKED
     assert not out.exists()
 
 

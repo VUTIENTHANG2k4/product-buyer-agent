@@ -10,9 +10,10 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import Engine, Enum, create_engine, inspect, text
 from sqlalchemy.engine import make_url
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import SQLModel
 
-from tests.db_support import downgrade_to_base, upgrade_to_head
+from tests.db_support import downgrade_to, downgrade_to_base, upgrade_to, upgrade_to_head
 
 TABLES = {
     "product",
@@ -74,7 +75,7 @@ def test_upgrade_head_on_empty_database_creates_the_twelve_tables(empty_engine: 
 
 def test_upgrade_head_twice_is_a_no_op(migrated_engine: Engine) -> None:
     upgrade_to_head(migrated_engine)
-    assert _scalars(migrated_engine, "SELECT version_num FROM alembic_version") == ["0001"]
+    assert _scalars(migrated_engine, "SELECT version_num FROM alembic_version") == ["0002"]
 
 
 def test_downgrade_base_removes_every_table_and_upgrade_restores_them(
@@ -199,3 +200,41 @@ def test_database_check_lists_exactly_the_values_of_the_code_enum(
             {"name": f"ck_{table}_{column}", "table": table},
         ).scalar_one()
     assert set(re.findall(r"'([^']*)'", definition)) == {member.value for member in enum_cls}
+
+
+_INSERT_RUN = (
+    "INSERT INTO scrape_run (site, category, status, trigger, pages_fetched, items_parsed,"
+    " items_failed, offers_upserted, price_changes)"
+    " VALUES (:site, 'laptop', 'SUCCEEDED', 'test', 1, 1, 0, 1, 0)"
+)
+
+
+def _insert_run(engine: Engine, site: str) -> None:
+    with engine.begin() as connection:
+        connection.execute(text(_INSERT_RUN), {"site": site})
+
+
+def test_0002_keeps_old_rows_and_accepts_the_new_sites(empty_engine: Engine) -> None:
+    upgrade_to(empty_engine, "0001")
+    _insert_run(empty_engine, "hoangha")
+    with pytest.raises(IntegrityError):
+        _insert_run(empty_engine, "fptshop")
+
+    upgrade_to(empty_engine, "0002")
+
+    _insert_run(empty_engine, "fptshop")
+    _insert_run(empty_engine, "anphat")
+    sites = _scalars(empty_engine, "SELECT site FROM scrape_run ORDER BY id")
+    assert sites == ["hoangha", "fptshop", "anphat"]
+    with pytest.raises(IntegrityError):
+        _insert_run(empty_engine, "shopee")
+
+
+def test_0002_downgrade_restores_the_six_site_list(migrated_engine: Engine) -> None:
+    downgrade_to(migrated_engine, "0001")
+
+    _insert_run(migrated_engine, "laptop88")
+    with pytest.raises(IntegrityError):
+        _insert_run(migrated_engine, "anphat")
+    upgrade_to_head(migrated_engine)
+    _insert_run(migrated_engine, "anphat")

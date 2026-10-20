@@ -10,7 +10,7 @@ Tài liệu gốc: `docs/06-scraping-design.md`, `docs/02-scope-and-sources.md` 
 
 ## Pha A — Khảo sát (không viết code)
 1. Mở `docs/sources/<site_key>.md` (tạo từ `_template.md` nếu chưa có). Mục 1–2 phải đã điền ở T0.4; nếu kết luận điều khoản là "Không dùng" → dừng.
-2. Kiểm tra robots.txt của trang **có chặn agent AI** (`ClaudeBot`, `Claude-User`, `ChatGPT-User`…) không. Nếu có (ví dụ Laptop88): **không dùng Playwright MCP hay WebFetch** với trang đó; chỉ lấy trang qua `scripts/fetch_page.py` (bot của dự án) hoặc nhờ người dùng tự lưu trang từ trình duyệt của họ.
+2. Kiểm tra robots.txt của trang **có chặn agent AI** (`ClaudeBot`, `Claude-User`, `ChatGPT-User`…) không. Nếu có (từng là Laptop88, đã bị loại ở ADR-0008): **không dùng Playwright MCP hay WebFetch** với trang đó; chỉ lấy trang qua `scripts/fetch_page.py` (bot của dự án) hoặc nhờ người dùng tự lưu trang từ trình duyệt của họ.
 3. **Hỏi người dùng đồng ý** rồi lưu trang bằng `uv run python scripts/fetch_page.py --site <s> --url <url> --out tests/fixtures/<s>/<tên>.html --allow-online` (đi qua Fetcher: robots, độ trễ, User-Agent trung thực). Lưu cả `robots.txt` vào fixture. Danh sách tối thiểu ở `docs/06-scraping-design.md` §8.
 4. Phân tích các file đã lưu (đọc file cục bộ, không tải lại):
    - URL danh mục và cách phân trang (tham số `page` có bị robots chặn không?).
@@ -28,7 +28,7 @@ Tài liệu gốc: `docs/06-scraping-design.md`, `docs/02-scope-and-sources.md` 
        config = SiteConfig(
            key=SiteKey.<KEY>,
            base_url="https://…",
-           min_delay_s=5.0,                # Laptop88: 10.0
+           min_delay_s=5.0,                # hoặc Crawl-delay / giá trị khảo sát nếu lớn hơn
            requires_js=False,              # theo kết quả khảo sát
            supports_live_search=…,         # theo docs/02 §1
            categories={Category.LAPTOP: "https://…", …},

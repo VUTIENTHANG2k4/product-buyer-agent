@@ -95,7 +95,7 @@ Chi tiết đã cài đặt (T2.2), khác hoặc chi tiết hơn bản phác ở
 `detect_challenge(resp, site)` (hàm thuần trong `scrapers/challenge.py`, `BaseScraper.detect_challenge` gọi nó và lớp con có thể ghi đè) trả về `Challenge(kind, site, url, prompt?, image_url?, token?)` (DTO ở [04 §6](04-data-model.md#6-dto-miền-appdomaindtopy), `kind` là `ChallengeKind`) khi:
 
 - Mã 403 → `http_403`; mã 429 → `http_429` (Fetcher đã chờ `Retry-After` và thử lại một lần, nên 429 tới đây là kết quả cuối). 5xx kèm dấu hiệu challenge của CDN (T2.7c: `cf-mitigated: challenge`, hoặc máy chủ Cloudflare với trang chờ "Just a moment"/"Attention Required"/`chl_page`; script `challenge-platform/.../main.js` đơn thuần không đủ vì Cloudflare chèn nó cả vào trang lỗi thường) → `captcha`; 5xx thường không bị coi là chặn. Mã trạng thái được xét trước từ khóa. **Hợp đồng với Fetcher:** trả `FetchResponse` cho 403/429 và cho 5xx của trang challenge CDN thay vì ném lỗi; mọi trạng thái 4xx/5xx khác (404, 410, 5xx hết lượt retry) và chuyển hướng ra khỏi domain hoặc tới URL robots chặn do Fetcher xử lý (ném lỗi), scraper không kiểm tra lại nên không bao giờ nhận trang lỗi để parse thành "0 sản phẩm".
-- Nội dung chứa dấu hiệu captcha → `captcha`: `captcha`, `cf-challenge`, `g-recaptcha`, `hcaptcha`, `Verify you are human`, `xác minh bạn không phải robot` (không phân biệt hoa thường và dạng Unicode NFC/NFD). Quét toàn văn HTML nên có thể báo nhầm với trang thật có form reCAPTCHA; khi khảo sát thấy vậy, ghi đè `detect_challenge` của trang đó. Báo nhầm chỉ làm lượt dừng ở `BLOCKED`.
+- Nội dung chứa dấu hiệu captcha → `captcha`: `captcha`, `cf-challenge`, `g-recaptcha`, `hcaptcha`, `Verify you are human`, `xác minh bạn không phải robot` (không phân biệt hoa thường và dạng Unicode NFC/NFD). Quét HTML nhưng **bỏ phần thân của `<script>` nội tuyến** (T4.0b: trang Next.js của FPT Shop có `NEXT_PUBLIC_CAPTCHA_KEY` trong script nội tuyến và bị báo nhầm); thẻ `<script>`, thuộc tính và `src` vẫn được quét nên widget reCAPTCHA/hCaptcha thật vẫn bị phát hiện. Thẻ `<script>` không đóng thì không bỏ gì. Có thể vẫn báo nhầm với trang thật có form reCAPTCHA hiển thị; khi khảo sát thấy vậy, ghi đè `detect_challenge` của trang đó. Báo nhầm chỉ làm lượt dừng ở `BLOCKED`. Dấu hiệu trang chờ Cloudflare vẫn quét toàn văn.
 - Trang danh sách trả 200 nhưng parse được 0 sản phẩm ở trang 1 trong khi lượt trước có sản phẩm (nghi bị chặn mềm) → `soft_block`. Detector không truy cập DB: `crawl_category(expect_items=...)` nhận cờ này từ pipeline.
 
 Xử lý trong pipeline:
@@ -140,13 +140,15 @@ Chi tiết sau khảo sát ghi trong `docs/sources/<site>.md`. Thứ tự ưu ti
 2. **JSON nhúng của framework** (ví dụ `__NEXT_DATA__`, biến khởi tạo) nếu nằm trong HTML công khai.
 3. **Selector CSS** trên thẻ sản phẩm.
 
-Không gọi các endpoint API nội bộ mà robots.txt chặn (ví dụ `/api/` của GearVN, `/Ajax/` của Hoàng Hà).
+Không gọi các endpoint API nội bộ mà robots.txt chặn (ví dụ `/api/` của GearVN).
+
+Hoàng Hà Mobile và Laptop88 đã bị loại khỏi danh sách nguồn từ 2026-10-19 ([ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)); thay bằng `fptshop` và `anphat`.
 
 | Trang | Nhóm (tầng 1) | `min_delay_s` | `requires_js` | Tầng 2 | Ghi chú đã biết |
 | --- | --- | --- | --- | --- | --- |
 | `gearvn` | laptop, mouse, keyboard, headset | 5 | Không (HTML dựng sẵn ở máy chủ, T3.1) | Có | Danh sách không có JSON-LD sản phẩm (parse thẻ `a.product-card`), chi tiết có JSON-LD `Product` + `additionalProperty`; chip thông số trên thẻ không có nhãn; sản phẩm ngừng kinh doanh hiện "Liên hệ tư vấn" (không giá) |
-| `hoangha` | laptop | 5 | Xác định khi khảo sát | Không | Hiển thị nhiều loại giá (niêm yết, hiện tại, "Hoàng Hà Member chỉ từ", flash sale bị che) → map `price_type` cẩn thận |
-| `laptop88` | laptop, mouse, keyboard, headset | **10** | Xác định khi khảo sát | **Không** | Không dùng tham số `specMap`, `filter`. Thẻ sản phẩm có sẵn thông số rút gọn |
+| `fptshop` | laptop, mouse, keyboard, headset | 5 | Không (trang chi tiết có JSON-LD `Product` trong HTML dựng sẵn, T4.1) | Không (chưa khảo sát) | Danh mục chỉ có ~25 sản phẩm trong HTML (phần còn lại qua nút "Xem thêm"/API) nên duyệt **qua sitemap + trang chi tiết**; phụ kiện nhận diện nhóm bằng tiền tố slug; `mpn` = `sku` = mã nội bộ; giá flash sale theo suất không lưu |
+| `anphat` | laptop, mouse, keyboard, headset | 5 (`Crawl-delay: 5`) | Không (thẻ sản phẩm trong HTML tĩnh, T4.3) | **Không** (robots.txt chặn `/tim`) | Phân trang `?page=N` (24 sản phẩm/trang laptop, 30 các nhóm khác; hết trang = 0 thẻ; `has_next` suy từ tổng "N kết quả"); thẻ không có thông số (nạp bằng JS qua `/ajax/` bị chặn) nên pipeline tải trang chi tiết; mọi trang có form đăng ký chứa chữ captcha nên scraper ghi đè `detect_challenge`; giá ẩn `d-none` (Build PC, combo TP.HCM) bỏ qua |
 | `viettelstore` | (mở rộng) | 5 | Xác định khi khảo sát | Có | Tên điện thoại chứa dung lượng |
 | `nguyenkim` | (mở rộng) | 5 | Xác định khi khảo sát | Có | |
 | `mockshop` | cả 4 | `MOCK_SHOP_DELAY_SECONDS` | Không | Có (dev/test/demo) | Dùng cho test và demo |
@@ -190,13 +192,13 @@ Chi tiết đã cài đặt (T2.6; `app/scrapers/pipeline.py`, `app/services/scr
 
 - **Cách chuẩn:** `uv run python scripts/fetch_page.py --site <s> --url <url> --out tests/fixtures/<s>/<tên>.html --allow-online`. Script đi qua `Fetcher` (robots.txt, độ trễ, User-Agent trung thực của dự án). Cờ `--allow-online` cho phép đúng lệnh này truy cập trang thật kể cả khi `SCRAPER_OFFLINE_ONLY=true`; chỉ chạy khi người dùng đồng ý trong task khảo sát.
 - **Playwright MCP** (trình duyệt do Claude điều khiển) chỉ dùng để quan sát cách trang hiển thị (cần JavaScript hay không, vị trí phần tử) và chỉ trên trang **không** chặn agent AI trong robots.txt. Không dùng để tải hàng loạt.
-- **Laptop88** chặn rõ các agent AI truy cập thay người dùng (`ChatGPT-User`, `ClaudeBot`). Không dùng Playwright MCP hay WebFetch với trang này. Fixture lấy bằng `fetch_page.py` (bot thu thập của dự án, độ trễ 10 s) hoặc người dùng tự mở trang trong trình duyệt của mình và lưu HTML ("Save Page As… → HTML only") vào thư mục fixture.
+- **Trang chặn agent AI** (`ChatGPT-User`, `ClaudeBot`… trong robots.txt; hiện chưa có nguồn nào, Laptop88 đã bị loại ở ADR-0008): không dùng Playwright MCP hay WebFetch. Fixture lấy bằng `fetch_page.py` (bot thu thập của dự án, độ trễ theo trang) hoặc người dùng tự mở trang trong trình duyệt của mình và lưu HTML ("Save Page As… → HTML only") vào thư mục fixture.
 - Ngoài ra có thể lưu khi chạy pipeline: `scripts/scrape.py --site <s> --category <c> --save-fixture` (cần `SCRAPER_OFFLINE_ONLY=false`, người dùng chạy có chủ ý).
 - Mỗi trang tối thiểu: 1 trang danh sách mỗi nhóm, 1 trang danh sách cuối (không còn trang sau), 2 trang chi tiết, 1 trang tìm kiếm (nếu tầng 2).
 - Xóa nội dung không cần (script quảng cáo lớn) để file < 500 KB; không chứa dữ liệu cá nhân.
 - Tên: `listing_<category>_p<n>.html`, `detail_<slug>.html`, `search_<query>.html`.
 - Fixture của mock-shop (`tests/fixtures/mockshop/`) sinh bằng `uv run python -m scripts.save_mockshop_fixtures` (gọi mock-shop qua ASGI, không mạng); một test so fixture với mock-shop hiện tại nên sửa mock-shop xong phải chạy lại lệnh này.
-- Parser nhận thẻ không đọc được thì bỏ qua và đếm vào `ListingPage.skipped`; pipeline cộng vào `items_failed`.
+- Parser nhận thẻ không đọc được thì bỏ qua và đếm vào `ListingPage.skipped`; pipeline cộng vào `items_failed`. Sản phẩm mà nguồn liệt kê nhưng trả 404/410 (FPT Shop qua sitemap) đếm vào `ListingPage.gone`, không phải `skipped`: đó là hàng đã gỡ nên không cấm tắt offer và không tính lỗi.
 - Test parser khẳng định: số sản phẩm, sản phẩm đầu tiên đầy đủ trường, `has_next` đúng, mọi giá là số nguyên dương hoặc `None`.
 
 ## 9. Lệnh

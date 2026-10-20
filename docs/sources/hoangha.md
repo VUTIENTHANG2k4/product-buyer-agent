@@ -1,5 +1,7 @@
 # Nguồn: Hoàng Hà Mobile (`hoangha`)
 
+> **KHÔNG DÙNG từ 2026-10-19** ([ADR-0008](../adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)): người dùng chọn thay bằng FPT Shop và An Phát thay vì chờ xác nhận của giảng viên. Giữ nội dung khảo sát dưới đây để tham khảo; không viết scraper.
+
 > Khảo sát ngày: 2026-10-17 (mục 1–2) · Người khảo sát: Claude Code + người dùng (cách lấy trang: xem mục 6) · Task: T0.4 (mục 1–2), T4.1 (mục 3–7)
 
 ## 1. robots.txt

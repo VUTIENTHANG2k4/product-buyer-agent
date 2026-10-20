@@ -191,7 +191,7 @@ Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.spe
 | Enum | Giá trị |
 | --- | --- |
 | `Category` | `laptop`, `mouse`, `keyboard`, `headset`, `phone` (mở rộng), `other` |
-| `SiteKey` | `gearvn`, `hoangha`, `laptop88`, `viettelstore`, `nguyenkim`, `mockshop` |
+| `SiteKey` | `gearvn`, `hoangha`, `laptop88`, `fptshop`, `anphat`, `viettelstore`, `nguyenkim`, `mockshop` |
 | `PriceType` | `regular` (giá bán không giảm), `sale` (giá khuyến mãi công khai), `member` (giá thành viên), `flash` (flash sale đang diễn ra), `unknown` |
 | `StockStatus` | `in_stock`, `out_of_stock`, `preorder`, `unknown` |
 | `ScrapeStatus` | `PENDING`, `RUNNING`, `NEEDS_HUMAN`, `BLOCKED`, `SUCCEEDED`, `PARTIAL`, `FAILED` |
@@ -305,6 +305,7 @@ class ListingPage(BaseModel):
     has_next: bool
     next_url: HttpUrl | None
     skipped: int                       # số thẻ không parse được (mặc định 0); pipeline cộng vào items_failed
+    gone: int                          # sản phẩm đã gỡ (404/410) nguồn vẫn liệt kê (mặc định 0); không phải lỗi, nên không cấm tắt offer
     pagination_loop: bool              # mặc định False; crawl_category đặt True khi trang sau quay về URL đã tải
 
 class ProductDetail(BaseModel):        # đầu ra parser trang chi tiết

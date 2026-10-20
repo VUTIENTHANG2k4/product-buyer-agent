@@ -16,6 +16,7 @@ _CAPTCHA_MARKERS = (
     "cf-challenge",
     "g-recaptcha",
     "hcaptcha",
+    "turnstile",  # widget Cloudflare Turnstile (div `cf-turnstile`)
     "verify you are human",
     "xác minh bạn không phải robot",
 )
@@ -24,6 +25,52 @@ _CAPTCHA_MARKERS = (
 def _fold(text: str) -> str:
     """Đưa về NFC + chữ thường để khớp không phân biệt hoa/thường và dạng Unicode của tiếng Việt."""
     return unicodedata.normalize("NFC", text).casefold()
+
+
+# Thân `<script>`/`<style>` nội tuyến và chú thích HTML (biến môi trường Next.js, JSON-LD, mã theo
+# dõi, `.grecaptcha-badge{visibility:hidden}`...) hay chứa chữ như `NEXT_PUBLIC_CAPTCHA_KEY` trên
+# trang bình thường mà người dùng không thấy. Chỉ bỏ phần thân; thẻ mở (kể cả `src`) vẫn được giữ
+# nên widget reCAPTCHA/hCaptcha thật (div, iframe, `<script src=...>`) vẫn bị phát hiện. Phần
+# không có điểm kết thì giữ nguyên để không bỏ sót. Duyệt bằng `str.find` (tuyến tính): regex lười
+# gặp hàng nghìn thẻ không đóng sẽ chạy bậc hai và treo event loop.
+_NAME_CHARS = frozenset("_-")
+
+
+def _strip_bodies(folded: str, opener: str, closer: str, *, tag: bool) -> str:
+    """Bỏ phần giữa `opener...>` (hoặc hết `opener` nếu không phải thẻ) và `closer`."""
+    parts: list[str] = []
+    pos = 0
+    while True:
+        start = folded.find(opener, pos)
+        if start < 0:
+            break
+        after = start + len(opener)
+        next_char = folded[after] if after < len(folded) else ""
+        if tag and (next_char.isalnum() or next_char in _NAME_CHARS):
+            parts.append(folded[pos:after])  # `<scripts…`: không phải thẻ này, tìm tiếp
+            pos = after
+            continue
+        keep_end = after
+        if tag:
+            open_end = folded.find(">", after)
+            if open_end < 0:
+                break
+            keep_end = open_end + 1
+        close = folded.find(closer, keep_end)
+        if close < 0:
+            break
+        parts.append(folded[pos:keep_end])
+        pos = close
+    parts.append(folded[pos:])
+    return "".join(parts)
+
+
+def _captcha_text(text: str) -> str:
+    """Thân trang đã bỏ script/style nội tuyến và chú thích, dùng để tìm từ khóa captcha."""
+    folded = _fold(text)
+    folded = _strip_bodies(folded, "<script", "</script", tag=True)
+    folded = _strip_bodies(folded, "<style", "</style", tag=True)
+    return _strip_bodies(folded, "<!--", "-->", tag=False)
 
 
 _FOLDED_MARKERS = tuple(_fold(marker) for marker in _CAPTCHA_MARKERS)
@@ -50,9 +97,9 @@ def is_blocking_error_response(status: int, headers: Mapping[str, str], text: st
     lowered = {name.lower(): value.lower() for name, value in headers.items()}
     if lowered.get("cf-mitigated") == "challenge":
         return True
-    body = _fold(text)
-    if any(marker in body for marker in _FOLDED_MARKERS):
+    if any(marker in _captcha_text(text) for marker in _FOLDED_MARKERS):
         return True
+    body = _fold(text)
     return "cloudflare" in lowered.get("server", "") and any(
         marker in body for marker in _CLOUDFLARE_INTERSTITIAL
     )
@@ -83,8 +130,7 @@ def detect_challenge(resp: FetchResponse, site: SiteKey) -> Challenge | None:
         return _build(ChallengeKind.http_429, site, resp.final_url)
     if is_blocking_error_response(resp.status, resp.headers, resp.text):
         return _build(ChallengeKind.captcha, site, resp.final_url)
-    body = _fold(resp.text)
-    if any(marker in body for marker in _FOLDED_MARKERS):
+    if any(marker in _captcha_text(resp.text) for marker in _FOLDED_MARKERS):
         return _build(ChallengeKind.captcha, site, resp.final_url)
     return None
 

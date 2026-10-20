@@ -109,7 +109,7 @@ Lỗi HTTP khác do framework sinh ra (ví dụ 418) dùng mã `HTTP_<status>`; 
 
 ```
 event: plan
-data: {"intent":{"category":"laptop","tier":1,"price_max":30000000,"spec_filters":[{"field":"gpu_rank","op":"gte","value":40}],"sort":"price_asc","limit":10,"needs_clarification":false},"steps":["Tìm laptop trong danh mục đã thu thập","Lọc GPU từ RTX 4060 trở lên, giá dưới 30 triệu","So sánh giá giữa GearVN, Hoàng Hà, Laptop88"]}
+data: {"intent":{"category":"laptop","tier":1,"price_max":30000000,"spec_filters":[{"field":"gpu_rank","op":"gte","value":40}],"sort":"price_asc","limit":10,"needs_clarification":false},"steps":["Tìm laptop trong danh mục đã thu thập","Lọc GPU từ RTX 4060 trở lên, giá dưới 30 triệu","So sánh giá giữa GearVN, FPT Shop, An Phát"]}
 
 event: tool_start
 data: {"call_id":"c1","tool":"search_catalog","args_summary":"laptop, ≤ 30.000.000 ₫, GPU ≥ RTX 4060"}

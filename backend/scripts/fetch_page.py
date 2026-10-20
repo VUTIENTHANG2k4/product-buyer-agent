@@ -17,7 +17,6 @@ from urllib.parse import urlsplit
 
 from app.config import get_settings
 from app.domain.enums import SiteKey
-from app.scrapers.challenge import detect_challenge
 from app.scrapers.http.errors import FetchError
 from app.scrapers.http.factory import build_fetcher
 from app.scrapers.registry import SCRAPERS
@@ -39,7 +38,11 @@ async def fetch_to_file(site: SiteKey, url: str, out: Path, *, allow_online: boo
     if scraper is None:
         logger.error("Trang %s chưa có scraper đăng ký (app/scrapers/registry.py).", site)
         return EXIT_FAILED
-    if urlsplit(url).netloc.lower() != urlsplit(scraper.config.base_url).netloc.lower():
+    try:
+        same_host = urlsplit(url).netloc.lower() == urlsplit(scraper.config.base_url).netloc.lower()
+    except ValueError:  # `https://[x`: URL sai dạng
+        same_host = False
+    if not same_host:
         logger.error("URL phải thuộc %s.", scraper.config.base_url)
         return EXIT_FAILED
 
@@ -53,7 +56,8 @@ async def fetch_to_file(site: SiteKey, url: str, out: Path, *, allow_online: boo
         except FetchError as error:
             logger.error("Không tải được trang: %s (%s)", error, type(error).__name__)
             return EXIT_FAILED
-    challenge = detect_challenge(response, site)
+        # Dùng bộ phát hiện của chính scraper: trang có thể ghi đè khi báo nhầm (06 §4).
+        challenge = scraper(fetcher).detect_challenge(response)
     if challenge is not None:
         logger.error("Trang trả challenge %s: dừng, không lưu file.", challenge.kind)
         return EXIT_BLOCKED
