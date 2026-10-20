@@ -54,7 +54,7 @@ Mọi tool: tham số là Pydantic model (sinh JSON schema cho LLM), trả về 
 | 7 | `create_price_alert` | `product_id`, `target_price`, `channel?` | `{alert_id, target_price, channel, current_best_price}` | **Ghi** |
 | 8 | `list_alerts` | `status?` | `{alerts: [...]}` | Chỉ đọc |
 
-`ProductSummary` = `{product_id, name, brand, category, key_specs: {…tối đa 6 trường}, min_price, max_price, best_offer: {site, price, price_type, url, scraped_at}, offers_count}`.
+`ProductSummary` = `{product_id, name, brand, category, key_specs: {…tối đa 6 trường}, min_price, max_price, best_offer: {site, price, price_type, url, scraped_at, …}, offers_count, in_stock, image_url}` (định nghĩa đầy đủ ở `app/domain/catalog.py`; `min_price` là giá hiệu lực, offer hết hàng không tính).
 
 **Quy tắc tool ghi (6, 7):** chỉ gọi khi người dùng yêu cầu rõ ràng trong lượt hiện tại ("thêm…", "báo tôi khi…"). Kênh và địa chỉ nhận cảnh báo lấy từ cấu hình (`ALERT_DEFAULT_CHANNEL`, `ALERT_DEFAULT_EMAIL`, `TELEGRAM_CHAT_ID`); agent không tự hỏi hay lưu email người dùng.
 

@@ -256,7 +256,7 @@ Xong khi:
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
 | T6.1 | LLM factory + `ScriptedChatModel` | T0.1 | S | ✅ |
-| T6.2 | Services: catalog, compare, shopping_list, alert (CRUD) | T1.4 | M | ⬜ |
+| T6.2 | Services: catalog, compare, shopping_list, alert (CRUD) | T1.4 | M | ✅ |
 | T6.3 | Planner + prompt | T6.1, T1.1 | M | ⬜ |
 | T6.4 | 8 tool | T6.2 | M | ⬜ |
 | T6.5 | Executor + sự kiện + guardrail + bộ nhớ hội thoại | T6.3, T6.4 | L | ⬜ |
@@ -278,6 +278,8 @@ Xong khi:
 | T7.3 | Lists + alerts | T6.2 | S | ⬜ |
 | T7.4 | Admin + challenge HITL | T2.6 | M | ⬜ |
 | T7.5 | Sinh kiểu TypeScript từ OpenAPI | T7.1–T7.4, T0.2 | S | ⬜ |
+
+Ghi chú từ T6.2: `PATCH /lists/{id}/items/{item_id}` cần `preferred_offer_id`, nhưng `ShoppingListService.update_item`/repo chưa hỗ trợ (chỉ `quantity`, `note`, `clear_note`): thêm kèm kiểm offer thuộc sản phẩm. `GET /products` còn thiếu `sort=updated_desc` và `GET /categories` chưa có service.
 
 Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test integration cho mọi endpoint (thành công + ít nhất một lỗi); SSE test bằng client đọc luồng, gồm phát lại khi kết nối sau khi run xong.
 

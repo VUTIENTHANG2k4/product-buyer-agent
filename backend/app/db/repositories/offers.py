@@ -44,6 +44,13 @@ def effective_price() -> ColumnElement[int]:
     )
 
 
+def effective_price_of(offer: Offer) -> int:
+    """Cùng quy tắc với `effective_price()` nhưng tính trên một đối tượng đã nạp (VND)."""
+    if offer.price_type is PriceType.member and offer.list_price is not None:
+        return offer.list_price
+    return offer.price
+
+
 class OfferUpsert(BaseModel):
     """Giá trị ghi vào một offer. `url` đã qua `clean_url`; giá không đọc được thì không tới đây."""
 
@@ -102,6 +109,20 @@ class OfferRepository:
         if active_only:
             statement = statement.where(col(Offer.is_active).is_(True))
         return list(self._session.exec(statement.order_by(effective_price(), col(Offer.id))))
+
+    def list_for_products(
+        self, product_ids: list[int], *, active_only: bool = True
+    ) -> dict[int, list[Offer]]:
+        """Offer của nhiều sản phẩm trong một truy vấn; mỗi sản phẩm xếp rẻ nhất trước."""
+        grouped: dict[int, list[Offer]] = {product_id: [] for product_id in product_ids}
+        if not product_ids:
+            return grouped
+        statement = select(Offer).where(col(Offer.product_id).in_(product_ids))
+        if active_only:
+            statement = statement.where(col(Offer.is_active).is_(True))
+        for offer in self._session.exec(statement.order_by(effective_price(), col(Offer.id))):
+            grouped[offer.product_id].append(offer)
+        return grouped
 
     def upsert(self, data: OfferUpsert, *, now: datetime | None = None) -> UpsertResult:
         """`INSERT … ON CONFLICT (url) DO UPDATE`: giữ `id`, `first_seen_at`, làm mới phần còn lại.
