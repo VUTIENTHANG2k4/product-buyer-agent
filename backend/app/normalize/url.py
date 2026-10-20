@@ -76,3 +76,10 @@ def clean_url(url: str) -> str:
     if len(cleaned) > MAX_URL_LENGTH:
         raise ValueError(f"URL longer than {MAX_URL_LENGTH} characters")
     return cleaned
+
+
+def scheme_twin(url: str) -> str:
+    """Cùng URL nhưng đổi http ↔ https (đầu vào đã qua `clean_url`); scheme khác trả nguyên."""
+    parts = urlsplit(url)
+    twin = {"http": "https", "https": "http"}.get(parts.scheme)
+    return url if twin is None else urlunsplit(parts._replace(scheme=twin))

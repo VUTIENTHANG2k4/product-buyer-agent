@@ -4,7 +4,7 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Đang làm: M5 trên nhánh `milestone/M5-normalize-match` — T5.1 ✅, đang làm T5.2 (T5.3 hoãn sang M6 vì cần T6.1; T4.6 không gộp)
+- Đang làm: M5 trên nhánh `milestone/M5-normalize-match` — T5.1, T5.2 ✅; còn `/check`, `/review M5`, `qa-tester`, `/done M5` (T5.3 hoãn sang M6, T4.6 không gộp)
 - Task kế tiếp đề xuất: `/plan-task M5` trong Plan mode. Người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-20 — M4 đã merge vào main; bắt đầu M5
 

@@ -118,6 +118,22 @@ class ProductRepository:
         )
         return self._session.exec(statement).first()
 
+    def list_by_brand(self, category: Category, brand: str) -> list[Product]:
+        """Mọi sản phẩm cùng nhóm và hãng (ứng viên để ghép offer mới), theo id tăng dần."""
+        statement = (
+            select(Product)
+            .where(Product.category == category, Product.brand == brand)
+            .order_by(col(Product.id))
+        )
+        return list(self._session.exec(statement))
+
+    def set_model_code(self, product: Product, model_code: str) -> Product:
+        """Gán mã model cho sản phẩm chưa có mã. Người gọi kiểm tra mã chưa thuộc sản phẩm khác
+        (chỉ mục unique `(category, brand, model_code)`), nếu không `flush` sẽ ném lỗi ràng buộc."""
+        product.model_code = model_code
+        self._session.flush()
+        return product
+
     def update_specs(
         self, product: Product, specs: Mapping[str, Any], specs_confidence: float | None = None
     ) -> Product:

@@ -28,6 +28,15 @@ _SCRAPERS: dict[SiteKey, type[BaseScraper]] = {
 }
 
 
+# Trang chi tiết FPT Shop được lưu theo slug; nhóm nhận ra qua tiền tố của slug.
+_FPT_PREFIX: dict[Category, str] = {
+    Category.laptop: "detail_laptop-",
+    Category.mouse: "detail_chuot-",
+    Category.keyboard: "detail_ban-phim-",
+    Category.headset: "detail_tai-nghe-",
+}
+
+
 @dataclass(frozen=True)
 class GoldenCase:
     id: str
@@ -77,6 +86,62 @@ def _parsed_items(
         return ((item.title, tuple(item.raw_specs.items())),)
     page = scraper.parse_listing(html, category, scraper.listing_url(category, 1))
     return tuple((item.title, tuple(item.raw_specs.items())) for item in page.items)
+
+
+def real_titles(site: SiteKey, category: Category) -> dict[str, dict[str, str]]:
+    """{tiêu đề: raw_specs} của mọi sản phẩm của (site, nhóm) trong các fixture đã lưu."""
+    folder = TESTS_DIR / "fixtures" / site.value
+    pattern = "detail_*.html" if site is SiteKey.fptshop else f"listing_{category.value}_*.html"
+    found: dict[str, dict[str, str]] = {}
+    for path in sorted(folder.glob(pattern)):
+        if site is SiteKey.fptshop and _FPT_PREFIX[category] not in path.name:
+            continue
+        found.update(fixture_items(site, f"fixtures/{site.value}/{path.name}", category))
+    return found
+
+
+@dataclass(frozen=True)
+class PairSide:
+    site: SiteKey
+    title: str
+    synthetic_from_title: str | None = None  # có khi `title` là bản viết lại từ tiêu đề thật
+    synthetic_from_site: SiteKey | None = None
+
+
+@dataclass(frozen=True)
+class GoldenPair:
+    id: str
+    category: Category
+    expect: str  # "merge" | "separate"
+    why: str
+    a: PairSide
+    b: PairSide
+
+
+def _pair_side(raw: dict[str, Any]) -> PairSide:
+    source = raw.get("synthetic_from")
+    return PairSide(
+        site=SiteKey(raw["site"]),
+        title=raw["title"],
+        synthetic_from_title=source["title"] if source else None,
+        synthetic_from_site=SiteKey(source["site"]) if source else None,
+    )
+
+
+def load_pairs() -> list[GoldenPair]:
+    """Nạp `tests/unit/golden/pairs.yaml`."""
+    raw = yaml.safe_load((GOLDEN_DIR / "pairs.yaml").read_text(encoding="utf-8"))
+    return [
+        GoldenPair(
+            id=item["id"],
+            category=Category(item["category"]),
+            expect=item["expect"],
+            why=item["why"],
+            a=_pair_side(item["a"]),
+            b=_pair_side(item["b"]),
+        )
+        for item in raw
+    ]
 
 
 def case_raw_specs(case: GoldenCase, category: Category) -> dict[str, str]:

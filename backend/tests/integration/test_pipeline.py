@@ -253,7 +253,7 @@ async def test_saved_offers_and_products_carry_the_scraped_data(
     assert offer.site_sku == "MK-LA001" and offer.is_active is True
     assert offer.raw_specs["CPU"].startswith("Intel")
     assert (product.category, product.brand, product.model_code) == (Category.laptop, "ASUS", None)
-    assert product.canonical_name == "Laptop ASUS Mock Strix 15 X01"
+    assert product.canonical_name == "ASUS Mock Strix 15 X01"  # đã bỏ tiền tố loại
     # Thông số trích bằng luật từ thẻ danh sách (thẻ mock-shop không có GPU nên còn thiếu 1/4).
     assert product.specs == {
         "cpu_model": "i5-13500H",

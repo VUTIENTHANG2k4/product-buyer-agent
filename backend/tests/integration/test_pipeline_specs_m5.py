@@ -1,4 +1,4 @@
-"""Thông số trích bằng luật được lưu vào Product qua resolver tạm thời (T5.1)."""
+"""Thông số trích bằng luật được lưu vào Product qua `resolve_product` (T5.1)."""
 
 from pathlib import Path
 
@@ -9,7 +9,7 @@ from app.db.models import Product
 from app.db.repositories import OfferRepository, OfferUpsert, ProductQuery, ProductRepository
 from app.domain.dto import ListingItem, ProductDetail, SpecFilter
 from app.domain.enums import Category, SiteKey
-from app.scrapers.pipeline import resolve_product_interim
+from app.scrapers.pipeline import resolve_product
 from app.scrapers.sites.mockshop import MockShopScraper
 from scripts.save_mockshop_fixtures import FIXTURE_DIR
 
@@ -33,6 +33,12 @@ def mock_detail() -> ProductDetail:
     return MockShopScraper(None).parse_detail(html, URL)  # type: ignore[arg-type]
 
 
+def resolve(
+    session: Session, category: Category, item: ListingItem, detail: ProductDetail | None
+) -> int:
+    return resolve_product(session, category, item, detail).product_id
+
+
 def get_product(session: Session, product_id: int) -> Product:
     product = ProductRepository(session).get(product_id)
     assert product is not None
@@ -43,7 +49,7 @@ def test_new_product_gets_specs_from_the_detail_page(db_session: Session) -> Non
     detail = mock_detail()
     assert "Card đồ họa" in detail.raw_specs
 
-    product_id = resolve_product_interim(db_session, Category.laptop, listing_item(), detail)
+    product_id = resolve(db_session, Category.laptop, listing_item(), detail)
 
     product = get_product(db_session, product_id)
     assert product.specs["gpu_model"] == "RTX 4050"
@@ -55,7 +61,7 @@ def test_new_product_gets_specs_from_the_detail_page(db_session: Session) -> Non
 
 
 def test_specs_are_queryable_by_the_catalog_filters(db_session: Session) -> None:
-    product_id = resolve_product_interim(db_session, Category.laptop, listing_item(), mock_detail())
+    product_id = resolve(db_session, Category.laptop, listing_item(), mock_detail())
     OfferRepository(db_session).upsert(
         OfferUpsert(
             product_id=product_id,
@@ -81,7 +87,7 @@ def test_specs_are_queryable_by_the_catalog_filters(db_session: Session) -> None
 def test_product_with_missing_required_field_has_low_confidence(db_session: Session) -> None:
     item = listing_item(CPU="Intel Core i5-13500H", RAM="8GB DDR5")
 
-    product_id = resolve_product_interim(db_session, Category.laptop, item, None)
+    product_id = resolve(db_session, Category.laptop, item, None)
 
     product = get_product(db_session, product_id)
     assert "gpu_model" not in product.specs and "storage_gb" not in product.specs
@@ -92,7 +98,7 @@ def test_existing_offer_fills_missing_specs_without_overwriting_known_ones(
     db_session: Session,
 ) -> None:
     first = listing_item(CPU="Intel Core i5-13500H", RAM="8GB DDR5")
-    product_id = resolve_product_interim(db_session, Category.laptop, first, None)
+    product_id = resolve(db_session, Category.laptop, first, None)
     OfferRepository(db_session).upsert(
         OfferUpsert(
             product_id=product_id,
@@ -109,7 +115,7 @@ def test_existing_offer_fills_missing_specs_without_overwriting_known_ones(
     detail = mock_detail().model_copy(
         update={"raw_specs": {**mock_detail().raw_specs, "RAM": "16GB DDR5"}}
     )
-    again = resolve_product_interim(db_session, Category.laptop, first, detail)
+    again = resolve(db_session, Category.laptop, first, detail)
 
     assert again == product_id
     after = get_product(db_session, product_id)
@@ -127,7 +133,7 @@ def test_category_without_extractor_keeps_empty_specs(db_session: Session) -> No
         price=9_990_000,
     )
 
-    product_id = resolve_product_interim(db_session, Category.phone, item, None)
+    product_id = resolve(db_session, Category.phone, item, None)
 
     product = get_product(db_session, product_id)
     assert (product.specs, product.specs_confidence) == ({}, 0.0)
