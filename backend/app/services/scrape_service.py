@@ -10,8 +10,9 @@ from collections.abc import Awaitable, Callable, Sequence
 from app.config import Settings
 from app.domain.enums import Category, ScrapeTrigger, SiteKey
 from app.domain.errors import OfflineMode
+from app.normalize.llm_extract import LlmSpecsFiller
 from app.scrapers.http.types import FormFetcher
-from app.scrapers.pipeline import PipelineResult, ScrapePipeline, SessionFactory
+from app.scrapers.pipeline import PipelineResult, ScrapePipeline, SessionFactory, make_resolver
 from app.scrapers.registry import get_scraper
 
 logger = logging.getLogger(__name__)
@@ -28,12 +29,17 @@ class ScrapeService:
         *,
         on_price_changes: PriceChangeHook | None = None,
         pipeline: ScrapePipeline | None = None,
+        spec_filler: LlmSpecsFiller | None = None,
     ) -> None:
+        """`spec_filler` (LLM dự phòng, T5.3) do nơi lắp ráp tiêm; bỏ qua nếu có `pipeline`."""
         self._settings = settings
         self._fetcher = fetcher
         self._on_price_changes = on_price_changes
         self._pipeline = pipeline or ScrapePipeline(
-            session_factory, fetcher, default_max_pages=settings.scraper_max_listing_pages
+            session_factory,
+            fetcher,
+            default_max_pages=settings.scraper_max_listing_pages,
+            resolver=make_resolver(spec_filler if settings.llm_extractor_enabled else None),
         )
 
     async def run(

@@ -26,6 +26,7 @@ from sqlmodel import Session
 
 from app.db.models import Offer, Product, ScrapeRun, utc_now
 from app.db.repositories import (
+    LlmExtractionCacheRepository,
     OfferRepository,
     OfferUpsert,
     PriceHistoryRepository,
@@ -50,7 +51,8 @@ from app.domain.errors import (
     SiteCooldown,
 )
 from app.normalize.brand import UNKNOWN_BRAND, detect_brand
-from app.normalize.extract import extract_specs, merge_specs, specs_confidence
+from app.normalize.extract import SpecsExtraction, extract_specs, merge_specs, specs_confidence
+from app.normalize.llm_extract import LlmSpecsFiller
 from app.normalize.matcher import Candidate, decide_match
 from app.normalize.model_code import extract_model_code
 from app.normalize.names import canonical_name
@@ -164,24 +166,60 @@ def find_existing_offer(offers: OfferRepository, url: str) -> Offer | None:
     return offers.get_by_url(url) or offers.get_by_url(scheme_twin(url))
 
 
+class _RepoSpecsCache:
+    """Đưa `LlmExtractionCacheRepository` (theo session của mục) về giao diện `SpecsCache`."""
+
+    def __init__(self, session: Session) -> None:
+        self._repo = LlmExtractionCacheRepository(session)
+
+    def get(self, content_hash: str) -> Mapping[str, Any] | None:
+        entry = self._repo.get(content_hash)
+        return None if entry is None else entry.result
+
+    def put(
+        self, content_hash: str, category: Category, result: Mapping[str, Any], model: str
+    ) -> None:
+        self._repo.put(content_hash, category, result, model)
+
+
+def make_resolver(spec_filler: LlmSpecsFiller | None = None) -> ProductResolver:
+    """`resolve_product` có (hoặc không có) LLM dự phòng điền trường bắt buộc còn thiếu."""
+
+    def resolver(
+        session: Session,
+        category: Category,
+        item: ListingItem,
+        detail: ProductDetail | None,
+        raw_specs: Mapping[str, str] | None = None,
+    ) -> Resolution:
+        return resolve_product(session, category, item, detail, raw_specs, spec_filler=spec_filler)
+
+    return resolver
+
+
 def resolve_product(
     session: Session,
     category: Category,
     item: ListingItem,
     detail: ProductDetail | None,
     raw_specs: Mapping[str, str] | None = None,
+    *,
+    spec_filler: LlmSpecsFiller | None = None,
 ) -> Resolution:
     """Product cho `item`: giữ sản phẩm của offer đã có, nếu không thì ghép hoặc tạo mới.
 
     `raw_specs` là bảng thông số đã gộp (offer cũ, thẻ, chi tiết); mặc định gộp thẻ + chi tiết.
     Thông số trích bằng luật chỉ điền thêm trường còn thiếu cho sản phẩm đã có, không ghi đè.
+    `spec_filler` (T5.3) chỉ chạy khi luật còn thiếu trường bắt buộc.
     """
     raw = (
         dict(raw_specs)
         if raw_specs is not None
         else {**item.raw_specs, **(detail.raw_specs if detail is not None else {})}
     )
-    extraction = extract_specs(category, item.title, raw)
+    extraction: SpecsExtraction = extract_specs(category, item.title, raw)
+    if spec_filler is not None and extraction.missing:
+        extraction = spec_filler(_RepoSpecsCache(session), category, item.title, raw, extraction)
     products = ProductRepository(session)
     existing = find_existing_offer(OfferRepository(session), clean_url(str(item.url)))
     if existing is not None:

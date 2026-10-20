@@ -239,7 +239,7 @@ Xong khi:
 | --- | --- | --- | --- | --- |
 | T5.1 | Bộ trích xuất thông số theo luật (4 nhóm) + golden test | T1.3, T3.2, T4.2, T4.4 | L | ✅ |
 | T5.2 | Trích `model_code` + matcher + golden pairs | T5.1 | M | ✅ |
-| T5.3 | LLM dự phòng + cache (hoãn sang lượt M6, người dùng đồng ý 2026-10-20) | T5.1, T6.1 | M | ⬜ |
+| T5.3 | LLM dự phòng + cache (hoãn sang lượt M6, người dùng đồng ý 2026-10-20) | T5.1, T6.1 | M | ✅ |
 | T5.4 | Ghép lại offer đã có (script rematch) + hạn chế từ review M5 | T5.2 | M | ⬜ |
 | T5.5 | Nhận hãng sau mô tả loại ("Chuột có dây Dell…", "Hàng chính hãng Chuột Logitech…") và tên chuẩn bắt đầu từ hãng (QA M5 BUG-M5-1) | T5.2 | S | ⬜ |
 | T5.6 | Vệ sinh khóa tên: tên mẫu trong ngoặc "(G304)" không bị coi là mã phụ tùng, màu "Đỏ/Xanh dương/Xanh lá", nhãn "(Mới 100%)/[Hot]/(Bảo hành…)", nhãn khuyến mãi đầu tên che mã laptop (BUG-M5-3, 4, 5, 13) | T5.2 | M | ⬜ |
