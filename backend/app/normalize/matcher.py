@@ -53,7 +53,8 @@ class MatchDecision:
 
 
 def _as_comparable(value: Any) -> Any:
-    return frozenset(value) if isinstance(value, list) else value
+    # repr: giá trị đã lưu có thể hỏng (list lồng nhau, dict trong list) và không băm được.
+    return frozenset(repr(item) for item in value) if isinstance(value, list) else value
 
 
 def specs_compatible(

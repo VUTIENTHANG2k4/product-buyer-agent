@@ -5,6 +5,7 @@ Nhãn của bảng thông số được so khớp sau `fold` (không dấu, ch�
 """
 
 import re
+import unicodedata
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, TypeVar
@@ -27,8 +28,18 @@ _MASS = re.compile(rf"(?<![\w.]){_NUMBER}\s?(kg|g)\b", re.IGNORECASE)
 MAX_TEXT_LENGTH = 2000  # chuỗi dài hơn là rác (hoặc tấn công): cắt trước khi chạy regex
 
 
+# Chỉ chuẩn hóa phần đầu: chuỗi dài hơn nhiều lần giới hạn là rác mà `clean` gọi rất nhiều lần.
+_MAX_RAW_LENGTH = 4 * MAX_TEXT_LENGTH
+_MARKS = str.maketrans("", "", "™®©℠")
+
+
 def clean(text: str) -> str:
-    """Gộp khoảng trắng và cắt đầu/đuôi; giới hạn độ dài."""
+    """Chuẩn hóa NFKC (NFC, chữ toàn chiều rộng), bỏ ký tự điều khiển, gộp khoảng trắng."""
+    text = text[:_MAX_RAW_LENGTH].translate(
+        _MARKS
+    )  # NFKC đổi "™" thành "TM" dính vào từ ("Ryzen™" -> "RyzenTM")
+    text = unicodedata.normalize("NFKC", text)
+    text = "".join(c for c in text if c.isspace() or unicodedata.category(c) not in {"Cc", "Cf"})
     return " ".join(text.split())[:MAX_TEXT_LENGTH]
 
 

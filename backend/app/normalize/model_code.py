@@ -9,6 +9,7 @@ import re
 from typing import Final
 
 from app.domain.enums import Category
+from app.normalize.specs.parsing import clean
 
 MAX_CODE_LENGTH: Final = 40
 _MIN_CODE_LENGTH: Final = 5
@@ -25,7 +26,10 @@ _NOT_A_CODE = re.compile(
     r"i[3579][-\s]?\d{4,5}[a-z]{0,2}"  # CPU Intel: i5-13420H
     r"|\d{4,5}[a-z]{1,2}"  # số hiệu CPU rời: 7730U, 13420H
     r"|r[3579][-\s]?\d{4}[a-z]{0,2}"  # CPU AMD viết tắt: R7-7730U
-    r"|(?:rtx|gtx|rx)\d{3,4}[a-z]*"  # GPU
+    r"|(?:rtx|gtx|rx)-?\d{3,4}[a-z]*"  # GPU
+    r"|\d-\d{3,5}[a-z]{0,2}"  # CPU viết "Core 5-120U", "Ryzen 5-7535HS"
+    r"|x\d[a-z]?-\d+-\d+"  # Snapdragon X1E-78-100
+    r"|(?:lp)?ddr\d-\d+"  # DDR5-5600
     r"|\d+(?:\.\d+)?(?:gb|tb|hz|mm|kg|wh|inch|in)"  # dung lượng, tần số, kích thước
     r"|win(?:dows)?\d*"  # hệ điều hành
     r"|ddr\d+x?|lpddr\d+x?|\d+x\d+"  # RAM, độ phân giải
@@ -71,7 +75,7 @@ def is_strong_code(code: str) -> bool:
 
 def laptop_head(title: str) -> list[str]:
     """Các token của phần tên laptop trước khối thông số (đã bỏ chữ "Laptop [gaming]")."""
-    head = _SPEC_BLOCK.split(_LAPTOP_PREFIX.sub("", title.strip()), maxsplit=1)[0]
+    head = _SPEC_BLOCK.split(_LAPTOP_PREFIX.sub("", clean(title)), maxsplit=1)[0]
     return [token for token in (_trim(raw) for raw in head.split()) if token]
 
 

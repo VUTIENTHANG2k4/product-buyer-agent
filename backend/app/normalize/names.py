@@ -9,6 +9,7 @@
 
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Final
 
 from app.domain.enums import Category
@@ -69,7 +70,23 @@ _COLORS: Final = frozenset(
 )
 # Màu đứng ngay sau / ngay trước các từ này là tên switch bàn phím chứ không phải màu vỏ.
 _SWITCH_BEFORE: Final = frozenset(
-    ["mx", "gateron", "cherry", "kailh", "outemu", "jwk", "switch", "sw", "optical"]
+    [
+        "mx",
+        "gateron",
+        "cherry",
+        "kailh",
+        "outemu",
+        "jwk",
+        "switch",
+        "sw",
+        "optical",
+        "box",
+        "jelly",
+        "ink",
+        "milky",
+        "crystal",
+        "silent",
+    ]
 )
 _SWITCH_AFTER: Final = frozenset(["switch", "sw", "axis"])
 # Từ chỉ loại sản phẩm hoặc quảng cáo: không phân biệt mẫu.
@@ -244,6 +261,7 @@ def _substitute(
     return result
 
 
+@lru_cache(maxsize=8192)  # hàm thuần; matcher tính lại khóa của mọi ứng viên cho mỗi offer
 def name_key(name: str, brand: str) -> tuple[str, ...]:
     """Các token đã `fold` của tên, dùng để so hai sản phẩm cùng hãng.
 
