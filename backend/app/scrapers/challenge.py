@@ -16,6 +16,7 @@ _CAPTCHA_MARKERS = (
     "cf-challenge",
     "g-recaptcha",
     "hcaptcha",
+    "turnstile",  # widget Cloudflare Turnstile (div `cf-turnstile`)
     "verify you are human",
     "xác minh bạn không phải robot",
 )
@@ -26,40 +27,50 @@ def _fold(text: str) -> str:
     return unicodedata.normalize("NFC", text).casefold()
 
 
-# Thân `<script>` nội tuyến (biến môi trường Next.js, JSON-LD, mã theo dõi...) hay chứa chữ như
-# `NEXT_PUBLIC_CAPTCHA_KEY` trên trang bình thường. Chỉ bỏ phần thân; thẻ mở (kể cả `src`) vẫn
-# được giữ nên widget reCAPTCHA/hCaptcha thật (div, iframe, `<script src=...>`) vẫn bị phát hiện.
-# Thẻ `<script>` không đóng thì giữ nguyên phần còn lại để không bỏ sót. Duyệt bằng `str.find`
-# (tuyến tính): regex lười gặp hàng nghìn `<script>` không đóng sẽ chạy bậc hai và treo event loop.
-_SCRIPT_OPEN = "<script"
-_SCRIPT_CLOSE = "</script"
+# Thân `<script>`/`<style>` nội tuyến và chú thích HTML (biến môi trường Next.js, JSON-LD, mã theo
+# dõi, `.grecaptcha-badge{visibility:hidden}`...) hay chứa chữ như `NEXT_PUBLIC_CAPTCHA_KEY` trên
+# trang bình thường mà người dùng không thấy. Chỉ bỏ phần thân; thẻ mở (kể cả `src`) vẫn được giữ
+# nên widget reCAPTCHA/hCaptcha thật (div, iframe, `<script src=...>`) vẫn bị phát hiện. Phần
+# không có điểm kết thì giữ nguyên để không bỏ sót. Duyệt bằng `str.find` (tuyến tính): regex lười
+# gặp hàng nghìn thẻ không đóng sẽ chạy bậc hai và treo event loop.
+_NAME_CHARS = frozenset("_-")
 
 
-def _strip_script_bodies(folded: str) -> str:
+def _strip_bodies(folded: str, opener: str, closer: str, *, tag: bool) -> str:
+    """Bỏ phần giữa `opener...>` (hoặc hết `opener` nếu không phải thẻ) và `closer`."""
     parts: list[str] = []
     pos = 0
     while True:
-        start = folded.find(_SCRIPT_OPEN, pos)
-        after = start + len(_SCRIPT_OPEN)
-        if start < 0 or (after < len(folded) and (folded[after].isalnum() or folded[after] == "_")):
-            if start >= 0:  # `<scripts…`: không phải thẻ script, bỏ qua đoạn này và tìm tiếp
-                parts.append(folded[pos:after])
-                pos = after
-                continue
+        start = folded.find(opener, pos)
+        if start < 0:
             break
-        open_end = folded.find(">", after)
-        close = folded.find(_SCRIPT_CLOSE, open_end + 1) if open_end >= 0 else -1
+        after = start + len(opener)
+        next_char = folded[after] if after < len(folded) else ""
+        if tag and (next_char.isalnum() or next_char in _NAME_CHARS):
+            parts.append(folded[pos:after])  # `<scripts…`: không phải thẻ này, tìm tiếp
+            pos = after
+            continue
+        keep_end = after
+        if tag:
+            open_end = folded.find(">", after)
+            if open_end < 0:
+                break
+            keep_end = open_end + 1
+        close = folded.find(closer, keep_end)
         if close < 0:
             break
-        parts.append(folded[pos : open_end + 1])
+        parts.append(folded[pos:keep_end])
         pos = close
     parts.append(folded[pos:])
     return "".join(parts)
 
 
 def _captcha_text(text: str) -> str:
-    """Thân trang đã bỏ nội dung script nội tuyến, dùng để tìm từ khóa captcha."""
-    return _strip_script_bodies(_fold(text))
+    """Thân trang đã bỏ script/style nội tuyến và chú thích, dùng để tìm từ khóa captcha."""
+    folded = _fold(text)
+    folded = _strip_bodies(folded, "<script", "</script", tag=True)
+    folded = _strip_bodies(folded, "<style", "</style", tag=True)
+    return _strip_bodies(folded, "<!--", "-->", tag=False)
 
 
 _FOLDED_MARKERS = tuple(_fold(marker) for marker in _CAPTCHA_MARKERS)

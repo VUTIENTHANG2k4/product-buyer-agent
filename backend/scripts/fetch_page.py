@@ -38,7 +38,11 @@ async def fetch_to_file(site: SiteKey, url: str, out: Path, *, allow_online: boo
     if scraper is None:
         logger.error("Trang %s chưa có scraper đăng ký (app/scrapers/registry.py).", site)
         return EXIT_FAILED
-    if urlsplit(url).netloc.lower() != urlsplit(scraper.config.base_url).netloc.lower():
+    try:
+        same_host = urlsplit(url).netloc.lower() == urlsplit(scraper.config.base_url).netloc.lower()
+    except ValueError:  # `https://[x`: URL sai dạng
+        same_host = False
+    if not same_host:
         logger.error("URL phải thuộc %s.", scraper.config.base_url)
         return EXIT_FAILED
 

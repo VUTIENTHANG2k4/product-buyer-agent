@@ -5,8 +5,8 @@
 
 ## Trạng thái
 - Đang làm: M4 trên nhánh `milestone/M4-fptshop-anphat` (đã đổi nguồn: FPT Shop + An Phát thay Hoàng Hà + Laptop88, 2026-10-19). Lượt này: T4.0 ✅, T4.0b ✅, T4.1 ✅, T4.2 ✅, T4.3 ✅, T4.4 ✅, T4.5 ✅ (8 lượt `PAGES=1`: 194 offer, 100% parse, không BLOCKED)
-- Task kế tiếp đề xuất: cuối milestone M4: `/check` → `/review M4` → (hỏi) `qa-tester` → `/done M4`. Người dùng đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-19 — Sprint 4: M3, M3b xong; M4 xong T4.0–T4.5, đã qua `/check` và `code-reviewer` (đã sửa), còn `qa-tester` + `/done M4`. Chưa merge
+- Task kế tiếp đề xuất: `/done M4` (người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`). Sau đó M5; T4.6–T4.8 không chặn.
+- Cập nhật lần cuối: 2026-10-19 — Sprint 4: M3, M3b xong; M4 xong T4.0–T4.5, đã qua `/check`, `code-reviewer` và `qa-tester` (đã sửa), còn `/done M4`. Chưa merge
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -15,7 +15,7 @@
 | M1 Dữ liệu | ✅ | Đã qua `qa-tester`; T1.6–T1.8 xong (T1.7, T1.8 ở M3b) |
 | M2 Hạ tầng thu thập | ✅ | Qua `code-reviewer` + `qa-tester`; T2.7 xong ở M3b, còn T2.8 (cùng T7.4) |
 | M3 GearVN | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 4 nhóm `PAGES=1` 80/80 mục parse đúng. M3b (T1.7, T1.8, T3.4, T2.7) qua `code-reviewer`, **bỏ qua `qa-tester`** theo quyết định của người dùng |
-| M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | 🔄 | T4.0–T4.5 xong; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). Chờ `qa-tester` + `/done` |
+| M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | 🔄 | T4.0–T4.5 xong; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). Qua `code-reviewer` + `qa-tester`; còn `/done` (backlog T4.6–T4.8) |
 | M5 Chuẩn hóa & ghép | ⬜ | |
 | M6 Agent | ⬜ | |
 | M7 API | ⬜ | |
@@ -30,7 +30,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,50% (2509 pass + 5 xfail đã biết, ngưỡng 80% trong `make test-be`, ~1,5 phút) | 2026-10-19 |
+| Coverage backend | 99,47% (3043 pass + 7 xfail đã biết, ngưỡng 80% trong `make test-be`, ~2 phút) | 2026-10-20 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
 | Eval intent accuracy | – | |
 | Eval constraint satisfaction | – | |
@@ -56,4 +56,4 @@
 - 2026-10-19 (công cụ): công cụ Write/Edit giải mã chuỗi `\uXXXX` trong nội dung (regex có `\u00a0` thành ký tự thật): kiểm lại bằng `grep` sau khi ghi. Heredoc lồng nhau trong Bash dễ lỗi nháy: dùng Write cho file dài. Console Windows/pipe là cp1252: script in tiếng Việt phải đổi stdout sang UTF-8 (`scripts.scrape.configure_console`).
 - 2026-10-19 (M3): `GearVNScraper` đọc thẻ `a.product-card` theo `data-slot`, chi tiết theo JSON-LD `additionalProperty`; `raw_specs` của danh sách để rỗng nên pipeline tải chi tiết (20/lượt; 13/80 sản phẩm GearVN không có thông số có nhãn). `PAGES=1` luôn cho `PARTIAL`; lượt đầy đủ nhóm chuột cũng `PARTIAL` (thẻ ngừng kinh doanh tính là lỗi). Chi tiết `docs/sources/gearvn.md` mục 7.
 - 2026-10-19 (M3b): robots.txt 403/429/challenge CDN → `RobotsBlocked` → lượt `BLOCKED` + nghỉ 24 giờ (429 không chờ `Retry-After`). Fetcher đọc thân theo luồng, từ chối > 5 MB sau giải nén (`ResponseTooLarge`). `clean_url` giữ mã hóa query gốc, sắp tham số, viết hoa hex: offer có query có thể đổi khóa so với trước. `ListingPage.pagination_loop` báo vòng lặp phân trang. `MockShopLocation` cho phép import registry mà không cần đủ env. Hạng GPU thêm RTX 3070/3070 Ti/3080 (ước lượng); chuỗi GPU > 500 ký tự → `None`. Chưa có QA biên cho Fetcher streaming và `clean_url`: nghi lỗi thì thử hai chỗ này trước.
-- 2026-10-19 (M4): FPT Shop duyệt qua sitemap (danh mục chỉ ~25 sản phẩm tĩnh), mỗi "trang" là lô 20 sản phẩm, JSON-LD `Product`; lỗi tải rời rạc bị bỏ qua, 3 lỗi liên tiếp mới dừng. An Phát: trang nào cũng có form đăng ký chứa chữ captcha nên `AnPhatScraper.detect_challenge` loại đúng tên form đó (5xx không loại); `scripts.fetch_page` dùng detector của scraper. `detect_challenge` bỏ thân `<script>` nội tuyến (quét tuyến tính). Seed/test còn dùng hoangha/laptop88 (T4.6).
+- 2026-10-19 (M4): FPT Shop duyệt qua sitemap (danh mục chỉ ~25 sản phẩm tĩnh), mỗi "trang" là lô 20 sản phẩm, JSON-LD `Product`; lỗi tải rời rạc bị bỏ qua, 3 lỗi liên tiếp mới dừng; 404/410 đếm vào `ListingPage.gone` (không cấm tắt offer). An Phát: trang nào cũng có form đăng ký chứa chữ captcha nên `AnPhatScraper.detect_challenge` loại đúng tên form đó (5xx không loại); `scripts.fetch_page` dùng detector của scraper. `detect_challenge` bỏ thân `<script>` nội tuyến (quét tuyến tính). Seed/test còn dùng hoangha/laptop88 (T4.6).

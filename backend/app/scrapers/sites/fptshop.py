@@ -15,7 +15,7 @@ import unicodedata
 from collections.abc import AsyncIterator, Sequence
 from html import unescape
 from typing import Any, ClassVar
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import SplitResult, urljoin, urlsplit
 
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 from selectolax.lexbor import LexborHTMLParser, LexborNode
@@ -26,7 +26,14 @@ from app.normalize.price import parse_price
 from app.normalize.url import clean_url
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.challenge import ChallengeDetected, soft_block_challenge
-from app.scrapers.http.errors import FetchFailed, HttpStatusError, ResponseTooLarge
+from app.scrapers.http.errors import (
+    FetchFailed,
+    HttpStatusError,
+    RedirectError,
+    ResponseTooLarge,
+    RobotsBlocked,
+    RobotsDisallowed,
+)
 from app.scrapers.parsing import json_ld_objects, node_text
 
 logger = logging.getLogger(__name__)
@@ -34,6 +41,7 @@ logger = logging.getLogger(__name__)
 _BASE_URL = "https://fptshop.com.vn"
 SITEMAP_INDEX_URL = f"{_BASE_URL}/sitemap.xml"
 BATCH_SIZE = 20  # sản phẩm mỗi "trang" của crawl_category
+MAX_COUNT = 2**31 - 1  # cột `rating_count` là INTEGER (4 byte)
 MAX_CONSECUTIVE_ERRORS = 3  # tải lỗi liên tiếp (5xx, quá lớn...) thì dừng lượt
 
 _LAPTOP_SITEMAP_PATH = "/products/sitemap-may-tinh-xach-tay.xml"
@@ -45,7 +53,9 @@ _ACCESSORY_PREFIX: dict[Category, str] = {
     Category.keyboard: "ban-phim-",
     Category.headset: "tai-nghe-",
 }
-_LOC = re.compile(r"<loc>\s*([^<]+?)\s*</loc>", re.IGNORECASE)
+# Một lượng từ `[^<]*` rồi `.strip()`: hai lượng từ cùng ăn khoảng trắng sẽ backtrack bậc ba trên
+# `<loc>` không đóng. CDATA dùng `[^\]]*` để không quét quá điểm kết.
+_LOC = re.compile(r"<loc>(?:\s*<!\[CDATA\[([^\]]*)\]\]>\s*|([^<]*))</loc>", re.IGNORECASE)
 _PRICE_TEXT = re.compile(r"^\d{1,3}(?:\.\d{3})+đ$")
 _HTTP_URL = TypeAdapter(HttpUrl)
 _STOCK: dict[str, StockStatus] = {
@@ -64,12 +74,30 @@ _STOCK: dict[str, StockStatus] = {
 # ---- sitemap (hàm thuần) ----------------------------------------------------------------------
 def parse_sitemap_locs(xml: str) -> list[str]:
     """Các `<loc>` của sitemap hoặc chỉ mục sitemap, theo thứ tự (không gồm `image:loc`)."""
-    return [unescape(match.group(1)) for match in _LOC.finditer(xml)]
+    locs: list[str] = []
+    for match in _LOC.finditer(xml):
+        cdata, plain = match.groups()
+        loc = cdata.strip() if cdata is not None else unescape(plain or "").strip()
+        if loc:
+            locs.append(loc)
+    return locs
+
+
+def _split(url: str) -> SplitResult | None:
+    """`urlsplit` không ném lỗi: `<loc>` sai dạng (`https://[host`) chỉ bị bỏ qua."""
+    try:
+        return urlsplit(url)
+    except ValueError:
+        return None
 
 
 def _same_site(url: str) -> bool:
-    parts = urlsplit(url)
-    return parts.scheme == "https" and parts.netloc.lower() == urlsplit(_BASE_URL).netloc
+    parts = _split(url)
+    return (
+        parts is not None
+        and parts.scheme == "https"
+        and parts.netloc.lower() == urlsplit(_BASE_URL).netloc
+    )
 
 
 def select_sitemaps(category: Category, index_locs: Sequence[str]) -> list[str]:
@@ -78,7 +106,7 @@ def select_sitemaps(category: Category, index_locs: Sequence[str]) -> list[str]:
     for loc in index_locs:
         if not _same_site(loc):
             continue
-        path = urlsplit(loc).path
+        path = urlsplit(loc).path  # `_same_site` đã chắc `urlsplit(loc)` không lỗi
         if category is Category.laptop:
             matches = path == _LAPTOP_SITEMAP_PATH
         else:
@@ -93,10 +121,10 @@ def select_product_urls(category: Category, locs: Sequence[str]) -> list[str]:
     seen: set[str] = set()
     urls: list[str] = []
     for loc in locs:
-        parts = urlsplit(loc)
-        if not _same_site(loc) or parts.query or parts.fragment:
+        parts = _split(loc)
+        if parts is None or not _same_site(loc) or parts.query or parts.fragment:
             continue  # URL có tham số có thể bị robots.txt chặn (`Disallow: /*t=`)
-        segments = [part for part in urlsplit(loc).path.split("/") if part]
+        segments = [part for part in parts.path.split("/") if part]
         if len(segments) != 2:
             continue
         section, slug = segments
@@ -202,9 +230,9 @@ def _rating(product: dict[str, Any]) -> tuple[float | None, int | None]:
             number = -1.0
         rating = number if 0 <= number <= 5 else None
     votes: int | None = None
-    if isinstance(count, str) and count.isascii() and count.isdecimal():
+    if isinstance(count, str) and count.isascii() and count.isdecimal() and len(count) <= 10:
         count = int(count)
-    if isinstance(count, int) and not isinstance(count, bool) and count >= 0:
+    if isinstance(count, int) and not isinstance(count, bool) and 0 <= count <= MAX_COUNT:
         votes = count
     return rating, votes
 
@@ -286,7 +314,7 @@ class FptShopScraper(BaseScraper):
                 "image_url": _image_url(page_url, product),
                 "rating": rating,
                 "rating_count": rating_count,
-                "site_sku": sku.strip() if isinstance(sku, str) and sku.strip() else None,
+                "site_sku": (_clean(sku) or None) if isinstance(sku, str) else None,
                 "raw_specs": _additional_properties(product),
                 "category_hint": category,
             }
@@ -333,15 +361,24 @@ class FptShopScraper(BaseScraper):
         batches = [urls[i : i + BATCH_SIZE] for i in range(0, len(urls), BATCH_SIZE)] or [[]]
         for page_no in range(start_page, min(max_pages, len(batches)) + 1):
             items: list[ListingItem] = []
-            skipped = 0
+            skipped = gone = 0
             errors = 0  # lỗi tải liên tiếp; một URL lỗi không làm mất cả lô
             for url in batches[page_no - 1]:
                 try:
                     response = await self._fetcher.get(url)
-                except (HttpStatusError, FetchFailed, ResponseTooLarge) as error:
-                    skipped += 1
+                except RobotsBlocked:
+                    raise  # robots.txt bị chặn cả trang: dừng lượt, không phải lỗi của một sản phẩm
+                except (
+                    HttpStatusError,
+                    FetchFailed,
+                    ResponseTooLarge,
+                    RobotsDisallowed,
+                    RedirectError,
+                ) as error:
                     if isinstance(error, HttpStatusError) and error.status in (404, 410):
-                        continue  # sản phẩm đã gỡ nhưng còn trong sitemap
+                        gone += 1  # đã gỡ nhưng còn trong sitemap: hết bán, không phải lỗi parse
+                        continue
+                    skipped += 1
                     errors += 1
                     if errors >= MAX_CONSECUTIVE_ERRORS:
                         raise
@@ -354,6 +391,9 @@ class FptShopScraper(BaseScraper):
                 except (ValueError, ValidationError):
                     skipped += 1
                     logger.warning("Bỏ qua trang sản phẩm không đọc được: %s", url)
-            if page_no == 1 and expect_items and not items:
+            # Cả lô trống vì sản phẩm đã gỡ (sitemap cũ) không phải dấu hiệu bị chặn.
+            if page_no == 1 and expect_items and not items and not gone:
                 raise ChallengeDetected(soft_block_challenge(self.config.key, SITEMAP_INDEX_URL))
-            yield ListingPage(items=items, has_next=page_no < len(batches), skipped=skipped)
+            yield ListingPage(
+                items=items, has_next=page_no < len(batches), skipped=skipped, gone=gone
+            )

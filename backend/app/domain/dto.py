@@ -42,6 +42,9 @@ class ListingPage(BaseModel):
     has_next: bool = False
     next_url: HttpUrl | None = None
     skipped: int = Field(default=0, ge=0, strict=True)  # thẻ sản phẩm không đọc được, bị bỏ qua
+    # Sản phẩm đã gỡ (404/410) mà nguồn vẫn liệt kê: không phải lỗi parse, nên không tính vào
+    # `skipped` (nếu tính, pipeline cấm tắt offer và lượt không bao giờ dọn được hàng đã gỡ).
+    gone: int = Field(default=0, ge=0, strict=True)
     # `crawl_category` đặt khi trang sau trỏ về URL đã tải (vòng lặp phân trang): parser không đặt.
     pagination_loop: bool = False
 

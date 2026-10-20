@@ -41,10 +41,11 @@ _DEFAULT_PAGE_SIZE = 30
 # Trang thật có liên kết lạ dạng `/<slug>.html-1`: vẫn là trang sản phẩm của An Phát.
 _PRODUCT_PATH = re.compile(r"\.html(?:-\d+)?$")
 _STARS = re.compile(r"star-(\d)\b")
-_RATING_COUNT = re.compile(r"\((\d+)\)")
+_RATING_COUNT = re.compile(r"\((\d{1,10})\)")
 _SKU = re.compile(r"^\s*Mã\s*SP\s*:?\s*", re.IGNORECASE)
 _HTTP_URL = TypeAdapter(HttpUrl)
 _MAX_SPEC_LABEL = 60
+MAX_COUNT = 2**31 - 1
 _IGNORED_SECTIONS = {"mô tả chi tiết"}  # tiêu đề chung của bảng thông số, không phải một mục
 
 
@@ -80,7 +81,10 @@ def _rating(card: LexborNode) -> tuple[float | None, int | None]:
     if stars is None or counted is None:
         return None, None
     votes = int(counted.group(1))
-    return (float(stars.group(1)) if votes > 0 else None), votes
+    if votes > MAX_COUNT:  # cột `rating_count` là INTEGER (4 byte)
+        return None, None
+    value = float(stars.group(1))
+    return (value if votes > 0 and value <= 5 else None), votes
 
 
 def _stock(card: LexborNode) -> StockStatus:
@@ -103,7 +107,7 @@ def _total(tree: LexborHTMLParser) -> int | None:
     """Tổng số sản phẩm của nhóm: "Xem <span class=js-show-total>342</span> kết quả"."""
     node = tree.css_first("span.js-show-total")
     digits = re.sub(r"\D", "", node_text(node))
-    return int(digits) if digits else None
+    return int(digits) if 0 < len(digits) <= 1000 else None  # chuỗi dài bất thường là rác
 
 
 def _spec(specs: dict[str, str], label: str, value: str) -> None:

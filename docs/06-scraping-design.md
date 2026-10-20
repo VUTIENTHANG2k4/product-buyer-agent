@@ -198,7 +198,7 @@ Chi tiết đã cài đặt (T2.6; `app/scrapers/pipeline.py`, `app/services/scr
 - Xóa nội dung không cần (script quảng cáo lớn) để file < 500 KB; không chứa dữ liệu cá nhân.
 - Tên: `listing_<category>_p<n>.html`, `detail_<slug>.html`, `search_<query>.html`.
 - Fixture của mock-shop (`tests/fixtures/mockshop/`) sinh bằng `uv run python -m scripts.save_mockshop_fixtures` (gọi mock-shop qua ASGI, không mạng); một test so fixture với mock-shop hiện tại nên sửa mock-shop xong phải chạy lại lệnh này.
-- Parser nhận thẻ không đọc được thì bỏ qua và đếm vào `ListingPage.skipped`; pipeline cộng vào `items_failed`.
+- Parser nhận thẻ không đọc được thì bỏ qua và đếm vào `ListingPage.skipped`; pipeline cộng vào `items_failed`. Sản phẩm mà nguồn liệt kê nhưng trả 404/410 (FPT Shop qua sitemap) đếm vào `ListingPage.gone`, không phải `skipped`: đó là hàng đã gỡ nên không cấm tắt offer và không tính lỗi.
 - Test parser khẳng định: số sản phẩm, sản phẩm đầu tiên đầy đủ trường, `has_next` đúng, mọi giá là số nguyên dương hoặc `None`.
 
 ## 9. Lệnh

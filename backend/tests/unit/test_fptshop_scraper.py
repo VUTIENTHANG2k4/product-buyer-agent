@@ -609,11 +609,12 @@ async def test_crawl_reads_the_accessory_sitemaps_and_keeps_only_the_category(
     assert all(item.category_hint is category for item in result[0].items)
 
 
-async def test_removed_products_are_skipped_and_counted() -> None:
+async def test_removed_products_are_counted_as_gone_not_as_skipped() -> None:
     urls = laptop_urls(3)
     gone = HttpStatusError("HTTP 404", url=urls[1], status=404)
     pages = await collect(FptShopScraper(crawl_fetcher(urls, **{urls[1]: gone})), max_pages=1)
-    assert (len(pages[0].items), pages[0].skipped) == (2, 1)
+    # `gone` không vào `skipped`: pipeline coi đó là hết bán (tắt offer), không phải lỗi parse.
+    assert (len(pages[0].items), pages[0].skipped, pages[0].gone) == (2, 0, 1)
 
 
 @pytest.mark.parametrize(

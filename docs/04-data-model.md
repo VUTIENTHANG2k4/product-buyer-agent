@@ -305,6 +305,7 @@ class ListingPage(BaseModel):
     has_next: bool
     next_url: HttpUrl | None
     skipped: int                       # số thẻ không parse được (mặc định 0); pipeline cộng vào items_failed
+    gone: int                          # sản phẩm đã gỡ (404/410) nguồn vẫn liệt kê (mặc định 0); không phải lỗi, nên không cấm tắt offer
     pagination_loop: bool              # mặc định False; crawl_category đặt True khi trang sau quay về URL đã tải
 
 class ProductDetail(BaseModel):        # đầu ra parser trang chi tiết
