@@ -4,9 +4,9 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Đang làm: M4 trên nhánh `milestone/M4-fptshop-anphat` (đã đổi nguồn: FPT Shop + An Phát thay Hoàng Hà + Laptop88, 2026-10-19). Lượt này: T4.0 ✅, T4.0b ✅, T4.1 ✅, T4.2 ✅, T4.3 ✅, T4.4 ✅, T4.5 ✅ (8 lượt `PAGES=1`: 194 offer, 100% parse, không BLOCKED)
-- Task kế tiếp đề xuất: `/done M4` (người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`). Sau đó M5; T4.6–T4.8 không chặn.
-- Cập nhật lần cuối: 2026-10-19 — Sprint 4: M3, M3b xong; M4 xong T4.0–T4.5, đã qua `/check`, `code-reviewer` và `qa-tester` (đã sửa), còn `/done M4`. Chưa merge
+- Đang làm: (–) M4 đã xong, nhánh `milestone/M4-fptshop-anphat` chờ người dùng merge
+- Task kế tiếp đề xuất: M5 (Chuẩn hóa & ghép) sau khi merge M4; T4.6–T4.8 không chặn. Người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-10-20 — M4 xong (T4.0–T4.5, qua `code-reviewer` + `qa-tester`). Chưa merge
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -15,7 +15,7 @@
 | M1 Dữ liệu | ✅ | Đã qua `qa-tester`; T1.6–T1.8 xong (T1.7, T1.8 ở M3b) |
 | M2 Hạ tầng thu thập | ✅ | Qua `code-reviewer` + `qa-tester`; T2.7 xong ở M3b, còn T2.8 (cùng T7.4) |
 | M3 GearVN | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 4 nhóm `PAGES=1` 80/80 mục parse đúng. M3b (T1.7, T1.8, T3.4, T2.7) qua `code-reviewer`, **bỏ qua `qa-tester`** theo quyết định của người dùng |
-| M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | 🔄 | T4.0–T4.5 xong; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). Qua `code-reviewer` + `qa-tester`; còn `/done` (backlog T4.6–T4.8) |
+| M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). Backlog: T4.6 (seed/test), T4.7, T4.8 |
 | M5 Chuẩn hóa & ghép | ⬜ | |
 | M6 Agent | ⬜ | |
 | M7 API | ⬜ | |
