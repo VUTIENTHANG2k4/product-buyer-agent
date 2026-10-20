@@ -1,6 +1,6 @@
 # Product Scraper & Buyer Agent
 
-AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt, lập kế hoạch, lấy dữ liệu đã thu thập từ các trang bán lẻ Việt Nam (GearVN, Hoàng Hà Mobile, Laptop88), trả bảng so sánh có nguồn, hỗ trợ danh sách mua và cảnh báo giảm giá. Đồ án sinh viên, một người phát triển cùng Claude Code.
+AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt, lập kế hoạch, lấy dữ liệu đã thu thập từ các trang bán lẻ Việt Nam (GearVN, FPT Shop, An Phát), trả bảng so sánh có nguồn, hỗ trợ danh sách mua và cảnh báo giảm giá. Đồ án sinh viên, một người phát triển cùng Claude Code.
 
 ## Đọc trước khi làm
 - Trạng thái hiện tại: @docs/PROGRESS.md
@@ -52,7 +52,7 @@ Một lượt chỉ làm một milestone. Phiên dài quá thì `/clear` giữa 
 - Tài liệu hoặc hành vi thay đổi so với thiết kế → cập nhật file docs tương ứng trong cùng task.
 
 **Thu thập dữ liệu (không có ngoại lệ)** — chi tiết `docs/02-scope-and-sources.md` §3
-- Mọi request đi qua `Fetcher` (robots.txt + độ trễ ≥ 5 s/domain, Laptop88 10 s + retry). Không gọi httpx trực tiếp trong scraper.
+- Mọi request đi qua `Fetcher` (robots.txt + độ trễ ≥ 5 s/domain, lấy giá trị lớn hơn nếu robots.txt có `Crawl-delay`, kèm retry). Không gọi httpx trực tiếp trong scraper.
 - User-Agent trung thực từ `SCRAPER_USER_AGENT`. Không giả trình duyệt/Googlebot, không proxy xoay vòng.
 - Không đăng nhập, không chạm giỏ hàng/thanh toán, không dùng URL có tham số mà robots.txt chặn, không gọi API nội bộ bị chặn.
 - Captcha trên trang thật → dừng, `BLOCKED`. Chỉ mock-shop mới có luồng nhập đáp án (HITL). **Không bao giờ viết code giải captcha.**
