@@ -96,6 +96,10 @@ class FinalAnswer(BaseModel):
     follow_up_suggestions: list[str]  # ≤ 3 gợi ý hành động tiếp
 ```
 
+**Triển khai executor (T6.5):** `app/agent/runner.py::AgentRunner` điều phối cả lượt (`start()` tạo hội thoại/lượt chạy để API trả `run_id` ngay, `stream()` phát sự kiện và lưu từng sự kiện vào `agent_run.events` trước khi phát, `run()` = hai bước trên). Việc ghi/đọc hội thoại đi qua `services/conversation_service.py` (agent không chạm CSDL). Vòng lặp ở `executor.py::ToolLoop` **tự viết trên `bind_tools`** thay vì `create_agent` để kiểm soát số bước, sự kiện từng tool, chặn tool ghi và dừng khi tool lỗi lặp; `FinalAnswer` được gắn như tool thứ chín, LLM gọi nó khi đã đủ dữ liệu. Nếu LLM trả văn bản thường không gọi tool nào thì runner gọi thêm một lần `with_structured_output(FinalAnswer)` để lấy câu trả lời có cấu trúc (cũng dùng khi hết bước hoặc tool lỗi lặp). `FinalAnswer` gọi cùng lúc với tool khác bị bỏ qua (LLM chưa thấy kết quả). Mỗi bước LLM tính một bước của `AGENT_MAX_STEPS`.
+
+Bộ nhớ (`memory.py`): sáu tin nhắn gần nhất đưa vào executor như lịch sử; planner nhận các yêu cầu trước của người dùng; bảng lượt trước (`message.payload = {"product_ids": [...]}`) thành đoạn "Kết quả gần nhất (thứ tự hiển thị): 1) id=12 …" đầu tin nhắn người dùng để hiểu "máy thứ 2". Bảng `final.table` (`ProductRow`) dựng bởi `CatalogService.rows(product_ids)` từ CSDL, mỗi dòng tối đa 5 offer còn mua được.
+
 ## 5. Guardrail (code, chạy sau executor)
 
 | Kiểm tra | Hành động khi vi phạm |
@@ -106,6 +110,8 @@ class FinalAnswer(BaseModel):
 | Số tiền LLM viết trong `text` khác giá DB của sản phẩm tương ứng hơn 1% | Ghi log cảnh báo (eval tính là lỗi) |
 | Vượt `AGENT_MAX_STEPS` | Dừng vòng lặp, tổng hợp từ kết quả đã có |
 | Lỗi tool | Trả lỗi dạng ngắn cho LLM để nó thử cách khác; lỗi lặp 2 lần → dừng |
+
+**Triển khai guardrail (T6.5, `guardrail.py`, hàm thuần):** `Evidence` gom `product_id`, link và giá từ mọi kết quả tool thành công của lượt (link của `live_search_other` riêng); `apply_guardrail` loại id/link ngoài `Evidence` (id có trong CSDL nhưng không xuất hiện trong kết quả tool vẫn bị loại), bỏ id trùng, cắt gợi ý còn 3; mọi id đều bị loại → `AGENT_HALLUCINATION`. Số tiền trong `text` lệch mọi giá trong kết quả tool (và số tiền người dùng tự nêu) hơn 1% chỉ ghi log cảnh báo. Tool ghi bị chặn ở code nếu câu người dùng không có cụm từ yêu cầu (`allowed_write_tools`: "thêm … vào", "danh sách mua", "báo tôi", "cảnh báo", "khi … xuống"…): tool trả `WRITE_NOT_REQUESTED` cho LLM, không chạy. Tool lỗi hai lần → dừng vòng lặp và tổng hợp từ kết quả đã có; hết bước mà chưa có `FinalAnswer` hợp lệ → `AGENT_STEP_LIMIT`.
 
 ## 6. Sự kiện tiến trình (SSE)
 

@@ -4,7 +4,7 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Đang làm: M6 Agent trên nhánh `milestone/M6-agent`. Thứ tự task: T6.1 ✅ → T5.3 ✅ → T6.2 ✅ → T6.3 ✅ → T6.4 ✅ → T6.5 (đang làm) → T6.6.
+- Đang làm: M6 Agent trên nhánh `milestone/M6-agent`. Thứ tự task: T6.1 ✅ → T5.3 ✅ → T6.2 ✅ → T6.3 ✅ → T6.4 ✅ → T6.5 ✅ → T6.6 (đang làm).
 - Backlog chưa làm (không chặn M6): T4.6–T4.8, T5.4–T5.7. Người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-20 — bắt đầu M6 (`/next M6`)
 

@@ -1,12 +1,15 @@
 """Fixture cho test tool/agent: ToolContext chạy trên transaction của `db_session`."""
 
 import json
-from typing import Any
+from collections.abc import Callable
+from typing import Any, NamedTuple
 
 import pytest
 from langchain_core.tools import BaseTool
 from sqlmodel import Session
 
+from app.agent.runner import AgentRunner
+from app.agent.testing import ScriptedChatModel
 from app.agent.tools import ToolContext, build_tools
 from scripts.seed import seed_database
 from tests.service_support import NOW, clock, make_settings
@@ -36,6 +39,43 @@ def seeded(db_session: Session) -> Session:
     """Seed `dev` (≥ 30 laptop, phụ kiện, lịch sử giá) với "hiện tại" là NOW."""
     seed_database(db_session, "dev", now=NOW)
     return db_session
+
+
+class RunnerParts(NamedTuple):
+    runner: AgentRunner
+    planner: ScriptedChatModel
+    executor: ScriptedChatModel
+
+
+@pytest.fixture
+def make_runner(tool_ctx: ToolContext) -> Callable[..., RunnerParts]:
+    """Dựng `AgentRunner` với planner/executor là `ScriptedChatModel` có kịch bản cho trước."""
+
+    def build(
+        planner_script: list[Any], executor_script: list[Any], *, max_steps: int = 8
+    ) -> RunnerParts:
+        planner = ScriptedChatModel(script=planner_script)
+        executor = ScriptedChatModel(script=executor_script)
+        runner = AgentRunner(
+            tool_ctx.session_factory,
+            make_settings(agent_max_steps=max_steps),
+            planner_model=planner,
+            executor_model=executor,
+            now=clock,
+        )
+        return RunnerParts(runner, planner, executor)
+
+    return build
+
+
+async def collect(
+    runner: AgentRunner, message: str, conversation_id: int | None = None
+) -> list[Any]:
+    return [event async for event in runner.run(message, conversation_id)]
+
+
+def names(events: list[Any]) -> list[str]:
+    return [event.name for event in events]
 
 
 async def call(tools: dict[str, BaseTool], name: str, **args: Any) -> dict[str, Any]:

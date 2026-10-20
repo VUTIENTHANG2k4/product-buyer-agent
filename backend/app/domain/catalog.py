@@ -55,6 +55,30 @@ class ProductSummary(BaseModel):
     image_url: str | None = None
 
 
+class RowOffer(BaseModel):
+    """Một offer trong dòng bảng kết quả (docs/07 §3.2)."""
+
+    site: SiteKey
+    price: Vnd  # giá hiệu lực
+    price_type: PriceType
+    stock_status: StockStatus
+    url: str
+    scraped_at: datetime
+
+
+class ProductRow(BaseModel):
+    """Dòng của bảng kết quả, dựng từ CSDL theo `product_id` (không từ số LLM viết)."""
+
+    product_id: int
+    name: str
+    brand: str
+    category: Category
+    key_specs: dict[str, Any] = Field(default_factory=dict)
+    min_price: Vnd | None = None
+    offers: list[RowOffer] = Field(default_factory=list)
+    image_url: str | None = None
+
+
 class ProductFull(BaseModel):
     """Sản phẩm với toàn bộ thông số và mọi offer đang bán (rẻ nhất trước)."""
 

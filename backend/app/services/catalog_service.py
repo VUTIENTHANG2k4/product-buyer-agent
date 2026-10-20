@@ -23,7 +23,9 @@ from app.domain.catalog import (
     PriceHistoryResult,
     PricePointView,
     ProductFull,
+    ProductRow,
     ProductSummary,
+    RowOffer,
     SiteSeries,
 )
 from app.domain.enums import StockStatus
@@ -147,6 +149,42 @@ class CatalogService:
             for product in products
             if product.id is not None
         ]
+
+    def rows(self, product_ids: list[int], *, max_offers: int = 5) -> list[ProductRow]:
+        """Dòng bảng kết quả theo thứ tự `product_ids` (id lạ bị bỏ), mỗi dòng tối đa `max_offers`
+        offer còn mua được, rẻ nhất trước. Giá luôn lấy từ CSDL."""
+        products = self._products.get_many(product_ids)
+        ids = [product.id for product in products if product.id is not None]
+        offers_by_product = self._offers.list_for_products(ids)
+        rows: list[ProductRow] = []
+        for product in products:
+            if product.id is None:  # pragma: no cover - đọc từ CSDL luôn có id
+                continue
+            offers = sellable(offers_by_product[product.id])[:max_offers]
+            views = [to_offer_view(offer) for offer in offers]
+            rows.append(
+                ProductRow(
+                    product_id=product.id,
+                    name=product.canonical_name,
+                    brand=product.brand,
+                    category=product.category,
+                    key_specs=key_specs(product.category, product.specs),
+                    min_price=views[0].effective_price if views else None,
+                    offers=[
+                        RowOffer(
+                            site=view.site,
+                            price=view.effective_price,
+                            price_type=view.price_type,
+                            stock_status=view.stock_status,
+                            url=view.url,
+                            scraped_at=view.scraped_at,
+                        )
+                        for view in views
+                    ],
+                    image_url=product.image_url,
+                )
+            )
+        return rows
 
     def price_history(self, product_id: int, days: int = 30) -> PriceHistoryResult:
         """Chuỗi giá theo trang trong `days` ngày gần nhất (1..180), gồm cả offer đã tắt."""
