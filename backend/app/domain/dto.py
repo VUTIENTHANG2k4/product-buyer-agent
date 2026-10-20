@@ -6,7 +6,7 @@ do `normalize/url.clean_url` làm trước khi dựng DTO (T2.5), không làm �
 
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, Field, HttpUrl, StringConstraints, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, StringConstraints, model_validator
 
 from app.domain.enums import Category, ChallengeKind, PriceType, SiteKey, StockStatus
 
@@ -80,6 +80,9 @@ class SpecFilter(BaseModel):
     - `in`: trường vô hướng thuộc `value` (list).
     """
 
+    # Tên trường LLM gõ sai phải lỗi (planner thử lại) thay vì bị bỏ qua im lặng.
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+
     field: NonEmptyStr  # ví dụ "gpu_rank", "ram_gb"
     op: Literal["eq", "gte", "lte", "contains", "contains_any", "in"]
     # bool đứng đầu để `True` không bị ép thành `1` (trường bool như `is_gaming`).
@@ -106,6 +109,8 @@ class SpecFilter(BaseModel):
 
 class QueryIntent(BaseModel):
     """Đầu ra planner: ý định mua sắm có cấu trúc."""
+
+    model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
     category: Category | None = None
     tier: Literal[1, 2] = 1
