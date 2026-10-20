@@ -34,7 +34,7 @@ def _compare(case: GoldenCase, category: Category) -> tuple[int, int, list[str],
         actual: Any = result.specs.get(name)
         if actual == expected:
             correct += 1
-        elif actual is not None and expected is not None:
+        elif actual is not None:  # giá trị khác kỳ vọng, hoặc điền khi kỳ vọng là "không rõ"
             wrong.append(f"{case.id}.{name}: {actual!r} != {expected!r}")
         elif actual is None:
             lost.append(f"{case.id}.{name}: expected {expected!r}, got nothing")

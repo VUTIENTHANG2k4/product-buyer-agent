@@ -240,9 +240,11 @@ Xong khi:
 | T5.1 | Bộ trích xuất thông số theo luật (4 nhóm) + golden test | T1.3, T3.2, T4.2, T4.4 | L | ✅ |
 | T5.2 | Trích `model_code` + matcher + golden pairs | T5.1 | M | ✅ |
 | T5.3 | LLM dự phòng + cache (hoãn sang lượt M6, người dùng đồng ý 2026-10-20) | T5.1, T6.1 | M | ⬜ |
+| T5.4 | Ghép lại offer đã có (script rematch) + hạn chế từ review M5 | T5.2 | M | ⬜ |
 
 **T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
 **T5.2** — Từ T3.4: matcher cũng phải xử lý cùng sản phẩm có `href` http và https (hai khóa URL khác nhau) và cùng URL ở hai nhóm. Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
+**T5.4** — Từ review M5 (không chặn): script ghép lại/tách offer khi `detect_brand` hoặc luật ghép đổi (offer đã có hiện không bao giờ được xét lại); ưu tiên nguồn khi thông số mâu thuẫn (`raw_specs` thắng tiêu đề thay vì "cũ thắng"); `merge` cập nhật `image_url`; bỏ `model_code_hint` ở phụ kiện nếu nguồn có MPN theo màu; `switch_name` bàn phím đọc sai khi có "Pro/V3/hotswap" trước chữ "switch"; "Dòng CPU: Intel Core i5" chưa nên tính là đủ `cpu_model`; nhãn thông số mâu thuẫn tiêu đề (GPU rời vs tích hợp) nên để trống và vào `missing`; `list_by_brand` + `name_key` tính lại cho từng ứng viên (O(n²) khi nạp lần đầu hàng nghìn offer, nên cache `name_key`); alias Logitech `g pro → pro`; `golden` thêm recall riêng và phủ `dpi_max/form_factor/switch_name/screen_in`.
 **T5.3** — Phụ thuộc T6.1 nằm ở M6 nhưng T6.1 chỉ cần T0.1, nên khi lập lượt M5 cần làm T6.1 trước hoặc hoãn T5.3 sang lượt M6. Bật/tắt bằng `LLM_EXTRACTOR_ENABLED`. Xong khi: chỉ gọi khi thiếu trường bắt buộc; kết quả validate bằng khung specs; cache theo hash; test với model giả; ghi số lần gọi vào log.
 
 ### M6 — Agent

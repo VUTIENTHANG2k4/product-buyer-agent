@@ -237,3 +237,34 @@ def test_hostile_or_empty_input_never_raises(title: str) -> None:
 
 def test_empty_input_gives_empty_specs() -> None:
     assert dump("") == {}
+
+
+def test_onboard_ram_in_the_title_is_not_an_integrated_gpu() -> None:
+    specs = dump("Laptop Lenovo IdeaPad Slim 3 i5-13420H 16GB onboard 512GB")
+    assert "gpu_model" not in specs and specs["ram_gb"] == 16
+
+
+def test_onboard_next_to_a_discrete_gpu_keeps_the_discrete_gpu() -> None:
+    specs = dump("Laptop MSI Thin 15 i5-13420H 16GB onboard 512GB RTX 3050")
+    assert specs["gpu_model"] == "RTX 3050"
+
+
+def test_onboard_graphics_is_still_an_integrated_gpu() -> None:
+    assert dump("Laptop Foo Bar i5-13420H 8GB 256GB onboard graphics")["gpu_model"] == "Integrated"
+
+
+def test_capacity_does_not_read_the_tail_of_a_number_with_a_thousands_separator() -> None:
+    assert "storage_gb" not in dump("Laptop Foo Bar i5-13420H 8GB", {"Ổ cứng": "Up to 1,000GB"})
+
+
+def test_upgrade_limit_labels_are_not_read_as_the_installed_ram_or_storage() -> None:
+    specs = dump(
+        "Laptop Foo Bar i5-13420H",
+        {
+            "Nâng cấp RAM": "Tối đa 64GB",
+            "RAM": "16GB",
+            "Khả năng nâng cấp ổ cứng": "Tối đa 2TB",
+            "Ổ cứng": "512GB SSD",
+        },
+    )
+    assert (specs["ram_gb"], specs["storage_gb"]) == (16, 512)

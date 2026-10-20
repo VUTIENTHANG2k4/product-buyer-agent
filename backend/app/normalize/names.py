@@ -67,6 +67,11 @@ _COLORS: Final = frozenset(
         "nhat",
     ]
 )
+# Màu đứng ngay sau / ngay trước các từ này là tên switch bàn phím chứ không phải màu vỏ.
+_SWITCH_BEFORE: Final = frozenset(
+    ["mx", "gateron", "cherry", "kailh", "outemu", "jwk", "switch", "sw", "optical"]
+)
+_SWITCH_AFTER: Final = frozenset(["switch", "sw", "axis"])
 # Từ chỉ loại sản phẩm hoặc quảng cáo: không phân biệt mẫu.
 _NOISE: Final = frozenset(
     [
@@ -176,15 +181,23 @@ def _tokens(title: str) -> list[_Token]:
     return tokens
 
 
+def _is_switch_colour(tokens: list[_Token], index: int) -> bool:
+    """Màu là một phần tên switch (`MX Red`, `Gateron Brown`, `Red Axis`, `Cream Blue`)."""
+    before = tokens[index - 1].key if index > 0 else ""
+    after = tokens[index + 1].key if index + 1 < len(tokens) else ""
+    if before in _SWITCH_BEFORE or after in _SWITCH_AFTER:
+        return True
+    # "Cream Blue" / "Cream Yellow" là tên switch của Akko, không phải hai màu vỏ.
+    return (tokens[index].key == "cream" and after in _COLORS) or before == "cream"
+
+
 def _drop_colors(tokens: list[_Token]) -> list[_Token]:
-    """Bỏ màu (và chữ "màu" đứng trước màu). Từ ngay trước "switch" thuộc tên switch nên giữ."""
-    kept: list[_Token] = []
-    for index, token in enumerate(tokens):
-        before_switch = index + 1 < len(tokens) and tokens[index + 1].key == "switch"
-        if token.key in _COLORS and not before_switch:
-            continue
-        kept.append(token)
-    return kept
+    """Bỏ màu (và chữ "màu" đứng trước màu). Màu thuộc tên switch thì giữ vì nó phân biệt mẫu."""
+    return [
+        token
+        for index, token in enumerate(tokens)
+        if token.key not in _COLORS or _is_switch_colour(tokens, index)
+    ]
 
 
 def _leading_prefix_length(tokens: list[_Token]) -> int:

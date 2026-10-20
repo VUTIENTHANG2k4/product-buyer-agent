@@ -81,7 +81,8 @@ _NOT_SWITCH_NAME = frozenset(
         "bluetooth",
     ]
 )
-_FORM_TOKEN = re.compile(r"^(?:[a-z]{1,2})?(\d{2,3})%?$")
+# "65%" là bố cục rõ nhất; "F75"/"H108"/"EK98" là mã bố cục. "K60", "GK60" là tên mẫu nên không đọc.
+_FORM_TOKEN = re.compile(r"^(?:(?:f|h|ek)?(\d{2,3})|(\d{2,3})%)$")
 _FORM_BY_KEYS: Final = {
     "75": FormFactor.ff_75,
     "65": FormFactor.ff_65,
@@ -123,10 +124,13 @@ def _form_factor(folded: str) -> FormFactor | None:
         return FormFactor.tkl
     if has_word(folded, "fullsize", "full size", "full-size"):
         return FormFactor.full
-    for token in re.findall(r"[a-z0-9]+%?", folded):
+    tokens = re.findall(r"[a-z0-9]+%?", folded)
+    # Token có "%" thắng token chỉ có số ("Corsair K65 Mini 60%" là 60%).
+    for token in sorted(tokens, key=lambda t: not t.endswith("%")):
         match = _FORM_TOKEN.match(token)
-        if match and match[1] in _FORM_BY_KEYS:
-            return _FORM_BY_KEYS[match[1]]
+        key = match[1] or match[2] if match else None
+        if key in _FORM_BY_KEYS:
+            return _FORM_BY_KEYS[key]
     return None
 
 

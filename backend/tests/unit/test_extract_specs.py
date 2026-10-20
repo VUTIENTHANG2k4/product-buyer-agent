@@ -111,3 +111,12 @@ def test_merge_ignores_empty_values_in_both_sides() -> None:
 
 def test_merge_for_category_without_model_is_a_plain_union() -> None:
     assert merge_specs(Category.other, {"a": 1}, {"a": 2, "b": 3}) == {"a": 1, "b": 3}
+
+
+def test_merge_specs_drops_a_stored_value_of_the_wrong_type_instead_of_failing() -> None:
+    merged = merge_specs(
+        Category.laptop,
+        {"ram_gb": "8GB", "storage_type": "nvme"},
+        {"ram_gb": 16, "screen_in": 15.6},
+    )
+    assert merged["ram_gb"] == 16 and merged["screen_in"] == 15.6

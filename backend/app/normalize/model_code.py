@@ -29,9 +29,14 @@ _NOT_A_CODE = re.compile(
     r"|\d+(?:\.\d+)?(?:gb|tb|hz|mm|kg|wh|inch|in)"  # dung lượng, tần số, kích thước
     r"|win(?:dows)?\d*"  # hệ điều hành
     r"|ddr\d+x?|lpddr\d+x?|\d+x\d+"  # RAM, độ phân giải
+    r"|gen\d+"  # thế hệ: ThinkPad E14 Gen10
+    r"|[a-z]{3,}\d{1,2}"  # tên dòng máy dính số: Book4, Yoga7, Zenbook14
     r")$",
     re.IGNORECASE,
 )
+_STRONG_HYPHENATED = re.compile(r"[a-z0-9]-[a-z0-9]", re.IGNORECASE)
+_STRONG_MIN_LENGTH: Final = 7
+_STRONG_MIN_DIGITS: Final = 3
 
 
 def _normalize(code: str) -> str:
@@ -50,6 +55,18 @@ def _is_code_like(token: str) -> bool:
     if not has_digit or _NOT_A_CODE.match(token):
         return False
     return has_letter or len(token) >= _MIN_NUMERIC_CODE_LENGTH
+
+
+def is_strong_code(code: str) -> bool:
+    """Mã đủ đặc trưng để tin là mã hãng của một cấu hình (`AL15-53P-56QH`, `83DV01MCVN`).
+
+    Mã ngắn không gạch (`15IRX9`, `B13VFK`) thường là mã nền tảng chung cho nhiều dòng máy,
+    nên khi ghép phải có thêm tên và cấu hình khớp (`matcher.py`).
+    """
+    if _STRONG_HYPHENATED.search(code):
+        return True
+    digits = sum(char.isdigit() for char in code)
+    return len(code) >= _STRONG_MIN_LENGTH and digits >= _STRONG_MIN_DIGITS
 
 
 def laptop_head(title: str) -> list[str]:

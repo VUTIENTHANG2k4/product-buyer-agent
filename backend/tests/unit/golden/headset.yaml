@@ -25,9 +25,7 @@
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
   title: Tai Nghe Gaming Không Dây Predator Galea 550 (PHR235)
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: gearvn-headset-05
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
@@ -73,16 +71,12 @@
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
   title: Tai nghe gaming không dây Logitech Astro A20 X
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: gearvn-headset-13
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
   title: Tai nghe gaming Acer Predator Galea 550 Wireless
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: gearvn-headset-14
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
@@ -99,31 +93,23 @@
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
   title: Tai nghe gaming không dây Akko Verge S9 Ultra White
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: gearvn-headset-17
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
   title: Tai nghe gaming không dây Akko Verge S9 Ultra Black Red
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: gearvn-headset-18
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
   title: Tai nghe gaming không dây Akko Verge S9 Ultra Black
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: gearvn-headset-19
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
   title: Tai nghe ASUS ROG Cetra Open Wireless Gaming Earbuds
   expect:
     form: in_ear
-    connection:
-    - wireless_2_4
 - id: gearvn-headset-20
   site: gearvn
   fixture: fixtures/gearvn/listing_headset_p1.html
@@ -166,9 +152,7 @@
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
   title: Tai nghe HyperX Cloud Flight 2 Wireless
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: anphat-headset-07
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
@@ -224,7 +208,7 @@
   expect:
     form: tws
     connection:
-    - wireless_2_4
+    - bluetooth
 - id: anphat-headset-16
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
@@ -234,16 +218,12 @@
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
   title: Tai nghe ATK N9 Ultra Wireless Starry Blue
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: anphat-headset-18
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
   title: Tai nghe ATK N9 Ultra Wireless Stellar Purple
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: anphat-headset-19
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
@@ -269,9 +249,7 @@
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
   title: Tai nghe HyperX Cloud III S Wireless Black
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: anphat-headset-23
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
@@ -297,30 +275,22 @@
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
   title: Tai nghe ATK N9 Ultra Wireless Stellar Pink
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: anphat-headset-27
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
   title: Tai nghe ATK N9 Ultra Wireless Stellar Orange
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: anphat-headset-28
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
   title: Tai nghe ATK N9 Pro Wireless White
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: anphat-headset-29
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html
   title: Tai nghe ATK N9 Pro Wireless Black
-  expect:
-    connection:
-    - wireless_2_4
+  expect: {}
 - id: anphat-headset-30
   site: anphat
   fixture: fixtures/anphat/listing_headset_p1.html

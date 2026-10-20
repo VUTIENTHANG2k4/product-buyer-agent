@@ -17,7 +17,7 @@ from app.normalize.text import fold
 M = TypeVar("M", bound=BaseModel)
 
 _NUMBER = r"(\d+(?:[.,]\d+)?)"
-_CAPACITY = re.compile(r"(?<![\w.])(\d{1,4})\s?(tb|gb)\b", re.IGNORECASE)
+_CAPACITY = re.compile(r"(?<![\w.,])(\d{1,4})\s?(tb|gb)\b", re.IGNORECASE)
 _INCHES = re.compile(
     r"(?<![\w.])(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:\"|”|″|''|-?\s*inch\b|-?\s*in\b)", re.IGNORECASE
 )
@@ -32,6 +32,14 @@ def clean(text: str) -> str:
     return " ".join(text.split())[:MAX_TEXT_LENGTH]
 
 
+# Nhãn nói về giới hạn nâng cấp chứ không phải giá trị hiện có ("Nâng cấp RAM: tối đa 64GB").
+_LIMIT_LABEL = re.compile(r"toi da|nang cap")
+
+
+def _is_limit_label(label: str) -> bool:
+    return _LIMIT_LABEL.search(label) is not None
+
+
 def label_values(raw_specs: Mapping[str, str], aliases: Sequence[str]) -> Iterator[str]:
     """Giá trị của các nhãn chứa bí danh, theo thứ tự ưu tiên của `aliases`.
 
@@ -41,7 +49,7 @@ def label_values(raw_specs: Mapping[str, str], aliases: Sequence[str]) -> Iterat
     yielded: set[int] = set()  # mỗi nhãn chỉ trả một lần dù khớp nhiều bí danh
     for alias in aliases:
         for index, (label, value) in enumerate(folded):
-            if value and alias in label and index not in yielded:
+            if value and alias in label and index not in yielded and not _is_limit_label(label):
                 yielded.add(index)
                 yield value
 
@@ -106,6 +114,7 @@ class Connectivity:
 
     wired: bool = False
     radio: bool = False  # 2.4 GHz / dongle / Lightspeed… (hoặc "không dây" chung chung)
+    explicit_radio: bool = False  # radio nhưng chỉ tính khi có chữ 2.4G/dongle/Lightspeed…
     bluetooth: bool = False
     jack: bool = False  # 3.5 mm
     usb: bool = False  # cáp USB (không tính "USB receiver")
@@ -132,16 +141,18 @@ def read_connectivity(text: str) -> Connectivity:
     "không dây" chính là Bluetooth). "3 mode" là có dây + 2.4 GHz + Bluetooth.
     """
     if _MULTI_MODE.search(text):
-        return Connectivity(wired=True, radio=True, bluetooth=True, usb=True)
+        return Connectivity(wired=True, radio=True, explicit_radio=True, bluetooth=True, usb=True)
     bluetooth = _BLUETOOTH.search(text) is not None
     generic = _GENERIC_WIRELESS.search(text) is not None
-    radio = _RADIO.search(text) is not None or (
+    explicit_radio = _RADIO.search(text) is not None
+    radio = explicit_radio or (
         generic and (not bluetooth or _WIRELESS_PAIRED_BT.search(text) is not None)
     )
     cable = _USB_RECEIVER.sub(" ", text)
     return Connectivity(
         wired=_WIRED.search(text) is not None,
         radio=radio,
+        explicit_radio=explicit_radio,
         bluetooth=bluetooth,
         jack=_JACK.search(text) is not None,
         usb=_USB.search(cable) is not None,

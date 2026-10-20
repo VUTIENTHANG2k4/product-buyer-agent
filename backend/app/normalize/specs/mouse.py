@@ -40,7 +40,9 @@ _BUTTON_LABELS: Final = ("so nut", "nut bam", "button")
 _WEIGHT_LABELS: Final = ("trong luong", "can nang", "weight")
 _LIGHT_LABELS: Final = ("den", "led", "rgb")
 
-_DPI = re.compile(r"(?<![\w.])(\d{3,6})\s?(?:dpi|cpi)\b", re.IGNORECASE)
+_DPI = re.compile(
+    r"(?<![\w.,])(\d{1,3}(?:[.,]\d{3})+|\d{3,6})\s?(?:dpi|cpi)\b", re.IGNORECASE
+)  # "25,600 DPI" / "12.000 DPI" có dấu phân tách hàng nghìn
 _ERGONOMIC: Final = ("cong thai hoc", "ergonomic", "vertical")
 _AMBIDEXTROUS: Final = ("doi xung", "ambidextrous", "symmetric")
 _WEIGHT_RANGE_G: Final = range(
@@ -49,7 +51,7 @@ _WEIGHT_RANGE_G: Final = range(
 
 
 def _max_dpi(*texts: str) -> int | None:
-    values = [int(match[1]) for text in texts for match in _DPI.finditer(text)]
+    values = [int(re.sub(r"[.,]", "", match[1])) for text in texts for match in _DPI.finditer(text)]
     return max(values) if values else None
 
 

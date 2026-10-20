@@ -257,11 +257,13 @@ def _require_product_id(product: Product) -> int:
 
 
 def _url_key(item: ListingItem) -> str | None:
-    """URL đã làm sạch của mục, hoặc `None` nếu không làm sạch được (mục sẽ lỗi ở bước lưu)."""
+    """URL đã làm sạch của mục (http và https của cùng URL cho cùng khóa), hoặc `None` nếu không
+    làm sạch được (mục sẽ lỗi ở bước lưu)."""
     try:
-        return clean_url(str(item.url))
+        url = clean_url(str(item.url))
     except ValueError:
         return None
+    return min(url, scheme_twin(url))
 
 
 def _check_item_url(config: SiteConfig, url: str) -> None:

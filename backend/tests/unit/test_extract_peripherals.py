@@ -212,7 +212,6 @@ def test_headset_form_and_connection_are_not_guessed_from_a_bare_model_name(titl
     [
         ("Tai nghe Razer Kraken V3 X USB", {}, ["usb"]),
         ("Tai nghe Logitech G321 LightSpeed White", {}, ["wireless_2_4"]),
-        ("Tai nghe HyperX Cloud Flight 2 Wireless", {}, ["wireless_2_4"]),
         ("Tai nghe E-Dra EH497W Triple Mode", {}, ["usb", "wireless_2_4", "bluetooth"]),
         ("Tai nghe Corsair HS50", {"Cổng giao tiếp/Cổng sạc": "Jack 3.5 mm"}, ["wired_3_5"]),
         (
@@ -247,3 +246,57 @@ def test_headset_cable_length_is_not_a_driver_size() -> None:
 
 def test_headset_chong_on_label_alone_is_not_anc() -> None:
     assert "anc" not in headset("Tai nghe Corsair HS50 PRO Stereo", {"Tính năng": "Chống ồn"})
+
+
+@pytest.mark.parametrize(
+    ("title", "raw"),
+    [
+        ("Tai nghe HyperX Cloud Flight 2 Wireless", {}),  # "không dây" trơn: chưa biết 2.4G hay BT
+        ("Tai nghe Apple AirPods Pro 2 USB-C", {}),  # USB-C là cổng sạc
+        ("Tai nghe Sony WH-1000XM5", {"Cổng sạc": "USB Type-C"}),
+        ("Tai nghe Sony WH-1000XM5", {"Công nghệ âm thanh": "USB DAC"}),
+    ],
+)
+def test_headset_connection_is_left_empty_when_the_text_does_not_say(
+    title: str, raw: dict[str, str]
+) -> None:
+    assert headset(title, raw).get("connection") is None
+
+
+def test_true_wireless_earbuds_are_bluetooth_not_2_4g() -> None:
+    specs = headset("Tai nghe Sony WF-C700N True Wireless")
+    assert (specs["form"], specs["connection"]) == ("tws", ["bluetooth"])
+
+
+def test_headset_with_explicit_dongle_is_2_4g() -> None:
+    assert headset("Tai nghe HyperX Cloud Flight 2 Wireless 2.4GHz")["connection"] == [
+        "wireless_2_4"
+    ]
+
+
+@pytest.mark.parametrize(
+    ("text", "dpi"),
+    [
+        ("Up to 25,600 DPI", 25600),
+        ("12.000 DPI", 12000),
+        ("35,000 DPI", 35000),
+        ("26000 DPI / 800 DPI", 26000),
+    ],
+)
+def test_mouse_dpi_reads_thousands_separators(text: str, dpi: int) -> None:
+    assert mouse("Chuột Foo Bar", {"Độ phân giải": text})["dpi_max"] == dpi
+
+
+@pytest.mark.parametrize(
+    ("title", "form_factor"),
+    [
+        ("Bàn phím Corsair K60 RGB Pro", None),  # K60 là tên mẫu (full-size), không phải 60%
+        ("Bàn phím MSI Vigor GK60", None),
+        ("Bàn phím Corsair K65 RGB Mini 60%", "60"),
+        ("Bàn phím cơ AULA F75 Pro", "75"),
+    ],
+)
+def test_keyboard_form_factor_ignores_model_names_that_contain_a_number(
+    title: str, form_factor: str | None
+) -> None:
+    assert keyboard(title).get("form_factor") == form_factor

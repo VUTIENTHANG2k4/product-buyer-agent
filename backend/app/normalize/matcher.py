@@ -21,6 +21,7 @@ from rapidfuzz import fuzz
 from app.domain.enums import Category, MatchMethod
 from app.normalize.brand import UNKNOWN_BRAND
 from app.normalize.extract import missing_required
+from app.normalize.model_code import is_strong_code
 from app.normalize.names import name_key
 from app.normalize.specs import REQUIRED_FIELDS
 
@@ -94,6 +95,28 @@ def name_similarity(left: Sequence[str], right: Sequence[str]) -> float:
     return float(fuzz.token_sort_ratio(" ".join(left), " ".join(right))) / 100
 
 
+def _code_match_is_safe(
+    category: Category,
+    strong: bool,
+    key: Sequence[str],
+    specs: Mapping[str, Any],
+    candidate: Candidate,
+    brand: str,
+) -> bool:
+    """Cùng mã model có đủ để ghép không.
+
+    Mã mạnh (đặc trưng cho một cấu hình): chỉ cần thông số bắt buộc không mâu thuẫn. Mã yếu
+    (mã nền tảng như `15IRX9`, hay `GEN10`): phải cùng tên mẫu và đủ thông số bằng nhau, vì
+    `Legion 5 15IRX9` và `Legion Pro 5 15IRX9` hay `E14 Gen10` và `E16 Gen10` cùng mã.
+    """
+    if strong:
+        return specs_compatible(category, specs, candidate.specs)
+    other = name_key(candidate.canonical_name, brand)
+    return same_model_name(key, other) and specs_compatible(
+        category, specs, candidate.specs, strict=True
+    )
+
+
 def decide_match(
     category: Category,
     brand: str,
@@ -104,17 +127,18 @@ def decide_match(
 ) -> MatchDecision:
     """Chọn Product có sẵn để ghép (hoặc `new`). `candidates` cùng category và brand với offer."""
     code_taken = False
+    key = name_key(name, brand)
     if model_code is not None:
+        strong = is_strong_code(model_code)
         for candidate in candidates:
             if candidate.model_code != model_code:
                 continue
-            if specs_compatible(category, specs, candidate.specs):
+            if _code_match_is_safe(category, strong, key, specs, candidate, brand):
                 return MatchDecision(candidate.product_id, MatchMethod.model_code, 1.0)
-            code_taken = True  # cùng mã nhưng cấu hình khác: coi là mẫu riêng
+            code_taken = True  # cùng mã nhưng tên hoặc cấu hình khác: coi là mẫu riêng
     if brand == UNKNOWN_BRAND:
         return MatchDecision(None, MatchMethod.new, None, code_taken)
 
-    key = name_key(name, brand)
     strict = category is Category.laptop
     best: tuple[float, int] | None = None
     for candidate in sorted(candidates, key=lambda c: c.product_id):

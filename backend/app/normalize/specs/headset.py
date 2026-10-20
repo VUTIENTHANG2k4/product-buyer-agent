@@ -24,7 +24,7 @@ class HeadsetSpecs(BaseModel):
 
 
 # ---- bộ trích xuất theo luật ----
-_CONNECTION_LABELS: Final = ("ket noi", "giao tiep", "cong ")
+_CONNECTION_LABELS: Final = ("ket noi", "giao tiep", "cong ket noi", "cong giao tiep")
 _MIC_LABELS: Final = ("micro", "mic")
 _DRIVER_LABELS: Final = ("driver", "duong kinh loa", "kich thuoc loa")
 
@@ -51,14 +51,23 @@ def _form(folded: str) -> HeadsetForm | None:
     return None
 
 
-def _connection(text: str) -> list[HeadsetConnection] | None:
-    found = read_connectivity(fold(text))
+_USB_C: Final = re.compile(r"\busb[\s-]*c\b(?!\s*/\s*a\b)|\btype[\s-]*c\b")
+
+
+def _connection(text: str, form: HeadsetForm | None) -> list[HeadsetConnection] | None:
+    """Kết nối đọc được. Không đoán: "True Wireless/TWS" chỉ suy ra Bluetooth; "không dây" chung
+    chung không đủ để nói 2.4 GHz; "USB-C" thường là cổng sạc nên không tính là kết nối USB."""
+    folded = fold(text)
+    found = read_connectivity(folded)
+    usb = read_connectivity(_USB_C.sub(" ", folded)).usb
+    if form is HeadsetForm.tws:
+        return [HeadsetConnection.bluetooth] if found.bluetooth or found.radio else None
     connection = [
         kind
         for kind, present in (
             (HeadsetConnection.wired_3_5, found.jack),
-            (HeadsetConnection.usb, found.usb),
-            (HeadsetConnection.wireless_2_4, found.radio),
+            (HeadsetConnection.usb, usb),
+            (HeadsetConnection.wireless_2_4, found.explicit_radio),
             (HeadsetConnection.bluetooth, found.bluetooth),
         )
         if present
@@ -88,16 +97,18 @@ def extract_headset(title: str, raw_specs: Mapping[str, str]) -> HeadsetSpecs:
     """Thông số tai nghe đọc được từ tiêu đề và bảng thông số thô.
 
     `form` và `connection` chỉ được điền khi viết rõ ("TWS", "earbuds", "chụp tai", "USB", "3.5mm",
-    "không dây"…); tên mẫu trơn như "HyperX Cloud III" không đủ căn cứ nên để trống.
+    "2.4G", "Bluetooth"); "không dây" trơn không đủ để nói 2.4G hay Bluetooth, và tên mẫu trơn
+    như "HyperX Cloud III" cũng không đủ căn cứ nên để trống.
     """
     title = clean(title)
     folded = fold(title)
     labelled = list(label_values(raw_specs, _CONNECTION_LABELS))
+    form = _form(folded)
     return build_specs(
         HeadsetSpecs,
         {
-            "form": _form(folded),
-            "connection": _connection(" ".join([title, *labelled])),
+            "form": form,
+            "connection": _connection(" ".join([title, *labelled]), form),
             "has_mic": _has_mic(folded, raw_specs),
             "anc": True if _ANC.search(folded) else None,
             "surround_7_1": True if _SURROUND.search(folded) else None,

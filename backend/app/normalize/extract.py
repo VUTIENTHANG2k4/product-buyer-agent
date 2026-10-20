@@ -17,6 +17,7 @@ from app.normalize.specs.headset import extract_headset
 from app.normalize.specs.keyboard import extract_keyboard
 from app.normalize.specs.laptop import extract_laptop
 from app.normalize.specs.mouse import extract_mouse
+from app.normalize.specs.parsing import build_specs
 
 Extractor = Callable[[str, Mapping[str, str]], BaseModel]
 
@@ -88,11 +89,14 @@ def merge_specs(
 ) -> dict[str, Any]:
     """Gộp `new` vào `existing`: chỉ điền trường còn thiếu, giá trị đã có không bị ghi đè.
 
-    Kết quả đi qua khung của `category` nên `gpu_rank` được tính lại từ `gpu_model` cuối cùng.
+    Kết quả đi qua khung của `category` nên `gpu_rank` được tính lại từ `gpu_model` cuối cùng; giá
+    trị đã lưu sai kiểu/miền (dữ liệu cũ) bị bỏ riêng trường đó thay vì làm lỗi cả mục.
     """
+    model = SPEC_MODELS.get(category)
+    if model is not None:
+        existing = build_specs(model, existing).model_dump(mode="json", exclude_none=True)
     merged = {name: value for name, value in new.items() if not _is_missing(value)}
     merged.update({name: value for name, value in existing.items() if not _is_missing(value)})
-    model = SPEC_MODELS.get(category)
     if model is None:
         return merged
-    return model.model_validate(merged).model_dump(mode="json", exclude_none=True)
+    return build_specs(model, merged).model_dump(mode="json", exclude_none=True)

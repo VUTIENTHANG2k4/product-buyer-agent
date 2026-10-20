@@ -120,6 +120,7 @@ _DISCRETE_WITH_VRAM = re.compile(
     r"[\s,(:-]*(\d{1,2})\s?gb\b",
     _FLAGS,
 )
+_TITLE_ONBOARD = re.compile(r"\bon-?board\b(?!\s*(?:graphics|vga|gpu|card))", re.IGNORECASE)
 # GPU tích hợp mà `normalize_gpu_name` chưa nhận (Intel Arc không hậu tố, "AMD Radeon" trơn…).
 _INTEGRATED_EXTRA = re.compile(
     r"\b(?:intel\s+arc|amd\s+radeon|radeon\s+vega|vega\s*\d|adreno|intel\s+iris|intel\s+graphics)\b",
@@ -213,6 +214,8 @@ def _gpu(text: str) -> str | None:
 
 def _extract_gpu(title: str, raw_specs: Mapping[str, str]) -> tuple[str | None, int | None]:
     """(tên GPU, VRAM GB). Nhãn bảng thông số được ưu tiên hơn tiêu đề."""
+    # "16GB onboard" trong tiêu đề nói về RAM; chỉ "onboard graphics/VGA/GPU" mới nói về GPU.
+    title = _TITLE_ONBOARD.sub(" ", title)
     for source in (*label_values(raw_specs, _GPU_LABELS), title):
         name = _gpu(source)
         if name is None:

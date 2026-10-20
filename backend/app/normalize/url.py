@@ -79,7 +79,13 @@ def clean_url(url: str) -> str:
 
 
 def scheme_twin(url: str) -> str:
-    """Cùng URL nhưng đổi http ↔ https (đầu vào đã qua `clean_url`); scheme khác trả nguyên."""
+    """Cùng URL nhưng đổi http ↔ https (đầu vào đã qua `clean_url`); scheme khác trả nguyên.
+
+    URL có cổng riêng (`:8080`) trả nguyên: cổng mặc định đã bị `clean_url` bỏ, còn hai cổng
+    tùy chọn của http và https là hai máy chủ khác nhau.
+    """
     parts = urlsplit(url)
     twin = {"http": "https", "https": "http"}.get(parts.scheme)
-    return url if twin is None else urlunsplit(parts._replace(scheme=twin))
+    if twin is None or parts.port is not None:
+        return url
+    return urlunsplit(parts._replace(scheme=twin))
