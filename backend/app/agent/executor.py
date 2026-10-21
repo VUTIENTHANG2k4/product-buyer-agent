@@ -8,7 +8,7 @@ số bước, sự kiện từng tool, chặn tool ghi khi người dùng không
 import json
 import logging
 import time
-from collections.abc import AsyncIterator, Callable, Sequence
+from collections.abc import AsyncIterator, Callable, Collection, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final, Literal
 
@@ -18,7 +18,7 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMe
 from langchain_core.tools import BaseTool
 from pydantic import ValidationError
 
-from app.agent.guardrail import Evidence
+from app.agent.guardrail import Evidence, check_write_args
 from app.agent.schemas import FinalAnswer, ToolEndEvent, ToolStartEvent
 from app.agent.tools import WRITE_TOOLS
 from app.agent.tools.base import Result, error_result
@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 FINAL_TOOL: Final = FinalAnswer.__name__
 MAX_ARGS_SUMMARY: Final = 200
 MAX_CALLS_PER_STEP: Final = 5
+MAX_WRITE_CALLS: Final = 5  # tool ghi tối đa mỗi lượt
 TOOL_FAILURE_LIMIT: Final = 2  # cùng một tool lỗi 2 lần thì dừng (docs/05 §5)
 
 StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures"]
@@ -54,6 +55,7 @@ class LoopOutcome:
     answer: FinalAnswer | None = None
     stop_reason: StopReason | None = None
     tool_calls: int = 0
+    write_calls: int = 0  # số lần tool ghi thật sự chạy trong lượt (trần `MAX_WRITE_CALLS`)
     llm_steps: int = 0
 
 
@@ -116,6 +118,7 @@ class ToolLoop:
         *,
         max_steps: int,
         allowed_writes: frozenset[str],
+        user_amounts: Collection[int] = frozenset(),
         clock: Callable[[], float] = time.perf_counter,
     ) -> None:
         self._model = model
@@ -123,6 +126,7 @@ class ToolLoop:
         self._bound = model.bind_tools([*tools, FinalAnswer])
         self._max_steps = max_steps
         self._allowed_writes = allowed_writes
+        self._user_amounts = user_amounts  # số tiền người dùng nêu, để bắt tham số sai thang
         self._clock = clock
 
     async def run(
@@ -216,7 +220,16 @@ class ToolLoop:
                 "UNKNOWN_PRODUCT",
                 "Sản phẩm chưa xuất hiện trong kết quả; hãy tìm trước rồi mới ghi",
             )
+        elif name in WRITE_TOOLS and outcome.write_calls >= MAX_WRITE_CALLS:
+            # Lệnh bị tiêm qua nội dung web không thể thêm hàng loạt sản phẩm trong một lượt.
+            result = error_result(
+                "TOO_MANY_WRITES", f"Tối đa {MAX_WRITE_CALLS} thao tác ghi mỗi lượt"
+            )
+        elif (bad_args := check_write_args(name, args, self._user_amounts)) is not None:
+            result = bad_args
         else:
+            if name in WRITE_TOOLS:
+                outcome.write_calls += 1
             try:
                 result = _as_result(await tool.ainvoke(args))
             except Exception:

@@ -326,10 +326,6 @@ async def test_nul_characters_from_the_llm_never_stop_the_run_from_being_saved(
 
 
 # ---- tiền sai thang ở tool ghi (xfail) ----
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M6-15: create_price_alert nhận target_price=25 khi người dùng nói '25 triệu'",
-)
 async def test_alert_threshold_in_the_wrong_unit_is_not_saved_silently(
     db_session: Session, make_runner: Make
 ) -> None:

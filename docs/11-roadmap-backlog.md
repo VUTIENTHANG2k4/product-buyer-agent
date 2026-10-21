@@ -263,7 +263,7 @@ Xong khi:
 | T6.6 | Eval harness + báo cáo cơ sở | T6.5, T1.5 | M | ✅ |
 | T6.7 | Chỉnh prompt/seed sau eval cơ sở (phát sinh từ T6.6) | T6.6 | S | ⬜ |
 | T6.8 | Guardrail: chặn câu phủ định mở khóa tool ghi (BUG-M6-13) | T6.5 | S | ✅ |
-| T6.9 | `create_price_alert` kiểm `target_price` sai thang + trần số lần gọi tool ghi mỗi lượt (BUG-M6-15) | T6.5 | S | ⬜ |
+| T6.9 | `create_price_alert` kiểm `target_price` sai thang + trần số lần gọi tool ghi mỗi lượt (BUG-M6-15) | T6.5 | S | ✅ |
 | T6.10 | Hậu xử lý: GPU "trở xuống" và số tiền cách nghìn bằng dấu cách (BUG-M6-11, 12) | T6.3 | S | ⬜ |
 | T6.11 | `FinalAnswer.text` không rỗng, chạy lại eval (BUG-M6-14) | T6.5 | S | ⬜ |
 | T6.12 | Trần `quantity` / `total_price` danh sách mua (BUG-M6-16) | T6.2 | S | ⬜ |
@@ -282,7 +282,7 @@ Xong khi:
 - **Gọi tool thừa** làm câu mất 30–50 giây: L07, L09, A06, T02 (gọi lại tool khi kết quả rỗng/chưa bật; A06 gọi `compare_products`/`get_product_detail` không được hỏi). Có thể giới hạn cứng số lần gọi cùng một tool trong `ToolLoop` thay vì chỉ dặn trong prompt.
 - **Latency p50** 15,7 giây chưa đại diện: `LLM_MAX_RPM=12` (giới hạn 15 request/phút của gói miễn phí) buộc mỗi lần gọi chờ ≥ 5 giây. Đo lại khi có hạn mức cao hơn (`--rpm 0`), và so với `gemini-3.8-flash`.
 - **Seed `eval` quá "sạch"** (từ QA M1): chưa thêm sản phẩm thiếu thông số / chỉ còn offer hết hàng; thêm kèm cập nhật `test_seed_data.py`.
-- Từ review M6 (chưa làm): (a) `LlmSpecsFiller` gọi LLM đồng bộ trong `_save_item` khi giao dịch của trang còn mở (nên gọi ở `_prepare_items` trước khi mở session lưu; cache `put` cũng nằm trong savepoint của mục); (b) `create_price_alert` chưa đối chiếu `target_price` với số tiền người dùng nêu; (c) `scripts/run_eval.py` import `tests.db_support` (chuyển helper ra `app/db`) và chưa bắt hết lỗi thiết lập (alembic, YAML) thành mã thoát 2; (d) 14 câu eval có `constraints` nhưng không có `min_results` (bảng rỗng vẫn "đạt": L10 hiện 0 kết quả); (e) xử lý `invalid_tool_calls` của LLM; thống nhất id tool call; log kèm `run_id`; (f) đổi tên `agent/prompts.py` (trùng tên thư mục `prompts/`); (g) N+1 trong `shopping_list_service`/`alert_service`, `update_item` chưa nhận `preferred_offer_id`, race tạo trùng danh sách/cảnh báo.
+- Từ review M6 (chưa làm): (a) `LlmSpecsFiller` gọi LLM đồng bộ trong `_save_item` khi giao dịch của trang còn mở (nên gọi ở `_prepare_items` trước khi mở session lưu; cache `put` cũng nằm trong savepoint của mục); (b) ✅ làm ở T6.9; (c) `scripts/run_eval.py` import `tests.db_support` (chuyển helper ra `app/db`) và chưa bắt hết lỗi thiết lập (alembic, YAML) thành mã thoát 2; (d) 14 câu eval có `constraints` nhưng không có `min_results` (bảng rỗng vẫn "đạt": L10 hiện 0 kết quả); (e) xử lý `invalid_tool_calls` của LLM; thống nhất id tool call; log kèm `run_id`; (f) đổi tên `agent/prompts.py` (trùng tên thư mục `prompts/`); (g) N+1 trong `shopping_list_service`/`alert_service`, `update_item` chưa nhận `preferred_offer_id`, race tạo trùng danh sách/cảnh báo.
 - Cảnh báo "số tiền lệch" còn dương tính giả khi LLM nêu ngưỡng/ước lượng chung ("trên 50 triệu"), chỉ ghi log nên chưa ảnh hưởng chỉ số.
 
 **Phát sinh từ QA M6** (2026-10-21; 10 bug đã sửa ngay, 7 bug còn lại giữ bằng `xfail(strict=True)` trong `*_qa_m6.py`; XPASS báo đỏ → gỡ dấu xfail khi sửa). Không chặn M7; T6.8 và T6.9 nên làm trước khi bật ghi từ chat thật (M7/M9):

@@ -6,12 +6,13 @@
 """
 
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Final
 
-from app.agent.intent import extract_amounts
+from app.agent.intent import MIN_AMOUNT_VND, extract_amounts
 from app.agent.schemas import MAX_SUGGESTIONS, FinalAnswer, LiveItem
+from app.agent.tools.base import Result, error_result
 from app.normalize.text import fold
 
 PRICE_TOLERANCE: Final = 0.01
@@ -79,6 +80,30 @@ def _requested(pattern: re.Pattern[str], folded: str) -> bool:
         if not _NEGATION.search(window[cut + 1 :]):
             return True
     return False
+
+
+def check_write_args(
+    tool: str, args: Mapping[str, Any], user_amounts: Collection[int]
+) -> Result | None:
+    """Lỗi cho LLM thử lại nếu tham số tool ghi sai thang tiền, None nếu hợp lệ.
+
+    `create_price_alert` với `target_price` < 10.000 VND, hoặc bằng số người dùng nêu chia cho
+    1.000 / 1.000.000 ("25 triệu" mà LLM gửi 25), sẽ không bao giờ kích hoạt nên bị từ chối.
+    """
+    if tool != ALERT_TOOL:
+        return None
+    price = args.get("target_price")
+    if isinstance(price, bool) or not isinstance(price, int):
+        return None  # sai kiểu: tool tự báo lỗi tham số
+    scaled = next((price * f for f in (1_000_000, 1_000) if price * f in user_amounts), None)
+    if price < MIN_AMOUNT_VND or scaled is not None:
+        hint = f" (người dùng nêu {scaled})" if scaled is not None else ""
+        return error_result(
+            "INVALID_TARGET_PRICE",
+            f"target_price tính bằng VND đầy đủ, ví dụ 25 triệu = 25000000{hint}; "
+            "hãy gọi lại với số đúng",
+        )
+    return None
 
 
 @dataclass

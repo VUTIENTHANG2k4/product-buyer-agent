@@ -182,11 +182,15 @@ class AgentRunner:
         # ("báo tôi khi máy đầu tiên xuống dưới 25 triệu").
         previous = Evidence(product_ids={pid for pid, _ in handle.context.last_results})
         outcome = LoopOutcome(evidence=previous)
+        amounts = extract_amounts(message) | {
+            value for value in (intent.price_min, intent.price_max) if value
+        }
         loop = ToolLoop(
             self._executor_model,
             self._tools,
             max_steps=self._settings.agent_max_steps,
             allowed_writes=allowed_write_tools(message),
+            user_amounts=amounts,
             clock=self._clock,
         )
         async for tool_event in loop.run(messages, outcome):
@@ -203,9 +207,6 @@ class AgentRunner:
                 )
             return
 
-        amounts = extract_amounts(message) | {
-            value for value in (intent.price_min, intent.price_max) if value
-        }
         verdict = apply_guardrail(outcome.answer, outcome.evidence, user_amounts=amounts)
         if self.observer is not None:
             self.observer(verdict)
