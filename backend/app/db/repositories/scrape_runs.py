@@ -7,6 +7,7 @@ from typing import Any
 from sqlmodel import Session, col, select
 
 from app.db.models import ScrapeRun, utc_now
+from app.db.repositories.ids import fits_int4
 from app.domain.enums import Category, ScrapeStatus, ScrapeTrigger, SiteKey
 
 # Trạng thái kết thúc: có `finished_at`. `NEEDS_HUMAN` chưa kết thúc (chờ `resume`).
@@ -40,7 +41,7 @@ class ScrapeRunRepository:
         return run
 
     def get(self, run_id: int) -> ScrapeRun | None:
-        return self._session.get(ScrapeRun, run_id)
+        return self._session.get(ScrapeRun, run_id) if fits_int4(run_id) else None
 
     def update_counters(
         self,

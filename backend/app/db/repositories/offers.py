@@ -13,6 +13,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, col, select
 
 from app.db.models import Offer, Product, utc_now
+from app.db.repositories.ids import fits_int4, keep_valid
 from app.domain.dto import FiniteFloat, NonEmptyStr, Vnd
 from app.domain.enums import Category, MatchMethod, PriceType, SiteKey, StockStatus
 
@@ -98,13 +99,15 @@ class OfferRepository:
         self._session = session
 
     def get(self, offer_id: int) -> Offer | None:
-        return self._session.get(Offer, offer_id)
+        return self._session.get(Offer, offer_id) if fits_int4(offer_id) else None
 
     def get_by_url(self, url: str) -> Offer | None:
         return self._session.exec(select(Offer).where(Offer.url == url)).first()
 
     def list_for_product(self, product_id: int, *, active_only: bool = True) -> list[Offer]:
         """Offer của một sản phẩm, rẻ nhất trước (theo giá hiệu lực)."""
+        if not fits_int4(product_id):
+            return []
         statement = select(Offer).where(Offer.product_id == product_id)
         if active_only:
             statement = statement.where(col(Offer.is_active).is_(True))
@@ -115,9 +118,10 @@ class OfferRepository:
     ) -> dict[int, list[Offer]]:
         """Offer của nhiều sản phẩm trong một truy vấn; mỗi sản phẩm xếp rẻ nhất trước."""
         grouped: dict[int, list[Offer]] = {product_id: [] for product_id in product_ids}
-        if not product_ids:
+        valid = keep_valid(product_ids)
+        if not valid:
             return grouped
-        statement = select(Offer).where(col(Offer.product_id).in_(product_ids))
+        statement = select(Offer).where(col(Offer.product_id).in_(valid))
         if active_only:
             statement = statement.where(col(Offer.is_active).is_(True))
         for offer in self._session.exec(statement.order_by(effective_price(), col(Offer.id))):

@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, col, select
 
 from app.db.models import Offer, ShoppingList, ShoppingListItem, utc_now
+from app.db.repositories.ids import fits_int4
 
 
 def normalize_list_name(name: str) -> str:
@@ -29,7 +30,7 @@ class ShoppingListRepository:
         return shopping_list
 
     def get(self, list_id: int) -> ShoppingList | None:
-        return self._session.get(ShoppingList, list_id)
+        return self._session.get(ShoppingList, list_id) if fits_int4(list_id) else None
 
     def get_by_name(self, name: str) -> ShoppingList | None:
         statement = (
@@ -70,7 +71,7 @@ class ShoppingListRepository:
         return list(self._session.exec(statement))
 
     def get_item(self, item_id: int) -> ShoppingListItem | None:
-        return self._session.get(ShoppingListItem, item_id)
+        return self._session.get(ShoppingListItem, item_id) if fits_int4(item_id) else None
 
     def add_item(
         self,
@@ -90,9 +91,13 @@ class ShoppingListRepository:
         `product_id` (nếu không ném `ValueError`).
         """
         if preferred_offer_id is not None:
-            owner = self._session.exec(
-                select(Offer.product_id).where(Offer.id == preferred_offer_id)
-            ).first()
+            owner = (
+                self._session.exec(
+                    select(Offer.product_id).where(Offer.id == preferred_offer_id)
+                ).first()
+                if fits_int4(preferred_offer_id)
+                else None
+            )
             if owner != product_id:
                 raise ValueError("preferred_offer_id không thuộc sản phẩm này")
         moment = now or utc_now()

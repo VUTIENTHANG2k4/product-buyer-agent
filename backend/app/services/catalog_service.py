@@ -21,6 +21,7 @@ from app.db.repositories import (
 from app.domain.catalog import (
     CatalogFilters,
     CatalogSearchResult,
+    CategoryInfo,
     PriceHistoryResult,
     PricePointView,
     ProductFull,
@@ -29,8 +30,10 @@ from app.domain.catalog import (
     RowOffer,
     SiteSeries,
 )
-from app.domain.enums import StockStatus
+from app.domain.enums import Category, StockStatus
 from app.domain.errors import ProductNotFound, ValidationFailed
+from app.normalize.specs import SPEC_MODELS
+from app.services.spec_filters import spec_fields
 from app.services.views import (
     Clock,
     aware_now,
@@ -143,6 +146,23 @@ class CatalogService:
             data_as_of=data_as_of,
             applied_filters=_applied(filters),
         )
+
+    def categories(self) -> list[CategoryInfo]:
+        """Mọi nhóm: tầng, số sản phẩm đang bán và trường lọc được (cho bộ lọc của giao diện).
+
+        Nhóm có khung thông số thuộc tầng 1; `other` (tầng 2) chỉ tìm trực tiếp nên không có sản
+        phẩm lưu và không có trường lọc.
+        """
+        counts = self._products.count_by_category()
+        return [
+            CategoryInfo(
+                key=category,
+                tier=1 if category in SPEC_MODELS else 2,
+                product_count=counts.get(category, 0),
+                filter_fields=list(spec_fields(category)),
+            )
+            for category in Category
+        ]
 
     def get_detail(self, product_id: int) -> ProductFull:
         """Thông số và mọi offer đang bán của một sản phẩm (`ProductNotFound` nếu không có)."""

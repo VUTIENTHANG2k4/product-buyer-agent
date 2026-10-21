@@ -4,7 +4,7 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Đang làm: M7 API trên `milestone/M7-api`. Thứ tự đã duyệt: T6.8 ✅ → T6.9 ✅ → T7.1 → T7.3 → T7.4 → T7.2 → T7.5 (gộp T6.8, T6.9; không gộp T2.8). Đang làm: T7.1.
+- Đang làm: M7 API trên `milestone/M7-api`. Thứ tự đã duyệt: T6.8 ✅ → T6.9 ✅ → T7.1 ✅ → T7.3 → T7.4 → T7.2 → T7.5 (gộp T6.8, T6.9; không gộp T2.8). Đang làm: T7.3.
 - Backlog chưa làm (không chặn M7): T4.6–T4.8, T5.4–T5.7, T6.7–T6.13 (T6.8, T6.9 nên làm trước khi chat ghi dữ liệu thật). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-21 — `/next M7`
 

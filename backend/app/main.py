@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api.errors import UnhandledErrorMiddleware, error_responses, register_error_handlers
-from app.api.routers import health
+from app.api.routers import categories, health, products
 
 FRONTEND_ORIGIN = "http://localhost:5173"
 
@@ -31,6 +31,8 @@ def create_app() -> FastAPI:
     )
     api = APIRouter(prefix="/api")
     api.include_router(health.router)
+    api.include_router(products.router)
+    api.include_router(categories.router)
     app.include_router(api)
     return app
 

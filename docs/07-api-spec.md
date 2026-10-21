@@ -68,11 +68,15 @@ Lỗi HTTP khác do framework sinh ra (ví dụ 418) dùng mã `HTTP_<status>`; 
 ### 3.3 Danh mục
 | Method | Path | Mô tả |
 | --- | --- | --- |
-| GET | `/products` | Lọc: `category`, `q`, `price_min`, `price_max`, `brand` (lặp), `site` (lặp), `spec.<field>__<op>=<value>` (ví dụ `spec.gpu_rank__gte=40`), `sort` (`price_asc`, `price_desc`, `rating_desc`, `updated_desc`), phân trang |
+| GET | `/products` | Lọc: `category`, `q`, `price_min`, `price_max`, `brand` (lặp), `site` (lặp), `spec.<field>__<op>=<value>` (ví dụ `spec.gpu_rank__gte=40`), `sort` (`price_asc` mặc định, `price_desc`, `rating_desc`, `updated_desc`), phân trang. Phản hồi thêm `stale` (dữ liệu cũ hơn 24 giờ) và `data_as_of` (mốc thu thập cũ nhất trong kết quả) ngoài `{items, total, page, page_size}` |
 | GET | `/products/{id}` | Sản phẩm + toàn bộ offer |
-| GET | `/products/{id}/price-history?days=30` | `{series: [{site, points: [{t, price, price_type}]}], min_price, max_price}` |
-| POST | `/compare` | Body `{product_ids: [int] (2..5)}` → `{products, differing_fields, cheapest_product_id}` |
-| GET | `/categories` | Nhóm, tầng, số sản phẩm, trường lọc được hỗ trợ (để frontend dựng bộ lọc) |
+| GET | `/products/{id}/price-history?days=30` | `{series: [{site, points: [{t, price, price_type}]}], min_price, max_price}`; `days` 1..180 |
+| POST | `/compare` | Body `{product_ids: [int] (2..5, khác nhau)}` → `{products, differing_fields, cheapest_product_id}`; id không tồn tại → 404 `PRODUCT_NOT_FOUND` (`details.product_ids`) |
+| GET | `/categories` | `{items: [{key, tier, product_count, filter_fields: [{name, kind, ops, choices}]}]}` để frontend dựng bộ lọc |
+
+Quy ước `spec.*` ở `/products`: cần có `category`; `<op>` là `eq` (mặc định nếu bỏ `__<op>`), `gte`, `lte`, `contains`, `contains_any`, `in`; `in` và `contains_any` nhận danh sách cách nhau bằng dấu phẩy. Trường, kiểu (`integer`, `number`, `boolean`, `string`, `list`), toán tử hợp lệ và giá trị enum (`choices`) của từng nhóm lấy từ `GET /categories` (sinh từ khung specs, gồm cả `gpu_rank` của laptop). Trường lạ, toán tử không hợp với kiểu, giá trị sai kiểu hoặc ngoài `choices` → 422 `VALIDATION_ERROR`. `tier` là 1 cho nhóm có khung specs, 2 cho `other` (chỉ tìm trực tiếp, `product_count` 0, không có `filter_fields`); `product_count` đếm sản phẩm còn ít nhất một offer đang bán.
+
+Id trong đường dẫn hoặc thân yêu cầu ngoài miền khóa chính (≤ 0 hoặc > 2^31−1) được coi là không tồn tại: 404 với mã `*_NOT_FOUND` tương ứng, không phải 500.
 
 ### 3.4 Danh sách mua
 | Method | Path | Mô tả |

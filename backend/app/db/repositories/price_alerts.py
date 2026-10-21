@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlmodel import Session, col, select
 
 from app.db.models import PriceAlert, utc_now
+from app.db.repositories.ids import fits_int4, keep_valid
 from app.domain.enums import AlertChannel, AlertStatus
 
 # Cảnh báo còn hiệu lực: `triggered` vẫn có thể gửi lại khi giá xuống thấp hơn (docs/11 T9.1).
@@ -43,7 +44,7 @@ class PriceAlertRepository:
         return alert
 
     def get(self, alert_id: int) -> PriceAlert | None:
-        return self._session.get(PriceAlert, alert_id)
+        return self._session.get(PriceAlert, alert_id) if fits_int4(alert_id) else None
 
     def list_all(self, *, status: AlertStatus | None = None) -> list[PriceAlert]:
         """Mọi cảnh báo (mới nhất trước), có thể lọc theo trạng thái."""
@@ -57,12 +58,13 @@ class PriceAlertRepository:
         self, product_ids: list[int], *, statuses: tuple[AlertStatus, ...] = LIVE_STATUSES
     ) -> list[PriceAlert]:
         """Cảnh báo của các sản phẩm đã cho, trạng thái trong `statuses` (mặc định còn hiệu lực)."""
-        if not product_ids:
+        valid = keep_valid(product_ids)
+        if not valid:
             return []
         statement = (
             select(PriceAlert)
             .where(
-                col(PriceAlert.product_id).in_(product_ids),
+                col(PriceAlert.product_id).in_(valid),
                 col(PriceAlert.status).in_(statuses),
             )
             .order_by(col(PriceAlert.id))
@@ -73,6 +75,8 @@ class PriceAlertRepository:
         self, product_id: int, channel: AlertChannel, destination: str
     ) -> PriceAlert | None:
         """Cảnh báo còn hiệu lực cùng (sản phẩm, kênh, nơi nhận); dùng để chặn tạo trùng."""
+        if not fits_int4(product_id):
+            return None
         statement = (
             select(PriceAlert)
             .where(
