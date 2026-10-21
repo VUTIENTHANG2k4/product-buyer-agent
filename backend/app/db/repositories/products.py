@@ -14,7 +14,7 @@ from sqlmodel import Session, col, select
 from app.db.models import Offer, Product
 from app.db.repositories.offers import effective_price
 from app.domain.dto import INT8_MAX, SpecFilter, Vnd
-from app.domain.enums import Category, SiteKey
+from app.domain.enums import Category, SiteKey, StockStatus
 
 ProductSort = Literal["price_asc", "price_desc", "rating_desc"]
 
@@ -30,6 +30,10 @@ class ProductQuery(BaseModel):
     price_min: Vnd | None = None  # theo giá hiệu lực của offer đang bán (VND)
     price_max: Vnd | None = None
     spec_filters: list[SpecFilter] = Field(default_factory=list)
+    # Mọi từ (tách theo khoảng trắng) phải xuất hiện trong tên chuẩn, hãng hoặc mã model.
+    text: str | None = Field(default=None, max_length=200)
+    # Mặc định bỏ offer hết hàng khỏi giá/số offer; sản phẩm chỉ còn offer hết hàng thì không hiện.
+    include_out_of_stock: bool = False
     sort: ProductSort = "price_asc"
     limit: int = Field(default=20, ge=1, le=100, strict=True)
     offset: int = Field(default=0, ge=0, le=INT8_MAX, strict=True)
@@ -148,6 +152,8 @@ class ProductRepository:
         """Sản phẩm có ít nhất một offer đang bán khớp điều kiện giá/trang và specs khớp bộ lọc."""
         price = effective_price()
         offer_conditions: list[ColumnElement[bool]] = [col(Offer.is_active).is_(True)]
+        if not query.include_out_of_stock:
+            offer_conditions.append(col(Offer.stock_status) != StockStatus.out_of_stock)
         if query.sites:
             offer_conditions.append(col(Offer.site).in_(query.sites))
         if query.price_min is not None:
@@ -179,6 +185,15 @@ class ProductRepository:
         if query.brands:
             lowered = [brand.lower() for brand in query.brands]
             base = base.where(func.lower(Product.brand).in_(lowered))
+        for term in (query.text or "").split():
+            pattern = "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            base = base.where(
+                or_(
+                    col(Product.canonical_name).ilike(pattern, escape="\\"),
+                    col(Product.brand).ilike(pattern, escape="\\"),
+                    col(Product.model_code).ilike(pattern, escape="\\"),
+                )
+            )
         for spec_filter in query.spec_filters:
             base = base.where(spec_condition(spec_filter))
 

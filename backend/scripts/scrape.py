@@ -17,6 +17,7 @@ from collections.abc import Callable, Sequence
 from sqlalchemy.exc import OperationalError
 from sqlmodel import Session
 
+from app.agent.spec_filler import build_spec_filler
 from app.config import get_settings
 from app.db.engine import get_engine
 from app.domain.enums import Category, ScrapeStatus, ScrapeTrigger, SiteKey
@@ -122,7 +123,9 @@ async def _main(args: argparse.Namespace) -> int:
     engine = get_engine(settings.database_url.get_secret_value())
     ask: Callable[[str], str] | None = input if sys.stdin.isatty() else None
     async with build_fetcher(settings) as fetcher:
-        service = ScrapeService(lambda: Session(engine), fetcher, settings)
+        service = ScrapeService(
+            lambda: Session(engine), fetcher, settings, spec_filler=build_spec_filler(settings)
+        )
         return await run_command(
             service,
             site=args.site,

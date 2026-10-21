@@ -7,8 +7,14 @@ transaction); thời gian truyền vào qua `now` (UTC) để test dùng đồng
 from app.db.repositories.agent_runs import AgentRunRepository
 from app.db.repositories.caches import LiveSearchCacheRepository, LlmExtractionCacheRepository
 from app.db.repositories.conversations import ConversationRepository, MessageRepository
-from app.db.repositories.offers import OfferRepository, OfferUpsert, UpsertResult, effective_price
-from app.db.repositories.price_alerts import PriceAlertRepository
+from app.db.repositories.offers import (
+    OfferRepository,
+    OfferUpsert,
+    UpsertResult,
+    effective_price,
+    effective_price_of,
+)
+from app.db.repositories.price_alerts import PriceAlertRepository, normalize_destination
 from app.db.repositories.price_history import (
     PriceHistoryRepository,
     PricePoint,
@@ -21,7 +27,7 @@ from app.db.repositories.products import (
     ProductRepository,
 )
 from app.db.repositories.scrape_runs import ScrapeRunRepository
-from app.db.repositories.shopping_lists import ShoppingListRepository
+from app.db.repositories.shopping_lists import ShoppingListRepository, normalize_list_name
 
 __all__ = [
     "AgentRunRepository",
@@ -43,4 +49,7 @@ __all__ = [
     "SnapshotResult",
     "UpsertResult",
     "effective_price",
+    "effective_price_of",
+    "normalize_destination",
+    "normalize_list_name",
 ]

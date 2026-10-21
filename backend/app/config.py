@@ -84,10 +84,12 @@ class Settings(BaseSettings):
     # LLM
     llm_provider: Literal["gemini", "openai", "fake"] = "gemini"
     google_api_key: SecretStr = SecretStr("")
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     openai_api_key: SecretStr = SecretStr("")
     openai_model: str = "gpt-4o-mini"
     agent_max_steps: PositiveInt = 8
+    # 0 = không giới hạn. Gói miễn phí của Gemini cho ~15 request/phút/model: đặt 12 khi chạy eval.
+    llm_max_rpm: NonNegativeInt = 0
     llm_extractor_enabled: bool = True
 
     # Cơ sở dữ liệu (URL chứa mật khẩu nên là SecretStr; không có mặc định để khỏi hardcode).

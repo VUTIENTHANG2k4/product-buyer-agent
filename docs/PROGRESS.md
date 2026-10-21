@@ -4,9 +4,9 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Đang làm: không có. M5 xong trên nhánh `milestone/M5-normalize-match`, chờ người dùng merge vào `main` rồi `/clear`.
-- Task kế tiếp đề xuất: `/next M6` (Agent; gộp T5.3 LLM dự phòng vì cần T6.1). Backlog chưa làm: T4.6–T4.8, T5.4–T5.7. Người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-20 — M5 xong (qua `code-reviewer` + `qa-tester`)
+- Đang làm: (–). M6 đã đóng trên `milestone/M6-agent`, chờ người dùng merge. Kế tiếp đề xuất: M7 API (`/next M7`); nên làm T6.8, T6.9 (khóa tool ghi, ngưỡng cảnh báo sai thang) trước khi chat ghi dữ liệu thật.
+- Backlog chưa làm (không chặn M7): T4.6–T4.8, T5.4–T5.7, T6.7–T6.13. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-10-21 — đóng M6 (`/done M6`)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -17,7 +17,7 @@
 | M3 GearVN | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 4 nhóm `PAGES=1` 80/80 mục parse đúng. M3b (T1.7, T1.8, T3.4, T2.7) qua `code-reviewer`, **bỏ qua `qa-tester`** theo quyết định của người dùng |
 | M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). Backlog: T4.6 (seed/test), T4.7, T4.8 |
 | M5 Chuẩn hóa & ghép | ✅ | Qua `code-reviewer` + `qa-tester`; T5.1, T5.2 xong, T5.3 hoãn sang M6. QA còn 8 lỗi nhỏ ghi thành test `xfail(strict)` (T5.4–T5.7) |
-| M6 Agent | ⬜ | |
+| M6 Agent | ✅ | Gộp T5.3; qua `code-reviewer` + `qa-tester` (10 bug sửa ngay, 7 bug giữ `xfail(strict)` BUG-M6-11…17 → T6.8–T6.13). T6.7 tùy chọn |
 | M7 API | ⬜ | |
 | M8 Frontend | ⬜ | Có thêm T8.9, T8.10 (từ QA M0) |
 | M9 Theo dõi giá | ⬜ | |
@@ -30,9 +30,9 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,38% (3803 pass + 49 xfail đã biết, ngưỡng 80% trong `make test-be`, ~4 phút) | 2026-10-20 |
-| Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
-| Eval (intent accuracy / constraint satisfaction / hallucination) | – / – / – | |
+| Coverage backend | 99,32% (4548 pass + 56 xfail đã biết, ngưỡng 80% trong `make test-be`, ~4,5 phút) | 2026-10-21 |
+| Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-21 |
+| Eval (intent accuracy / constraint satisfaction / hallucination) | 100% / 98,7% / 0 (clarification 100%, tool 96,4%, latency p50 15,7 s bị kéo dài bởi `LLM_MAX_RPM=12`; 29/31 câu đạt; `gemini-3.5-flash-lite`; chi tiết T6.7; **chưa đo lại** sau các sửa executor/guardrail của review và QA M6) | 2026-10-21 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
 - 2026-10-16: đổi CSDL sang PostgreSQL 17 qua Docker Compose, test trên Postgres thật ([ADR-0007](adr/0007-postgresql.md) thay ADR-0002). Cần `make db-up`.
@@ -56,3 +56,4 @@
 - 2026-10-19 (M3b): robots.txt 403/429/challenge CDN → `RobotsBlocked` → lượt `BLOCKED` + nghỉ 24 giờ (429 không chờ `Retry-After`). Fetcher đọc thân theo luồng, từ chối > 5 MB sau giải nén (`ResponseTooLarge`). `clean_url` giữ mã hóa query gốc, sắp tham số, viết hoa hex: offer có query có thể đổi khóa so với trước. `ListingPage.pagination_loop` báo vòng lặp phân trang. `MockShopLocation` cho phép import registry mà không cần đủ env. Hạng GPU thêm RTX 3070/3070 Ti/3080 (ước lượng); chuỗi GPU > 500 ký tự → `None`. Chưa có QA biên cho Fetcher streaming và `clean_url`: nghi lỗi thì thử hai chỗ này trước.
 - 2026-10-19 (M4): FPT Shop duyệt qua sitemap (danh mục chỉ ~25 sản phẩm tĩnh), mỗi "trang" là lô 20 sản phẩm, JSON-LD `Product`; lỗi tải rời rạc bị bỏ qua, 3 lỗi liên tiếp mới dừng; 404/410 đếm vào `ListingPage.gone` (không cấm tắt offer). An Phát: trang nào cũng có form đăng ký chứa chữ captcha nên `AnPhatScraper.detect_challenge` loại đúng tên form đó (5xx không loại); `scripts.fetch_page` dùng detector của scraper. `detect_challenge` bỏ thân `<script>` nội tuyến (quét tuyến tính). Seed/test còn dùng hoangha/laptop88 (T4.6).
 - 2026-10-20 (M5): bộ trích xuất theo luật `normalize/extract.py` (không đoán; thiếu trường bắt buộc → `specs_confidence < 0,5`, chờ T5.3). Ghép mẫu `normalize/matcher.py` dùng `token_sort_ratio` + chốt chặn (không dùng `token_set_ratio` vì ghép nhầm), phụ kiện không có `model_code`, màu không phải khác biệt sản phẩm; mã model mạnh/yếu và giới hạn đã biết ở `docs/04` §7. Offer đã có không bao giờ được ghép lại (T5.4). Test có `xfail(strict=True)` mã `BUG-M5-n` trong `*_qa_m5.py`: XPASS báo đỏ, gỡ dấu khi sửa. `clean()` (specs/parsing.py) chuẩn hóa NFKC cho mọi văn bản đầu vào.
+- 2026-10-21 (M6): agent = `planner` → `ToolLoop` (8 tool + `FinalAnswer`) → `apply_guardrail`, chạy qua `AgentRunner` (chi tiết `docs/05` §3–§7). LLM thật: dùng `gemini-3.5-flash-lite` (`gemini-2.5-flash` đã ngừng, `gemini-3.8-flash` chậm 20–30 s); gói miễn phí 15 request/phút nên đặt `LLM_MAX_RPM=12`. `make eval` và pytest dùng chung test DB: không chạy đồng thời. Test `xfail(strict=True)` mã `BUG-M6-n` trong `*_qa_m6.py`: XPASS báo đỏ, gỡ dấu khi sửa. `AgentRun.id` là UUID ngẫu nhiên nên test không được dựa vào thứ tự run cùng `created_at`.

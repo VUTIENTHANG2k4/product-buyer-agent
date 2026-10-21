@@ -62,15 +62,6 @@ def test_find_live_returns_the_oldest_when_duplicates_already_exist(db_session: 
     assert len(repo.list_for_products([product_id])) == 2
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1 (cần quyết định thiết kế): find_live so khớp destination chính xác từng ký tự, nên "
-        "'Mock@Example.com' và 'mock@example.com ' (có khoảng trắng) được coi là hai người nhận "
-        "khác nhau -> tạo hai cảnh báo trùng và gửi email hai lần cho cùng một hộp thư. Cần chuẩn "
-        "hóa destination (strip, lower cho email) khi tạo và khi tìm."
-    ),
-)
 @pytest.mark.parametrize("variant", ["MOCK@EXAMPLE.COM", "  mock@example.com ", "Mock@Example.com"])
 def test_find_live_treats_email_variants_of_one_mailbox_as_the_same_destination(
     db_session: Session, variant: str

@@ -11,6 +11,12 @@ from app.domain.enums import AlertChannel, AlertStatus
 LIVE_STATUSES = (AlertStatus.active, AlertStatus.triggered)
 
 
+def normalize_destination(channel: AlertChannel, destination: str) -> str:
+    """Bỏ khoảng trắng hai đầu; email thì thêm chữ thường (hộp thư không phân biệt hoa/thường)."""
+    cleaned = destination.strip()
+    return cleaned.lower() if channel is AlertChannel.email else cleaned
+
+
 class PriceAlertRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -29,7 +35,7 @@ class PriceAlertRepository:
             product_id=product_id,
             target_price=target_price,
             channel=channel,
-            destination=destination,
+            destination=normalize_destination(channel, destination),
             created_at=now or utc_now(),
         )
         self._session.add(alert)
@@ -72,7 +78,7 @@ class PriceAlertRepository:
             .where(
                 PriceAlert.product_id == product_id,
                 PriceAlert.channel == channel,
-                PriceAlert.destination == destination,
+                PriceAlert.destination == normalize_destination(channel, destination),
                 col(PriceAlert.status).in_(LIVE_STATUSES),
             )
             .order_by(col(PriceAlert.id))

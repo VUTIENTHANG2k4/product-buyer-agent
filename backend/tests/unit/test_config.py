@@ -34,7 +34,7 @@ def test_values_come_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_empty_variable_falls_back_to_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GEMINI_MODEL", "")
     settings = Settings(_env_file=None)  # type: ignore[call-arg]
-    assert settings.gemini_model == "gemini-2.5-flash"
+    assert settings.gemini_model == "gemini-3.5-flash-lite"
 
 
 def test_database_urls_use_psycopg3_driver() -> None:

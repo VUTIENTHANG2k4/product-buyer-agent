@@ -132,15 +132,6 @@ def test_two_lists_with_the_same_name_resolve_to_the_oldest(db_session: Session)
     assert len(repo.list_all()) == 2
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1 (cần quyết định thiết kế): preferred_offer_id chỉ có khóa ngoại tới offer, không "
-        "ràng buộc offer thuộc product_id của mục. Có thể lưu mục 'máy A' ưu tiên link của 'máy "
-        "B' -> bảng so sánh/giá hiện tại sai link. Cần kiểm tra ở repository/service hoặc khóa "
-        "ngoại ghép (product_id, preferred_offer_id)."
-    ),
-)
 def test_add_item_rejects_preferred_offer_of_another_product(db_session: Session) -> None:
     repo = ShoppingListRepository(db_session)
     shopping_list = repo.create("Mock")
@@ -154,15 +145,6 @@ def test_add_item_rejects_preferred_offer_of_another_product(db_session: Session
         repo.add_item(shopping_list.id, mine, preferred_offer_id=foreign.id)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M1 (cần quyết định thiết kế): get_by_name so khớp byte-by-byte, nên tên danh sách "
-        "tiếng Việt dạng NFD (gõ trên macOS/Telegram/một số bộ gõ) không tìm thấy danh sách đã "
-        "lưu dạng NFC -> agent tạo danh sách trùng tên. Chuẩn hóa NFC (và so khớp không phân "
-        "biệt hoa/thường) ở service hoặc repository."
-    ),
-)
 def test_get_by_name_matches_vietnamese_name_in_either_unicode_form(db_session: Session) -> None:
     repo = ShoppingListRepository(db_session)
     name = "Mock máy học tập"

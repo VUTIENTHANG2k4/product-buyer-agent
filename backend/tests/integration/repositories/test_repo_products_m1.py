@@ -234,8 +234,8 @@ def test_search_price_filter_ignores_inactive_offers(db_session: Session) -> Non
     assert [(hit.min_price, hit.offers_count) for hit in page.items] == [(30_000_000, 1)]
 
 
-def test_search_counts_out_of_stock_offers_like_any_active_offer(db_session: Session) -> None:
-    """Ghi nhận hành vi hiện tại: `stock_status` không ảnh hưởng `search` (xem báo cáo QA M1)."""
+def test_search_ignores_out_of_stock_offers_unless_asked(db_session: Session) -> None:
+    """T6.2d: offer hết hàng không vào giá thấp nhất/số offer; `include_out_of_stock` bật lại."""
     product = _add(db_session)
     _offer(
         db_session,
@@ -246,9 +246,27 @@ def test_search_counts_out_of_stock_offers_like_any_active_offer(db_session: Ses
     )
     _offer(db_session, product, "https://m.example/in", price=20_000_000)
 
-    hit = ProductRepository(db_session).search(ProductQuery()).items[0]
+    repo = ProductRepository(db_session)
+    default_hit = repo.search(ProductQuery()).items[0]
+    all_hit = repo.search(ProductQuery(include_out_of_stock=True)).items[0]
 
-    assert (hit.min_price, hit.offers_count) == (15_000_000, 2)
+    assert (default_hit.min_price, default_hit.offers_count) == (20_000_000, 1)
+    assert (all_hit.min_price, all_hit.offers_count) == (15_000_000, 2)
+
+
+def test_search_hides_product_whose_only_offer_is_out_of_stock(db_session: Session) -> None:
+    product = _add(db_session)
+    _offer(
+        db_session,
+        product,
+        "https://m.example/oos-only",
+        price=15_000_000,
+        stock_status=StockStatus.out_of_stock,
+    )
+    repo = ProductRepository(db_session)
+
+    assert repo.search(ProductQuery()).total == 0
+    assert repo.search(ProductQuery(include_out_of_stock=True)).total == 1
 
 
 # --- Phân trang, sắp xếp, tổng khi limit/offset ngoài miền ------------------------------------
