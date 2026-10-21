@@ -50,9 +50,16 @@ _ALERT: Final = re.compile(
 # mệnh đề và khi từ phủ định cách động từ tối đa 2 từ, nên "không quá 30 triệu và đặt cảnh báo"
 # (phủ định thuộc về giá) không bị chặn nhầm. Gắn với cuối cửa sổ (`$`).
 _NEGATION: Final = re.compile(
-    r"\b(dung|khong|ko|chang|khoi|thoi|chua|do not|don'?t|no need|never)\b(?: \w+){0,2} ?$"
+    r"\b(dung(?! (?:quen|ngai)\b)|khong|ko|chang|khoi|thoi|chua|do not|don'?t|no need|never)"
+    r"\b(?: \w+){0,2} ?$"
 )
 _NEGATION_WINDOW: Final = 40
+_CLAUSE_LOOKBACK: Final = 200  # xem lại tối đa ngần này ký tự để tìm động từ của mệnh đề
+# Động từ yêu cầu; phủ định được xét ngay trước động từ GẦN NHẤT của mệnh đề, vì cụm khớp có thể
+# bắt đầu muộn ("đừng thêm <tên sản phẩm dài> vào danh sách" khớp từ "vào danh sách").
+_VERB: Final = re.compile(
+    r"\b(them|luu|add|dat|tao|bat|cai|thiet lap|set|create|bao|nhac|thong bao|notify)\b"
+)
 _SENTENCE_END: Final = ".?!,;"  # dấu ngắt câu/mệnh đề: phủ định ở mệnh đề trước không lan sang sau
 # Có cả "www." không scheme (markdown dạng GFM tự biến thành link) và scheme viết hoa.
 _URL: Final = re.compile(r"(?:https?://|www\.)[^\s)\]>\"'<]+", re.IGNORECASE)
@@ -77,9 +84,16 @@ def _requested(pattern: re.Pattern[str], folded: str) -> bool:
     """Có cụm yêu cầu khớp `pattern` mà không bị từ phủ định đứng ngay trước trong cùng câu."""
     for match in pattern.finditer(folded):
         start = match.start()
-        window = folded[max(0, start - _NEGATION_WINDOW) : start]
-        cut = max(window.rfind(mark) for mark in _SENTENCE_END)
-        if not _NEGATION.search(window[cut + 1 :]):
+        lo = max(0, start - _CLAUSE_LOOKBACK)
+        segment = folded[lo:start]
+        cut = max(segment.rfind(mark) for mark in _SENTENCE_END)
+        lo, segment = lo + cut + 1, segment[cut + 1 :]  # chỉ giữ mệnh đề chứa cụm khớp
+        verbs = list(_VERB.finditer(segment))
+        # Cụm khớp tự bắt đầu bằng động từ thì phủ định phải đứng ngay trước nó; chỉ khi cụm bắt đầu
+        # muộn ("vào danh sách") mới lùi về động từ gần nhất của mệnh đề.
+        anchor = lo + verbs[-1].start() if verbs and not _VERB.match(folded, start) else start
+        window = folded[max(lo, anchor - _NEGATION_WINDOW) : anchor]
+        if not _NEGATION.search(window):
             return True
     return False
 

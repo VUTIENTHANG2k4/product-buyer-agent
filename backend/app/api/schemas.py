@@ -60,7 +60,7 @@ class ProductListResponse(Page[ProductSummary]):
 class CompareRequest(BaseModel):
     """POST /compare: 2–5 sản phẩm. Id không tồn tại (kể cả ngoài miền) → `PRODUCT_NOT_FOUND`."""
 
-    product_ids: list[int] = Field(min_length=2, max_length=5)
+    product_ids: list[StrictInt] = Field(min_length=2, max_length=5)
 
 
 class CategoriesResponse(BaseModel):
@@ -90,10 +90,10 @@ class ListBody(BaseModel):
 class ItemCreate(BaseModel):
     """POST /lists/{id}/items. Sản phẩm đã có trong danh sách thì cộng dồn `quantity`."""
 
-    product_id: int
+    product_id: StrictInt
     quantity: StrictInt = 1
     note: str | None = Field(default=None, max_length=1000)
-    preferred_offer_id: int | None = None
+    preferred_offer_id: StrictInt | None = None
 
 
 class ItemPatch(BaseModel):
@@ -102,7 +102,7 @@ class ItemPatch(BaseModel):
 
     quantity: StrictInt | None = None
     note: str | None = Field(default=None, max_length=1000)
-    preferred_offer_id: int | None = None
+    preferred_offer_id: StrictInt | None = None
 
     @model_validator(mode="after")
     def _quantity_is_not_null(self) -> Self:
@@ -138,7 +138,7 @@ class ScrapeRunCreate(BaseModel):
 
     site: SiteKey
     category: Category
-    max_pages: int | None = Field(default=None, ge=1, le=100)
+    max_pages: StrictInt | None = Field(default=None, ge=1, le=100)
 
 
 class ChallengeAnswer(BaseModel):
@@ -151,7 +151,7 @@ class ChatRequest(BaseModel):
     """POST /chat. `conversation_id` bỏ trống thì tạo hội thoại mới."""
 
     message: str = Field(min_length=1, max_length=1000)
-    conversation_id: int | None = None
+    conversation_id: StrictInt | None = None
 
 
 class ChatAccepted(BaseModel):

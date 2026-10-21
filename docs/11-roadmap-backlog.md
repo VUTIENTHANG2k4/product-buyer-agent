@@ -314,6 +314,11 @@ Ghi chú từ T6.2: `PATCH /lists/{id}/items/{item_id}` cần `preferred_offer_i
 - `events_since` cắt sự kiện ở mức SQL (hiện tải cả cột `events` mỗi nhịp 0,25 s); `GET /chat/{id}` bỏ qua sự kiện lưu hỏng thay vì trả 500; `existing_run` không tải cả `events`.
 - `GET /products`: tham số `spec.*` lặp (chỉ giữ giá trị cuối) và `price_min > price_max` (trả rỗng) ghi rõ trong docs/07 hoặc trả 422; cân nhắc từ chối `target_price` lớn bất thường so với số người dùng nêu (T6.9).
 
+**T7.7** — Phát sinh từ QA M7 (13 ca `xfail(strict=True)` mã `BUG-M7-n` trong `tests/api/*_qa_m7.py`; BUG-M7-1, 2, 5, 7 và nửa đầu của BUG-M7-6 đã sửa ngay; XPASS báo đỏ → gỡ dấu khi sửa). Còn lại, không chặn M8:
+- **BUG-M7-3** (trung-thấp): `q` không bỏ dấu, nên "chuot khong day" không tìm thấy "Chuột không dây" dù planner prompt nói hỗ trợ không dấu. Cần so khớp trên văn bản đã `fold` (cột tên đã chuẩn hóa hoặc extension `unaccent`; quyết định thiết kế vì đụng schema/chỉ mục).
+- **BUG-M7-4** (thấp): thân không giải mã được (UTF-8 hỏng, số nguyên 5000 chữ số) trả 400 `HTTP_400` thông điệp tiếng Anh thay vì 422 `VALIDATION_ERROR`; ánh xạ lỗi parse thân sang `ValidationFailed` ở `api/errors.py`.
+- **BUG-M7-6b** (thấp-trung): phủ định cách động từ quá 2 từ qua dấu phẩy ("Không muốn đâu, tôi thêm vào danh sách làm gì") vẫn mở khóa tool ghi; cần quyết định có coi mệnh đề trước là lời từ chối của mệnh đề sau không (dễ chặn nhầm).
+
 Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test integration cho mọi endpoint (thành công + ít nhất một lỗi); SSE test bằng client đọc luồng, gồm phát lại khi kết nối sau khi run xong.
 
 ### M8 — Frontend

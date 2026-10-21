@@ -5,7 +5,7 @@ tính toán `gpu_rank`, nên danh sách lọc được không bao giờ lệch k
 """
 
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from functools import cache
 from typing import Any, Final
 
@@ -97,14 +97,23 @@ def _value(info: SpecFieldInfo, op: str, raw: str) -> bool | int | float | str |
     return raw
 
 
-def parse_spec_filters(params: Mapping[str, str], category: Category | None) -> list[SpecFilter]:
+def parse_spec_filters(
+    params: Mapping[str, str] | Iterable[tuple[str, str]], category: Category | None
+) -> list[SpecFilter]:
     """Bộ lọc từ các tham số `spec.<field>__<op>=<value>` (tham số khác bị bỏ qua).
 
     Cần `category` để biết khung thông số. Trường lạ, toán tử không hợp với kiểu trường hoặc giá trị
     sai kiểu/ngoài enum → `ValidationFailed` (422). Danh sách giá trị cho `in`/`contains_any` cách
     nhau bằng dấu phẩy.
     """
-    raw = {key: value for key, value in params.items() if key.startswith(SPEC_PARAM_PREFIX)}
+    pairs = params.items() if isinstance(params, Mapping) else params
+    raw: dict[str, str] = {}
+    for key, value in pairs:
+        if not key.startswith(SPEC_PARAM_PREFIX):
+            continue
+        if key in raw:  # lặp lại sẽ làm mất ràng buộc đầu một cách im lặng
+            raise ValidationFailed(f"Tham số {key[:100]} chỉ được dùng một lần")
+        raw[key] = value
     if not raw:
         return []
     if category is None:

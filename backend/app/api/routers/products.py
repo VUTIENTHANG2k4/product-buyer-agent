@@ -54,7 +54,7 @@ def list_products(
         price_max=price_max,
         brands=brand or [],
         sites=site or [],
-        spec_filters=parse_spec_filters(dict(request.query_params), category),
+        spec_filters=parse_spec_filters(request.query_params.multi_items(), category),
         sort=sort,
         limit=page_size,
         offset=(page - 1) * page_size,
