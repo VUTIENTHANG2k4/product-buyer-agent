@@ -32,6 +32,7 @@ dev = [
     "respx==0.23.1",
     "ruff==0.17.1",
     "time-machine==3.5.1",
+    "types-pyyaml==6.0.12.20260906",
 ]
 
 [tool.uv]

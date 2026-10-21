@@ -29,7 +29,7 @@ flowchart LR
 | Tham số | Mặc định | Ghi chú |
 | --- | --- | --- |
 | Provider | `gemini` | `openai` hoặc `fake` qua `LLM_PROVIDER` ([ADR-0001](adr/0001-gemini-langchain.md)) |
-| Model | `GEMINI_MODEL` | Kiểm tra tên model hiện hành trên tài liệu Google trước M6 |
+| Model | `GEMINI_MODEL` (mặc định `gemini-3.5-flash-lite`) | `gemini-2.5-flash` đã bị Google ngừng cấp cho tài khoản mới (API trả 404 NOT_FOUND, 2026-10-21). `gemini-3.8-flash` (tên API gợi ý) chạy được nhưng mất 20–30 giây mỗi lần gọi (suy luận) và có lúc 503; `gemini-3.5-flash-lite` mất ~3 giây và là model của báo cáo cơ sở. Model này bỏ qua `temperature` (cảnh báo của langchain-google-genai). Đổi model thì chạy lại `make eval` |
 | Temperature | 0 (planner), 0.2 (executor) | |
 | `AGENT_MAX_STEPS` | 8 | Hết bước → trả kết quả tốt nhất hiện có + ghi chú |
 | Timeout mỗi lần gọi LLM | 30 s | Retry 1 lần |
@@ -77,7 +77,7 @@ Lưu ở `app/agent/prompts/*.md` (không viết chuỗi prompt dài trong code)
 
 **Triển khai (T6.3):** `app/agent/planner.py` (`Planner.plan(message, history)`) dựng prompt từ `prompts/planner.md` (bảng hạng GPU sinh từ `GPU_RANKS`, snapshot ở `tests/unit/snapshots/planner_prompt.md`, cập nhật bằng `UPDATE_SNAPSHOTS=1`), gọi `with_structured_output(QueryIntent)`, thử lại 1 lần khi kết quả không hợp lệ (kèm lý do lỗi), hai lần hỏng hoặc LLM lỗi → `LlmUnavailable`. Rồi `app/agent/intent.py::postprocess_intent` (hàm thuần) sửa lỗi LLM hay mắc theo luật cố định: đơn vị tiền đối chiếu với số tiền trong câu ("30" → 30.000.000), "tầm X" → ±10% khi chỉ có một số tiền và không phải khoảng "A đến B", tên GPU → `gpu_rank gte` (thêm nếu LLM quên; GPU chưa có hạng thì bỏ điều kiện), RAM/ổ cứng/Hz mặc định `gte` trừ khi nói "đúng", "1TB" → 1000 GB, bỏ trang chưa có dữ liệu và thêm bước giải thích khi nhắc Shopee/Tiki…, "rẻ nhất" → `price_asc`, tầng/nhóm nhất quán, có cờ hỏi lại thì phải có câu hỏi, đủ 1–5 bước kế hoạch. Việc có hỏi lại hay không do prompt quyết định (không ép ở code, vì "so sánh 2 máy rẻ nhất" hay "tôi đang theo dõi gì" không có nhóm nhưng không cần hỏi); `make eval` đo chỉ số này.
 
-`QueryIntent` và `SpecFilter` dùng `extra="forbid"` + `validate_assignment=True`: tên trường LLM gõ sai là lỗi (planner thử lại) thay vì bị bỏ qua im lặng. JSON schema gửi cho Gemini vì thế có `additionalProperties: false`; SDK `google-genai` 2.31 liệt kê `additionalProperties` trong các từ khóa schema được hỗ trợ nhưng **chưa kiểm với Gemini thật** (cần `GOOGLE_API_KEY`): lần chạy `make eval` đầu tiên phải xác nhận; nếu Gemini từ chối schema, bỏ `additionalProperties` khỏi schema gửi đi (giữ kiểm tra ở phía code).
+`QueryIntent` và `SpecFilter` dùng `extra="forbid"` + `validate_assignment=True`: tên trường LLM gõ sai là lỗi (planner thử lại) thay vì bị bỏ qua im lặng. JSON schema vì thế có `additionalProperties: false`. **Đã kiểm với Gemini thật (2026-10-21):** `langchain-google-genai` ghi log "Key 'additionalProperties' is not supported in schema, ignoring" rồi bỏ khóa này khỏi schema gửi đi, nên Gemini không lỗi nhưng cũng không bị ràng buộc; việc từ chối trường lạ chỉ do phía code (Pydantic) + thử lại. Eval tắt log này.
 
 **`executor.md` (ý chính):**
 - Chỉ trả lời dựa trên kết quả tool. **Không bao giờ** nêu sản phẩm, giá hay link không có trong kết quả tool.
@@ -128,7 +128,7 @@ Toàn bộ sự kiện lưu vào `agent_run.events` để xem lại.
 
 ## 7. Đánh giá agent (eval)
 
-Bộ câu hỏi: [docs/eval/queries.yaml](eval/queries.yaml). Chạy `make eval` trên **DB seed cố định** (`scripts/seed.py --fixture eval`) để kết quả tái lập được.
+Bộ câu hỏi: [docs/eval/queries.yaml](eval/queries.yaml). `make eval` chạy trên **DB seed cố định** để kết quả tái lập được: script nạp seed `eval` (hư cấu) vào **DB test** (`TEST_DATABASE_URL`, tên kết thúc `_test`) trong một transaction rồi hoàn tác khi xong, nên không đụng DB dev (đang chứa dữ liệu thu thập thật) và không cần `make seed`. Đừng chạy cùng lúc với `pytest` (hai bên chờ khóa của nhau).
 
 | Chỉ số | Cách đo | Ngưỡng đạt (gắn với mục tiêu ở [01](01-requirements.md)) |
 | --- | --- | --- |
@@ -142,3 +142,5 @@ Bộ câu hỏi: [docs/eval/queries.yaml](eval/queries.yaml). Chạy `make eval`
 Hai lớp kiểm tra:
 - **Test agent trong CI** (`backend/tests/agent/`, chạy trong `make check`): dùng `ScriptedChatModel` phát tool call định sẵn để kiểm tra nối tool, guardrail, sự kiện SSE, giới hạn bước. Không gọi mạng.
 - **Eval với LLM thật** (`make eval`): gọi Gemini trên toàn bộ `queries.yaml`, xuất báo cáo `reports/eval-<ngày>.md` với các chỉ số trên. Cần `GOOGLE_API_KEY`. Chạy thủ công cuối M6, sau mỗi lần sửa prompt, và trước demo. Không chạy trong CI để tránh tốn phí và kết quả dao động.
+
+**Triển khai (T6.6):** `scripts/eval_core.py` (nạp YAML với khóa chặt, chấm điểm, viết báo cáo; có test không cần LLM) và `scripts/run_eval.py` (chạy từng câu qua `AgentRunner`: các lượt `context` trước rồi câu chính trong cùng hội thoại). Cách chấm: *intent accuracy* tính theo trường đã khai báo trong `expected.intent` (danh sách so như tập, không phân biệt hoa/thường); *constraint satisfaction* theo từng sản phẩm trong bảng kết quả (thiếu thông số = không thỏa); *hallucination* tính từ kết quả guardrail TRƯỚC khi lọc (id/link bị loại hoặc `AGENT_HALLUCINATION`), nên đo đúng điều LLM bịa chứ không phải điều người dùng thấy; *tool correctness* đếm cả tool bị guardrail chặn (LLM đã cố gọi) và hỏi lại chỉ là chấp nhận được khi câu chỉ cấm tool; *latency p50* đo từ lúc gửi câu chính đến khi kết thúc, chỉ các câu có câu trả lời. Lỗi LLM/hạn mức (429, 503) là `LLM_UNAVAILABLE` và làm ca đó hỏng: chạy lại bằng `make eval CASES="…"`. `make eval` mặc định giới hạn 12 lần gọi LLM mỗi phút (`LLM_MAX_RPM` hoặc `--rpm`) vì gói miễn phí Gemini chỉ cho ~15 request/phút/model; `SLEEP=giây` thêm nghỉ giữa các câu. Mã thoát 0 khi mọi chỉ số đạt ngưỡng, 1 khi chưa đạt, 2 khi không chạy được.

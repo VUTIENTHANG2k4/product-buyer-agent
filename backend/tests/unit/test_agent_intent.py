@@ -146,6 +146,12 @@ def test_ram_is_at_least_unless_user_says_exact(message: str, op: str) -> None:
     assert result.spec_filters == [SpecFilter(field="ram_gb", op=op, value=16)]  # type: ignore[arg-type]
 
 
+def test_numeric_gpu_rank_eq_from_llm_becomes_at_least() -> None:
+    given = {"field": "gpu_rank", "op": "eq", "value": 40}
+    result = postprocess_intent(intent(category="laptop", spec_filters=[given]), "laptop rtx 4060")
+    assert result.spec_filters == [SpecFilter(field="gpu_rank", op="gte", value=40)]
+
+
 def test_other_eq_filters_are_left_alone() -> None:
     given = {"field": "switch_type", "op": "eq", "value": "mechanical"}
     result = postprocess_intent(intent(category="keyboard", spec_filters=[given]), "phím cơ")

@@ -168,6 +168,23 @@ def test_prices_in_text_are_checked_against_tool_results(
     assert verdict.price_warnings == warnings
 
 
+def test_product_ids_written_in_the_text_are_not_price_warnings() -> None:
+    evidence = Evidence(product_ids={118687, 118_666})
+    answer = FinalAnswer(
+        text="Gigabyte (ID: 118687) và máy id=118666, giá 18 triệu", product_ids=[118687]
+    )
+
+    verdict = apply_guardrail(answer, evidence)
+
+    assert verdict.price_warnings == (18_000_000,)  # chỉ số tiền thật sự lệch mới bị báo
+
+
+def test_evidence_can_start_with_ids_shown_in_the_previous_turn() -> None:
+    previous = Evidence(product_ids={7})
+    verdict = apply_guardrail(FinalAnswer(text="x", product_ids=[7, 8]), previous)
+    assert (verdict.answer.product_ids, verdict.dropped_product_ids) == ([7], (8,))
+
+
 def test_suggestions_are_trimmed_to_three_non_empty() -> None:
     answer = FinalAnswer(text="x", follow_up_suggestions=[" a ", "", "b", "c", "d"])
     assert apply_guardrail(answer, Evidence()).answer.follow_up_suggestions == ["a", "b", "c"]

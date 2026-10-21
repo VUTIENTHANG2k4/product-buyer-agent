@@ -4,7 +4,7 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Đang làm: M6 Agent trên nhánh `milestone/M6-agent`. Thứ tự task: T6.1 ✅ → T5.3 ✅ → T6.2 ✅ → T6.3 ✅ → T6.4 ✅ → T6.5 ✅ → T6.6 (đang làm).
+- Đang làm: M6 Agent trên nhánh `milestone/M6-agent`. Thứ tự task: T6.1 ✅ → T5.3 ✅ → T6.2 ✅ → T6.3 ✅ → T6.4 ✅ → T6.5 ✅ → T6.6 ✅ (T6.7 chỉnh prompt/seed sau eval: tùy chọn).
 - Backlog chưa làm (không chặn M6): T4.6–T4.8, T5.4–T5.7. Người dùng nhớ đặt lại `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-20 — bắt đầu M6 (`/next M6`)
 
@@ -32,7 +32,7 @@
 | --- | --- | --- |
 | Coverage backend | 99,38% (3803 pass + 49 xfail đã biết, ngưỡng 80% trong `make test-be`, ~4 phút) | 2026-10-20 |
 | Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-17 |
-| Eval (intent accuracy / constraint satisfaction / hallucination) | – / – / – | |
+| Eval (intent accuracy / constraint satisfaction / hallucination) | 100% / 98,7% / 0 (clarification 100%, tool 96,4%, latency p50 15,7 s bị kéo dài bởi `LLM_MAX_RPM=12`; 29/31 câu đạt; `gemini-3.5-flash-lite`; chi tiết T6.7) | 2026-10-21 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
 - 2026-10-16: đổi CSDL sang PostgreSQL 17 qua Docker Compose, test trên Postgres thật ([ADR-0007](adr/0007-postgresql.md) thay ADR-0002). Cần `make db-up`.

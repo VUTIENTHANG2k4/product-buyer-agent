@@ -260,7 +260,8 @@ Xong khi:
 | T6.3 | Planner + prompt | T6.1, T1.1 | M | ✅ |
 | T6.4 | 8 tool | T6.2 | M | ✅ |
 | T6.5 | Executor + sự kiện + guardrail + bộ nhớ hội thoại | T6.3, T6.4 | L | ✅ |
-| T6.6 | Eval harness + báo cáo cơ sở | T6.5, T1.5 | M | ⬜ |
+| T6.6 | Eval harness + báo cáo cơ sở | T6.5, T1.5 | M | ✅ |
+| T6.7 | Chỉnh prompt/seed sau eval cơ sở (phát sinh từ T6.6) | T6.6 | S | ⬜ |
 
 **T6.1** — [05 §2](05-agent-design.md#2-mô-hình-và-cấu-hình). Xong khi: `get_chat_model(role)` cho gemini/openai/fake; tra Context7 cho API LangChain hiện hành và ghi phiên bản; `ScriptedChatModel` phát chuỗi tool call định sẵn.
 **T6.2** — Xong khi: `catalog_service.search(QueryIntent-like filters)` lọc đúng theo specs JSON và giá hiệu lực (§4 `effective_price` ở 04); `stale` khi dữ liệu > 24 giờ; test với seed. Từ review T1.4: service kiểm `quantity ≥ 1` và đổi lỗi ràng buộc thành lỗi miền; `ProductRepository.search` đã có lọc giá/trang/specs, service chỉ ánh xạ `relevance`/từ khóa và `stale`. **Việc dồn từ QA M1 (cần quyết định thiết kế, xfail ở `*_m1.py`):** (a) chuẩn hóa `strip`+`lower` cho `destination` email khi tạo/tìm cảnh báo (`find_live` đang coi `Mock@Example.com` và `mock@example.com ` là hai người nhận, gửi trùng; test `test_find_live_treats_email_variants_of_one_mailbox_as_the_same_destination`); (b) kiểm `preferred_offer_id` thuộc đúng `product_id` (`test_add_item_rejects_preferred_offer_of_another_product`); (c) chuẩn hóa tên danh sách về NFC (`test_get_by_name_matches_vietnamese_name_in_either_unicode_form`); (d) quyết định xử lý offer hết hàng trong `search` (hiện vẫn tính vào `min_price`/`offers_count`); (e) bọc đầu vào repository: `limit < 0`, `quantity` > int32, `now` naive; `update_item` chưa xóa được `note`.
@@ -268,6 +269,14 @@ Xong khi:
 **T6.4** — [05 §3](05-agent-design.md#3-hợp-đồng-tool). Xong khi: 8 tool đúng hợp đồng; kết quả ≤ 4.000 ký tự; test từng tool với seed; `live_search_other` tạm trả `{"items": [], "sites_skipped": [...], "reason": "chưa bật tầng 2"}` cho đến M10.
 **T6.5** — [05 §1, §5, §6](05-agent-design.md#5-guardrail-code-chạy-sau-executor). Xong khi: test kịch bản: câu hỏi chuẩn → `plan` → `tool_*` → `final`; id bịa bị loại; vượt bước; tool lỗi; tham chiếu "máy thứ 2"; không gọi tool ghi khi không được yêu cầu; hỏi lại khi mơ hồ.
 **T6.6** — [05 §7](05-agent-design.md#7-đánh-giá-agent-eval). Xong khi: `make eval` chạy toàn bộ `queries.yaml` (đã bổ sung đủ ≥ 30 câu), xuất `reports/eval-<ngày>.md`; ghi kết quả cơ sở vào PROGRESS.md; nếu dưới ngưỡng → tạo task sửa prompt.
+
+**T6.7** — Phát sinh từ eval cơ sở T6.6 (2026-10-21, `gemini-3.5-flash-lite`, 29/31 câu đạt; ngưỡng `docs/05` §7 đạt trừ latency). Làm khi muốn nâng chỉ số hoặc trước T11.1; không chặn M7. Xong khi chạy lại `make eval` và các mục sau tốt hơn, không hồi quy:
+- **A03** (bàn phím cơ TKL switch red): 1/5 sản phẩm không thỏa `switch_type=mechanical` + `form_factor=tkl`; LLM nói "switch red" không có trong bộ lọc và trả cả máy không phải TKL. Xem planner có đưa `form_factor`/`switch_type` vào `spec_filters` không, và executor có được đưa sản phẩm không khớp vào bảng không.
+- **T01** (loa bluetooth): gọi `search_catalog` (bị cấm cho tầng 2) một lần giữa hai lần `live_search_other`.
+- **Gọi tool thừa** làm câu mất 30–50 giây: L07, L09, A06, T02 (gọi lại tool khi kết quả rỗng/chưa bật; A06 gọi `compare_products`/`get_product_detail` không được hỏi). Có thể giới hạn cứng số lần gọi cùng một tool trong `ToolLoop` thay vì chỉ dặn trong prompt.
+- **Latency p50** 15,7 giây chưa đại diện: `LLM_MAX_RPM=12` (giới hạn 15 request/phút của gói miễn phí) buộc mỗi lần gọi chờ ≥ 5 giây. Đo lại khi có hạn mức cao hơn (`--rpm 0`), và so với `gemini-3.8-flash`.
+- **Seed `eval` quá "sạch"** (từ QA M1): chưa thêm sản phẩm thiếu thông số / chỉ còn offer hết hàng; thêm kèm cập nhật `test_seed_data.py`.
+- Cảnh báo "số tiền lệch" còn dương tính giả khi LLM nêu ngưỡng/ước lượng chung ("trên 50 triệu"), chỉ ghi log nên chưa ảnh hưởng chỉ số.
 
 ### M7 — API
 

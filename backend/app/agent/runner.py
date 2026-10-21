@@ -19,7 +19,7 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from sqlmodel import Session
 
 from app.agent.executor import LoopOutcome, ToolLoop
-from app.agent.guardrail import allowed_write_tools, apply_guardrail
+from app.agent.guardrail import Evidence, GuardrailOutcome, allowed_write_tools, apply_guardrail
 from app.agent.intent import extract_amounts
 from app.agent.memory import ConversationContext, to_context
 from app.agent.planner import Planner
@@ -80,7 +80,10 @@ class AgentRunner:
         executor_model: BaseChatModel,
         now: Callable[[], datetime] = utc_now,
         clock: Callable[[], float] = time.perf_counter,
+        observer: Callable[[GuardrailOutcome], None] | None = None,
     ) -> None:
+        # `observer` nhận kết quả guardrail của mỗi lượt (eval đo hallucination trước khi lọc).
+        self.observer = observer
         self._session_factory = session_factory
         self._settings = settings
         self._now = now
@@ -154,7 +157,10 @@ class AgentRunner:
             *handle.context.history,
             HumanMessage(content=_user_turn(message, intent, handle.context)),
         ]
-        outcome = LoopOutcome()
+        # Sản phẩm trong bảng lượt trước đã hiển thị cho người dùng nên được phép nhắc lại
+        # ("báo tôi khi máy đầu tiên xuống dưới 25 triệu").
+        previous = Evidence(product_ids={pid for pid, _ in handle.context.last_results})
+        outcome = LoopOutcome(evidence=previous)
         loop = ToolLoop(
             self._executor_model,
             self._tools,
@@ -180,6 +186,8 @@ class AgentRunner:
             value for value in (intent.price_min, intent.price_max) if value
         }
         verdict = apply_guardrail(outcome.answer, outcome.evidence, user_amounts=amounts)
+        if self.observer is not None:
+            self.observer(verdict)
         if verdict.dropped_product_ids or verdict.dropped_live_urls:
             logger.warning(
                 "Guardrail loại id %s và link %s không có trong kết quả tool",

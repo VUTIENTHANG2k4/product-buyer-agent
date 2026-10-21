@@ -510,6 +510,26 @@ async def test_second_turn_resolves_ordinal_references_from_the_previous_table(
     assert [item.product_id for item in detail.items] == [first_ids[1]]
 
 
+async def test_follow_up_may_cite_products_shown_in_the_previous_table(
+    db_session: Session, make_runner: Make
+) -> None:
+    products = make_laptops(db_session)
+    first_ids = ids(products)
+    turn1 = make_runner([LAPTOP_INTENT], [SEARCH, final_call(product_ids=first_ids)])
+    await collect(turn1.runner, "tìm laptop dưới 30 triệu")
+    conversation_id = stored_run(db_session).conversation_id
+
+    # Lượt hai không gọi tool nào nhưng nhắc lại máy đầu tiên (đã hiển thị ở lượt một).
+    turn2 = make_runner(
+        [{"plan_steps": ["Trả lời"]}],
+        [final_call(text="Máy đầu tiên là máy rẻ nhất.", product_ids=[first_ids[0], 999_999])],
+    )
+    events = await collect(turn2.runner, "máy đầu tiên thế nào", conversation_id)
+
+    final = events[-1]
+    assert isinstance(final, FinalEvent) and [r.product_id for r in final.table] == [first_ids[0]]
+
+
 async def test_first_turn_has_no_reference_block(db_session: Session, make_runner: Make) -> None:
     parts = make_runner([LAPTOP_INTENT], [final_call()])
     await collect(parts.runner, "tìm laptop")

@@ -57,7 +57,7 @@ _APPROX_WORDS = re.compile(r"\b(tam|khoang|xap xi|around|about)\b")
 _EXACT_WORDS = re.compile(r"\b(dung|chinh xac|exactly|exact)\b")
 _CHEAPEST_WORDS = re.compile(r"\b(re nhat|gia thap nhat|cheapest|lowest price)\b")
 # Thông số kiểu "từ X trở lên" mặc định: người dùng nói "RAM 16GB" nghĩa là ít nhất 16GB.
-_AT_LEAST_FIELDS: Final = frozenset({"ram_gb", "storage_gb", "refresh_hz"})
+_AT_LEAST_FIELDS: Final = frozenset({"ram_gb", "storage_gb", "refresh_hz", "gpu_rank"})
 _GPU_FIELDS: Final = frozenset({"gpu", "gpu_model", "gpu_name", "card", "vga"})
 
 

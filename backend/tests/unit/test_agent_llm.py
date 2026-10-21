@@ -2,6 +2,7 @@
 
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
@@ -68,6 +69,27 @@ def test_temperature_depends_on_role(role: str, temperature: float) -> None:
     model = get_chat_model(role, settings)  # type: ignore[arg-type]
     assert isinstance(model, ChatGoogleGenerativeAI)
     assert model.temperature == temperature
+
+
+def test_no_rate_limiter_by_default_and_one_shared_limiter_when_rpm_is_set() -> None:
+    plain = make_settings(llm_provider="gemini", google_api_key=SecretStr("k"))
+    limited = make_settings(llm_provider="gemini", google_api_key=SecretStr("k"), llm_max_rpm=12)
+
+    assert get_chat_model("planner", plain).rate_limiter is None
+    planner, executor = get_chat_model("planner", limited), get_chat_model("executor", limited)
+    assert isinstance(planner.rate_limiter, InMemoryRateLimiter)
+    assert planner.rate_limiter is executor.rate_limiter  # chung hạn mức theo dự án/model
+    assert planner.rate_limiter.requests_per_second == pytest.approx(12 / 60)
+
+
+def test_openai_provider_also_gets_the_rate_limiter() -> None:
+    settings = make_settings(llm_provider="openai", openai_api_key=SecretStr("k"), llm_max_rpm=30)
+    assert isinstance(get_chat_model("planner", settings).rate_limiter, InMemoryRateLimiter)
+
+
+def test_negative_rpm_is_rejected_by_settings() -> None:
+    with pytest.raises(ValueError):
+        make_settings(llm_max_rpm=-1)
 
 
 def test_scripted_model_plays_responses_in_order_and_records_calls() -> None:

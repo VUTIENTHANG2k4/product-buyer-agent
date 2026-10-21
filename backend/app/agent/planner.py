@@ -74,6 +74,9 @@ class Planner:
                     ),
                 ]
             except Exception as error:
+                logger.error(
+                    "Planner không gọi được LLM: %s: %s", type(error).__name__, str(error)[:200]
+                )
                 raise LlmUnavailable(details={"stage": "planner"}) from error
         raise LlmUnavailable(
             "Planner không trả về ý định hợp lệ", details={"stage": "planner"}

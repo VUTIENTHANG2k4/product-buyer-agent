@@ -132,8 +132,12 @@ def apply_guardrail(
             dropped_urls.append(item.url)
 
     reference = [*evidence.prices, *user_amounts]
+    # Id sản phẩm in trong câu ("ID: 118687") trông như số tiền nhưng không phải tiền.
+    identifiers = evidence.product_ids | set(answer.product_ids)
     warnings = sorted(
-        amount for amount in extract_amounts(answer.text) if not _near(amount, reference)
+        amount
+        for amount in extract_amounts(answer.text)
+        if amount not in identifiers and not _near(amount, reference)
     )
 
     cleaned = answer.model_copy(

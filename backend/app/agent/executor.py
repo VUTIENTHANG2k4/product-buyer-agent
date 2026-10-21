@@ -222,6 +222,9 @@ class ToolLoop:
         try:
             reply = await runnable.ainvoke(messages)
         except Exception as error:
+            logger.error(
+                "Executor không gọi được LLM: %s: %s", type(error).__name__, str(error)[:200]
+            )
             raise LlmUnavailable(details={"stage": "executor"}) from error
         if not isinstance(reply, AIMessage):
             raise LlmUnavailable("LLM trả về dữ liệu không hợp lệ", details={"stage": "executor"})
