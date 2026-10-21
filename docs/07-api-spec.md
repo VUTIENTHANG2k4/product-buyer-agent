@@ -47,11 +47,13 @@ Lỗi HTTP khác do framework sinh ra (ví dụ 418) dùng mã `HTTP_<status>`; 
 ### 3.2 Chat / Agent
 | Method | Path | Mô tả |
 | --- | --- | --- |
-| POST | `/chat` | Body `{message: str (1..1000), conversation_id?: int}` → 202 `{run_id, conversation_id}` |
+| POST | `/chat` | Body `{message: str (1..1000), conversation_id?: int}` → 202 `{run_id, conversation_id}`; agent chạy nền. `conversation_id` không tồn tại → 404 `NOT_FOUND`; tin nhắn rỗng/quá dài/có NUL → 422; thiếu khóa LLM → 503 `LLM_UNAVAILABLE` |
 | GET | `/chat/{run_id}/events` | `text/event-stream`; sự kiện theo [05 §6](05-agent-design.md#6-sự-kiện-tiến-trình-sse). Kết nối lại sau khi run xong → phát lại toàn bộ sự kiện đã lưu rồi đóng |
-| GET | `/chat/{run_id}` | Trạng thái và kết quả cuối `{status, intent, final?}` |
-| GET | `/conversations` | Danh sách hội thoại gần đây |
-| GET | `/conversations/{id}/messages` | Tin nhắn của hội thoại |
+| GET | `/chat/{run_id}` | Trạng thái và kết quả cuối `{run_id, conversation_id, status, intent, final?, clarification?, error?}` (`final`/`error` cùng dạng với dữ liệu sự kiện SSE cùng tên) |
+| GET | `/conversations?limit=20` | `{items: [{conversation_id, title, created_at}]}`, mới nhất trước (`limit` 1..100) |
+| GET | `/conversations/{id}/messages` | `{items: [{message_id, role, content, payload, created_at}]}`, cũ → mới (tối đa 500 tin cuối); `payload` của tin trợ lý là `{product_ids}` của bảng đã hiển thị; hội thoại không tồn tại → 404 `NOT_FOUND` |
+
+**SSE (T7.2).** Mỗi sự kiện có `event:` (tên), `data:` (JSON như §4) và `id:` là vị trí của sự kiện trong lượt (0, 1, 2…). Máy chủ không giữ kênh trong bộ nhớ: `AgentRunner` lưu từng sự kiện vào `agent_run.events` trước khi phát, và luồng SSE đọc lại từ CSDL (thăm dò 0,25 giây), nên một đường duy nhất cho lượt đang chạy lẫn lượt đã xong, và sống sót qua việc khởi động lại API. Gửi header `Last-Event-ID: n` để nhận tiếp từ sau sự kiện `n`. Luồng đóng sau sự kiện `final`, `error` hoặc `clarification`, hoặc khi lượt đã đóng mà không còn sự kiện mới (lượt bị hủy). Lượt còn `running` quá 15 phút (tiến trình đã chết) được đánh `failed` ở lần `POST /chat` kế tiếp. Dùng `fastapi.sse.EventSourceResponse` (FastAPI 0.143.3).
 
 `ProductRow` (dùng trong sự kiện `final.table`):
 ```json

@@ -292,7 +292,7 @@ Xong khi:
 - **T6.11** (BUG-M6-14): `FinalAnswer.text` rỗng/toàn khoảng trắng được chấp nhận. Đổi schema gửi cho Gemini nên phải chạy lại `make eval`.
 - **T6.12** (BUG-M6-16): giá 5 tỷ × `quantity` INT32 làm `total_price` vượt BIGINT và `get_list` ném `ValidationError`. Giới hạn `quantity` (ví dụ ≤ 10.000).
 - **T6.13** (BUG-M6-17): mọi ca crash nhưng chỉ số "không đo được" nên `all_thresholds_met` vẫn đạt (mã thoát 0); crash hoặc `error_code` phải cho mã thoát 1.
-- **Dồn sang M7:** giới hạn id INT4 và loại NUL ở tham số API (id lớn → 404, không phải 500) ✅ làm ở T7.1 (repository `get/get_many/list_for_products` coi id ngoài miền là không tồn tại; `q`/`brand`/`spec.*` có NUL không gây 500; các body ghi của T7.3/T7.2 còn phải kiểm khi làm); bộ dọn `agent_run` kẹt `running` khi `_finish` lỗi do DB. **Dồn sang M8:** trình hiển thị markdown tự lọc scheme `javascript:` (guardrail chỉ vet `http(s)`/`www.`).
+- **Dồn sang M7:** giới hạn id INT4 và loại NUL ở tham số API (id lớn → 404, không phải 500) ✅ làm ở T7.1 (repository `get/get_many/list_for_products` coi id ngoài miền là không tồn tại; `q`/`brand`/`spec.*` có NUL không gây 500; các body ghi của T7.3/T7.2 còn phải kiểm khi làm); bộ dọn `agent_run` kẹt `running` khi `_finish` lỗi do DB ✅ làm ở T7.2 (`fail_stale_runs`, 15 phút, chạy ở mỗi lượt chat mới). **Dồn sang M8:** trình hiển thị markdown tự lọc scheme `javascript:` (guardrail chỉ vet `http(s)`/`www.`).
 - Rủi ro chưa kiểm được: đồng thời thật (test dùng một connection chung), hành vi Gemini thật (`tool_call.id = None`, content dạng list) chỉ `make eval` bắt được; grounding của `LlmSpecsFiller` chỉ kiểm chuỗi, không kiểm số.
 
 ### M7 — API
@@ -300,7 +300,7 @@ Xong khi:
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
 | T7.1 | Products, categories, compare, price-history | T6.2 | M | ✅ |
-| T7.2 | Chat + SSE + conversations | T6.5 | M | ⬜ |
+| T7.2 | Chat + SSE + conversations | T6.5 | M | ✅ |
 | T7.3 | Lists + alerts | T6.2 | S | ✅ |
 | T7.4 | Admin + challenge HITL | T2.6 | M | ✅ |
 | T7.5 | Sinh kiểu TypeScript từ OpenAPI | T7.1–T7.4, T0.2 | S | ⬜ |

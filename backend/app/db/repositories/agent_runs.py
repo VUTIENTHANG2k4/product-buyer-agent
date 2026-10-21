@@ -5,6 +5,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
+from sqlalchemy import update
 from sqlmodel import Session, col, select
 
 from app.db.models import AgentRun, utc_now
@@ -61,6 +62,22 @@ class AgentRunRepository:
             run.latency_ms = latency_ms
         self._session.flush()
         return run
+
+    def fail_stale(self, before: datetime) -> int:
+        """Đánh `failed` các lượt còn `running` tạo trước `before` (tiến trình đã chết giữa lượt
+        hoặc không chốt được lượt); trả số lượt vừa đổi."""
+        statement = (
+            update(AgentRun)
+            .where(
+                col(AgentRun.status) == AgentRunStatus.running,
+                col(AgentRun.created_at) < before,
+            )
+            .values(status=AgentRunStatus.failed)
+            .execution_options(synchronize_session="fetch")
+        )
+        result = self._session.exec(statement)
+        self._session.flush()
+        return int(result.rowcount)
 
     def list_for_conversation(self, conversation_id: int) -> list[AgentRun]:
         """Các lượt chạy của hội thoại, cũ nhất trước."""

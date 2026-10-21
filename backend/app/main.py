@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api.errors import UnhandledErrorMiddleware, error_responses, register_error_handlers
-from app.api.routers import admin, alerts, categories, health, lists, products
+from app.api.routers import admin, alerts, categories, chat, health, lists, products
 from app.api.tasks import TaskRegistry
 
 FRONTEND_ORIGIN = "http://localhost:5173"
@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
     api.include_router(lists.router)
     api.include_router(alerts.router)
     api.include_router(admin.router)
+    api.include_router(chat.router)
     app.include_router(api)
     return app
 

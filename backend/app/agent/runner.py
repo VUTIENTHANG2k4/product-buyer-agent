@@ -39,7 +39,7 @@ from app.domain.dto import QueryIntent
 from app.domain.enums import AgentRunStatus
 from app.domain.errors import LlmUnavailable
 from app.services.catalog_service import CatalogService
-from app.services.conversation_service import ConversationService
+from app.services.conversation_service import ConversationService, RunStart
 
 logger = logging.getLogger(__name__)
 
@@ -96,9 +96,13 @@ class AgentRunner:
     # ---- vòng đời ----
     async def start(self, message: str, conversation_id: int | None = None) -> RunHandle:
         """Tạo (hoặc dùng lại) hội thoại, ghi tin nhắn người dùng và tạo lượt chạy `running`."""
-        started = await self._db(
-            lambda s: ConversationService(s, now=self._now).start_run(message, conversation_id)
-        )
+
+        def begin(session: Session) -> RunStart:
+            service = ConversationService(session, now=self._now)
+            service.fail_stale_runs()  # dọn lượt kẹt `running` của tiến trình đã chết
+            return service.start_run(message, conversation_id)
+
+        started = await self._db(begin)
         return RunHandle(started.run_id, started.conversation_id, to_context(started.snapshot))
 
     async def run(

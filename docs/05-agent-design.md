@@ -127,7 +127,7 @@ Bộ nhớ (`memory.py`): sáu tin nhắn gần nhất đưa vào executor như 
 | `final` | `{text, table: [ProductRow], live_items, suggestions, data_as_of}` | Kết thúc thành công |
 | `error` | `{code, message}` | Lỗi không phục hồi |
 
-Toàn bộ sự kiện lưu vào `agent_run.events` để xem lại.
+Toàn bộ sự kiện lưu vào `agent_run.events` để xem lại; API (`GET /chat/{run_id}/events`, [07](07-api-spec.md)) phát chúng bằng cách đọc lại cột này nên không cần kênh trong bộ nhớ. `AgentRunner.start` đánh `failed` các lượt `running` quá 15 phút trước khi tạo lượt mới.
 
 ## 7. Đánh giá agent (eval)
 

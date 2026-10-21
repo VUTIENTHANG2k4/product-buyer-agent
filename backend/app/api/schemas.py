@@ -1,13 +1,17 @@
 """Schema phản hồi chung của API (docs/07)."""
 
+import uuid
 from datetime import datetime
 from typing import Any, Generic, Literal, Self, TypeVar
 
 from pydantic import BaseModel, Field, model_validator
 
+from app.agent.schemas import ErrorEvent, FinalEvent
 from app.domain.admin import ScrapeRunView, SourceView
 from app.domain.catalog import AlertView, CategoryInfo, ProductSummary, ShoppingListSummary
-from app.domain.enums import Category, SiteKey
+from app.domain.chat import ConversationView, MessageView
+from app.domain.dto import QueryIntent
+from app.domain.enums import AgentRunStatus, Category, SiteKey
 
 
 class HealthResponse(BaseModel):
@@ -141,3 +145,35 @@ class ChallengeAnswer(BaseModel):
     """POST /admin/scrape-runs/{id}/challenge: đáp án captcha của mock-shop."""
 
     answer: str = Field(min_length=1, max_length=200, pattern=r"^[^\x00]+$")
+
+
+class ChatRequest(BaseModel):
+    """POST /chat. `conversation_id` bỏ trống thì tạo hội thoại mới."""
+
+    message: str = Field(min_length=1, max_length=1000)
+    conversation_id: int | None = None
+
+
+class ChatAccepted(BaseModel):
+    run_id: uuid.UUID
+    conversation_id: int
+
+
+class RunStatusResponse(BaseModel):
+    """GET /chat/{run_id}: trạng thái và kết quả cuối (cùng nội dung với sự kiện SSE tương ứng)."""
+
+    run_id: uuid.UUID
+    conversation_id: int
+    status: AgentRunStatus
+    intent: QueryIntent | None
+    final: FinalEvent | None = None
+    clarification: str | None = None  # câu hỏi lại khi `status = needs_clarification`
+    error: ErrorEvent | None = None
+
+
+class ConversationsResponse(ItemsResponse[ConversationView]):
+    """GET /conversations."""
+
+
+class MessagesResponse(ItemsResponse[MessageView]):
+    """GET /conversations/{id}/messages."""

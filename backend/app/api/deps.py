@@ -6,6 +6,8 @@ from typing import Annotated
 from fastapi import Depends, Request
 from sqlmodel import Session
 
+from app.agent.llm import get_chat_model
+from app.agent.runner import AgentRunner
 from app.agent.spec_filler import build_spec_filler
 from app.api.tasks import TaskRegistry
 from app.config import Settings, get_settings
@@ -14,7 +16,7 @@ from app.services.admin_service import AdminService
 from app.services.alert_service import AlertService
 from app.services.catalog_service import CatalogService
 from app.services.compare_service import CompareService
-from app.services.database import session_scope
+from app.services.database import SessionFactory, session_factory, session_scope
 from app.services.health_service import DbStatus
 from app.services.scrape_runtime import ScrapeRuntime
 from app.services.scrape_service import ScrapeService
@@ -96,3 +98,30 @@ def get_admin_service(request: Request, session: SessionDep, settings: SettingsD
 TaskRegistryDep = Annotated[TaskRegistry, Depends(get_task_registry)]
 ScrapeServiceDep = Annotated[ScrapeService, Depends(get_scrape_service)]
 AdminServiceDep = Annotated[AdminService, Depends(get_admin_service)]
+
+
+def get_session_factory(settings: SettingsDep) -> SessionFactory:
+    """Hàm tạo session ngắn hạn cho tác vụ nền và luồng SSE (không gắn với một request)."""
+    return session_factory(settings.database_url.get_secret_value())
+
+
+SessionFactoryDep = Annotated[SessionFactory, Depends(get_session_factory)]
+
+
+def get_agent_runner(
+    request: Request, settings: SettingsDep, factory: SessionFactoryDep
+) -> AgentRunner:
+    """Runner dùng chung, dựng ở lần chat đầu tiên. Thiếu khóa LLM -> `LlmUnavailable` (503)."""
+    runner: AgentRunner | None = getattr(request.app.state, "agent_runner", None)
+    if runner is None:
+        runner = AgentRunner(
+            factory,
+            settings,
+            planner_model=get_chat_model("planner", settings),
+            executor_model=get_chat_model("executor", settings),
+        )
+        request.app.state.agent_runner = runner
+    return runner
+
+
+AgentRunnerDep = Annotated[AgentRunner, Depends(get_agent_runner)]
