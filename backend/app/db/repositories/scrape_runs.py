@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
+from sqlalchemy import ColumnElement, func
 from sqlmodel import Session, col, select
 
 from app.db.models import ScrapeRun, utc_now
@@ -117,6 +118,33 @@ class ScrapeRunRepository:
             col(ScrapeRun.started_at).desc(), col(ScrapeRun.id).desc()
         ).limit(limit)
         return list(self._session.exec(statement))
+
+    def list_filtered(
+        self,
+        *,
+        site: SiteKey | None = None,
+        category: Category | None = None,
+        status: ScrapeStatus | None = None,
+        offset: int = 0,
+        limit: int = 20,
+    ) -> tuple[list[ScrapeRun], int]:
+        """Các lượt khớp bộ lọc (mới nhất trước) cho một trang kết quả, kèm tổng số lượt khớp."""
+        conditions: list[ColumnElement[bool]] = []
+        if site is not None:
+            conditions.append(col(ScrapeRun.site) == site)
+        if category is not None:
+            conditions.append(col(ScrapeRun.category) == category)
+        if status is not None:
+            conditions.append(col(ScrapeRun.status) == status)
+        total = self._session.exec(select(func.count()).select_from(ScrapeRun).where(*conditions))
+        page = (
+            select(ScrapeRun)
+            .where(*conditions)
+            .order_by(col(ScrapeRun.started_at).desc(), col(ScrapeRun.id).desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self._session.exec(page)), int(total.one())
 
     def latest_blocked_since(self, site: SiteKey, since: datetime) -> ScrapeRun | None:
         """Lượt `BLOCKED` mới nhất của trang bắt đầu từ `since` (UTC); dùng cho thời gian nghỉ."""

@@ -5,7 +5,9 @@ from typing import Any, Generic, Literal, Self, TypeVar
 
 from pydantic import BaseModel, Field, model_validator
 
+from app.domain.admin import ScrapeRunView, SourceView
 from app.domain.catalog import AlertView, CategoryInfo, ProductSummary, ShoppingListSummary
+from app.domain.enums import Category, SiteKey
 
 
 class HealthResponse(BaseModel):
@@ -117,3 +119,25 @@ class AlertTestResponse(BaseModel):
 
     sent: bool
     reason: str | None = None
+
+
+class SourcesResponse(ItemsResponse[SourceView]):
+    """GET /admin/sources."""
+
+
+class ScrapeRunPage(Page[ScrapeRunView]):
+    """GET /admin/scrape-runs."""
+
+
+class ScrapeRunCreate(BaseModel):
+    """POST /admin/scrape-runs. `max_pages` bỏ trống thì theo `SCRAPER_MAX_LISTING_PAGES`."""
+
+    site: SiteKey
+    category: Category
+    max_pages: int | None = Field(default=None, ge=1, le=100)
+
+
+class ChallengeAnswer(BaseModel):
+    """POST /admin/scrape-runs/{id}/challenge: đáp án captcha của mock-shop."""
+
+    answer: str = Field(min_length=1, max_length=200, pattern=r"^[^\x00]+$")

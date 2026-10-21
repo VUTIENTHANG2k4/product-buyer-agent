@@ -125,7 +125,7 @@ Quy tắc phụ thuộc (kiểm tra trong review):
 - Mọi module được import `app/domain` và `app/config`.
 - `api` → `agent`, `services`. Không gọi `db` hay `scrapers` trực tiếp. Phiên CSDL của request đến từ `services/database.py` (`session_scope`: commit khi xong, rollback khi lỗi) qua dependency `get_session` ở `api/deps.py` (`scope="function"`, nên commit chạy trước khi gửi response).
 - `agent/tools` → `services` duy nhất.
-- `services` → `db/repositories`, `normalize`, `scrapers` (chỉ `live_search_service` dùng scraper/fetcher; chỉ `scrape_service` gọi `pipeline`).
+- `services` → `db/repositories`, `normalize`, `scrapers` (chỉ `live_search_service` dùng scraper/fetcher; chỉ `scrape_service` gọi `pipeline`; `admin_service` chỉ đọc `SiteConfig` từ registry, tóm tắt robots.txt đã tải và hằng số thời gian nghỉ của pipeline, không gọi pipeline hay mạng; `scrape_runtime` dựng Fetcher + `scrape_service` dùng chung cho API).
 - `scrapers` không import `db` và `services`, **ngoại lệ duy nhất** là `scrapers/pipeline.py` được import `db/repositories` và `normalize` (nơi nối scraper → normalize → repository). Pipeline không gọi `services` (tránh vòng phụ thuộc).
 - `db` chỉ import `domain`, `config`.
 - Worker (`app/worker.py`) và router quản trị chạy thu thập qua `scrape_service`, không gọi pipeline trực tiếp.

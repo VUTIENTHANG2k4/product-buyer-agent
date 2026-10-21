@@ -8,12 +8,29 @@ import logging
 from collections.abc import Awaitable, Callable, Sequence
 
 from app.config import Settings
-from app.domain.enums import Category, ScrapeTrigger, SiteKey
-from app.domain.errors import OfflineMode
+from app.db.models import utc_now
+from app.db.repositories import ScrapeRunRepository
+from app.domain.admin import ChallengeView
+from app.domain.dto import Challenge
+from app.domain.enums import Category, ScrapeStatus, ScrapeTrigger, SiteKey
+from app.domain.errors import (
+    ChallengeNotPending,
+    InvalidScrapeRequest,
+    OfflineMode,
+    RunNotFound,
+)
 from app.normalize.llm_extract import LlmSpecsFiller
 from app.scrapers.http.types import FormFetcher
-from app.scrapers.pipeline import PipelineResult, ScrapePipeline, SessionFactory, make_resolver
-from app.scrapers.registry import get_scraper
+from app.scrapers.pipeline import (
+    NEEDS_HUMAN_STALE_AFTER,
+    PipelineResult,
+    ScrapePipeline,
+    SessionFactory,
+    StartedRun,
+    make_resolver,
+)
+from app.scrapers.registry import SiteNotAvailable, get_scraper
+from app.services.views import Clock, aware_now
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +47,11 @@ class ScrapeService:
         on_price_changes: PriceChangeHook | None = None,
         pipeline: ScrapePipeline | None = None,
         spec_filler: LlmSpecsFiller | None = None,
+        now: Clock = utc_now,
     ) -> None:
         """`spec_filler` (LLM dự phòng, T5.3) do nơi lắp ráp tiêm; bỏ qua nếu có `pipeline`."""
+        self._session_factory = session_factory
+        self._now = now
         self._settings = settings
         self._fetcher = fetcher
         self._on_price_changes = on_price_changes
@@ -54,12 +74,70 @@ class ScrapeService:
 
         Còn ném `SiteNotAvailable`, `SiteCooldown`, `ScrapeAlreadyRunning` từ phía dưới.
         """
-        config = get_scraper(site, self._fetcher).config
-        if self._settings.scraper_offline_only and not config.is_mock:
-            raise OfflineMode(details={"site": site.value})
+        self._ensure_allowed(site)
         result = await self._pipeline.run(site, category, trigger, max_pages=max_pages)
         await self._evaluate(result)
         return result
+
+    async def start(
+        self,
+        site: SiteKey,
+        category: Category,
+        *,
+        trigger: ScrapeTrigger = ScrapeTrigger.manual,
+        max_pages: int | None = None,
+    ) -> StartedRun:
+        """Tạo lượt (RUNNING) rồi trả ngay; nơi gọi `execute()` kết quả, thường ở tác vụ nền.
+
+        Lỗi đồng bộ: `OfflineMode`, `SiteCooldown`, `ScrapeAlreadyRunning` và `InvalidScrapeRequest`
+        (trang chưa có scraper/đã tắt, nhóm không thuộc trang, `max_pages` < 1).
+        """
+        try:
+            self._ensure_allowed(site)
+            return await self._pipeline.start(site, category, trigger, max_pages=max_pages)
+        except SiteNotAvailable as error:
+            raise InvalidScrapeRequest(f"Trang {site.value} chưa có scraper hoặc đã tắt") from error
+
+    async def execute(self, started: StartedRun) -> PipelineResult:
+        """Chạy lượt đã `start`/`reopen` rồi đánh giá cảnh báo cho các offer đổi giá."""
+        result = await self._pipeline.execute(started)
+        await self._evaluate(result)
+        return result
+
+    async def reopen(self, run_id: int, answer: str, *, max_pages: int | None = None) -> StartedRun:
+        """Gửi đáp án captcha cho lượt `NEEDS_HUMAN` rồi trả lượt đã chiếm để `execute()`.
+
+        Ném `RunNotFound`, `ChallengeNotPending`, `ChallengeFailed` (đáp án sai: lượt vẫn chờ).
+        """
+        return await self._pipeline.reopen(run_id, answer, max_pages=max_pages)
+
+    def challenge_of(self, run_id: int) -> ChallengeView:
+        """Challenge của lượt đang chờ người nhập đáp án (không có `token`).
+
+        `RunNotFound` nếu không có lượt; `ChallengeNotPending` nếu lượt không chờ đáp án hoặc đã
+        quá hạn chờ (khi đó lượt mới được phép chạy).
+        """
+        with self._session_factory() as session:
+            run = ScrapeRunRepository(session).get(run_id)
+            if run is None:
+                raise RunNotFound(details={"run_id": run_id})
+            if (
+                run.status is not ScrapeStatus.NEEDS_HUMAN
+                or run.challenge is None
+                or aware_now(self._now) - run.started_at >= NEEDS_HUMAN_STALE_AFTER
+            ):
+                raise ChallengeNotPending(details={"run_id": run_id, "status": run.status.value})
+            challenge = Challenge.model_validate(run.challenge)
+        return ChallengeView(
+            kind=challenge.kind,
+            prompt=challenge.prompt,
+            image_url=None if challenge.image_url is None else str(challenge.image_url),
+        )
+
+    def _ensure_allowed(self, site: SiteKey) -> None:
+        config = get_scraper(site, self._fetcher).config
+        if self._settings.scraper_offline_only and not config.is_mock:
+            raise OfflineMode(details={"site": site.value})
 
     async def resume(
         self, run_id: int, answer: str, *, max_pages: int | None = None

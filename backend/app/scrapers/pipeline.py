@@ -135,6 +135,30 @@ class _RunContext:
     previous_items: int | None  # items_parsed của lượt SUCCEEDED gần nhất
 
 
+@dataclass(frozen=True)
+class StartedRun:
+    """Lượt đã tạo (RUNNING) và chờ `ScrapePipeline.execute`. Chỉ `run_id`, `site`, `category` là
+    thông tin công khai; phần còn lại là trạng thái nội bộ của pipeline."""
+
+    scraper: BaseScraper = field(repr=False)
+    context: _RunContext = field(repr=False)
+    progress: _Progress = field(repr=False)
+    start_page: int
+    max_pages: int
+
+    @property
+    def run_id(self) -> int:
+        return self.context.run_id
+
+    @property
+    def site(self) -> SiteKey:
+        return self.context.site
+
+    @property
+    def category(self) -> Category:
+        return self.context.category
+
+
 class UnpricedItem(ValueError):
     """Mục không có giá dùng được (che, ngoài miền, 0): offer cũ của nó coi như hết bán."""
 
@@ -352,11 +376,26 @@ class ScrapePipeline:
         *,
         max_pages: int | None = None,
     ) -> PipelineResult:
-        """Một lượt thu thập (site, category).
+        """Một lượt thu thập (site, category): `start` rồi `execute`.
 
         Ném `SiteNotAvailable` (trang chưa đăng ký/đã tắt), `SiteCooldown` (trang thật vừa chặn)
         hoặc `ScrapeAlreadyRunning`. Mọi kết cục khác (lỗi tải, challenge, lỗi không lường
         trước) được ghi vào `ScrapeRun` và trả về trong kết quả thay vì ném ra.
+        """
+        return await self.execute(await self.start(site, category, trigger, max_pages=max_pages))
+
+    async def start(
+        self,
+        site: SiteKey,
+        category: Category,
+        trigger: ScrapeTrigger,
+        *,
+        max_pages: int | None = None,
+    ) -> StartedRun:
+        """Kiểm tra điều kiện và tạo `ScrapeRun` (RUNNING) nhưng chưa tải trang nào.
+
+        Lỗi đồng bộ như `run()`. Nơi gọi PHẢI `execute()` kết quả (hoặc để lượt quá hạn sau
+        `RUNNING_STALE_AFTER`); API dùng để trả `run_id` ngay rồi chạy nền.
         """
         scraper = get_scraper(site, self._fetcher)
         if category not in scraper.config.categories:
@@ -368,16 +407,33 @@ class ScrapePipeline:
         logger.info(
             "[run %s] bắt đầu %s/%s (tối đa %s trang)", context.run_id, site, category, limit
         )
-        return await self._crawl(scraper, context, _Progress(), start_page=1, max_pages=limit)
+        return StartedRun(scraper, context, _Progress(), start_page=1, max_pages=limit)
+
+    async def execute(self, started: StartedRun) -> PipelineResult:
+        """Chạy vòng thu thập của lượt đã `start`/`reopen` tới khi xong, bị chặn hoặc cần người."""
+        return await self._crawl(
+            started.scraper,
+            started.context,
+            started.progress,
+            start_page=started.start_page,
+            max_pages=started.max_pages,
+        )
 
     async def resume(
         self, run_id: int, answer: str, *, max_pages: int | None = None
     ) -> PipelineResult:
-        """Gửi đáp án captcha của mock-shop rồi tiếp tục lượt `NEEDS_HUMAN` từ trang đang dừng.
+        """`reopen` rồi `execute`: gửi đáp án captcha của mock-shop và tiếp tục lượt `NEEDS_HUMAN`.
 
         Ném `RunNotFound`, `ChallengeNotPending` (lượt không chờ đáp án) hoặc `ChallengeFailed` (đáp
         án sai: lượt vẫn `NEEDS_HUMAN`, thử lại được). Phải dùng cùng `Fetcher` với lượt đầu nếu
         muốn giữ cookie phiên; một tiến trình mới vẫn được vì cookie lấy lại từ chính lần gửi này.
+        """
+        return await self.execute(await self.reopen(run_id, answer, max_pages=max_pages))
+
+    async def reopen(self, run_id: int, answer: str, *, max_pages: int | None = None) -> StartedRun:
+        """Chiếm lượt `NEEDS_HUMAN` và gửi đáp án; đúng thì trả lượt (RUNNING) để `execute` tiếp.
+
+        Lỗi đồng bộ như `resume()`. Lượt đang RUNNING sau khi trả về: nơi gọi phải `execute()`.
         """
         limit = self._limit(max_pages)
         context, progress, challenge = await asyncio.to_thread(self._claim_paused, run_id, limit)
@@ -395,7 +451,7 @@ class ScrapePipeline:
             await asyncio.to_thread(self._release_paused, run_id, challenge)
             raise ChallengeFailed()
         logger.info("[run %s] đáp án đúng, tiếp tục từ trang %s", run_id, progress.pages + 1)
-        return await self._crawl(
+        return StartedRun(
             scraper, context, progress, start_page=progress.pages + 1, max_pages=limit
         )
 

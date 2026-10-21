@@ -104,12 +104,16 @@ Id trong đường dẫn hoặc thân yêu cầu ngoài miền khóa chính (≤
 ### 3.6 Quản trị thu thập
 | Method | Path | Mô tả |
 | --- | --- | --- |
-| GET | `/admin/sources` | Mỗi trang: `key`, `enabled`, `categories`, `robots_status` (`allowed`/`partial`/`unknown`), `effective_delay_s`, `supports_live_search`, `last_run`, `cooldown_until?` |
-| GET | `/admin/scrape-runs?site=&category=&status=` | Phân trang, mới nhất trước |
-| GET | `/admin/scrape-runs/{id}` | Chi tiết + thống kê + lỗi |
-| POST | `/admin/scrape-runs` | `{site, category, max_pages?}` → 202 `{run_id}`; chạy nền |
-| GET | `/admin/scrape-runs/{id}/challenge` | Khi `NEEDS_HUMAN`: `{kind, prompt, image_url?}` |
-| POST | `/admin/scrape-runs/{id}/challenge` | `{answer}` → 200 `{status: "RUNNING"}` hoặc `CHALLENGE_FAILED` |
+| GET | `/admin/sources` | `{items: [...]}`, mỗi trang: `key`, `enabled`, `is_mock`, `categories`, `robots_status`, `effective_delay_s`, `supports_live_search`, `last_run`, `cooldown_until?` |
+| GET | `/admin/scrape-runs?site=&category=&status=` | Phân trang `{items, total, page, page_size}`, mới nhất trước |
+| GET | `/admin/scrape-runs/{id}` | Chi tiết: trạng thái, bộ đếm (`pages_fetched`, `items_parsed`, `items_failed`, `offers_upserted`, `price_changes`), `started_at`, `finished_at`, `error_message`, `challenge_kind` |
+| POST | `/admin/scrape-runs` | `{site, category, max_pages? (1..100)}` → 202 `{run_id}`; chạy nền (theo dõi bằng `GET .../{id}`) |
+| GET | `/admin/scrape-runs/{id}/challenge` | Khi `NEEDS_HUMAN`: `{kind, prompt, image_url?}` (không có `token`); lượt không chờ đáp án hoặc đã chờ quá 1 giờ → 409 `CHALLENGE_NOT_PENDING` |
+| POST | `/admin/scrape-runs/{id}/challenge` | `{answer}` → 200 `{status: "RUNNING"}` (lượt chạy tiếp ở nền) hoặc 400 `CHALLENGE_FAILED` (lượt vẫn chờ, thử lại được) |
+
+Lỗi đồng bộ của `POST /admin/scrape-runs`: 409 `OFFLINE_MODE` (trang thật khi `SCRAPER_OFFLINE_ONLY=true`), 409 `SCRAPE_ALREADY_RUNNING` (kèm `details.run_id`), 409 `SITE_COOLDOWN` (kèm `details.retry_after`), 422 `VALIDATION_ERROR` (trang chưa có scraper hoặc đã tắt, nhóm không thuộc trang, `max_pages` sai). Lượt chạy nền kết thúc `SUCCEEDED`/`PARTIAL`/`FAILED`/`BLOCKED`/`NEEDS_HUMAN` ghi trong `ScrapeRun`.
+
+`robots_status`: `allowed` (robots.txt đã tải, không chặn gì; mock-shop luôn `allowed`), `partial` (đã tải và có luật chặn một phần hoặc chặn tất cả), `unknown` (chưa tải robots.txt trong tiến trình API này; trang quản trị không gọi mạng). `effective_delay_s` là độ trễ giữa hai request: `max(SCRAPER_MIN_DELAY_SECONDS, độ trễ của trang, Crawl-delay đã tải)` (mock-shop: `MOCK_SHOP_DELAY_SECONDS`). `cooldown_until` chỉ có khi trang thật đang nghỉ 24 giờ sau lượt `BLOCKED`.
 
 ## 4. Ví dụ SSE
 
