@@ -115,5 +115,7 @@ class ConversationService:
         names = {p.id: p.canonical_name for p in self._products.get_many(ids)}
         return ConversationSnapshot(
             messages=[(m.role, m.content) for m in messages],
-            last_results=[(pid, names[pid][:MAX_NAME]) for pid in ids if pid in names],
+            last_results=[
+                (pid, " ".join(names[pid].split())[:MAX_NAME]) for pid in ids if pid in names
+            ],
         )

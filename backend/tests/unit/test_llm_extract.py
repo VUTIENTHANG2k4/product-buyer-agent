@@ -14,6 +14,8 @@ from app.normalize.specs import LaptopSpecs
 
 ACER = 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)'
 PROMPT = "prompt thử"
+# Nhãn luật không nhận ra nhưng văn bản có nói GPU: ca LLM dự phòng điền được và kiểm chứng được.
+RAW = {"Ghi chú": "Card rời RTX 4050 6GB"}
 
 
 class MemoryCache:
@@ -31,8 +33,8 @@ class MemoryCache:
         self.models.append(model)
 
 
-def rule_extraction(title: str = ACER) -> SpecsExtraction:
-    return extract_specs(Category.laptop, title, {})
+def rule_extraction(title: str = ACER, raw: dict[str, str] | None = None) -> SpecsExtraction:
+    return extract_specs(Category.laptop, title, RAW if raw is None else raw)
 
 
 def filler(*script: Any, enabled: bool = True) -> tuple[LlmSpecsFiller, ScriptedChatModel]:
@@ -48,7 +50,7 @@ def test_fills_only_the_missing_field_and_never_overrides_rule_values() -> None:
     fill, model = filler(LaptopSpecs(gpu_model="RTX 4050", ram_gb=16))
     before = rule_extraction()
 
-    after = fill(MemoryCache(), Category.laptop, ACER, {}, before)
+    after = fill(MemoryCache(), Category.laptop, ACER, RAW, before)
 
     assert after.specs["gpu_model"] == "RTX 4050"
     assert after.specs["gpu_rank"] == 30  # tính lại từ gpu_model sau khi gộp
@@ -60,11 +62,11 @@ def test_fills_only_the_missing_field_and_never_overrides_rule_values() -> None:
 def test_prompt_and_data_are_sent_with_title_and_raw_specs() -> None:
     fill, model = filler(LaptopSpecs(gpu_model="RTX 4050"))
 
-    fill(MemoryCache(), Category.laptop, ACER, {"Card": "?"}, rule_extraction())
+    fill(MemoryCache(), Category.laptop, ACER, RAW, rule_extraction())
 
     system, human = model.calls[0]
     assert system.content == PROMPT
-    assert json.loads(str(human.content)) == {"title": ACER, "specs": {"Card": "?"}}
+    assert json.loads(str(human.content)) == {"title": ACER, "specs": RAW}
 
 
 def test_not_called_when_nothing_is_missing() -> None:
@@ -82,7 +84,7 @@ def test_not_called_when_disabled() -> None:
     fill, model = filler(LaptopSpecs(gpu_model="RTX 4050"), enabled=False)
     before = rule_extraction()
 
-    assert fill(MemoryCache(), Category.laptop, ACER, {}, before) is before
+    assert fill(MemoryCache(), Category.laptop, ACER, RAW, before) is before
     assert model.calls == []
 
 
@@ -90,13 +92,13 @@ def test_second_identical_call_hits_the_cache_and_skips_the_llm() -> None:
     fill, model = filler(LaptopSpecs(gpu_model="RTX 4050"))
     cache = MemoryCache()
 
-    first = fill(cache, Category.laptop, ACER, {}, rule_extraction())
-    second = fill(cache, Category.laptop, ACER, {}, rule_extraction())
+    first = fill(cache, Category.laptop, ACER, RAW, rule_extraction())
+    second = fill(cache, Category.laptop, ACER, RAW, rule_extraction())
 
     assert second == first
     assert (fill.llm_calls, fill.cache_hits, len(model.calls)) == (1, 1, 1)
     assert cache.models == ["fake-1"]
-    assert list(cache.entries) == [content_hash(Category.laptop, ACER, {})]
+    assert list(cache.entries) == [content_hash(Category.laptop, ACER, RAW)]
 
 
 @pytest.mark.parametrize(
@@ -112,26 +114,26 @@ def test_llm_failure_keeps_rule_result_and_is_not_cached(bad_reply: object) -> N
     before = rule_extraction()
     cache = MemoryCache()
 
-    assert fill(cache, Category.laptop, ACER, {}, before) is before
+    assert fill(cache, Category.laptop, ACER, RAW, before) is before
     assert cache.entries == {}
 
 
 def test_script_exhausted_is_treated_as_llm_failure() -> None:
     fill, _ = filler()
     before = rule_extraction()
-    assert fill(MemoryCache(), Category.laptop, ACER, {}, before) is before
+    assert fill(MemoryCache(), Category.laptop, ACER, RAW, before) is before
 
 
 def test_llm_that_finds_nothing_leaves_missing_and_caches_the_empty_answer() -> None:
     fill, model = filler(LaptopSpecs())
     cache = MemoryCache()
 
-    after = fill(cache, Category.laptop, ACER, {}, rule_extraction())
+    after = fill(cache, Category.laptop, ACER, RAW, rule_extraction())
 
     assert after.missing == ("gpu_model",)
     assert after.confidence < 0.5
     assert len(cache.entries) == 1
-    fill(cache, Category.laptop, ACER, {}, rule_extraction())
+    fill(cache, Category.laptop, ACER, RAW, rule_extraction())
     assert len(model.calls) == 1  # lần hai dùng cache, không hỏi lại
 
 
@@ -148,3 +150,34 @@ def test_category_without_spec_model_is_skipped() -> None:
     nothing = SpecsExtraction(specs={}, missing=("x",), confidence=0.0)
     assert fill(MemoryCache(), Category.other, "x", {}, nothing) is nothing
     assert model.calls == []
+
+
+def test_value_missing_from_the_input_text_is_dropped_but_kept_in_cache() -> None:
+    fill, _ = filler(LaptopSpecs(gpu_model="RTX 4090"))
+    cache = MemoryCache()
+    before = rule_extraction()
+
+    after = fill(cache, Category.laptop, ACER, RAW, before)  # văn bản chỉ nói RTX 4050
+
+    assert "gpu_model" not in after.specs and after.missing == ("gpu_model",)
+    assert len(cache.entries) == 1  # lần sau không hỏi lại LLM
+
+
+@pytest.mark.parametrize("written", ["RTX4050", "rtx 4050", "NVIDIA GeForce RTX 4050 6GB"])
+def test_grounding_ignores_case_spacing_and_extra_words_around_the_value(written: str) -> None:
+    fill, _ = filler(LaptopSpecs(gpu_model=written))
+    after = fill(
+        MemoryCache(), Category.laptop, ACER, {"Ghi chú": f"Card {written}"}, rule_extraction()
+    )
+    assert after.specs["gpu_model"] == "RTX 4050"
+
+
+def test_input_sent_to_the_llm_is_size_capped() -> None:
+    fill, model = filler(LaptopSpecs())
+    huge = {f"nhãn {i}": "x" * 1000 for i in range(200)}
+
+    fill(MemoryCache(), Category.laptop, "T" * 5000, huge, rule_extraction("T" * 5000, huge))
+
+    payload = json.loads(str(model.calls[0][1].content))
+    assert len(payload["title"]) == 300 and len(payload["specs"]) == 60
+    assert all(len(value) == 300 for value in payload["specs"].values())

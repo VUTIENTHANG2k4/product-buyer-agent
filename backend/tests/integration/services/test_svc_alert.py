@@ -187,3 +187,37 @@ def test_get_delete_and_unknown_alert(db_session: Session) -> None:
         with pytest.raises(AlertNotFound) as caught:
             call(alert.alert_id)
         assert caught.value.details == {"alert_id": alert.alert_id}
+
+
+def test_update_validates_everything_before_writing_anything(db_session: Session) -> None:
+    product = add_product(db_session)
+    alert = service(db_session).create(AlertCreate(product_id=product.id or 0, target_price=10))
+
+    with pytest.raises(ValidationFailed):
+        service(db_session).update(alert.alert_id, target_price=5, status=AlertStatus.triggered)
+
+    assert service(db_session).get(alert.alert_id).target_price == 10
+
+
+def test_update_error_reports_the_rejected_value(db_session: Session) -> None:
+    product = add_product(db_session)
+    alert = service(db_session).create(AlertCreate(product_id=product.id or 0, target_price=10))
+
+    with pytest.raises(ValidationFailed) as caught:
+        service(db_session).update(alert.alert_id, target_price=2**63)
+
+    assert caught.value.details == {"target_price": 2**63}
+
+
+def test_update_to_a_threshold_another_alert_already_has_is_a_duplicate(
+    db_session: Session,
+) -> None:
+    product = add_product(db_session)
+    first = service(db_session).create(AlertCreate(product_id=product.id or 0, target_price=10))
+    second = service(db_session).create(AlertCreate(product_id=product.id or 0, target_price=20))
+
+    with pytest.raises(DuplicateAlert) as caught:
+        service(db_session).update(second.alert_id, target_price=10)
+
+    assert caught.value.details == {"alert_id": first.alert_id}
+    assert service(db_session).update(second.alert_id, target_price=20).target_price == 20

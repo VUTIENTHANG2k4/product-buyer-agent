@@ -100,7 +100,7 @@ async def run_case(
         if guard:
             verdict = guard[-1]
             run.dropped_product_ids = list(verdict.dropped_product_ids)
-            run.dropped_live_urls = list(verdict.dropped_live_urls)
+            run.dropped_live_urls = [*verdict.dropped_live_urls, *verdict.dropped_text_urls]
             run.price_warnings = list(verdict.price_warnings)
     except Exception as error:
         run.crashed = f"{type(error).__name__}: {error}"

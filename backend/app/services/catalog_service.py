@@ -202,6 +202,8 @@ class CatalogService:
             series.points.append(
                 PricePointView(t=point.scraped_at, price=point.price, price_type=point.price_type)
             )
+        for series in by_site.values():  # nhiều offer cùng trang: gộp rồi xếp theo thời gian
+            series.points.sort(key=lambda point: point.t)
         prices = [point.price for point in points]
         return PriceHistoryResult(
             series=list(by_site.values()),

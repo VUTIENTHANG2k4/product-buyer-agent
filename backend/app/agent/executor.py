@@ -12,6 +12,7 @@ from collections.abc import AsyncIterator, Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any, Final, Literal
 
+from langchain_core.exceptions import OutputParserException
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
 from langchain_core.tools import BaseTool
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 FINAL_TOOL: Final = FinalAnswer.__name__
 MAX_ARGS_SUMMARY: Final = 200
+MAX_CALLS_PER_STEP: Final = 5
 TOOL_FAILURE_LIMIT: Final = 2  # cùng một tool lỗi 2 lần thì dừng (docs/05 §5)
 
 StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures"]
@@ -139,9 +141,19 @@ class ToolLoop:
                 return
 
             real = [call for call in calls if call["name"] != FINAL_TOOL]
-            for call in real:
+            for call in real[:MAX_CALLS_PER_STEP]:
                 async for event in self._run_tool(call, messages, outcome, failures):
                     yield event
+            for call in real[MAX_CALLS_PER_STEP:]:  # LLM đòi quá nhiều tool trong một bước
+                messages.append(
+                    _tool_message(
+                        {"id": call.get("id") or "call_extra", "name": call["name"]},
+                        error_result(
+                            "TOO_MANY_CALLS",
+                            f"Tối đa {MAX_CALLS_PER_STEP} tool mỗi bước; bỏ qua lời gọi này",
+                        ),
+                    )
+                )
             for call in calls:
                 if call["name"] != FINAL_TOOL:
                     continue
@@ -190,12 +202,19 @@ class ToolLoop:
         started = self._clock()
         tool = self._tools.get(name)
         if tool is None:
-            result = error_result("UNKNOWN_TOOL", f"Không có tool {name}")
+            result = error_result("UNKNOWN_TOOL", f"Không có tool {name[:40]}")
         elif name in WRITE_TOOLS and name not in self._allowed_writes:
             logger.warning("Chặn tool ghi %s: người dùng chưa yêu cầu rõ ràng", name)
             result = error_result(
                 "WRITE_NOT_REQUESTED",
                 "Người dùng chưa yêu cầu rõ ràng thao tác này nên không thực hiện",
+            )
+        elif name in WRITE_TOOLS and args.get("product_id") not in outcome.evidence.product_ids:
+            # Tool ghi chỉ tác động lên sản phẩm đã xuất hiện trong kết quả của lượt này hoặc
+            # trong bảng lượt trước, không phải id tùy ý (kể cả id do nội dung web gợi ý).
+            result = error_result(
+                "UNKNOWN_PRODUCT",
+                "Sản phẩm chưa xuất hiện trong kết quả; hãy tìm trước rồi mới ghi",
             )
         else:
             try:
@@ -237,9 +256,22 @@ class ToolLoop:
         prompt = [*messages, HumanMessage(content=_SYNTHESIS_HINTS[reason])]
         try:
             result = await self._model.with_structured_output(FinalAnswer).ainvoke(prompt)
-            return result if isinstance(result, FinalAnswer) else FinalAnswer.model_validate(result)
-        except Exception:
-            logger.warning("Không tổng hợp được FinalAnswer (%s)", reason, exc_info=True)
+        except (ValidationError, OutputParserException):
+            logger.warning("LLM trả FinalAnswer không hợp lệ (%s)", reason, exc_info=True)
+            return None
+        except Exception as error:  # lỗi gọi LLM (429, 503, hết hạn…) khác lỗi dữ liệu
+            logger.error(
+                "Executor không gọi được LLM khi tổng hợp: %s: %s",
+                type(error).__name__,
+                str(error)[:200],
+            )
+            raise LlmUnavailable(details={"stage": "executor"}) from error
+        if isinstance(result, FinalAnswer):
+            return result
+        try:
+            return FinalAnswer.model_validate(result)
+        except ValidationError:
+            logger.warning("LLM trả FinalAnswer không hợp lệ (%s)", reason, exc_info=True)
             return None
 
 

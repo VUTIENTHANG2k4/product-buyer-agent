@@ -277,3 +277,25 @@ def test_postprocess_does_not_mutate_the_input_and_is_idempotent() -> None:
 
     assert given == snapshot
     assert once == twice
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("laptop i5-12450 tầm 20 triệu", {20_000_000}),
+        ("chuột 25600 dpi dưới 1 triệu", {1_000_000}),
+        ("máy id 118687", set()),
+        ("giá 27490000", {27_490_000}),
+        ("giá 27490 đ", {27_490}),
+        ("giá 27.490.000đ", {27_490_000}),
+    ],
+)
+def test_plain_numbers_are_money_only_with_seven_digits_or_a_currency_suffix(
+    message: str, expected: set[int]
+) -> None:
+    assert extract_amounts(message) == expected
+
+
+def test_model_code_with_a_dash_is_not_a_price_range() -> None:
+    result = postprocess_intent(intent(category="laptop"), "laptop i7-13700H tầm 25 triệu")
+    assert (result.price_min, result.price_max) == (22_500_000, 27_500_000)

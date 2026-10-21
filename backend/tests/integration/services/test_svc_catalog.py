@@ -314,3 +314,18 @@ def test_price_history_rejects_days_outside_1_to_180(db_session: Session, days: 
 def test_price_history_of_unknown_product_raises(db_session: Session) -> None:
     with pytest.raises(ProductNotFound):
         service(db_session).price_history(999_999)
+
+
+def test_price_history_with_two_offers_on_one_site_is_ordered_by_time(db_session: Session) -> None:
+    product = add_product(db_session)
+    first = add_offer(db_session, product, site=SiteKey.gearvn)
+    second = add_offer(db_session, product, site=SiteKey.gearvn)
+    assert first.id and second.id
+    _history(db_session, first.id, 30_000_000, 20)
+    _history(db_session, first.id, 29_000_000, 2)
+    _history(db_session, second.id, 31_000_000, 10)
+
+    (series,) = service(db_session).price_history(product.id or 0, days=30).series
+
+    assert [p.price for p in series.points] == [30_000_000, 31_000_000, 29_000_000]
+    assert [p.t for p in series.points] == sorted(p.t for p in series.points)

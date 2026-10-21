@@ -30,14 +30,23 @@ _PRICE_KEYS: Final = frozenset(
 )
 LIVE_TOOL: Final = "live_search_other"
 
-# Từ khóa cho thấy người dùng yêu cầu tool ghi (đã bỏ dấu, chữ thường).
+# Cụm từ cho thấy người dùng YÊU CẦU tool ghi (đã bỏ dấu, chữ thường). Phải là động từ hành động
+# đi kèm đích ("vào danh sách", "báo tôi khi…"), không chỉ chứa từ rời: "thêm … vào khoảng 20
+# triệu", "tôi đang có cảnh báo nào?" là câu chỉ đọc và không được mở khóa tool ghi.
 _ADD_TO_LIST: Final = re.compile(
-    r"\b(them|luu|add)\b.*\b(vao|into|to)\b|\bdanh sach (mua|cua toi)\b|\bwishlist\b"
+    r"\bvao (danh sach|wishlist|shopping list)\b"
+    r"|\b(them|luu|add)\b[^.?!]{0,40}\b(danh sach|wishlist|shopping list)\b"
 )
 _ALERT: Final = re.compile(
-    r"\bbao (toi|minh|em|cho)\b|\bnhac\b|\bthong bao\b|\bcanh bao\b|\balert\b|\bnotify\b"
-    r"|\btheo doi gia\b|\bkhi\b.*\b(xuong|giam|ha)\b"
+    r"\b(dat|tao|bat|them|cai|thiet lap|set|create)\b[^.?!]{0,15}\b(canh bao|alert)\b"
+    r"|\bbao (toi|minh|em|cho (toi|minh))\b"
+    r"|\bnhac (toi|minh|em)\b"
+    r"|\bthong bao (cho|khi)\b|\bnotify me\b"
+    r"|\b(muon|hay|giup|can)\b[^.?!]{0,15}\btheo doi gia\b"
+    r"|\bkhi\b[^.?!]{0,40}\b(xuong|giam|ha)\b[^.?!]{0,30}\b(duoi|thap hon|con)\b"
 )
+_URL: Final = re.compile(r"https?://[^\s)\]>\"'<]+")
+REMOVED_LINK: Final = "[liên kết đã loại]"
 ADD_TOOL: Final = "add_to_shopping_list"
 ALERT_TOOL: Final = "create_price_alert"
 
@@ -95,6 +104,7 @@ class GuardrailOutcome:
     dropped_product_ids: tuple[int, ...]
     dropped_live_urls: tuple[str, ...]
     price_warnings: tuple[int, ...]
+    dropped_text_urls: tuple[str, ...] = ()
 
     @property
     def hallucinated(self) -> bool:
@@ -140,8 +150,21 @@ def apply_guardrail(
         if amount not in identifiers and not _near(amount, reference)
     )
 
+    # Link trong văn bản cũng phải có trong kết quả tool (LLM hay viết "[Mua ngay](url bịa)").
+    removed_text_urls: list[str] = []
+
+    def vet_link(match: re.Match[str]) -> str:
+        url = match.group(0).rstrip(".,;:!?")
+        if url in evidence.urls or url in evidence.live_urls:
+            return match.group(0)
+        removed_text_urls.append(url)
+        return REMOVED_LINK + match.group(0)[len(url) :]  # giữ dấu câu cuối câu
+
+    text = _URL.sub(vet_link, answer.text)
+
     cleaned = answer.model_copy(
         update={
+            "text": text,
             "product_ids": kept_ids,
             "live_items": kept_live,
             "follow_up_suggestions": [s.strip() for s in answer.follow_up_suggestions if s.strip()][
@@ -154,4 +177,5 @@ def apply_guardrail(
         dropped_product_ids=tuple(dropped_ids),
         dropped_live_urls=tuple(dropped_urls),
         price_warnings=tuple(warnings),
+        dropped_text_urls=tuple(removed_text_urls),
     )

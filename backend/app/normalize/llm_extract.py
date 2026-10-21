@@ -10,6 +10,7 @@ Module này không biết CSDL hay `app.agent`: cache và prompt được tiêm 
 import hashlib
 import json
 import logging
+import re
 from collections.abc import Mapping
 from typing import Any, Protocol
 
@@ -25,8 +26,34 @@ from app.normalize.extract import (
     specs_confidence,
 )
 from app.normalize.specs import SPEC_MODELS
+from app.normalize.text import fold
 
 logger = logging.getLogger(__name__)
+
+
+MAX_TITLE_CHARS = 300  # trần dữ liệu gửi LLM (tiêu đề/thông số thô từ web có thể rất dài)
+MAX_VALUE_CHARS = 300
+MAX_SPEC_ENTRIES = 60
+
+
+def _alnum(text: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", fold(text))
+
+
+def _source_text(title: str, raw_specs: Mapping[str, str]) -> str:
+    """Văn bản LLM được phép dựa vào, chỉ giữ chữ-số thường để so khớp ("RTX 4060" ~ "RTX4060")."""
+    return _alnum(
+        " ".join([title[:MAX_TITLE_CHARS], *(v[:MAX_VALUE_CHARS] for v in raw_specs.values())])
+    )
+
+
+def _is_grounded(value: Any, source: str) -> bool:
+    """Giá trị chuỗi LLM điền phải xuất hiện trong văn bản đầu vào (chặn "nhớ" cấu hình từ tên
+    dòng máy). Số, bool và danh sách enum không kiểm vì có phép đổi đơn vị/nhãn (1TB → 1000)."""
+    if isinstance(value, str):
+        needle = _alnum(value)
+        return bool(needle) and needle in source
+    return True
 
 
 class SpecsCache(Protocol):
@@ -88,7 +115,15 @@ class LlmSpecsFiller:
                 return extraction
             llm_specs = llm_specs_or_none
             cache.put(key, category, llm_specs, self._model_name)
-        wanted = {name: value for name, value in llm_specs.items() if name in extraction.missing}
+        source = _source_text(title, raw_specs)
+        wanted = {
+            name: value
+            for name, value in llm_specs.items()
+            if name in extraction.missing and _is_grounded(value, source)
+        }
+        dropped = sorted(set(llm_specs) & set(extraction.missing) - set(wanted))
+        if dropped:
+            logger.warning("LLM extractor: bỏ %s vì không có trong tiêu đề/thông số thô", dropped)
         specs = merge_specs(category, extraction.specs, wanted)
         return SpecsExtraction(
             specs=specs,
@@ -101,7 +136,16 @@ class LlmSpecsFiller:
     ) -> dict[str, Any] | None:
         self.llm_calls += 1
         logger.info("LLM extractor: gọi LLM lần %d cho %r", self.llm_calls, title[:80])
-        data = json.dumps({"title": title, "specs": dict(raw_specs)}, ensure_ascii=False)
+        data = json.dumps(
+            {
+                "title": title[:MAX_TITLE_CHARS],
+                "specs": {
+                    label[:MAX_VALUE_CHARS]: value[:MAX_VALUE_CHARS]
+                    for label, value in list(raw_specs.items())[:MAX_SPEC_ENTRIES]
+                },
+            },
+            ensure_ascii=False,
+        )
         try:
             result = self._model.with_structured_output(schema).invoke(
                 [SystemMessage(content=self._system_prompt), HumanMessage(content=data)]

@@ -49,9 +49,13 @@ _UNIT_FACTOR: Final = {
 _AMOUNT = re.compile(
     r"(?<![\w.,])(?P<num>(?>\d{1,3}(?:[.,]\d{3})+|\d+(?:[.,]\d+)?))"
     r"\s*(?P<unit>trieu|tr|m|cu|k|nghin|ngan)?(?:(?<=[a-z])(?P<tail>\d)(?!\d))?"
-    r"(?:\s*(?:vnd|dong|d))?(?![\w])"
+    r"(?P<cur>\s*(?:vnd|dong|d))?(?![\w])"
 )
-_RANGE = re.compile(r"\d\s*(?:trieu|tr|m|k)?\s*(?:den|toi|->|-|~)\s*\d")
+# Khoảng "20-30 triệu"; không khớp mã model như "i7-13700H" (chữ đứng ngay trước chữ số đầu).
+_RANGE = re.compile(r"(?<![a-z\d.])\d+\s*(?:trieu|tr|m|k)?\s*(?:den|toi|->|-|~)\s*\d")
+# Số trần không đơn vị cần ít nhất 7 chữ số hoặc hậu tố đ/vnd mới là tiền: "i5-12450", "25600 dpi",
+# "ID 118687" không phải giá.
+_MIN_PLAIN_DIGITS = 7
 _GROUPED = re.compile(r"\d{1,3}(?:[.,]\d{3})+")
 _APPROX_WORDS = re.compile(r"\b(tam|khoang|xap xi|around|about)\b")
 _EXACT_WORDS = re.compile(r"\b(dung|chinh xac|exactly|exact)\b")
@@ -70,7 +74,7 @@ def extract_amounts(message: str) -> set[int]:
         if unit is None:
             if _GROUPED.fullmatch(raw):
                 value = int(re.sub(r"[.,]", "", raw))
-            elif raw.isdigit():
+            elif raw.isdigit() and (len(raw) >= _MIN_PLAIN_DIGITS or match.group("cur")):
                 value = int(raw)
             else:
                 continue

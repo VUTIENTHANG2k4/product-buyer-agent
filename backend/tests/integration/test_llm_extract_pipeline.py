@@ -16,7 +16,11 @@ ACER = 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6"
 
 def listing(slug: str = "a") -> ListingItem:
     return ListingItem(
-        site=SiteKey.gearvn, url=f"https://gearvn.example/p/{slug}", title=ACER, price=1_000_000
+        site=SiteKey.gearvn,
+        url=f"https://gearvn.example/p/{slug}",
+        title=ACER,
+        price=1_000_000,
+        raw_specs={"Ghi chú": "Card rời RTX 4050 6GB"},
     )
 
 
@@ -75,8 +79,23 @@ def test_llm_error_does_not_fail_the_item(db_session: Session) -> None:
 
 
 def test_make_resolver_passes_the_filler_through(db_session: Session) -> None:
-    fill, _ = make_filler(LaptopSpecs(gpu_model="RTX 4060"))
+    fill, _ = make_filler(LaptopSpecs(gpu_model="RTX 4050"))
 
-    resolution = make_resolver(fill)(db_session, Category.laptop, listing(), None, {})
+    item = listing()
+    resolution = make_resolver(fill)(db_session, Category.laptop, item, None, item.raw_specs)
 
-    assert stored_product(db_session, resolution.product_id).specs["gpu_rank"] == 40
+    assert stored_product(db_session, resolution.product_id).specs["gpu_rank"] == 30
+
+
+def test_gpu_the_llm_remembers_but_the_text_never_mentions_is_not_stored(
+    db_session: Session,
+) -> None:
+    fill, _ = make_filler(LaptopSpecs(gpu_model="RTX 4090"))
+    bare = ListingItem(
+        site=SiteKey.gearvn, url="https://gearvn.example/p/bare", title=ACER, price=1_000_000
+    )
+
+    resolution = resolve_product(db_session, Category.laptop, bare, None, spec_filler=fill)
+
+    product = stored_product(db_session, resolution.product_id)
+    assert "gpu_model" not in product.specs and product.specs_confidence < 0.5

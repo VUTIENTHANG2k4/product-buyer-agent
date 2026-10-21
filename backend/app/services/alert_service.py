@@ -23,6 +23,7 @@ from app.services.views import Clock, aware_now, best_price
 
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MAX_DESTINATION_LENGTH = 320
+MAX_TARGET_PRICE = 2**63 - 1  # cận trên BIGINT
 # Chỉ hai trạng thái người dùng được đặt tay; `triggered` do bộ đánh giá đặt.
 SETTABLE_STATUSES = (AlertStatus.active, AlertStatus.paused)
 
@@ -75,14 +76,28 @@ class AlertService:
         target_price: int | None = None,
         status: AlertStatus | None = None,
     ) -> AlertView:
+        """Đổi ngưỡng và/hoặc trạng thái (active/paused). Kiểm tra hết rồi mới ghi, nên lỗi
+        không để lại thay đổi một phần; đổi sang ngưỡng trùng cảnh báo khác → `DuplicateAlert`."""
         alert = self._require(alert_id)
+        if target_price is not None and not 0 < target_price <= MAX_TARGET_PRICE:
+            raise ValidationFailed(
+                f"Giá mục tiêu phải trong khoảng 1..{MAX_TARGET_PRICE}",
+                details={"target_price": target_price},
+            )
+        if status is not None and status not in SETTABLE_STATUSES:
+            raise ValidationFailed("Chỉ đặt được trạng thái active hoặc paused")
+        if target_price is not None and target_price != alert.target_price:
+            for other in self._alerts.list_for_products([alert.product_id]):
+                if (
+                    other.id != alert.id
+                    and other.channel is alert.channel
+                    and other.destination == alert.destination
+                    and other.target_price == target_price
+                ):
+                    raise DuplicateAlert(details={"alert_id": other.id})
         if target_price is not None:
-            if not 0 < target_price <= 2**63 - 1:
-                raise ValidationFailed("Giá mục tiêu phải lớn hơn 0", details={"target_price": 0})
             self._alerts.set_target_price(alert, target_price)
         if status is not None:
-            if status not in SETTABLE_STATUSES:
-                raise ValidationFailed("Chỉ đặt được trạng thái active hoặc paused")
             self._alerts.set_status(alert, status)
         return self._view(alert)
 

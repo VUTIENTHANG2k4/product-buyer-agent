@@ -41,6 +41,8 @@ async def handler(ctx: ToolContext, args: ListAlertsArgs) -> Result:
                 for alert in alerts[:MAX_ALERTS]
             ],
         }
+        if len(alerts) > MAX_ALERTS:
+            result["truncated"] = True
         return limit_size(result, ("alerts",))
 
     return await run_in_session(ctx, work)

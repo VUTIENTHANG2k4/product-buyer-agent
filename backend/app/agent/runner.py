@@ -30,6 +30,7 @@ from app.agent.schemas import (
     ErrorEvent,
     FinalEvent,
     PlanEvent,
+    ToolStartEvent,
 )
 from app.agent.tools import ToolContext, build_tools
 from app.config import Settings
@@ -111,25 +112,41 @@ class AgentRunner:
     async def stream(self, handle: RunHandle, message: str) -> AsyncIterator[AnyEvent]:
         """Phát sự kiện của một lượt; mỗi sự kiện được lưu trước khi phát. Luôn chốt lượt."""
         started = self._clock()
-        finish = Finish(AgentRunStatus.failed)
+        tool_calls = 0
+        closed = False
         try:
             async for event, done in self._pipeline(handle, message):
                 await self._record(handle, event)
+                if isinstance(event, ToolStartEvent):
+                    tool_calls += 1
                 if done is not None:
-                    finish = done
+                    # Chốt lượt TRƯỚC khi phát sự kiện cuối: client thấy `final` rồi gửi lượt kế
+                    # ngay, hoặc dừng đọc luồng, cũng không làm mất tin nhắn/bảng đã lưu.
+                    closed = await self._close(handle, done, started)
                 yield event
         except LlmUnavailable as error:
             event = ErrorEvent(code=error.code, message=error.message)
             await self._record(handle, event)
+            closed = await self._close(handle, Finish(AgentRunStatus.failed, tool_calls), started)
             yield event
         except Exception:
             logger.exception("Lượt chạy agent %s lỗi", handle.run_id)
             event = ErrorEvent(code="INTERNAL_ERROR", message="Đã xảy ra lỗi, vui lòng thử lại")
             await self._record(handle, event)
+            closed = await self._close(handle, Finish(AgentRunStatus.failed, tool_calls), started)
             yield event
         finally:
-            latency = round((self._clock() - started) * 1000)
+            if not closed:  # bị hủy / consumer đóng luồng giữa chừng
+                await self._close(handle, Finish(AgentRunStatus.failed, tool_calls), started)
+
+    async def _close(self, handle: RunHandle, finish: Finish, started: float) -> bool:
+        """Chốt lượt (không bị hủy giữa chừng); lỗi lưu chỉ ghi log để không đè lỗi gốc."""
+        latency = round((self._clock() - started) * 1000)
+        try:
             await asyncio.shield(self._finish(handle, finish, latency))
+        except Exception:
+            logger.exception("Không chốt được lượt chạy agent %s", handle.run_id)
+        return True
 
     # ---- các bước ----
     async def _pipeline(
@@ -188,11 +205,14 @@ class AgentRunner:
         verdict = apply_guardrail(outcome.answer, outcome.evidence, user_amounts=amounts)
         if self.observer is not None:
             self.observer(verdict)
-        if verdict.dropped_product_ids or verdict.dropped_live_urls:
+        if verdict.dropped_product_ids or verdict.dropped_live_urls or verdict.dropped_text_urls:
             logger.warning(
-                "Guardrail loại id %s và link %s không có trong kết quả tool",
+                "Run %s: guardrail loại id %s, link %s và link trong văn bản %s không có trong "
+                "kết quả tool",
+                handle.run_id,
                 verdict.dropped_product_ids,
                 verdict.dropped_live_urls,
+                verdict.dropped_text_urls,
             )
         if verdict.price_warnings:
             logger.warning("Số tiền trong câu trả lời lệch giá CSDL: %s", verdict.price_warnings)
