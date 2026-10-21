@@ -292,10 +292,8 @@ async def test_a_failed_turn_does_not_break_the_next_turn_in_the_conversation(
     events = await collect(good.runner, QUESTION, conversation_id)
 
     assert isinstance(events[-1], FinalEvent)
-    assert [r.status for r in all_runs(db_session)] == [
-        AgentRunStatus.failed,
-        AgentRunStatus.succeeded,
-    ]
+    # Không so thứ tự: `created_at` có thể trùng (đồng hồ test) và `id` là UUID ngẫu nhiên.
+    assert sorted(r.status.value for r in all_runs(db_session)) == ["failed", "succeeded"]
 
 
 async def test_nul_characters_from_the_llm_never_stop_the_run_from_being_saved(

@@ -122,7 +122,8 @@ def test_regexes_stay_linear_on_long_hostile_input() -> None:
     started = time.perf_counter()
     allowed_write_tools(hostile)
     apply_guardrail(FinalAnswer(text=hostile + " https://" + "a" * 100_000), evidence())
-    assert time.perf_counter() - started < 2.0
+    # Cỡ 0,5 s khi chạy riêng, ~2,5 s dưới coverage; backtracking thật mất hàng phút.
+    assert time.perf_counter() - started < 15.0
 
 
 # ---- link trong văn bản (BUG-M6-2) ----
