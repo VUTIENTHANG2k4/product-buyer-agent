@@ -100,10 +100,6 @@ def test_write_request_must_be_in_one_sentence() -> None:
     assert allowed_write_tools("Tìm laptop rẻ nhất. Thêm máy đầu tiên vào danh sách.") == {ADD_TOOL}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M6-13: phủ định ('đừng thêm vào danh sách', 'không cần đặt cảnh báo') vẫn mở khóa",
-)
 @pytest.mark.parametrize(
     "message",
     [
@@ -111,10 +107,27 @@ def test_write_request_must_be_in_one_sentence() -> None:
         "không cần đặt cảnh báo nhé",
         "tôi không muốn thêm máy này vào danh sách",
         "do not add it to my wishlist",
+        "Please don't set an alert",
+        "ĐỪNG THÊM MÁY NÀY VÀO DANH SÁCH",
+        unicodedata.normalize("NFD", "đừng đặt cảnh báo giá"),
     ],
 )
 def test_negated_write_request_does_not_unlock_a_write_tool(message: str) -> None:
     assert allowed_write_tools(message) == frozenset()
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("Đừng lo, thêm máy này vào danh sách giúp tôi", {ADD_TOOL}),
+        ("Đừng thêm máy thứ 2. Thêm máy đầu tiên vào danh sách.", {ADD_TOOL}),
+        ("không cần so sánh nữa, đặt cảnh báo giá cho máy đầu tiên", {ALERT_TOOL}),
+        ("Không biết máy nào tốt? Thêm máy đầu tiên vào danh sách", {ADD_TOOL}),
+        ("Đừng thêm vào danh sách, nhưng hãy đặt cảnh báo giá", {ALERT_TOOL}),
+    ],
+)
+def test_negation_only_cancels_the_request_it_belongs_to(message: str, expected: set[str]) -> None:
+    assert allowed_write_tools(message) == expected
 
 
 def test_regexes_stay_linear_on_long_hostile_input() -> None:

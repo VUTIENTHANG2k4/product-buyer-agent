@@ -262,7 +262,7 @@ Xong khi:
 | T6.5 | Executor + sự kiện + guardrail + bộ nhớ hội thoại | T6.3, T6.4 | L | ✅ |
 | T6.6 | Eval harness + báo cáo cơ sở | T6.5, T1.5 | M | ✅ |
 | T6.7 | Chỉnh prompt/seed sau eval cơ sở (phát sinh từ T6.6) | T6.6 | S | ⬜ |
-| T6.8 | Guardrail: chặn câu phủ định mở khóa tool ghi (BUG-M6-13) | T6.5 | S | ⬜ |
+| T6.8 | Guardrail: chặn câu phủ định mở khóa tool ghi (BUG-M6-13) | T6.5 | S | ✅ |
 | T6.9 | `create_price_alert` kiểm `target_price` sai thang + trần số lần gọi tool ghi mỗi lượt (BUG-M6-15) | T6.5 | S | ⬜ |
 | T6.10 | Hậu xử lý: GPU "trở xuống" và số tiền cách nghìn bằng dấu cách (BUG-M6-11, 12) | T6.3 | S | ⬜ |
 | T6.11 | `FinalAnswer.text` không rỗng, chạy lại eval (BUG-M6-14) | T6.5 | S | ⬜ |

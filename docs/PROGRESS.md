@@ -4,9 +4,9 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 
 ## Trạng thái
-- Đang làm: (–). M6 đã đóng trên `milestone/M6-agent`, chờ người dùng merge. Kế tiếp đề xuất: M7 API (`/next M7`); nên làm T6.8, T6.9 (khóa tool ghi, ngưỡng cảnh báo sai thang) trước khi chat ghi dữ liệu thật.
-- Backlog chưa làm (không chặn M7): T4.6–T4.8, T5.4–T5.7, T6.7–T6.13. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-21 — đóng M6 (`/done M6`)
+- Đang làm: M7 API trên `milestone/M7-api`. Thứ tự đã duyệt: T6.8 ✅ → T6.9 → T7.1 → T7.3 → T7.4 → T7.2 → T7.5 (gộp T6.8, T6.9; không gộp T2.8). Đang làm: T6.9.
+- Backlog chưa làm (không chặn M7): T4.6–T4.8, T5.4–T5.7, T6.7–T6.13 (T6.8, T6.9 nên làm trước khi chat ghi dữ liệu thật). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-10-21 — `/next M7`
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -18,7 +18,7 @@
 | M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). Backlog: T4.6 (seed/test), T4.7, T4.8 |
 | M5 Chuẩn hóa & ghép | ✅ | Qua `code-reviewer` + `qa-tester`; T5.1, T5.2 xong, T5.3 hoãn sang M6. QA còn 8 lỗi nhỏ ghi thành test `xfail(strict)` (T5.4–T5.7) |
 | M6 Agent | ✅ | Gộp T5.3; qua `code-reviewer` + `qa-tester` (10 bug sửa ngay, 7 bug giữ `xfail(strict)` BUG-M6-11…17 → T6.8–T6.13). T6.7 tùy chọn |
-| M7 API | ⬜ | |
+| M7 API | 🔄 | T7.1–T7.5; M6 đã merge vào `main` |
 | M8 Frontend | ⬜ | Có thêm T8.9, T8.10 (từ QA M0) |
 | M9 Theo dõi giá | ⬜ | |
 | M10 Tầng 2 | ⬜ | |

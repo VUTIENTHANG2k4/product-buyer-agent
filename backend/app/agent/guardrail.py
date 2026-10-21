@@ -44,6 +44,13 @@ _ALERT: Final = re.compile(
     r"|\b(muon|hay|giup|can)\b[^.?!]{0,15}\btheo doi gia\b"
     r"|\bkhi\b[^.?!]{0,40}\b(xuong|giam|ha)\b[^.?!]{0,30}\b(duoi|thap hon|con)\b"
 )
+# Từ phủ định ngay trước cụm yêu cầu ("đừng thêm vào danh sách", "không cần đặt cảnh báo"): cụm đó
+# là lời từ chối, không phải yêu cầu. Chỉ xét trong cùng mệnh đề, `_NEGATION_WINDOW` ký tự trước.
+_NEGATION: Final = re.compile(
+    r"\b(dung|(khong|ko|chua) (can|muon|nen)|do not|don'?t|no need|never)\b"
+)
+_NEGATION_WINDOW: Final = 25
+_SENTENCE_END: Final = ".?!,;"  # dấu ngắt câu/mệnh đề: phủ định ở mệnh đề trước không lan sang sau
 # Có cả "www." không scheme (markdown dạng GFM tự biến thành link) và scheme viết hoa.
 _URL: Final = re.compile(r"(?:https?://|www\.)[^\s)\]>\"'<]+", re.IGNORECASE)
 _URL_TRAILING: Final = ".,;:!?*_~`"  # dấu câu / markdown dính sau link ("**https://…**")
@@ -56,11 +63,22 @@ def allowed_write_tools(message: str) -> frozenset[str]:
     """Tool ghi mà câu của người dùng cho phép (rỗng nếu chỉ hỏi/tìm kiếm)."""
     folded = " ".join(fold(message).split())  # gộp khoảng trắng/xuống dòng giữa các từ
     allowed: set[str] = set()
-    if _ADD_TO_LIST.search(folded):
+    if _requested(_ADD_TO_LIST, folded):
         allowed.add(ADD_TOOL)
-    if _ALERT.search(folded):
+    if _requested(_ALERT, folded):
         allowed.add(ALERT_TOOL)
     return frozenset(allowed)
+
+
+def _requested(pattern: re.Pattern[str], folded: str) -> bool:
+    """Có cụm yêu cầu khớp `pattern` mà không bị từ phủ định đứng ngay trước trong cùng câu."""
+    for match in pattern.finditer(folded):
+        start = match.start()
+        window = folded[max(0, start - _NEGATION_WINDOW) : start]
+        cut = max(window.rfind(mark) for mark in _SENTENCE_END)
+        if not _NEGATION.search(window[cut + 1 :]):
+            return True
+    return False
 
 
 @dataclass
