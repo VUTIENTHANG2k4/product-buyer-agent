@@ -8,10 +8,12 @@ from sqlmodel import Session
 
 from app.config import Settings, get_settings
 from app.services import health_service
+from app.services.alert_service import AlertService
 from app.services.catalog_service import CatalogService
 from app.services.compare_service import CompareService
 from app.services.database import session_scope
 from app.services.health_service import DbStatus
+from app.services.shopping_list_service import ShoppingListService
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
@@ -45,3 +47,15 @@ def get_compare_service(session: SessionDep) -> CompareService:
 
 CatalogServiceDep = Annotated[CatalogService, Depends(get_catalog_service)]
 CompareServiceDep = Annotated[CompareService, Depends(get_compare_service)]
+
+
+def get_shopping_list_service(session: SessionDep) -> ShoppingListService:
+    return ShoppingListService(session)
+
+
+def get_alert_service(session: SessionDep, settings: SettingsDep) -> AlertService:
+    return AlertService(session, settings)
+
+
+ShoppingListServiceDep = Annotated[ShoppingListService, Depends(get_shopping_list_service)]
+AlertServiceDep = Annotated[AlertService, Depends(get_alert_service)]

@@ -81,23 +81,25 @@ Id trong đường dẫn hoặc thân yêu cầu ngoài miền khóa chính (≤
 ### 3.4 Danh sách mua
 | Method | Path | Mô tả |
 | --- | --- | --- |
-| GET | `/lists` | Danh sách + số mục + tổng tiền theo giá thấp nhất hiện tại |
-| POST | `/lists` | `{name}` |
+| GET | `/lists` | `{items: [{list_id, name, item_count, total_price, updated_at}]}`; tổng tiền theo giá hiện tại của từng mục |
+| POST | `/lists` | `{name}` → 201 |
 | GET | `/lists/{id}` | Chi tiết với các mục (kèm giá hiện tại và chênh lệch so với `price_at_add`) |
 | PATCH | `/lists/{id}` | `{name}` |
-| DELETE | `/lists/{id}` | |
-| POST | `/lists/{id}/items` | `{product_id, quantity?, note?, preferred_offer_id?}`; trùng → tăng `quantity` |
-| PATCH | `/lists/{id}/items/{item_id}` | `{quantity?, note?, preferred_offer_id?}` |
-| DELETE | `/lists/{id}/items/{item_id}` | |
+| DELETE | `/lists/{id}` | 204 |
+| POST | `/lists/{id}/items` | `{product_id, quantity?, note?, preferred_offer_id?}` → 201; trùng → tăng `quantity` (giữ `price_at_add` ban đầu) |
+| PATCH | `/lists/{id}/items/{item_id}` | `{quantity?, note?, preferred_offer_id?}`; trường bỏ vắng giữ nguyên, `null` ở `note`/`preferred_offer_id` xóa giá trị |
+| DELETE | `/lists/{id}/items/{item_id}` | 204 |
+
+`quantity` 1..2.147.483.647 (cộng dồn cũng không được vượt); `note` ≤ 500 ký tự; `preferred_offer_id` phải là offer của chính sản phẩm của mục, nếu không 422 `VALIDATION_ERROR`; mục của danh sách khác → 404 `LIST_NOT_FOUND`; `product_id` không tồn tại → 404 `PRODUCT_NOT_FOUND`.
 
 ### 3.5 Cảnh báo giá
 | Method | Path | Mô tả |
 | --- | --- | --- |
-| GET | `/alerts?status=` | |
-| POST | `/alerts` | `{product_id, target_price, channel?, destination?}`; thiếu channel/destination → lấy mặc định từ cấu hình |
-| PATCH | `/alerts/{id}` | `{target_price?, status? (active/paused)}` |
-| DELETE | `/alerts/{id}` | |
-| POST | `/alerts/{id}/test` | Gửi thông báo thử tới kênh đã cấu hình |
+| GET | `/alerts?status=` | `{items: [...]}`, mới nhất trước |
+| POST | `/alerts` | `{product_id, target_price, channel?, destination?}` → 201; thiếu channel/destination → lấy mặc định từ cấu hình; nơi nhận chưa cấu hình hoặc sai định dạng → 422 |
+| PATCH | `/alerts/{id}` | `{target_price?, status? (active/paused)}`; ngưỡng trùng cảnh báo khác đang hiệu lực → 409 `DUPLICATE_ALERT` |
+| DELETE | `/alerts/{id}` | 204 |
+| POST | `/alerts/{id}/test` | `{sent, reason?}`. Bộ gửi email/Telegram thuộc M9 nên hiện luôn trả `sent: false` kèm lý do (không giả vờ gửi) |
 
 ### 3.6 Quản trị thu thập
 | Method | Path | Mô tả |

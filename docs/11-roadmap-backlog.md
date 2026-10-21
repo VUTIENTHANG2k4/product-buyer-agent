@@ -301,7 +301,7 @@ Xong khi:
 | --- | --- | --- | --- | --- |
 | T7.1 | Products, categories, compare, price-history | T6.2 | M | ✅ |
 | T7.2 | Chat + SSE + conversations | T6.5 | M | ⬜ |
-| T7.3 | Lists + alerts | T6.2 | S | ⬜ |
+| T7.3 | Lists + alerts | T6.2 | S | ✅ |
 | T7.4 | Admin + challenge HITL | T2.6 | M | ⬜ |
 | T7.5 | Sinh kiểu TypeScript từ OpenAPI | T7.1–T7.4, T0.2 | S | ⬜ |
 
