@@ -262,6 +262,12 @@ Xong khi:
 | T6.5 | Executor + sự kiện + guardrail + bộ nhớ hội thoại | T6.3, T6.4 | L | ✅ |
 | T6.6 | Eval harness + báo cáo cơ sở | T6.5, T1.5 | M | ✅ |
 | T6.7 | Chỉnh prompt/seed sau eval cơ sở (phát sinh từ T6.6) | T6.6 | S | ⬜ |
+| T6.8 | Guardrail: chặn câu phủ định mở khóa tool ghi (BUG-M6-13) | T6.5 | S | ⬜ |
+| T6.9 | `create_price_alert` kiểm `target_price` sai thang + trần số lần gọi tool ghi mỗi lượt (BUG-M6-15) | T6.5 | S | ⬜ |
+| T6.10 | Hậu xử lý: GPU "trở xuống" và số tiền cách nghìn bằng dấu cách (BUG-M6-11, 12) | T6.3 | S | ⬜ |
+| T6.11 | `FinalAnswer.text` không rỗng, chạy lại eval (BUG-M6-14) | T6.5 | S | ⬜ |
+| T6.12 | Trần `quantity` / `total_price` danh sách mua (BUG-M6-16) | T6.2 | S | ⬜ |
+| T6.13 | Mã thoát `run_eval` khi mọi ca crash (BUG-M6-17) | T6.6 | S | ⬜ |
 
 **T6.1** — [05 §2](05-agent-design.md#2-mô-hình-và-cấu-hình). Xong khi: `get_chat_model(role)` cho gemini/openai/fake; tra Context7 cho API LangChain hiện hành và ghi phiên bản; `ScriptedChatModel` phát chuỗi tool call định sẵn.
 **T6.2** — Xong khi: `catalog_service.search(QueryIntent-like filters)` lọc đúng theo specs JSON và giá hiệu lực (§4 `effective_price` ở 04); `stale` khi dữ liệu > 24 giờ; test với seed. Từ review T1.4: service kiểm `quantity ≥ 1` và đổi lỗi ràng buộc thành lỗi miền; `ProductRepository.search` đã có lọc giá/trang/specs, service chỉ ánh xạ `relevance`/từ khóa và `stale`. **Việc dồn từ QA M1 (cần quyết định thiết kế, xfail ở `*_m1.py`):** (a) chuẩn hóa `strip`+`lower` cho `destination` email khi tạo/tìm cảnh báo (`find_live` đang coi `Mock@Example.com` và `mock@example.com ` là hai người nhận, gửi trùng; test `test_find_live_treats_email_variants_of_one_mailbox_as_the_same_destination`); (b) kiểm `preferred_offer_id` thuộc đúng `product_id` (`test_add_item_rejects_preferred_offer_of_another_product`); (c) chuẩn hóa tên danh sách về NFC (`test_get_by_name_matches_vietnamese_name_in_either_unicode_form`); (d) quyết định xử lý offer hết hàng trong `search` (hiện vẫn tính vào `min_price`/`offers_count`); (e) bọc đầu vào repository: `limit < 0`, `quantity` > int32, `now` naive; `update_item` chưa xóa được `note`.
@@ -278,6 +284,16 @@ Xong khi:
 - **Seed `eval` quá "sạch"** (từ QA M1): chưa thêm sản phẩm thiếu thông số / chỉ còn offer hết hàng; thêm kèm cập nhật `test_seed_data.py`.
 - Từ review M6 (chưa làm): (a) `LlmSpecsFiller` gọi LLM đồng bộ trong `_save_item` khi giao dịch của trang còn mở (nên gọi ở `_prepare_items` trước khi mở session lưu; cache `put` cũng nằm trong savepoint của mục); (b) `create_price_alert` chưa đối chiếu `target_price` với số tiền người dùng nêu; (c) `scripts/run_eval.py` import `tests.db_support` (chuyển helper ra `app/db`) và chưa bắt hết lỗi thiết lập (alembic, YAML) thành mã thoát 2; (d) 14 câu eval có `constraints` nhưng không có `min_results` (bảng rỗng vẫn "đạt": L10 hiện 0 kết quả); (e) xử lý `invalid_tool_calls` của LLM; thống nhất id tool call; log kèm `run_id`; (f) đổi tên `agent/prompts.py` (trùng tên thư mục `prompts/`); (g) N+1 trong `shopping_list_service`/`alert_service`, `update_item` chưa nhận `preferred_offer_id`, race tạo trùng danh sách/cảnh báo.
 - Cảnh báo "số tiền lệch" còn dương tính giả khi LLM nêu ngưỡng/ước lượng chung ("trên 50 triệu"), chỉ ghi log nên chưa ảnh hưởng chỉ số.
+
+**Phát sinh từ QA M6** (2026-10-21; 10 bug đã sửa ngay, 7 bug còn lại giữ bằng `xfail(strict=True)` trong `*_qa_m6.py`; XPASS báo đỏ → gỡ dấu xfail khi sửa). Không chặn M7; T6.8 và T6.9 nên làm trước khi bật ghi từ chat thật (M7/M9):
+- **T6.8** (BUG-M6-13): "đừng thêm vào danh sách", "không cần đặt cảnh báo", "do not add…" vẫn mở khóa tool ghi trong `allowed_write_tools`. Bỏ khớp khi có từ phủ định trước cụm yêu cầu trong cùng câu. Xong khi: 4 ca xfail trong `test_agent_guardrail_qa_m6.py` xanh thật.
+- **T6.9** (BUG-M6-15): LLM gọi `create_price_alert(target_price=25)` khi người dùng nói "25 triệu" vẫn được lưu và không bao giờ kích hoạt. Đối chiếu với `extract_amounts(message)` hoặc từ chối ngưỡng < 10.000 VND bằng lỗi để LLM thử lại; thêm trần số lần gọi tool ghi mỗi lượt (LLM bị tiêm lệnh hiện có thể thêm mọi máy có trong kết quả). Xong khi: test xfail trong `test_runner_qa_m6.py` xanh; gộp mục (b) của review M6 ở T6.7.
+- **T6.10** (BUG-M6-11, 12): "RTX 4060 trở xuống"/"tối đa" bị đổi thành `gpu_rank gte` (ngược chiều); số tiền "27 990 000" không được nhận ra nên guardrail không cảnh báo giá lệch.
+- **T6.11** (BUG-M6-14): `FinalAnswer.text` rỗng/toàn khoảng trắng được chấp nhận. Đổi schema gửi cho Gemini nên phải chạy lại `make eval`.
+- **T6.12** (BUG-M6-16): giá 5 tỷ × `quantity` INT32 làm `total_price` vượt BIGINT và `get_list` ném `ValidationError`. Giới hạn `quantity` (ví dụ ≤ 10.000).
+- **T6.13** (BUG-M6-17): mọi ca crash nhưng chỉ số "không đo được" nên `all_thresholds_met` vẫn đạt (mã thoát 0); crash hoặc `error_code` phải cho mã thoát 1.
+- **Dồn sang M7:** giới hạn id INT4 và loại NUL ở tham số API (id lớn → 404, không phải 500); bộ dọn `agent_run` kẹt `running` khi `_finish` lỗi do DB. **Dồn sang M8:** trình hiển thị markdown tự lọc scheme `javascript:` (guardrail chỉ vet `http(s)`/`www.`).
+- Rủi ro chưa kiểm được: đồng thời thật (test dùng một connection chung), hành vi Gemini thật (`tool_call.id = None`, content dạng list) chỉ `make eval` bắt được; grounding của `LlmSpecsFiller` chỉ kiểm chuỗi, không kiểm số.
 
 ### M7 — API
 
