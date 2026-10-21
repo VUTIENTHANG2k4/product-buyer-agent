@@ -9,7 +9,7 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from app.agent.schemas import ErrorEvent, FinalEvent
 from app.api.deps import AgentRunnerDep, SessionDep, SessionFactoryDep, TaskRegistryDep
-from app.api.errors import error_responses
+from app.api.errors import error_responses, json_error_responses
 from app.api.schemas import (
     ChatAccepted,
     ChatRequest,
@@ -60,7 +60,7 @@ async def send_message(
         "Kết nối sau khi lượt đã xong thì phát lại toàn bộ rồi đóng. Mỗi sự kiện có `id` là vị trí "
         "của nó; gửi `Last-Event-ID` để nhận tiếp từ sau vị trí đó."
     ),
-    responses=error_responses(404, 422),
+    responses=json_error_responses(404, 422, 500),
 )
 async def stream_events(
     run_id: Annotated[uuid.UUID, Depends(existing_run)],

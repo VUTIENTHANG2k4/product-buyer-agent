@@ -303,7 +303,7 @@ Xong khi:
 | T7.2 | Chat + SSE + conversations | T6.5 | M | ✅ |
 | T7.3 | Lists + alerts | T6.2 | S | ✅ |
 | T7.4 | Admin + challenge HITL | T2.6 | M | ✅ |
-| T7.5 | Sinh kiểu TypeScript từ OpenAPI | T7.1–T7.4, T0.2 | S | ⬜ |
+| T7.5 | Sinh kiểu TypeScript từ OpenAPI | T7.1–T7.4, T0.2 | S | ✅ |
 
 Ghi chú từ T6.2: `PATCH /lists/{id}/items/{item_id}` cần `preferred_offer_id`, nhưng `ShoppingListService.update_item`/repo chưa hỗ trợ (chỉ `quantity`, `note`, `clear_note`): thêm kèm kiểm offer thuộc sản phẩm. `GET /products` còn thiếu `sort=updated_desc` và `GET /categories` chưa có service.
 

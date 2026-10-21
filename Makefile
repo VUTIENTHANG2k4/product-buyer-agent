@@ -90,8 +90,8 @@ seed: ## Nạp dữ liệu hư cấu: make seed FIXTURE=dev|eval|e2e [RESET=1: x
 	$(call require,backend/scripts/seed.py,T1.5)
 	$(BE) uv run python -m scripts.seed --fixture $(FIXTURE) $(if $(RESET),--reset --yes)
 
-gen-api: ## Sinh kiểu TypeScript từ OpenAPI
-	$(if $(shell grep -q '"gen:api"' frontend/package.json && echo yes),,$(error Chưa khả dụng: thiếu script gen:api trong frontend/package.json (làm ở T7.5)))
+gen-api: ## Sinh kiểu TypeScript từ OpenAPI (frontend/openapi.json -> src/api/types.gen.ts)
+	$(BE) uv run python -m scripts.dump_openapi
 	$(FE) npm run gen:api
 
 migrate: ## alembic upgrade head

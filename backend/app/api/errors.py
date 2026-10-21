@@ -46,6 +46,20 @@ def error_responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
     }
 
 
+def json_error_responses(*statuses: int) -> dict[int | str, dict[str, Any]]:
+    """Như `error_responses` nhưng ép kiểu nội dung JSON. Dùng cho route có `response_class` khác
+    (SSE): FastAPI gán media type của route cho cả phản hồi lỗi, trong khi lỗi thật luôn là JSON."""
+    return {
+        status: {
+            "description": _RESPONSE_DESCRIPTIONS.get(status, "Lỗi"),
+            "content": {
+                "application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}
+            },
+        }
+        for status in statuses
+    }
+
+
 def _error_response(
     status_code: int,
     code: str,

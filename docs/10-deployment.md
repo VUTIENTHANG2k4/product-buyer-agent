@@ -51,7 +51,7 @@ flowchart LR
   fe --> e2e
 ```
 
-- Job e2e chưa có ở T0.3 (chưa có spec Playwright, seed `e2e`); thêm ở T8.8. Hiện CI chỉ có job `backend` và `frontend` (Node 22), chạy bằng `make test-be` / `make test-fe`.
+- Job e2e chưa có ở T0.3 (chưa có spec Playwright, seed `e2e`); thêm ở T8.8. Hiện CI chỉ có job `backend` và `frontend` (Node 22), chạy bằng `make test-be` / `make test-fe`; job `frontend` còn kiểm `src/api/types.gen.ts` khớp `openapi.json` (`npm run gen:api` rồi `git diff --exit-code`).
 - Không có bí mật nào trong CI (LLM giả, offline).
 - Job backend (và e2e) khai báo `services: postgres` (image `postgres:17`, `POSTGRES_DB=product_buyer_test`, healthcheck `pg_isready`), đặt `TEST_DATABASE_URL`/`DATABASE_URL` trỏ `localhost:5432`. Mật khẩu CI là giá trị giả cố định, không phải bí mật.
 - Cache uv và npm.
