@@ -1,5 +1,7 @@
 """Tool `compare_products`: so sánh 2–5 sản phẩm (docs/05 §3, tool 3)."""
 
+from typing import Annotated
+
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 from sqlmodel import Session
@@ -14,6 +16,7 @@ from app.agent.tools.base import (
     run_in_session,
 )
 from app.domain.catalog import ProductFull
+from app.domain.dto import INT4_MAX
 from app.services.compare_service import CompareService
 from app.services.views import key_specs
 
@@ -27,7 +30,9 @@ MAX_OFFERS_PER_PRODUCT = 3
 
 
 class CompareArgs(BaseModel):
-    product_ids: list[int] = Field(min_length=2, max_length=5, description="2-5 distinct ids.")
+    product_ids: list[Annotated[int, Field(ge=1, le=INT4_MAX)]] = Field(
+        min_length=2, max_length=5, description="2-5 distinct ids."
+    )
 
 
 def compact_product(product: ProductFull, differing: list[str]) -> dict[str, object]:

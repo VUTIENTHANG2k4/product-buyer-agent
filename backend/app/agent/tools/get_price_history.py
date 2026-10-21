@@ -6,6 +6,7 @@ from sqlmodel import Session
 
 from app.agent.tools.base import Result, ToolContext, iso, limit_size, make_tool, run_in_session
 from app.domain.catalog import PricePointView
+from app.domain.dto import INT4_MAX
 from app.services.catalog_service import MAX_HISTORY_DAYS, CatalogService
 
 NAME = "get_price_history"
@@ -18,7 +19,7 @@ MAX_POINTS_PER_SITE = 30
 
 
 class HistoryArgs(BaseModel):
-    product_id: int = Field(ge=1, description="Product id from an earlier result.")
+    product_id: int = Field(ge=1, le=INT4_MAX, description="Product id from an earlier result.")
     days: int = Field(default=30, ge=1, le=MAX_HISTORY_DAYS, description="Look-back days.")
 
 

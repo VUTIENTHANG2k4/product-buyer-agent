@@ -9,10 +9,10 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, Final, Literal
+from typing import Any, Final, Literal, Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 QUERIES_FILE: Final = Path(__file__).resolve().parents[2] / "docs" / "eval" / "queries.yaml"
 
@@ -35,6 +35,13 @@ class Constraint(BaseModel):
     field: str
     op: Op
     value: Any
+
+    @model_validator(mode="after")
+    def _numeric_operators_need_numbers(self) -> Self:
+        """`lte`/`gte` với giá trị chuỗi làm cả lượt eval chết giữa chừng (TypeError khi chấm)."""
+        if self.op in ("lte", "gte") and not isinstance(self.value, int | float):
+            raise ValueError(f"toán tử {self.op} cần giá trị số, nhận {self.value!r}")
+        return self
 
 
 class Expected(BaseModel):
@@ -62,6 +69,8 @@ class EvalCase(BaseModel):
 def load_cases(path: Path = QUERIES_FILE, only: Sequence[str] = ()) -> list[EvalCase]:
     """Nạp câu hỏi; `only` (danh sách id) lọc bớt và báo lỗi nếu có id không tồn tại."""
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict) or not isinstance(data.get("cases"), list) or not data["cases"]:
+        raise ValueError(f"{path.name} phải có mục `cases` là danh sách không rỗng")
     cases = [EvalCase.model_validate(item) for item in data["cases"]]
     ids = [case.id for case in cases]
     if len(set(ids)) != len(ids):
@@ -433,7 +442,7 @@ def render_report(
             else (score.products_checked == score.products_satisfying)
         )
         latency = "" if score.run.latency_s is None else f"{score.run.latency_s:.1f}"
-        query = score.case.query.replace("|", "\\|")
+        query = " ".join(score.case.query.split()).replace("|", "\\|")
         out.append(
             f"| {score.case.id} | {query} | {_mark(score.passed)} | {_mark(intent_ok)} "
             f"| {_mark(constraint_ok)} | {_mark(score.tools_ok)} | {_mark(score.clarification_ok)} "

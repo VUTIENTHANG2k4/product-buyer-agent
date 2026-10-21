@@ -16,6 +16,7 @@ from app.db.repositories import (
     ProductRepository,
     normalize_destination,
 )
+from app.db.repositories.price_alerts import LIVE_STATUSES
 from app.domain.catalog import AlertCreate, AlertView
 from app.domain.enums import AlertChannel, AlertStatus
 from app.domain.errors import AlertNotFound, DuplicateAlert, ProductNotFound, ValidationFailed
@@ -86,13 +87,18 @@ class AlertService:
             )
         if status is not None and status not in SETTABLE_STATUSES:
             raise ValidationFailed("Chỉ đặt được trạng thái active hoặc paused")
-        if target_price is not None and target_price != alert.target_price:
+        # Trùng chỉ xét giữa các cảnh báo còn hiệu lực: đổi ngưỡng, hoặc bật lại cảnh báo đang
+        # tạm dừng (trong lúc dừng có thể đã tạo cái giống hệt) đều phải kiểm tra.
+        resulting_target = alert.target_price if target_price is None else target_price
+        retargeted = target_price is not None and target_price != alert.target_price
+        reactivated = status in LIVE_STATUSES and alert.status not in LIVE_STATUSES
+        if retargeted or reactivated:
             for other in self._alerts.list_for_products([alert.product_id]):
                 if (
                     other.id != alert.id
                     and other.channel is alert.channel
                     and other.destination == alert.destination
-                    and other.target_price == target_price
+                    and other.target_price == resulting_target
                 ):
                     raise DuplicateAlert(details={"alert_id": other.id})
         if target_price is not None:
@@ -118,6 +124,8 @@ class AlertService:
                 else self._settings.telegram_chat_id
             )
         destination = normalize_destination(channel, given)
+        if "\x00" in destination:  # PostgreSQL không lưu được NUL (DataError → 500)
+            raise ValidationFailed("Nơi nhận cảnh báo không hợp lệ")
         if not destination:
             raise ValidationFailed(
                 f"Chưa cấu hình nơi nhận cảnh báo cho kênh {channel.value}",

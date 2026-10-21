@@ -38,13 +38,24 @@ class FinalAnswer(BaseModel):
     )
 
 
+def _without_nul(value: Any) -> Any:
+    """Bỏ ký tự NUL (U+0000; JSONB của PostgreSQL không lưu được) khỏi mọi chuỗi lồng nhau."""
+    if isinstance(value, str):
+        return value.replace(chr(0), "")
+    if isinstance(value, list):
+        return [_without_nul(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _without_nul(item) for key, item in value.items()}
+    return value
+
+
 class AgentEvent(BaseModel):
     """Gốc của sự kiện SSE. `record()` là dạng lưu trong `agent_run.events` và phát cho client."""
 
     name: ClassVar[str]
 
     def record(self) -> dict[str, Any]:
-        return {"event": self.name, "data": self.model_dump(mode="json")}
+        return {"event": self.name, "data": _without_nul(self.model_dump(mode="json"))}
 
 
 class PlanEvent(AgentEvent):

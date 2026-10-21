@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import Session
 
 from app.agent.tools.base import Result, ToolContext, make_tool, run_in_session
+from app.domain.dto import INT4_MAX
 from app.services.shopping_list_service import ShoppingListService
 
 NAME = "add_to_shopping_list"
@@ -16,7 +17,7 @@ DESCRIPTION = (
 
 
 class AddToListArgs(BaseModel):
-    product_id: int = Field(ge=1, description="Product id from an earlier result.")
+    product_id: int = Field(ge=1, le=INT4_MAX, description="Product id from an earlier result.")
     list_name: str | None = Field(
         default=None, max_length=100, description="List name; omit for the default list."
     )

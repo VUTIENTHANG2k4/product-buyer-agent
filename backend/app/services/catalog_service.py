@@ -4,6 +4,7 @@ Chỉ đọc CSDL, không gọi mạng. Giá so sánh là giá hiệu lực (doc
 giá thấp nhất trừ khi `include_out_of_stock`. Dữ liệu cũ hơn 24 giờ được đánh dấu `stale`.
 """
 
+import unicodedata
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -43,10 +44,21 @@ STALE_AFTER = timedelta(hours=24)
 MAX_HISTORY_DAYS = 180
 
 
+def _nfkc(text: str) -> str:
+    """Cùng dạng chuẩn hóa với văn bản thu thập (`clean()` dùng NFKC): "Chuột" gõ ở dạng tổ hợp
+    (macOS, Telegram) vẫn khớp tên đã lưu."""
+    return unicodedata.normalize("NFKC", text).replace("\x00", "")  # NUL làm PostgreSQL lỗi
+
+
 def _applied(filters: CatalogFilters) -> dict[str, Any]:
     """Bộ lọc thật sự áp dụng (bỏ giá trị mặc định/rỗng) để hiển thị cho người dùng và agent."""
     data = filters.model_dump(mode="json", exclude_none=True)
-    applied = {name: value for name, value in data.items() if value not in ([], False, 0)}
+    # Giá trị mặc định/rỗng bị bỏ; số 0 chỉ bỏ ở `offset` (price_max=0 là điều kiện thật).
+    applied = {
+        name: value
+        for name, value in data.items()
+        if value != [] and value is not False and not (name == "offset" and value == 0)
+    }
     applied["sort"] = filters.sort
     applied["limit"] = filters.limit
     return applied
@@ -74,12 +86,12 @@ class CatalogService:
         now = aware_now(self._now)
         query = ProductQuery(
             category=filters.category,
-            brands=filters.brands,
+            brands=[_nfkc(brand) for brand in filters.brands],
             sites=filters.sites,
             price_min=filters.price_min,
             price_max=filters.price_max,
             spec_filters=filters.spec_filters,
-            text=filters.q,
+            text=None if filters.q is None else _nfkc(filters.q),
             include_out_of_stock=filters.include_out_of_stock,
             # Chưa có điểm liên quan: `relevance` xếp theo giá thấp nhất (docs/04 §3).
             sort="price_asc" if filters.sort == "relevance" else filters.sort,

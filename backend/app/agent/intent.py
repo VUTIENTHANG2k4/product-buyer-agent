@@ -14,6 +14,10 @@ from app.normalize.specs.gpu_rank import GPU_RANKS, normalize_gpu_name
 from app.normalize.text import fold
 
 MIN_AMOUNT_VND: Final = 10_000  # nhỏ hơn mức này là số đo khác (GB, Hz, inch), không phải giá
+MAX_AMOUNT_VND: Final = 10**12  # lớn hơn là rác (cùng trần với tool `create_price_alert`)
+_MAX_AMOUNT_DIGITS: Final = (
+    15  # số chữ số tối đa đem đổi sang số (chặn OverflowError, giới hạn 4300)
+)
 
 TIER1_CATEGORIES: Final = frozenset(
     {Category.laptop, Category.mouse, Category.keyboard, Category.headset}
@@ -57,6 +61,7 @@ _RANGE = re.compile(r"(?<![a-z\d.])\d+\s*(?:trieu|tr|m|k)?\s*(?:den|toi|->|-|~)\
 # "ID 118687" không phải giá.
 _MIN_PLAIN_DIGITS = 7
 _GROUPED = re.compile(r"\d{1,3}(?:[.,]\d{3})+")
+_MEASURE = re.compile(r"\s*(?:dpi|hz|mah|rpm|gb|tb|mb|ghz|mhz|nits?|inch|mm|cm)\b")
 _APPROX_WORDS = re.compile(r"\b(tam|khoang|xap xi|around|about)\b")
 _EXACT_WORDS = re.compile(r"\b(dung|chinh xac|exactly|exact)\b")
 _CHEAPEST_WORDS = re.compile(r"\b(re nhat|gia thap nhat|cheapest|lowest price)\b")
@@ -69,8 +74,13 @@ def extract_amounts(message: str) -> set[int]:
     """Các số tiền (VND) người dùng viết trong câu: "30 triệu", "30tr", "1,5tr", "2tr5", "500k",
     "30.000.000". Số nhỏ hơn 10.000 (RAM, Hz, inch…) không được coi là tiền."""
     found: set[int] = set()
-    for match in _AMOUNT.finditer(fold(message)):
+    folded = fold(message)
+    for match in _AMOUNT.finditer(folded):
         raw, unit = match.group("num"), match.group("unit")
+        if len(re.sub(r"[.,]", "", raw)) > _MAX_AMOUNT_DIGITS:
+            continue  # số quá lớn không phải giá (và int()/float() có thể ném lỗi)
+        if _MEASURE.match(folded, match.end()):
+            continue  # "16.000 dpi", "26k dpi", "5000 mah": đơn vị đo, không phải tiền
         if unit is None:
             if _GROUPED.fullmatch(raw):
                 value = int(re.sub(r"[.,]", "", raw))
@@ -88,7 +98,7 @@ def extract_amounts(message: str) -> set[int]:
                 value = round(float(text) * _UNIT_FACTOR[unit])
             except ValueError:  # pragma: no cover - regex chỉ cho chuỗi số hợp lệ
                 continue
-        if value >= MIN_AMOUNT_VND:
+        if MIN_AMOUNT_VND <= value <= MAX_AMOUNT_VND:
             found.add(value)
     return found
 

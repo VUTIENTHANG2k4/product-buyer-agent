@@ -13,6 +13,7 @@ from app.agent.tools.base import (
     make_tool,
     run_in_session,
 )
+from app.domain.dto import INT4_MAX
 from app.services.catalog_service import CatalogService
 
 NAME = "get_product_detail"
@@ -25,7 +26,7 @@ MAX_OFFERS = 8
 
 
 class DetailArgs(BaseModel):
-    product_id: int = Field(ge=1, description="Product id from an earlier result.")
+    product_id: int = Field(ge=1, le=INT4_MAX, description="Product id from an earlier result.")
 
 
 async def handler(ctx: ToolContext, args: DetailArgs) -> Result:

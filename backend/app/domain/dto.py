@@ -12,6 +12,10 @@ from app.domain.enums import Category, ChallengeKind, PriceType, SiteKey, StockS
 
 NonEmptyStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 INT8_MAX = 2**63 - 1  # cận trên BIGINT của PostgreSQL: vượt thì CSDL ném DataError
+INT4_MAX = 2**31 - 1  # cận trên của khóa chính (INTEGER): id lớn hơn làm CSDL ném DataError
+MAX_FILTER_FIELD = 64
+MAX_FILTER_TEXT = 200
+MAX_FILTER_LIST = 50
 # Strict: không nhận bool hay chuỗi "27490000" cho số nguyên (parser phải chuẩn hóa trước).
 Vnd = Annotated[int, Field(ge=0, le=INT8_MAX, strict=True)]
 FiniteFloat = Annotated[float, Field(allow_inf_nan=False)]
@@ -83,7 +87,9 @@ class SpecFilter(BaseModel):
     # Tên trường LLM gõ sai phải lỗi (planner thử lại) thay vì bị bỏ qua im lặng.
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
-    field: NonEmptyStr  # ví dụ "gpu_rank", "ram_gb"
+    field: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_FILTER_FIELD)
+    ]  # ví dụ "gpu_rank", "ram_gb"
     op: Literal["eq", "gte", "lte", "contains", "contains_any", "in"]
     # bool đứng đầu để `True` không bị ép thành `1` (trường bool như `is_gaming`).
     value: bool | int | FiniteFloat | str | list[str]
@@ -96,6 +102,11 @@ class SpecFilter(BaseModel):
             and abs(self.value) > INT8_MAX
         ):
             raise ValueError("integer value is out of the 64-bit range")
+        texts = [self.field, *(self.value if isinstance(self.value, list) else [self.value])]
+        if any(isinstance(t, str) and (chr(0) in t or len(t) > MAX_FILTER_TEXT) for t in texts):
+            raise ValueError("text must not contain NUL or exceed 200 characters")
+        if isinstance(self.value, list) and len(self.value) > MAX_FILTER_LIST:
+            raise ValueError("too many values")
         is_list = isinstance(self.value, list)
         is_number = isinstance(self.value, int | float) and not isinstance(self.value, bool)
         if self.op in ("in", "contains_any") and not is_list:

@@ -39,13 +39,14 @@ _ADD_TO_LIST: Final = re.compile(
 )
 _ALERT: Final = re.compile(
     r"\b(dat|tao|bat|them|cai|thiet lap|set|create)\b[^.?!]{0,15}\b(canh bao|alert)\b"
-    r"|\bbao (toi|minh|em|cho (toi|minh))\b"
-    r"|\bnhac (toi|minh|em)\b"
-    r"|\bthong bao (cho|khi)\b|\bnotify me\b"
+    r"|\b(bao|nhac) (toi|minh|em|cho (toi|minh))\b[^.?!]{0,40}\b(khi|neu|if|when)\b"
+    r"|\bthong bao\b[^.?!]{0,30}\b(khi|neu)\b|\bnotify me\b"
     r"|\b(muon|hay|giup|can)\b[^.?!]{0,15}\btheo doi gia\b"
     r"|\bkhi\b[^.?!]{0,40}\b(xuong|giam|ha)\b[^.?!]{0,30}\b(duoi|thap hon|con)\b"
 )
-_URL: Final = re.compile(r"https?://[^\s)\]>\"'<]+")
+# Có cả "www." không scheme (markdown dạng GFM tự biến thành link) và scheme viết hoa.
+_URL: Final = re.compile(r"(?:https?://|www\.)[^\s)\]>\"'<]+", re.IGNORECASE)
+_URL_TRAILING: Final = ".,;:!?*_~`"  # dấu câu / markdown dính sau link ("**https://…**")
 REMOVED_LINK: Final = "[liên kết đã loại]"
 ADD_TOOL: Final = "add_to_shopping_list"
 ALERT_TOOL: Final = "create_price_alert"
@@ -53,7 +54,7 @@ ALERT_TOOL: Final = "create_price_alert"
 
 def allowed_write_tools(message: str) -> frozenset[str]:
     """Tool ghi mà câu của người dùng cho phép (rỗng nếu chỉ hỏi/tìm kiếm)."""
-    folded = fold(message)
+    folded = " ".join(fold(message).split())  # gộp khoảng trắng/xuống dòng giữa các từ
     allowed: set[str] = set()
     if _ADD_TO_LIST.search(folded):
         allowed.add(ADD_TOOL)
@@ -152,15 +153,20 @@ def apply_guardrail(
 
     # Link trong văn bản cũng phải có trong kết quả tool (LLM hay viết "[Mua ngay](url bịa)").
     removed_text_urls: list[str] = []
+    known = evidence.urls | evidence.live_urls
 
     def vet_link(match: re.Match[str]) -> str:
-        url = match.group(0).rstrip(".,;:!?")
-        if url in evidence.urls or url in evidence.live_urls:
-            return match.group(0)
+        raw = match.group(0)
+        if raw in known:  # link hợp lệ có thể tự kết thúc bằng "_" hoặc "."
+            return raw
+        url = raw.rstrip(_URL_TRAILING)
+        if url in known:
+            return raw
         removed_text_urls.append(url)
         return REMOVED_LINK + match.group(0)[len(url) :]  # giữ dấu câu cuối câu
 
-    text = _URL.sub(vet_link, answer.text)
+    # NUL làm PostgreSQL từ chối lưu tin nhắn/sự kiện (lượt kẹt ở `running`): bỏ khỏi văn bản.
+    text = _URL.sub(vet_link, answer.text.replace(chr(0), ""))
 
     cleaned = answer.model_copy(
         update={

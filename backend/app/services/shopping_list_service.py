@@ -4,6 +4,8 @@ Giá hiện tại của mục là giá hiệu lực của offer ưu tiên nếu 
 nhất còn mua được của sản phẩm. Trùng sản phẩm trong cùng danh sách thì cộng dồn số lượng.
 """
 
+import unicodedata
+
 from sqlmodel import Session
 
 from app.db.models import Offer, ShoppingList, ShoppingListItem, utc_now
@@ -28,10 +30,15 @@ MAX_NOTE_LENGTH = 500
 DEFAULT_LIST_NAME = "Danh sách mua"
 
 
+def _visible(text: str) -> bool:
+    """Có ít nhất một ký tự nhìn thấy được (không phải khoảng trắng hay ký tự định dạng vô hình)."""
+    return any(not ch.isspace() and unicodedata.category(ch) != "Cf" for ch in text)
+
+
 def _clean_name(name: str) -> str:
     cleaned = " ".join(normalize_list_name(name).split())
-    if not cleaned or len(cleaned) > MAX_NAME_LENGTH:
-        raise ValidationFailed(f"Tên danh sách phải dài 1–{MAX_NAME_LENGTH} ký tự")
+    if not _visible(cleaned) or len(cleaned) > MAX_NAME_LENGTH or "\x00" in cleaned:
+        raise ValidationFailed(f"Tên danh sách phải dài 1–{MAX_NAME_LENGTH} ký tự, không rỗng")
     return cleaned
 
 
@@ -43,8 +50,8 @@ def _check_quantity(quantity: int) -> None:
 
 
 def _check_note(note: str | None) -> None:
-    if note is not None and len(note) > MAX_NOTE_LENGTH:
-        raise ValidationFailed(f"Ghi chú tối đa {MAX_NOTE_LENGTH} ký tự")
+    if note is not None and (len(note) > MAX_NOTE_LENGTH or "\x00" in note):
+        raise ValidationFailed(f"Ghi chú tối đa {MAX_NOTE_LENGTH} ký tự, không chứa ký tự NUL")
 
 
 class ShoppingListService:

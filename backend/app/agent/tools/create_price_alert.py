@@ -10,6 +10,7 @@ from sqlmodel import Session
 
 from app.agent.tools.base import Result, ToolContext, make_tool, run_in_session
 from app.domain.catalog import AlertCreate
+from app.domain.dto import INT4_MAX
 from app.domain.enums import AlertChannel
 from app.services.alert_service import AlertService
 
@@ -22,7 +23,7 @@ DESCRIPTION = (
 
 
 class AlertArgs(BaseModel):
-    product_id: int = Field(ge=1, description="Product id from an earlier result.")
+    product_id: int = Field(ge=1, le=INT4_MAX, description="Product id from an earlier result.")
     target_price: int = Field(
         ge=1, le=10**12, description="Notify when the price is at or below this, in VND."
     )

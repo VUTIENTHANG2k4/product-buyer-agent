@@ -56,8 +56,8 @@ class ConversationService:
     def start_run(self, message: str, conversation_id: int | None = None) -> RunStart:
         """Tạo (hoặc dùng lại) hội thoại, ghi tin nhắn người dùng và tạo lượt chạy `running`."""
         text = message.strip()
-        if not 1 <= len(text) <= MAX_MESSAGE_CHARS:
-            raise ValidationFailed(f"Tin nhắn phải dài 1–{MAX_MESSAGE_CHARS} ký tự")
+        if not 1 <= len(text) <= MAX_MESSAGE_CHARS or chr(0) in text:
+            raise ValidationFailed(f"Tin nhắn phải dài 1–{MAX_MESSAGE_CHARS} ký tự, không chứa NUL")
         moment = self._now()
         if conversation_id is None:
             conversation = self._conversations.create(text[:TITLE_CHARS], now=moment)
