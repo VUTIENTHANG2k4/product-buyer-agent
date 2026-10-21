@@ -120,9 +120,16 @@ class ConversationService:
         )
 
     def events_since(self, run_id: uuid.UUID, after: int) -> EventBatch:
-        """Sự kiện từ vị trí `after` (0 = từ đầu) và trạng thái lượt, đọc cùng một lần."""
+        """Sự kiện từ vị trí `after` (0 = từ đầu) và trạng thái lượt, đọc cùng một lần.
+
+        Lượt còn `running` quá `STALE_RUN_AFTER` được báo là `failed` (tiến trình đã chết), để
+        luồng SSE đóng thay vì chờ mãi.
+        """
         run = self._require_run(run_id)
-        return EventBatch(status=run.status, events=list(run.events[max(0, after) :]))
+        status = run.status
+        if status is AgentRunStatus.running and run.created_at < self._now() - STALE_RUN_AFTER:
+            status = AgentRunStatus.failed
+        return EventBatch(status=status, events=list(run.events[max(0, after) :]))
 
     def list_conversations(self, limit: int = 20) -> list[ConversationView]:
         """Hội thoại gần nhất trước."""

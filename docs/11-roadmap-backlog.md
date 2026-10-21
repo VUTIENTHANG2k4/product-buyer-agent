@@ -307,6 +307,13 @@ Xong khi:
 
 Ghi chú từ T6.2: `PATCH /lists/{id}/items/{item_id}` cần `preferred_offer_id`, nhưng `ShoppingListService.update_item`/repo chưa hỗ trợ (chỉ `quantity`, `note`, `clear_note`): thêm kèm kiểm offer thuộc sản phẩm. `GET /products` còn thiếu `sort=updated_desc` và `GET /categories` chưa có service.
 
+**T7.6** — Phát sinh từ review M7 (không chặn; làm trước khi chạy API với người dùng thật). Xong khi:
+- `ScrapeService.execute` chốt lượt (`FAILED`) khi task bị hủy trước khi vào `_crawl` (hiện lượt đã `start`/`reopen` mà task bị hủy giữa chừng, ví dụ tắt app ngay sau 202, kẹt `RUNNING` tới 2 giờ và chặn lượt mới); `StartedRun` chỉ `execute` được một lần.
+- `ScrapeService.reopen` kiểm `SCRAPER_OFFLINE_ONLY` theo site của lượt (hiện an toàn vì chỉ mock-shop vào `NEEDS_HUMAN`); thêm test khẳng định lượt trang thật không bao giờ vào `NEEDS_HUMAN`.
+- Test cho `lifespan` (tắt app hủy task nền và đóng Fetcher) và hai `reopen` đồng thời (một thành công, một `ChallengeNotPending`).
+- `events_since` cắt sự kiện ở mức SQL (hiện tải cả cột `events` mỗi nhịp 0,25 s); `GET /chat/{id}` bỏ qua sự kiện lưu hỏng thay vì trả 500; `existing_run` không tải cả `events`.
+- `GET /products`: tham số `spec.*` lặp (chỉ giữ giá trị cuối) và `price_min > price_max` (trả rỗng) ghi rõ trong docs/07 hoặc trả 422; cân nhắc từ chối `target_price` lớn bất thường so với số người dùng nêu (T6.9).
+
 Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test integration cho mọi endpoint (thành công + ít nhất một lỗi); SSE test bằng client đọc luồng, gồm phát lại khi kết nối sau khi run xong.
 
 ### M8 — Frontend

@@ -112,3 +112,11 @@ def test_list_messages_are_oldest_first_limited_to_the_latest_and_need_the_conve
     assert [m.content for m in latest] == ["tin 3", "tin 4"]
     with pytest.raises(NotFound):
         service(db_session).list_messages(999_999)
+
+
+def test_events_since_reports_an_abandoned_running_run_as_failed(db_session: Session) -> None:
+    stale = run_with_events(db_session, 1, created_at=NOW - STALE_RUN_AFTER - timedelta(seconds=1))
+    live = run_with_events(db_session, 1, created_at=NOW - timedelta(minutes=1))
+
+    assert service(db_session).events_since(stale.id, 1).status is AgentRunStatus.failed
+    assert service(db_session).events_since(live.id, 1).status is AgentRunStatus.running

@@ -36,7 +36,7 @@ LIVE_TOOL: Final = "live_search_other"
 # triệu", "tôi đang có cảnh báo nào?" là câu chỉ đọc và không được mở khóa tool ghi.
 _ADD_TO_LIST: Final = re.compile(
     r"\bvao (danh sach|wishlist|shopping list)\b"
-    r"|\b(them|luu|add)\b[^.?!]{0,40}\b(danh sach|wishlist|shopping list)\b"
+    r"|\b(them|luu|add)\b[^.?!]{0,80}\b(danh sach|wishlist|shopping list)\b"
 )
 _ALERT: Final = re.compile(
     r"\b(dat|tao|bat|them|cai|thiet lap|set|create)\b[^.?!]{0,15}\b(canh bao|alert)\b"
@@ -45,12 +45,14 @@ _ALERT: Final = re.compile(
     r"|\b(muon|hay|giup|can)\b[^.?!]{0,15}\btheo doi gia\b"
     r"|\bkhi\b[^.?!]{0,40}\b(xuong|giam|ha)\b[^.?!]{0,30}\b(duoi|thap hon|con)\b"
 )
-# Từ phủ định ngay trước cụm yêu cầu ("đừng thêm vào danh sách", "không cần đặt cảnh báo"): cụm đó
-# là lời từ chối, không phải yêu cầu. Chỉ xét trong cùng mệnh đề, `_NEGATION_WINDOW` ký tự trước.
+# Từ phủ định đứng ngay trước động từ yêu cầu ("đừng thêm …", "không cần đặt cảnh báo", "khỏi
+# thêm", "không nghĩ nên thêm"): cụm đó là lời từ chối, không phải yêu cầu. Chỉ xét trong cùng
+# mệnh đề và khi từ phủ định cách động từ tối đa 2 từ, nên "không quá 30 triệu và đặt cảnh báo"
+# (phủ định thuộc về giá) không bị chặn nhầm. Gắn với cuối cửa sổ (`$`).
 _NEGATION: Final = re.compile(
-    r"\b(dung|(khong|ko|chua) (can|muon|nen)|do not|don'?t|no need|never)\b"
+    r"\b(dung|khong|ko|chang|khoi|thoi|chua|do not|don'?t|no need|never)\b(?: \w+){0,2} ?$"
 )
-_NEGATION_WINDOW: Final = 25
+_NEGATION_WINDOW: Final = 40
 _SENTENCE_END: Final = ".?!,;"  # dấu ngắt câu/mệnh đề: phủ định ở mệnh đề trước không lan sang sau
 # Có cả "www." không scheme (markdown dạng GFM tự biến thành link) và scheme viết hoa.
 _URL: Final = re.compile(r"(?:https?://|www\.)[^\s)\]>\"'<]+", re.IGNORECASE)

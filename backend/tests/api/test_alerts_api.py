@@ -222,3 +222,16 @@ def test_alert_test_reports_that_nothing_was_sent_until_notifications_exist(
     assert response.status_code == 200
     assert response.json()["sent"] is False
     assert response.json()["reason"]
+
+
+@pytest.mark.parametrize("value", [True, "1000", 1000.0, 2.5])
+def test_patch_alert_target_price_must_be_a_real_integer(
+    client: TestClient, db_session: Session, value: Any
+) -> None:
+    product = priced_product(db_session)
+    alert_id = create_alert(client, product).json()["alert_id"]
+
+    response = client.patch(f"/api/alerts/{alert_id}", json={"target_price": value})
+
+    assert response.status_code == 422
+    assert client.get("/api/alerts").json()["items"][0]["target_price"] == 25_000_000

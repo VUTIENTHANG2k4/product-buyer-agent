@@ -73,8 +73,13 @@ def get_task_registry(request: Request) -> TaskRegistry:
     return registry
 
 
-def get_scrape_runtime(request: Request, settings: SettingsDep) -> ScrapeRuntime:
-    """Fetcher + ScrapeService dựng ở lần dùng đầu và giữ trên `app.state` (đóng khi tắt app)."""
+async def get_scrape_runtime(request: Request, settings: SettingsDep) -> ScrapeRuntime:
+    """Fetcher + ScrapeService dựng ở lần dùng đầu và giữ trên `app.state` (đóng khi tắt app).
+
+    `async def` không `await`: chạy trên event loop nên "kiểm rồi gán" là nguyên tử. Dependency
+    đồng bộ chạy trong threadpool, hai request đầu tiên đồng thời sẽ dựng hai Fetcher và làm mất
+    giới hạn ≥ 5 giây/domain dùng chung (docs/02 §3).
+    """
     runtime: ScrapeRuntime | None = getattr(request.app.state, "scrape_runtime", None)
     if runtime is None:
         runtime = ScrapeRuntime.build(settings, build_spec_filler(settings))
@@ -82,7 +87,7 @@ def get_scrape_runtime(request: Request, settings: SettingsDep) -> ScrapeRuntime
     return runtime
 
 
-def get_scrape_service(
+async def get_scrape_service(
     runtime: Annotated[ScrapeRuntime, Depends(get_scrape_runtime)],
 ) -> ScrapeService:
     return runtime.service
@@ -108,7 +113,7 @@ def get_session_factory(settings: SettingsDep) -> SessionFactory:
 SessionFactoryDep = Annotated[SessionFactory, Depends(get_session_factory)]
 
 
-def get_agent_runner(
+async def get_agent_runner(
     request: Request, settings: SettingsDep, factory: SessionFactoryDep
 ) -> AgentRunner:
     """Runner dùng chung, dựng ở lần chat đầu tiên. Thiếu khóa LLM -> `LlmUnavailable` (503)."""

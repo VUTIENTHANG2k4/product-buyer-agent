@@ -111,6 +111,11 @@ def test_write_request_must_be_in_one_sentence() -> None:
         "Please don't set an alert",
         "ĐỪNG THÊM MÁY NÀY VÀO DANH SÁCH",
         unicodedata.normalize("NFD", "đừng đặt cảnh báo giá"),
+        "không đặt cảnh báo",
+        "không thêm vào danh sách",
+        "khỏi thêm vào danh sách",
+        "tôi không nghĩ nên thêm vào danh sách",
+        "Đừng thêm Lenovo Legion Pro 5 16IRX9 RTX 4070 vào danh sách",
     ],
 )
 def test_negated_write_request_does_not_unlock_a_write_tool(message: str) -> None:
@@ -125,6 +130,8 @@ def test_negated_write_request_does_not_unlock_a_write_tool(message: str) -> Non
         ("không cần so sánh nữa, đặt cảnh báo giá cho máy đầu tiên", {ALERT_TOOL}),
         ("Không biết máy nào tốt? Thêm máy đầu tiên vào danh sách", {ADD_TOOL}),
         ("Đừng thêm vào danh sách, nhưng hãy đặt cảnh báo giá", {ALERT_TOOL}),
+        ("tìm laptop không quá 30 triệu và đặt cảnh báo giá", {ALERT_TOOL}),
+        ("thêm Lenovo Legion Pro 5 16IRX9 RTX 4070 vào danh sách", {ADD_TOOL}),
     ],
 )
 def test_negation_only_cancels_the_request_it_belongs_to(message: str, expected: set[str]) -> None:

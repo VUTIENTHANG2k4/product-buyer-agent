@@ -479,3 +479,32 @@ def test_started_run_sets_manual_trigger_and_clock_time(
 
     assert run["started_at"].startswith(NOW.strftime("%Y-%m-%dT%H:%M"))
     assert clock.now == NOW
+
+
+async def test_the_runtime_is_built_once_even_for_concurrent_first_requests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Hai request đầu tiên đồng thời phải dùng chung một Fetcher (giới hạn ≥ 5 s/domain)."""
+    import asyncio
+    from types import SimpleNamespace
+
+    from app.api import deps
+
+    built: list[object] = []
+
+    class FakeRuntime:
+        def __init__(self) -> None:
+            built.append(self)
+
+    monkeypatch.setattr(
+        deps.ScrapeRuntime, "build", classmethod(lambda cls, settings, filler=None: FakeRuntime())
+    )
+    monkeypatch.setattr(deps, "build_spec_filler", lambda settings: None)
+    request: Any = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace()))
+
+    results = await asyncio.gather(
+        *(deps.get_scrape_runtime(request, make_settings()) for _ in range(5))
+    )
+
+    assert len(built) == 1
+    assert all(result is built[0] for result in results)

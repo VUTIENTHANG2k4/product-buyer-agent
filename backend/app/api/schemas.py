@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Generic, Literal, Self, TypeVar
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, StrictInt, model_validator
 
 from app.agent.schemas import ErrorEvent, FinalEvent
 from app.domain.admin import ScrapeRunView, SourceView
@@ -91,7 +91,7 @@ class ItemCreate(BaseModel):
     """POST /lists/{id}/items. Sản phẩm đã có trong danh sách thì cộng dồn `quantity`."""
 
     product_id: int
-    quantity: int = 1
+    quantity: StrictInt = 1
     note: str | None = Field(default=None, max_length=1000)
     preferred_offer_id: int | None = None
 
@@ -100,7 +100,7 @@ class ItemPatch(BaseModel):
     """PATCH /lists/{id}/items/{item_id}. Trường bỏ vắng giữ nguyên; `null` ở `note` hoặc
     `preferred_offer_id` xóa giá trị đó."""
 
-    quantity: int | None = None
+    quantity: StrictInt | None = None
     note: str | None = Field(default=None, max_length=1000)
     preferred_offer_id: int | None = None
 
@@ -114,7 +114,7 @@ class ItemPatch(BaseModel):
 class AlertPatch(BaseModel):
     """PATCH /alerts/{id}: đổi ngưỡng và/hoặc tạm dừng/bật lại (`triggered` do hệ thống đặt)."""
 
-    target_price: int | None = None
+    target_price: StrictInt | None = None
     status: Literal["active", "paused"] | None = None
 
 

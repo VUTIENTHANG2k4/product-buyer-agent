@@ -333,3 +333,19 @@ def test_delete_item_returns_204_and_updates_the_total(
     assert response.status_code == 204
     assert client.get(f"/api/lists/{list_id}").json()["items"] == []
     assert client.get("/api/lists").json()["items"][0]["total_price"] == 0
+
+
+@pytest.mark.parametrize("value", [True, "2", 2.0])
+def test_quantity_must_be_a_real_integer_on_add_and_patch(
+    client: TestClient, db_session: Session, value: Any
+) -> None:
+    list_id = new_list(client)
+    product, _ = product_with_offer(db_session)
+    item_id = add_item(client, list_id, product)["item_id"]
+
+    added = client.post(
+        f"/api/lists/{list_id}/items", json={"product_id": product.id, "quantity": value}
+    )
+    patched = client.patch(f"/api/lists/{list_id}/items/{item_id}", json={"quantity": value})
+
+    assert added.status_code == patched.status_code == 422
