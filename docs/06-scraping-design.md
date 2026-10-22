@@ -185,12 +185,16 @@ lúc), **không bao giờ tắt offer** (kể cả 404/410, chỉ tính `items_f
 chọn offer bằng `OfferRepository.list_tracked` (sản phẩm có cảnh báo `active`/`triggered` hoặc nằm trong một danh sách
 mua), chạy mỗi nhóm một lượt rồi đánh giá cảnh báo như lượt đầy đủ.
 
+Gặp captcha ở lượt làm mới (chỉ mock-shop có), lượt kết thúc `BLOCKED` thay vì `NEEDS_HUMAN` (không có "trang danh sách để tiếp tục"; `resume` từ chối lượt `tracked_refresh`). Lượt làm mới không mang mốc "lượt trước" nên không bao giờ báo "số sản phẩm giảm". Khi trang chi tiết không cho biết loại giá và giá mới ≥ `list_price` đã lưu, offer `sale` quay về `regular`, `list_price = NULL`. Thẻ danh sách không cho biết tồn kho (`unknown`, như GearVN) thì lượt đầy đủ giữ `stock_status` đã biết thay vì xóa nó.
+
 **Worker (`app/worker.py`, `make worker`):** APScheduler `AsyncIOScheduler` (UTC) với hai job `catalog_refresh`
 (`CATALOG_REFRESH_CRON`, thu thập đầy đủ từng nhóm của từng trang đang bật, trang chạy song song, nhóm tuần tự,
 `trigger=schedule`) và `tracked_refresh` (`TRACKED_REFRESH_CRON`, `refresh_tracked` từng trang). `max_instances=1`,
 `coalesce=True`, `misfire_grace_time=300`. Ngoại tuyến chỉ chạy mock-shop. Nhóm đang có lượt khác
 (`ScrapeAlreadyRunning`) bị bỏ qua; trang đang nghỉ (`SiteCooldown`) bỏ qua phần còn lại. Cron sai báo lỗi và thoát mã 2
-ngay lúc khởi động; `SCHEDULER_ENABLED=false` thì worker thoát mã 0 mà không thu thập gì.
+ngay lúc khởi động; `SCHEDULER_ENABLED=false` thì worker thoát mã 0 mà không thu thập gì. Sau mỗi job worker gọi `AlertEvaluator.evaluate(None)` để quét mọi cảnh báo còn hiệu lực (bắt cảnh báo gửi lỗi lần trước, offer mới hoặc đổi tồn kho/loại giá mà `price` không đổi nên không có trong `changed_offer_ids`); lượt chạy từ API quản trị chỉ đánh giá theo `changed_offer_ids`. Khi tắt (SIGTERM/SIGINT) worker hủy job đang chạy (lượt ghi "bị huỷ") rồi mới đóng Fetcher. Mặc định hai cron lệch 30 phút (`0 */12` và `30 */6`) để không giành cùng nhóm. APScheduler đánh số thứ trong tuần 0 = thứ Hai: dùng tên (`mon-fri`).
+
+**Hạn chế đã biết:** bộ giới hạn độ trễ theo domain nằm trong từng tiến trình `Fetcher`; khóa pipeline chỉ theo (site, nhóm). Khi `api` (quản trị bấm thu thập) và `worker` chạy cùng lúc, hai nhóm khác nhau của cùng một domain có thể được tải song song từ hai tiến trình và vượt mức ≥ 5 s/domain. Cách khắc phục (khóa theo domain trong DB) để task sau.
 
 Cảnh báo chất lượng: tỷ lệ parse thành công < 80% hoặc số sản phẩm giảm > 50% so với lượt trước → log `WARNING` và hiển thị trên trang quản trị (dấu hiệu trang đổi giao diện).
 

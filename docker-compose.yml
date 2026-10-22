@@ -13,7 +13,8 @@ x-backend: &backend
     DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-buyer}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-product_buyer}
     MOCK_SHOP_URL: http://mock-shop:8100
   volumes:
-    - ./backend/data:/app/data
+    # Volume có tên (không phải bind mount) để user không root của container ghi được trên mọi hệ điều hành.
+    - appdata:/app/data
 
 services:
   db:
@@ -57,8 +58,9 @@ services:
 
   worker:
     <<: *backend
-    # Thoát mã 0 khi SCHEDULER_ENABLED=false (mặc định): không tự khởi động lại, chỉ khởi động lại khi lỗi.
-    restart: on-failure
+    # Thoát mã 0 khi SCHEDULER_ENABLED=false (mặc định): không tự khởi động lại. Cấu hình sai (cron) thoát
+    # mã khác 0: thử lại tối đa 5 lần rồi dừng thay vì lặp vô hạn.
+    restart: on-failure:5
     command: ["python", "-m", "app.worker"]
     depends_on:
       api:
@@ -85,3 +87,4 @@ services:
 
 volumes:
   pgdata:
+  appdata:

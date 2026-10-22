@@ -4,7 +4,7 @@ import asyncio
 import io
 import logging
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, ClassVar, cast
 
 import pytest
@@ -18,6 +18,7 @@ from app.domain.errors import OfflineMode, ScrapeAlreadyRunning, SiteCooldown
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.pipeline import PipelineResult
 from app.scrapers.registry import SiteNotAvailable
+from app.services.alert_evaluation import AlertEvaluator
 from app.services.scrape_runtime import ScrapeRuntime
 from app.services.scrape_service import ScrapeService
 from tests.service_support import make_settings
@@ -299,11 +300,25 @@ async def test_tracked_refresh_in_offline_mode_only_touches_the_mock_shop(
 
 
 # ---- run_worker -------------------------------------------------------------------------------
+class StubEvaluator:
+    """Thay `AlertEvaluator`: ghi lại các lần quét `evaluate(None)`, có thể ném lỗi."""
+
+    def __init__(self, error: BaseException | None = None) -> None:
+        self.error = error
+        self.calls: list[object] = []
+
+    async def evaluate(self, offer_ids: object = None) -> None:
+        self.calls.append(offer_ids)
+        if self.error is not None:
+            raise self.error
+
+
 class FakeRuntime:
     created: ClassVar[list["FakeRuntime"]] = []
 
     def __init__(self) -> None:
         self.service = StubService()
+        self.alert_evaluator = StubEvaluator()
         self.closed = 0
         FakeRuntime.created.append(self)
 
@@ -377,3 +392,122 @@ def test_configure_logging_switches_the_console_streams_to_utf8(
     worker.configure_logging()
 
     assert stream.encoding == "utf-8"
+
+
+# ---- quét cảnh báo sau job, hủy job khi tắt ------------------------------------------------------
+def jobs_with_evaluator(
+    service: StubService, evaluator: StubEvaluator, monkeypatch: pytest.MonkeyPatch
+) -> worker.ScheduledJobs:
+    monkeypatch.setattr(worker, "SCRAPERS", default_registry())
+    return worker.ScheduledJobs(
+        cast(ScrapeService, service),
+        make_settings(scraper_offline_only=True),
+        cast(AlertEvaluator, evaluator),
+    )
+
+
+@pytest.mark.parametrize("job", ["refresh_catalog", "refresh_tracked"])
+async def test_every_job_sweeps_all_alerts_once_after_the_scrape(
+    monkeypatch: pytest.MonkeyPatch, job: str
+) -> None:
+    evaluator = StubEvaluator()
+    jobs = jobs_with_evaluator(StubService(), evaluator, monkeypatch)
+
+    await getattr(jobs, job)()
+
+    assert evaluator.calls == [None]  # None = mọi cảnh báo còn hiệu lực
+
+
+@pytest.mark.parametrize("job", ["refresh_catalog", "refresh_tracked"])
+async def test_a_failing_alert_sweep_does_not_fail_the_job(
+    monkeypatch: pytest.MonkeyPatch, job: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    jobs = jobs_with_evaluator(StubService(), StubEvaluator(RuntimeError("smtp down")), monkeypatch)
+
+    with caplog.at_level(logging.ERROR, logger="worker"):
+        results = await getattr(jobs, job)()
+
+    assert results  # kết quả thu thập vẫn trả về
+    assert any(record.exc_info for record in caplog.records)
+
+
+async def test_without_an_evaluator_jobs_just_scrape(monkeypatch: pytest.MonkeyPatch) -> None:
+    jobs = jobs_with(StubService(), monkeypatch, offline=True)
+
+    assert await jobs.refresh_tracked()  # không lỗi dù không có bộ đánh giá
+
+
+class HangingService(StubService):
+    """`run` không bao giờ xong cho tới khi bị hủy; ghi lại việc bị hủy."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.cancelled = False
+
+    async def run(
+        self, site: SiteKey, category: Category, *, trigger: ScrapeTrigger
+    ) -> PipelineResult:
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            self.cancelled = True
+            raise
+        raise AssertionError("unreachable")
+
+
+async def test_cancel_running_cancels_in_flight_jobs_and_waits_for_them(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service = HangingService()
+    jobs = jobs_with(service, monkeypatch, offline=True)
+    task = asyncio.create_task(jobs.refresh_catalog())
+    await asyncio.sleep(0.05)
+    assert not task.done()
+
+    await jobs.cancel_running()
+
+    assert task.cancelled() and service.cancelled
+    await jobs.cancel_running()  # không còn gì để hủy: không lỗi
+
+
+async def test_finished_jobs_are_forgotten_so_cancel_running_has_nothing_to_do(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service = StubService()
+    jobs = jobs_with(service, monkeypatch, offline=True)
+    await jobs.refresh_catalog()
+
+    await jobs.cancel_running()
+
+    assert len(service.runs) == 2  # mock-shop có 2 nhóm trong registry giả; job không bị hủy
+
+
+async def test_stopping_the_worker_sweeps_nothing_extra_and_closes_after_cancelling_jobs() -> None:
+    runtime = FakeRuntime()
+    stop = asyncio.Event()
+    stop.set()
+
+    assert (
+        await worker.run_worker(
+            make_settings(scheduler_enabled=True), stop, cast(ScrapeRuntime, runtime)
+        )
+        == 0
+    )
+
+    assert runtime.closed == 1 and runtime.alert_evaluator.calls == []  # chưa tới giờ chạy job
+
+
+def test_default_crons_never_fire_at_the_same_minute() -> None:
+    settings = make_settings()
+    catalog = worker.parse_cron("A", settings.catalog_refresh_cron)
+    tracked = worker.parse_cron("B", settings.tracked_refresh_cron)
+    moment, fires_a, fires_b = MOMENT, set(), set()
+    for _ in range(40):  # ~10 ngày
+        moment_a = catalog.get_next_fire_time(None, moment)
+        moment_b = tracked.get_next_fire_time(None, moment)
+        assert moment_a is not None and moment_b is not None
+        fires_a.add(moment_a)
+        fires_b.add(moment_b)
+        moment = min(moment_a, moment_b) + timedelta(seconds=1)
+
+    assert fires_a and fires_b and not (fires_a & fires_b)

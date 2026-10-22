@@ -43,8 +43,9 @@ UserAgent = Annotated[
 ]
 
 
-# `mock-shop` là tên service trong docker-compose (T9.4): tên một nhãn, không có dấu chấm, chỉ phân
-# giải được trong mạng của Compose nên không thể trỏ ra trang thật.
+# `mock-shop` là tên service trong docker-compose (T9.4): tên một nhãn, không có dấu chấm nên không
+# thể là tên miền của trang thật. Ngoài Docker nó chỉ phân giải nếu người dùng tự khai báo (hosts,
+# search domain): đó là lựa chọn có chủ ý trong `.env`, giống việc đặt IP cục bộ khác.
 LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "mock-shop"})
 
 
@@ -121,7 +122,7 @@ class Settings(BaseSettings):
     # Lịch chạy
     scheduler_enabled: bool = False
     catalog_refresh_cron: str = "0 */12 * * *"
-    tracked_refresh_cron: str = "0 */6 * * *"
+    tracked_refresh_cron: str = "30 */6 * * *"
 
     # Thông báo giá
     smtp_host: str = ""

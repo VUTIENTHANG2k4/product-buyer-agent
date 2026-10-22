@@ -1,8 +1,11 @@
 """Đánh giá cảnh báo giá sau mỗi lượt làm mới và gửi thông báo (docs/03 §5.2, US-07).
 
-`AlertEvaluator` là hook `on_price_changes` của `ScrapeService`. Từng cảnh báo được gửi rồi ghi
-`triggered` + commit riêng: gửi lỗi thì cảnh báo giữ nguyên trạng thái (lần đánh giá sau thử lại);
-chỉ khi tiến trình sập đúng giữa lúc gửi xong và commit mới có thể gửi trùng một lần.
+`AlertEvaluator` là hook `on_price_changes` của `ScrapeService`; worker còn gọi `evaluate(None)`
+sau mỗi job để quét lại mọi cảnh báo (cảnh báo gửi lỗi lần trước, offer mới hoặc đổi tồn kho mà
+giá không đổi). Từng cảnh báo: khóa dòng (`FOR UPDATE SKIP LOCKED`: hai lượt đánh giá đồng thời,
+kể cả hai tiến trình, không cùng gửi), xác nhận lại điều kiện, gửi, rồi ghi `triggered` + commit.
+Gửi lỗi thì cảnh báo giữ nguyên trạng thái; chỉ khi tiến trình sập đúng giữa lúc gửi xong và
+commit mới có thể gửi trùng một lần.
 """
 
 import asyncio
@@ -10,6 +13,7 @@ import logging
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
 from app.config import Settings
@@ -60,14 +64,21 @@ class AlertEvaluator:
         with self._session_factory() as session:
             service = AlertService(session, self._settings, now=self._now)
             for due in service.find_due(offer_ids):
-                if not self._send(due):
-                    failed += 1
-                    continue
-                if service.mark_sent(due.alert_id, due.price):
+                try:
+                    if not service.claim(due):
+                        session.commit()  # không ghi gì; chỉ nhả khóa dòng
+                        continue
+                    if not self._send(due):
+                        failed += 1
+                        session.commit()
+                        continue
+                    if service.mark_sent(due.alert_id, due.price):
+                        sent += 1
                     session.commit()
-                    sent += 1
-                else:
-                    session.rollback()  # cảnh báo bị xóa/tạm dừng trong lúc gửi
+                except SQLAlchemyError:
+                    logger.exception("[alert %s] lỗi CSDL khi đánh giá", due.alert_id)
+                    session.rollback()
+                    failed += 1
         if sent or failed:
             logger.info("đánh giá cảnh báo giá: %s đã gửi, %s lỗi", sent, failed)
         return EvaluationReport(sent=sent, failed=failed)

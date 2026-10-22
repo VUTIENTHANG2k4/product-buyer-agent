@@ -1,9 +1,15 @@
 """Gửi thông báo giá qua Telegram Bot API (đồng bộ, `httpx.Client`)."""
 
+import logging
+
 import httpx
 from pydantic import SecretStr
 
 from app.services.notifier.base import NotificationFailed
+
+# URL gọi API chứa token bot: logger của httpx ở mức INFO sẽ in nó, nên hạ ngay tại nguồn thay vì
+# trông chờ từng điểm vào (API, worker, script) tự làm.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 TELEGRAM_API = "https://api.telegram.org"
 SEND_TIMEOUT_SECONDS = 15
@@ -33,7 +39,8 @@ class TelegramNotifier:
 
 def _description(response: httpx.Response) -> str:
     try:
-        description = response.json().get("description")
+        payload = response.json()
     except ValueError:
         return "không rõ lý do"
+    description = payload.get("description") if isinstance(payload, dict) else None
     return description[:200] if isinstance(description, str) else "không rõ lý do"

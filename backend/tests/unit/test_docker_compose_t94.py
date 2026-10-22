@@ -49,9 +49,16 @@ def test_every_published_port_is_bound_to_localhost() -> None:
     assert ports and all(str(port).startswith("127.0.0.1:") for port in ports)
 
 
-def test_worker_is_not_restarted_after_a_clean_exit() -> None:
-    # SCHEDULER_ENABLED=false làm worker thoát mã 0: `unless-stopped` sẽ khởi động lại mãi.
-    assert SERVICES["worker"]["restart"] == "on-failure"
+def test_worker_is_not_restarted_after_a_clean_exit_and_retries_a_bounded_number_of_times() -> None:
+    # SCHEDULER_ENABLED=false làm worker thoát mã 0: `unless-stopped` sẽ khởi động lại mãi;
+    # cấu hình sai (mã khác 0) không được lặp vô hạn.
+    assert SERVICES["worker"]["restart"] == "on-failure:5"
+
+
+def test_backend_containers_share_a_named_volume_the_unprivileged_user_can_write() -> None:
+    for name in ("api", "worker", "mock-shop"):
+        assert SERVICES[name]["volumes"] == ["appdata:/app/data"]
+    assert "appdata" in COMPOSE["volumes"]
 
 
 def test_no_secret_value_is_written_in_the_compose_file() -> None:
@@ -83,7 +90,10 @@ def test_web_image_proxies_api_without_buffering_and_falls_back_to_the_spa() -> 
     nginx = (ROOT / "frontend" / "nginx.conf").read_text(encoding="utf-8")
     dockerfile = (ROOT / "frontend" / "Dockerfile").read_text(encoding="utf-8")
 
-    assert "location /api/" in nginx and "proxy_pass http://api:8000;" in nginx
+    assert "location /api/" in nginx and "http://api:8000" in nginx
+    # Phân giải lại tên api qua DNS Docker: tạo lại container api không làm web trả 502.
+    assert "resolver 127.0.0.11" in nginx and "proxy_pass $api_upstream;" in nginx
+    assert "proxy_set_header Host $http_host;" in nginx  # giữ cổng
     assert "proxy_buffering off;" in nginx  # luồng SSE phải tới trình duyệt ngay
     assert "try_files $uri /index.html;" in nginx
     assert 'ENV VITE_API_BASE_URL=""' in dockerfile

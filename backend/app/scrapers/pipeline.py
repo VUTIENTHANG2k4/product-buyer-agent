@@ -588,7 +588,8 @@ class ScrapePipeline:
             return targets
 
     def _save_refresh(self, offer_id: int, detail: ProductDetail) -> bool:
-        """Ghi giá từ trang chi tiết vào offer; trả `True` nếu giá/loại giá/tồn kho đổi."""
+        """Ghi giá từ trang chi tiết vào offer; trả `True` nếu `price` đổi so với lần ghi trước
+        (loại giá và tồn kho vẫn được lưu vào lịch sử nhưng không tính là đổi giá)."""
         moment = self._now()
         with self._session_factory() as session:
             offers = OfferRepository(session)
@@ -596,6 +597,15 @@ class ScrapePipeline:
             if offer is None or detail.price is None:
                 raise ValueError(f"offer {offer_id} is missing or the page has no price")
             keep_price_type = detail.price_type is PriceType.unknown
+            list_price = offer.list_price if keep_price_type else detail.list_price
+            price_type = offer.price_type if keep_price_type else detail.price_type
+            if (
+                keep_price_type
+                and price_type is PriceType.sale
+                and list_price is not None
+                and detail.price >= list_price
+            ):
+                list_price, price_type = None, PriceType.regular  # khuyến mãi đã kết thúc
             with session.begin_nested():
                 result = offers.upsert(
                     OfferUpsert(
@@ -604,8 +614,8 @@ class ScrapePipeline:
                         url=offer.url,
                         title=offer.title,
                         price=detail.price,
-                        list_price=offer.list_price if keep_price_type else detail.list_price,
-                        price_type=offer.price_type if keep_price_type else detail.price_type,
+                        list_price=list_price,
+                        price_type=price_type,
                         stock_status=(
                             offer.stock_status
                             if detail.stock_status is StockStatus.unknown
@@ -659,7 +669,8 @@ class ScrapePipeline:
                     until = blocked.started_at + BLOCK_COOLDOWN
                     if until > moment:
                         raise SiteCooldown(details={"retry_after": until, "run_id": blocked.id})
-            previous = runs.latest_succeeded(site, category)
+            # Lượt làm mới chỉ chạm vài offer: so với lượt đầy đủ sẽ luôn báo "số sản phẩm giảm".
+            previous = None if partial_scope else runs.latest_succeeded(site, category)
             run = runs.create(site, category, trigger, now=moment)
             session.commit()
             return _RunContext(
@@ -703,6 +714,8 @@ class ScrapePipeline:
             run = peek
             if (
                 run.status is not ScrapeStatus.NEEDS_HUMAN
+                or run.trigger
+                is ScrapeTrigger.tracked_refresh  # không có trang danh sách để tiếp tục
                 or run.challenge is None
                 or moment - run.started_at >= NEEDS_HUMAN_STALE_AFTER
             ):
@@ -936,7 +949,12 @@ class ScrapePipeline:
                 price=item.price,
                 list_price=item.list_price,
                 price_type=item.price_type,
-                stock_status=item.stock_status,
+                # Thẻ danh sách không cho biết tồn kho (GearVN): giữ giá trị đã biết thay vì xóa nó.
+                stock_status=(
+                    item.stock_status
+                    if item.stock_status is not StockStatus.unknown or existing is None
+                    else existing.stock_status
+                ),
                 site_sku=site_sku,
                 rating=rating,
                 rating_count=rating_count,
@@ -1020,7 +1038,12 @@ class ScrapePipeline:
     ) -> _Verdict:
         if challenge is not None:
             # Chỉ mock-shop có luồng nhập đáp án, và chỉ cho captcha; mọi trường hợp khác là chặn.
-            human = scraper.config.is_mock and challenge.kind is ChallengeKind.captcha
+            # Lượt làm mới giá không có trang để tiếp tục: gặp captcha là dừng (BLOCKED), không chờ.
+            human = (
+                scraper.config.is_mock
+                and challenge.kind is ChallengeKind.captcha
+                and not context.partial_scope
+            )
             return _Verdict(ScrapeStatus.NEEDS_HUMAN if human else ScrapeStatus.BLOCKED, None)
         if error is not None:
             if crashed or progress.pages == 0:

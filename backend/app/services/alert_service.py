@@ -5,6 +5,7 @@ thông báo và commit từng cảnh báo do `AlertEvaluator` (`alert_evaluation
 mặc định lấy từ cấu hình (`ALERT_DEFAULT_CHANNEL`, `ALERT_DEFAULT_EMAIL`, `TELEGRAM_CHAT_ID`).
 """
 
+import logging
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -28,10 +29,12 @@ from app.services.notifier.base import NotificationFailed, Notifier
 from app.services.notifier.message import format_vnd
 from app.services.views import Clock, aware_now, best_price, sellable
 
+logger = logging.getLogger(__name__)
+
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MAX_DESTINATION_LENGTH = 320
 MAX_TARGET_PRICE = 2**63 - 1  # cận trên BIGINT
-RENOTIFY_MIN_DROP_PERCENT = 1  # cảnh báo `triggered` chỉ báo lại khi giá giảm thêm ≥ 1%
+RENOTIFY_MIN_DROP_PERCENT = 1  # đã báo rồi thì chỉ báo lại khi giá giảm thêm ≥ 1%
 # Chỉ hai trạng thái người dùng được đặt tay; `triggered` do bộ đánh giá đặt.
 SETTABLE_STATUSES = (AlertStatus.active, AlertStatus.paused)
 
@@ -39,18 +42,15 @@ SETTABLE_STATUSES = (AlertStatus.active, AlertStatus.paused)
 def should_notify(alert: PriceAlert, price: int | None) -> bool:
     """Có nên gửi thông báo cho `alert` khi giá hiệu lực thấp nhất hiện tại là `price` (VND).
 
-    `active`: giá đã xuống tới ngưỡng. `triggered`: đã báo rồi, chỉ báo lại khi giá vẫn dưới
-    ngưỡng và thấp hơn `last_notified_price` thêm ít nhất 1% (so bằng số nguyên, không dùng float).
-    `paused` và sản phẩm không còn offer mua được (`price is None`) không bao giờ gửi.
+    Giá phải đã xuống tới ngưỡng. Nếu đã từng báo (`last_notified_price`, gồm cả cảnh báo
+    `triggered` hoặc đã tạm dừng rồi bật lại) thì chỉ báo lại khi giá thấp hơn mốc đó thêm ít nhất
+    1% (so bằng số nguyên, không dùng float). `paused` và sản phẩm không còn offer mua được
+    (`price is None`) không bao giờ gửi.
     """
-    if price is None or price > alert.target_price:
+    if price is None or price > alert.target_price or alert.status not in LIVE_STATUSES:
         return False
-    if alert.status is AlertStatus.active:
-        return True
-    if alert.status is AlertStatus.triggered:
-        last = alert.last_notified_price
-        return last is None or price * 100 <= last * (100 - RENOTIFY_MIN_DROP_PERCENT)
-    return False
+    last = alert.last_notified_price
+    return last is None or price * 100 <= last * (100 - RENOTIFY_MIN_DROP_PERCENT)
 
 
 @dataclass(frozen=True)
@@ -178,6 +178,9 @@ class AlertService:
             )
         except NotificationFailed as error:
             return AlertTestResult(sent=False, reason=str(error))
+        except Exception:
+            logger.exception("[alert %s] lỗi không lường trước khi gửi thử", alert_id)
+            return AlertTestResult(sent=False, reason="Lỗi không xác định khi gửi thử")
         return AlertTestResult(sent=True)
 
     def find_due(self, offer_ids: Sequence[int] | None = None) -> list[DueAlert]:
@@ -215,10 +218,22 @@ class AlertService:
             )
         return due
 
+    def claim(self, due: DueAlert) -> bool:
+        """Khóa dòng cảnh báo và xác nhận lại với trạng thái mới nhất trước khi gửi.
+
+        `False` nếu cảnh báo đang được lượt đánh giá khác xử lý (khóa dòng, bỏ qua thay vì chờ nên
+        không gửi trùng), đã bị xóa/tạm dừng, hoặc không còn đủ điều kiện kể từ `find_due`. Khi
+        `True`, khóa được giữ tới lúc nơi gọi commit/rollback: người dùng sửa hoặc xóa cảnh báo
+        này trong lúc gửi sẽ chờ tối đa thời gian gửi (≤ 15 giây).
+        """
+        alert = self._alerts.lock(due.alert_id, skip_locked=True)
+        return alert is not None and should_notify(alert, due.price)
+
     def mark_sent(self, alert_id: int, price: int) -> bool:
         """Ghi lần gửi (`triggered`, `last_notified_*`). `False` nếu cảnh báo đã bị xóa hoặc tạm
-        dừng trong lúc gửi (không ghi đè lựa chọn của người dùng)."""
-        alert = self._alerts.get(alert_id)
+        dừng trong lúc gửi (không ghi đè lựa chọn của người dùng). Đọc lại dòng từ CSDL, không dùng
+        bản đã nạp từ `find_due`."""
+        alert = self._alerts.lock(alert_id, skip_locked=False)
         if alert is None or alert.status not in LIVE_STATUSES:
             return False
         self._alerts.mark_notified(alert, price, now=aware_now(self._now))

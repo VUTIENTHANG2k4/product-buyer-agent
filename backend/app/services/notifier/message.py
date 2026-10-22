@@ -26,7 +26,8 @@ def render_alert_message(
     previous_price: int | None = None,
 ) -> AlertMessage:
     """Thông báo giá xuống dưới ngưỡng; `previous_price` là giá của lần báo trước (nếu có)."""
-    subject = f"Giá giảm: {product_name} còn {format_vnd(price)}"
+    # Tên sản phẩm lấy từ web có thể chứa xuống dòng: header email không cho phép.
+    subject = " ".join(f"Giá giảm: {product_name} còn {format_vnd(price)}".split())
     lines = [
         f"{product_name} hiện có giá {format_vnd(price)}"
         f" (ngưỡng bạn đặt: {format_vnd(target_price)}).",

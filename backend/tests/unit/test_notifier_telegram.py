@@ -102,3 +102,16 @@ def test_build_notifiers_telegram_needs_a_bot_token() -> None:
 
     assert isinstance(built[AlertChannel.telegram], TelegramNotifier)
     assert AlertChannel.email not in built
+
+
+@respx.mock
+@pytest.mark.parametrize("body", ["[]", '"text"', "123", "null", '{"description": 5}'])
+def test_error_bodies_that_are_not_an_object_with_a_text_description_still_fail_cleanly(
+    body: str,
+) -> None:
+    respx.post(URL).mock(return_value=httpx.Response(502, text=body))
+
+    with pytest.raises(NotificationFailed) as error:
+        notifier().send("1", "s", "b")
+
+    assert "HTTP 502" in str(error.value) and "không rõ lý do" in str(error.value)

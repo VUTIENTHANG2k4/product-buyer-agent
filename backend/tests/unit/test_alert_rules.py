@@ -99,3 +99,29 @@ def test_message_omits_previous_price_on_first_notification() -> None:
     )
 
     assert "Lần báo trước" not in message.body
+
+
+@pytest.mark.parametrize(
+    ("price", "expected"),
+    [(27_000_000, False), (26_800_000, False), (26_730_000, True)],
+)
+def test_active_alert_that_was_notified_before_follows_the_one_percent_rule(
+    price: int, expected: bool
+) -> None:
+    """Cảnh báo `paused` rồi bật lại (`active` nhưng còn mốc đã báo) không gửi lại đúng mức cũ."""
+    alert = make_price_alert(1, target_price=TARGET, last_notified_price=27_000_000)
+
+    assert should_notify(alert, price) is expected
+
+
+def test_subject_never_contains_line_breaks_even_if_the_product_name_does() -> None:
+    message = render_alert_message(
+        product_name="Laptop Mock\r\nBcc: victim@example.com\n  X",
+        price=1_000_000,
+        target_price=2_000_000,
+        site=SiteKey.mockshop,
+        url="https://mock.example/p/1",
+    )
+
+    assert "\n" not in message.subject and "\r" not in message.subject
+    assert message.subject.startswith("Giá giảm: Laptop Mock Bcc: victim@example.com X")

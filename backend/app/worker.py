@@ -18,8 +18,9 @@ import io
 import logging
 import signal
 import sys
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterator
 from datetime import UTC
+from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -30,6 +31,7 @@ from app.domain.enums import ScrapeTrigger, SiteKey
 from app.domain.errors import AppError, SiteCooldown
 from app.scrapers.pipeline import PipelineResult
 from app.scrapers.registry import SCRAPERS, SiteNotAvailable
+from app.services.alert_evaluation import AlertEvaluator
 from app.services.scrape_runtime import ScrapeRuntime
 from app.services.scrape_service import ScrapeService
 
@@ -37,6 +39,7 @@ logger = logging.getLogger("worker")
 
 CATALOG_JOB_ID = "catalog_refresh"
 TRACKED_JOB_ID = "tracked_refresh"
+CANCEL_WAIT_SECONDS = 30  # chờ job đóng lượt khi tắt worker
 MISFIRE_GRACE_SECONDS = 300  # bù lượt lỡ do tiến trình bận hoặc vừa khởi động lại trong 5 phút
 
 
@@ -51,9 +54,16 @@ def parse_cron(name: str, expression: str) -> CronTrigger:
 class ScheduledJobs:
     """Hai việc định kỳ; mỗi lỗi của một trang/nhóm chỉ được ghi log, không làm hỏng job."""
 
-    def __init__(self, service: ScrapeService, settings: Settings) -> None:
+    def __init__(
+        self,
+        service: ScrapeService,
+        settings: Settings,
+        evaluator: AlertEvaluator | None = None,
+    ) -> None:
         self._service = service
         self._settings = settings
+        self._evaluator = evaluator
+        self._running: set[asyncio.Task[Any]] = set()
 
     def sites(self) -> list[SiteKey]:
         """Trang đang bật; ở chế độ ngoại tuyến chỉ còn mock-shop."""
@@ -66,19 +76,55 @@ class ScheduledJobs:
 
     async def refresh_catalog(self) -> list[PipelineResult]:
         """Thu thập đầy đủ mọi nhóm của mọi trang; các trang chạy song song, nhóm chạy tuần tự."""
-        sites = self.sites()
-        logger.info("làm mới danh mục: %s", ", ".join(site.value for site in sites) or "(không có)")
-        per_site = await asyncio.gather(*(self._catalog_site(site) for site in sites))
-        return [result for results in per_site for result in results]
+        with self._track_current_task():
+            sites = self.sites()
+            logger.info(
+                "làm mới danh mục: %s", ", ".join(site.value for site in sites) or "(không có)"
+            )
+            per_site = await asyncio.gather(*(self._catalog_site(site) for site in sites))
+            await self._sweep_alerts()
+            return [result for results in per_site for result in results]
 
     async def refresh_tracked(self) -> list[PipelineResult]:
         """Làm mới giá offer đang được theo dõi của mọi trang (song song giữa các trang)."""
-        sites = self.sites()
-        logger.info(
-            "làm mới giá theo dõi: %s", ", ".join(site.value for site in sites) or "(không có)"
-        )
-        per_site = await asyncio.gather(*(self._tracked_site(site) for site in sites))
-        return [result for results in per_site for result in results]
+        with self._track_current_task():
+            sites = self.sites()
+            logger.info(
+                "làm mới giá theo dõi: %s", ", ".join(site.value for site in sites) or "(không có)"
+            )
+            per_site = await asyncio.gather(*(self._tracked_site(site) for site in sites))
+            await self._sweep_alerts()
+            return [result for results in per_site for result in results]
+
+    async def cancel_running(self) -> None:
+        """Hủy các job đang chạy và chờ chúng đóng lượt thu thập (`ScrapeRun` ghi "bị huỷ") tối đa
+        `CANCEL_WAIT_SECONDS`. Gọi trước khi đóng Fetcher để không cắt request đang bay."""
+        tasks = list(self._running)
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.wait(tasks, timeout=CANCEL_WAIT_SECONDS)
+
+    @contextlib.contextmanager
+    def _track_current_task(self) -> Iterator[None]:
+        task = asyncio.current_task()
+        if task is not None:
+            self._running.add(task)
+        try:
+            yield
+        finally:
+            if task is not None:
+                self._running.discard(task)
+
+    async def _sweep_alerts(self) -> None:
+        """Quét mọi cảnh báo còn hiệu lực sau job: bắt cảnh báo gửi lỗi lần trước và các thay đổi
+        mà `changed_offer_ids` không có (offer mới, đổi tồn kho, đổi loại giá)."""
+        if self._evaluator is None:
+            return
+        try:
+            await self._evaluator.evaluate(None)
+        except Exception:
+            logger.exception("lỗi khi quét lại cảnh báo giá sau job")
 
     async def _catalog_site(self, site: SiteKey) -> list[PipelineResult]:
         results: list[PipelineResult] = []
@@ -153,7 +199,8 @@ async def run_worker(
         return 0
     runtime = runtime or ScrapeRuntime.build(settings, build_spec_filler(settings))
     try:
-        scheduler = build_scheduler(ScheduledJobs(runtime.service, settings), settings)
+        jobs = ScheduledJobs(runtime.service, settings, runtime.alert_evaluator)
+        scheduler = build_scheduler(jobs, settings)
         scheduler.start()
         logger.info(
             "worker chạy: danh mục %r, theo dõi %r (UTC), ngoại tuyến=%s",
@@ -165,6 +212,7 @@ async def run_worker(
             await stop.wait()
         finally:
             scheduler.shutdown(wait=False)
+            await jobs.cancel_running()  # trước khi đóng Fetcher, tránh cắt request đang bay
     finally:
         await runtime.aclose()
     logger.info("worker đã dừng")

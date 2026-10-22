@@ -45,7 +45,6 @@ def node_text(node: LexborNode | None) -> str:
 _AVAILABILITY: dict[str, StockStatus] = {
     "instock": StockStatus.in_stock,
     "limitedavailability": StockStatus.in_stock,
-    "instoreonly": StockStatus.in_stock,
     "onlineonly": StockStatus.in_stock,
     "outofstock": StockStatus.out_of_stock,
     "soldout": StockStatus.out_of_stock,

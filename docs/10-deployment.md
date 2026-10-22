@@ -45,12 +45,12 @@ Service `db` có từ T0.3 (dev, test); `api`, `worker`, `mock-shop`, `web` thê
 | Service | Image | Lệnh | Cổng | Volume |
 | --- | --- | --- | --- | --- |
 | `db` | `postgres:17` | mặc định; healthcheck `pg_isready` | 5432 (`POSTGRES_PORT`) | volume `pgdata`; `./docker/postgres/init:/docker-entrypoint-initdb.d` (tạo `product_buyer_test`) |
-| `api` | `backend/Dockerfile` (`product-buyer-backend:local`) | `alembic upgrade head` rồi `uvicorn app.main:app --host 0.0.0.0 --port 8000` | 8000 | `./backend/data:/app/data` |
+| `api` | `backend/Dockerfile` (`product-buyer-backend:local`) | `alembic upgrade head` rồi `uvicorn app.main:app --host 0.0.0.0 --port 8000` | 8000 | volume `appdata:/app/data` |
 | `worker` | cùng image | `python -m app.worker` | – | dùng chung `data` |
 | `mock-shop` | cùng image | `uvicorn app.mock_shop.main:app --host 0.0.0.0 --port 8100` | 8100 | – |
 | `web` | `frontend/Dockerfile` (build Vite → nginx, cấu hình `frontend/nginx.conf`) | nginx, proxy `/api` → `api:8000` (tắt buffering cho SSE) | 8080 | – |
 
-`api` phụ thuộc `db` (`depends_on: condition: service_healthy`); `worker` và `web` chờ `api` healthy (schema đã migrate). `api`, `worker`, `mock-shop` dùng chung một image, đọc cấu hình từ `.env` (không đóng `.env` vào image) và bị ghi đè hai khóa trong `environment`: `DATABASE_URL` với host `db` (mật khẩu có ký tự đặc biệt phải mã hóa URL) và `MOCK_SHOP_URL=http://mock-shop:8100` (`mock-shop` là tên service, được `config.py` chấp nhận như địa chỉ cục bộ; không thể trỏ ra trang thật). `SCRAPER_OFFLINE_ONLY` và `SCHEDULER_ENABLED` theo `.env` (mặc định `true`/`false`); `worker` thoát mã 0 khi lịch tắt và chỉ tự khởi động lại khi lỗi. Container chạy bằng người dùng không phải root. Volume `./backend/data` chỉ còn chứa cache file ([ADR-0007](adr/0007-postgresql.md)).
+`api` phụ thuộc `db` (`depends_on: condition: service_healthy`); `worker` và `web` chờ `api` healthy (schema đã migrate). `api`, `worker`, `mock-shop` dùng chung một image, đọc cấu hình từ `.env` (không đóng `.env` vào image) và bị ghi đè hai khóa trong `environment`: `DATABASE_URL` với host `db` (mật khẩu có ký tự đặc biệt phải mã hóa URL) và `MOCK_SHOP_URL=http://mock-shop:8100` (`mock-shop` là tên service, được `config.py` chấp nhận như địa chỉ cục bộ; không thể trỏ ra trang thật). `SCRAPER_OFFLINE_ONLY` và `SCHEDULER_ENABLED` theo `.env` (mặc định `true`/`false`); `worker` thoát mã 0 khi lịch tắt (không khởi động lại) và chỉ thử lại tối đa 5 lần khi lỗi (`on-failure:5`). Ba container backend chạy bằng người dùng không phải root (`web` là nginx chuẩn, chạy root); `appdata` là volume có tên (không phải bind mount) để user đó ghi được cache thô trên mọi hệ điều hành, và chỉ chứa cache file ([ADR-0007](adr/0007-postgresql.md)). nginx của `web` phân giải lại tên `api` qua DNS Docker nên tạo lại container `api` không làm `web` trả 502.
 
 ## 5. CI (GitHub Actions, `.github/workflows/ci.yml`)
 
