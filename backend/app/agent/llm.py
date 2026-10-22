@@ -12,7 +12,7 @@ from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 
-from app.agent.testing import ScriptedChatModel
+from app.agent.fake_llm import ShoppingFakeChatModel
 from app.config import Settings, get_settings
 from app.domain.errors import LlmUnavailable
 
@@ -42,7 +42,7 @@ def get_chat_model(role: Role, settings: Settings | None = None) -> BaseChatMode
     temperature = TEMPERATURE[role]
     provider = settings.llm_provider
     if provider == "fake":
-        return ScriptedChatModel()
+        return ShoppingFakeChatModel()
     if provider == "gemini":
         google_key = settings.google_api_key
         if not google_key.get_secret_value():

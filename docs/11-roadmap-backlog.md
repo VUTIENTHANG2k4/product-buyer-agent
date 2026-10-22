@@ -325,21 +325,25 @@ Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T8.1 | Token, layout, điều hướng, API client | T7.5 | M | ⬜ |
-| T8.2 | Trang chính + chat + tiến trình agent (SSE) | T8.1 | L | ⬜ |
-| T8.3 | Bảng kết quả + ngăn so sánh | T8.2 | L | ⬜ |
-| T8.4 | Chi tiết sản phẩm + biểu đồ giá | T8.1 | M | ⬜ |
-| T8.5 | Danh sách mua | T8.1 | M | ⬜ |
-| T8.6 | Cảnh báo giá | T8.1 | M | ⬜ |
-| T8.7 | Quản trị + hộp thoại challenge | T8.1 | M | ⬜ |
-| T8.8 | E2E luồng chính | T8.2–T8.7 | M | ⬜ |
-| T8.9 | Sửa `apiFetch`: hủy bằng lý do bất kỳ, thông điệp lỗi rỗng (phát sinh từ QA M0) | T0.5 | S | ⬜ |
-| T8.10 | Sửa `NavBar`: `aria-current` trên trang không tìm thấy (phát sinh từ QA M0) | T8.1 | S | ⬜ |
+| T8.1 | Token, layout, điều hướng, API client | T7.5 | M | ✅ |
+| T8.2 | Trang chính + chat + tiến trình agent (SSE) | T8.1 | L | ✅ |
+| T8.3 | Bảng kết quả + ngăn so sánh | T8.2 | L | ✅ |
+| T8.4 | Chi tiết sản phẩm + biểu đồ giá | T8.1 | M | ✅ |
+| T8.5 | Danh sách mua | T8.1 | M | ✅ |
+| T8.6 | Cảnh báo giá | T8.1 | M | ✅ |
+| T8.7 | Quản trị + hộp thoại challenge | T8.1 | M | ✅ |
+| T8.8 | E2E luồng chính | T8.2–T8.7 | M | ✅ |
+| T8.9 | Sửa `apiFetch`: hủy bằng lý do bất kỳ, thông điệp lỗi rỗng (phát sinh từ QA M0) | T0.5 | S | ✅ |
+| T8.10 | Sửa `NavBar`: `aria-current` trên trang không tìm thấy (phát sinh từ QA M0) | T8.1 | S | ✅ |
+| T8.11 | `LLM_PROVIDER=fake` trả lời xác định (backend; cho E2E và ảnh chụp, phát sinh từ kế hoạch M8) | T6.5 | S | ✅ |
+| T8.12 | Việc nhỏ còn lại từ review/QA M8 (cần quyết định thiết kế) | T8.3, T8.4 | S | ⬜ |
 
 Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái ở [08 §3–4](08-ui-ux.md#3-wireframe); test Vitest cho logic và trạng thái (tải/rỗng/lỗi); ảnh chụp màn hình sáng + tối, desktop + 375 px lưu vào `docs/ui/screens/`; người dùng duyệt ảnh.
+**T8.11** — Trước đây `LLM_PROVIDER=fake` là `ScriptedChatModel()` kịch bản rỗng (ném `ScriptExhausted`) nên backend thật không trả lời được chat. Xong khi: `app/agent/fake_llm.py` có `ShoppingFakeChatModel` (planner nhận nhóm hàng + giá, executor gọi `search_catalog` rồi `FinalAnswer`, câu mơ hồ → hỏi lại); `get_chat_model` trả nó khi `fake`; `tests/agent/test_fake_provider.py` chạy cả lượt qua `AgentRunner` và `POST /chat` trên seed `e2e`.
+**T8.12** — Phát sinh từ review/QA M8; không chặn M9. Mỗi mục cần người dùng chọn hành vi trước khi sửa: (1) `OffersList`/`ProductDetailView` đánh dấu "Rẻ nhất" cả offer hết hàng (backend `min_price` cũng tính hàng hết; nên chỉ tính còn hàng?); (2) `formatSpecValue('storage_gb', 1024)` hiện "1.024 TB" dễ đọc nhầm (hiện extractor đổi TB thành 1000); (3) `ResultsTable` giữ `selected` không loại id đã biến mất khi `rows` đổi (chưa gặp vì `rows` cố định mỗi lượt); (4) `useAgentRun` không tự đặt lại khi `runId` đổi mà dựa vào `key={runId}` ở `ConversationPage` (đã ghi trong doc). Xong khi: mỗi mục có quyết định + test, hoặc ghi rõ "giữ nguyên" trong docs/08.
 **T8.8** — Xong khi: 4 luồng E2E: hỏi → bảng; so sánh; thêm vào danh sách; tạo cảnh báo; chạy với `LLM_PROVIDER=fake` + seed `e2e`. Lưu ý từ T0.5: `e2e/**/*.ts` đang nằm trong `tsconfig.node.json` (không có DOM lib); nếu spec dùng `window`/`document` trong `page.evaluate`, tách `tsconfig.e2e.json` có lib DOM.
 **T8.9** — Phát sinh từ QA M0 (lỗi 3 và 4); làm trước T8.2 vì chat SSE và `useQuery` dùng chung `apiFetch`. Xong khi:
-- `apiFetch` coi mọi lần hủy là hủy: khi `init.signal?.aborted` thì ném lại lỗi gốc, không đổi thành `ApiError(0, 'NETWORK_ERROR')` (nếu không `shouldRetry` sẽ thử lại một lần hủy, kể cả `controller.abort(new Error('…'))`).
+- `apiFetch` coi mọi lần hủy là hủy: khi `init.signal?.aborted` thì ném lại lỗi gốc, không đổi thành `ApiError(0, 'NETWORK_ERROR')` (nếu không `shouldRetry` sẽ thử lại một lần hủy, kể cả `controller.abort(new Error('…'))`). Ngoại lệ giữ nguyên: lý do `TimeoutError` (`AbortSignal.timeout`) vẫn là `NETWORK_ERROR` để thử lại được.
 - Khi `error.message` từ máy chủ là chuỗi rỗng thì dùng `strings.errors.unknown` để UI không hiện hộp lỗi trống.
 - Gỡ hai `it.fails` trong `frontend/src/api/client.edge.test.ts` (test "abort kèm lý do tùy ý…" và "thông điệp lỗi từ máy chủ rỗng…") và để chúng xanh thật; `client.test.ts` cũ vẫn xanh.
 **T8.10** — Phát sinh từ QA M0 (lỗi 5); làm cùng hoặc sau T8.1 vì T8.1 quyết định cách nav nổi ở `/c/:id` và `/products/:id` (docs/08 chưa nói rõ). Xong khi:

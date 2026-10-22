@@ -1,8 +1,12 @@
 import { QueryClient } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
+import { apiUrl } from '@/api/client'
+import { productFull } from '@/mocks/data'
+import { server } from '@/mocks/server'
 import { Providers } from './providers'
 import { routes } from './router'
 
@@ -42,22 +46,31 @@ describe('router', () => {
     expect(screen.getByRole('link', { name: 'Hỏi agent' })).not.toHaveAttribute('aria-current')
   })
 
-  it('đọc tham số của /products/:id', () => {
+  it('đọc tham số của /products/:id và tải đúng sản phẩm đó', async () => {
+    let requested = ''
+    server.use(
+      http.get(apiUrl('products/:id'), ({ params }) => {
+        requested = String(params.id)
+        return HttpResponse.json(productFull({ product_id: 42, name: 'MockBook Số 42' }))
+      }),
+    )
     renderAt('/products/42')
-    expect(screen.getByRole('heading', { name: 'Chi tiết sản phẩm' })).toBeInTheDocument()
-    expect(screen.getByText(/mã: 42/)).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'MockBook Số 42' }),
+    ).toBeInTheDocument()
+    expect(requested).toBe('42')
   })
 
   it.each([
-    ['/c/abc', 'Hội thoại', /mã: abc/],
-    ['/lists', 'Danh sách mua', /^Sẽ làm ở T8\.5\.$/],
-    ['/lists/7', 'Danh sách mua', /mã: 7/],
-    ['/alerts', 'Cảnh báo giá', /T8\.6/],
-    ['/admin', 'Quản trị', /T8\.7/],
-  ])('có route %s', (path, heading, description) => {
+    ['/c/abc', 'Hội thoại', /Không tìm thấy hội thoại này/],
+    ['/lists', 'Danh sách mua', /Bạn chưa có danh sách mua nào/],
+    ['/lists/7', 'Danh sách mua', /Danh sách này chưa có sản phẩm/],
+    ['/alerts', 'Cảnh báo giá', /Bạn chưa đặt cảnh báo giá nào/],
+    ['/admin', 'Quản trị', /Chưa có nguồn nào được cấu hình/],
+  ])('có route %s', async (path, heading, description) => {
     renderAt(path)
     expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument()
-    expect(screen.getByText(description)).toBeInTheDocument()
+    expect(await screen.findByText(description)).toBeInTheDocument()
   })
 
   it('liên kết "Bỏ qua tới nội dung" là mục đầu tiên khi bấm Tab và chuyển focus vào <main>', async () => {

@@ -42,23 +42,19 @@ function currentLinks(): string[] {
 
 describe('router · tham số route lạ', () => {
   it.each([
-    ['/products/%3Cscript%3Ealert(1)%3C%2Fscript%3E', '<script>alert(1)</script>'],
-    ['/products/%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E', '<img src=x onerror=alert(1)>'],
-    ['/products/..%2F..%2Fadmin', '../../admin'],
-    ['/products/a%20b%26c%3Dd%3F%23e', 'a b&c=d?#e'],
-    ['/products/' + encodeURIComponent('Đà Nẵng ₫ 🙂'), 'Đà Nẵng ₫ 🙂'],
-  ])('%s hiện mã như văn bản thuần, không chèn phần tử và không đổi tiêu đề', (path, id) => {
+    '/products/%3Cscript%3Ealert(1)%3C%2Fscript%3E',
+    '/products/%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E',
+    '/products/..%2F..%2Fadmin',
+    '/products/a%20b%26c%3Dd%3F%23e',
+    '/products/' + encodeURIComponent('Đà Nẵng ₫ 🙂'),
+    '/products/' + encodeURIComponent('Lenovo Legion Ấ'.normalize('NFD')),
+    '/products/0',
+    '/products/2147483648',
+  ])('%s: mã không hợp lệ → thông báo cố định, không chèn phần tử, không đổi tiêu đề', (path) => {
     const { container } = renderAt(path)
-    expect(screen.getByText(`Sẽ làm ở T8.4. (mã: ${id})`)).toBeInTheDocument()
+    expect(screen.getByText('Mã sản phẩm không hợp lệ.')).toBeInTheDocument()
     expect(container.querySelector('script, img')).toBeNull()
     expect(document.title).toBe('Chi tiết sản phẩm · Buyer Agent')
-  })
-
-  it('giữ nguyên dạng Unicode của mã: NFD không bị đổi thành NFC khi hiển thị', () => {
-    const nfd = 'Lenovo Legion Ấ'.normalize('NFD')
-    renderAt(`/products/${encodeURIComponent(nfd)}`)
-    const description = screen.getByText(/^Sẽ làm ở T8\.4\./)
-    expect(description.textContent).toBe(`Sẽ làm ở T8.4. (mã: ${nfd})`)
   })
 
   it('/lists/%20 (mã toàn khoảng trắng) vẫn hiện trang danh sách chi tiết, không sập', () => {
@@ -67,10 +63,10 @@ describe('router · tham số route lạ', () => {
     expect(document.title).toBe('Danh sách mua · Buyer Agent')
   })
 
-  it('đường dẫn rất dài (5000 ký tự) vẫn render và không làm đổi tiêu đề', () => {
+  it('đường dẫn rất dài (5000 ký tự) vẫn render và không làm đổi tiêu đề', async () => {
     const id = 'a'.repeat(5000)
     renderAt(`/lists/${id}`)
-    expect(screen.getByText(`Sẽ làm ở T8.5. (mã: ${id})`)).toBeInTheDocument()
+    expect(await screen.findByText('Mã danh sách không hợp lệ.')).toBeInTheDocument()
     expect(document.title).toBe('Danh sách mua · Buyer Agent')
   })
 
@@ -184,9 +180,19 @@ describe('NavBar · aria-current', () => {
     }
   })
 
-  // Lỗi đã biết (thấp): mục "Cảnh báo"/"Quản trị" nổi trên trang "Không tìm thấy" vì NavLink khớp tiền tố.
-  // it.fails: khi thêm `end` cho các mục không có route con, test sẽ báo để gỡ.
-  it.fails.each(['/alerts/x', '/admin/anything'])(
+  // Hội thoại thuộc luồng "Hỏi agent" (docs/08 §2); trang chi tiết sản phẩm là trang con, không nổi mục nào.
+  it.each(['/c/7', '/c/7/'])('%s làm nổi "Hỏi agent" và không mục nào khác', (path) => {
+    renderAt(path)
+    expect(currentLinks()).toEqual(['Hỏi agent'])
+  })
+
+  it('/c/7/khac là trang không tìm thấy nên "Hỏi agent" không nổi', () => {
+    renderAt('/c/7/khac')
+    expect(screen.getByRole('heading', { name: 'Không tìm thấy trang' })).toBeInTheDocument()
+    expect(currentLinks()).toEqual([])
+  })
+
+  it.each(['/alerts/x', '/admin/anything'])(
     '%s là trang không tìm thấy nên không mục nào được đánh dấu là trang hiện tại',
     (path) => {
       renderAt(path)

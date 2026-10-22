@@ -1,5 +1,5 @@
 # CI (docs/10 §5). Không có bí mật: LLM giả, offline, mật khẩu DB là giá trị giả cố định.
-# Job e2e (Playwright, chỉ PR vào main) thêm ở T8.8.
+# Job e2e (Playwright, chỉ PR vào main): backend thật + LLM giả + DB `*_e2e` do script tự tạo (T8.8).
 name: CI
 
 on:
@@ -76,3 +76,60 @@ jobs:
         run: make test-fe
       - name: Build
         run: cd frontend && npm run build
+
+  e2e:
+    # Chỉ PR vào main: chậm (cần trình duyệt) và đã được hai job trên chặn trước.
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: buyer
+          POSTGRES_PASSWORD: ci_password_not_a_secret
+          POSTGRES_DB: product_buyer_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U buyer -d product_buyer_test"
+          --health-start-period 10s
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # DB E2E suy ra từ DATABASE_URL (product_buyer_test_e2e) và do scripts/e2e_server.py tự tạo.
+      DATABASE_URL: postgresql+psycopg://buyer:ci_password_not_a_secret@localhost:5432/product_buyer_test
+      SCRAPER_USER_AGENT: ProductBuyerAgent-ci/0.1
+      LLM_PROVIDER: fake
+      SCRAPER_OFFLINE_ONLY: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Cài phụ thuộc
+        run: |
+          cd backend && uv sync --locked
+          cd ../frontend && npm ci
+      - name: Tải trình duyệt cho Playwright
+        # Chỉ chạy trên máy CI (runner dùng một lần); trên máy dev tự cài khi cần.
+        run: cd frontend && npx playwright install --with-deps chromium
+      - name: E2E (Playwright, LLM giả)
+        run: make e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            frontend/test-results
+            frontend/playwright-report
+          if-no-files-found: ignore

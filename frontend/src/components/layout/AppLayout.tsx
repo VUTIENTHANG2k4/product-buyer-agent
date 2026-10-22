@@ -6,6 +6,7 @@ import { titleFromMatches } from '@/lib/routeTitle'
 import { strings } from '@/lib/strings'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
 import { NavBar } from './NavBar'
+import { ThemeToggle } from './ThemeToggle'
 
 export function AppLayout() {
   const mainRef = useRef<HTMLElement>(null)
@@ -33,6 +34,9 @@ export function AppLayout() {
             {strings.appName}
           </span>
           <NavBar />
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <main
