@@ -1,3 +1,4 @@
+import { strings } from '@/lib/strings'
 import * as React from 'react'
 import { cn } from 'cn'
 import { Dialog as SheetPrimitive } from 'radix-ui'
@@ -64,7 +65,7 @@ function SheetContent({
           <SheetPrimitive.Close data-slot="sheet-close" asChild>
             <Button variant="ghost" className="absolute top-4 right-4" size="icon-sm">
               <XIcon />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{strings.common.close}</span>
             </Button>
           </SheetPrimitive.Close>
         )}

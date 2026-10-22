@@ -8,6 +8,8 @@ import { ChatComposer } from '@/features/chat/ChatComposer'
 import { parseConversationId } from '@/features/chat/conversationId'
 import { AssistantMessage, UserMessage } from '@/features/chat/Messages'
 import { RunTurn } from '@/features/chat/RunTurn'
+import { ProductIdsTable } from '@/features/results/ProductIdsTable'
+import { productIdsOf } from '@/features/results/productIds'
 import { errorMessage } from '@/lib/errorMessage'
 import { strings } from '@/lib/strings'
 
@@ -25,6 +27,7 @@ function HistoryMessage({ message }: { message: Message }) {
   ) : (
     <AssistantMessage>
       <SafeMarkdown>{message.content}</SafeMarkdown>
+      <ProductIdsTable ids={productIdsOf(message.payload)} />
     </AssistantMessage>
   )
 }

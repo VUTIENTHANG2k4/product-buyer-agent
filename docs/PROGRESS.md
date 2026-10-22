@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: M8 Frontend trên `milestone/M8-frontend`. Thứ tự (T8.9, T8.1, T8.10, T8.11, T8.2 ✅): T8.3 → T8.4 → T8.5 → T8.6 → T8.7 → T8.8. Kiểu API đã có ở `frontend/src/api/types.gen.ts` (T7.5). Dồn từ M6: trình hiển thị markdown tự lọc scheme `javascript:` (làm ở T8.2/T8.3).
+- Đang làm: M8 Frontend trên `milestone/M8-frontend`. Thứ tự (T8.9, T8.1, T8.10, T8.11, T8.2, T8.3 ✅): T8.4 → T8.5 → T8.6 → T8.7 → T8.8. Kiểu API đã có ở `frontend/src/api/types.gen.ts` (T7.5). Dồn từ M6: trình hiển thị markdown tự lọc scheme `javascript:` (làm ở T8.2/T8.3).
 - Backlog chưa làm (không chặn M8): T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-22 — đóng M7 (`/done M7`)
 

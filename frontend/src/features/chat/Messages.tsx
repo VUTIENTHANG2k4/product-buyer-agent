@@ -3,6 +3,8 @@ import type { ReactNode } from 'react'
 import { StaleBadge } from '@/components/common/badges'
 import { SafeMarkdown } from '@/components/common/SafeMarkdown'
 import { Button } from '@/components/ui/button'
+import { LiveItemsTable } from '@/features/results/LiveItemsTable'
+import { ResultsTable } from '@/features/results/ResultsTable'
 import { formatDateTime } from '@/lib/format'
 import { strings } from '@/lib/strings'
 import type { FinalEvent } from './events'
@@ -48,11 +50,13 @@ interface FinalAnswerViewProps {
   disabled?: boolean
 }
 
-/** Câu trả lời cuối: văn bản, mốc dữ liệu, gợi ý tiếp. Bảng kết quả thêm ở T8.3. */
+/** Câu trả lời cuối: văn bản, mốc dữ liệu, gợi ý tiếp. Gồm bảng kết quả (tầng 1) và bảng tìm trực tiếp (tầng 2). */
 export function FinalAnswerView({ final, onSuggestion, disabled = false }: FinalAnswerViewProps) {
   return (
     <div className="space-y-3">
       <SafeMarkdown>{final.text}</SafeMarkdown>
+      <ResultsTable rows={final.table} />
+      <LiveItemsTable items={final.live_items} />
       {final.data_as_of ? (
         <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           <span>{strings.chat.dataAsOf(formatDateTime(final.data_as_of))}</span>

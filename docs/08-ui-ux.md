@@ -120,6 +120,15 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 - **Trang chính:** dòng "Nguồn … · Cập nhật: … trước" lấy từ `GET /products?page_size=1` (`data_as_of`; badge vàng khi > 24 giờ); danh mục rỗng thì trỏ tới trang Quản trị; "Hội thoại gần đây" (5 mục từ `GET /conversations`) để mở lại `/c/:id`, ẩn khi chưa có.
 - **Markdown của câu trả lời:** HTML thô hiện như văn bản, ảnh không được tải, chỉ liên kết `http(s):` và `mailto:` bấm được (`javascript:`, `data:`, đường dẫn tương đối bị bỏ), liên kết mở tab mới với `rel="noopener noreferrer"`.
 
+### 3.9 Bảng kết quả và ngăn so sánh (đã dựng ở T8.3)
+- **Bảng** (≥ 640 px; dưới đó là danh sách thẻ cùng nội dung): cột chọn, sản phẩm (ảnh, tên liên kết tới `/products/:id`, hãng), giá thấp nhất, thông số chính (4 trường đầu của `key_specs`), nơi bán, menu `⋯`. Sắp xếp theo Sản phẩm/Giá bằng cách bấm tiêu đề (tăng → giảm → thứ tự gốc; sản phẩm chưa có giá luôn cuối; `aria-sort`). Ảnh lỗi hoặc URL không phải http(s) thì hiện ô giữ chỗ. Bảng chỉ hiện số liệu có trong kết quả của agent, không tự tính giá.
+- **Nơi bán** mở ra giá từng trang: loại giá (Khuyến mãi/Thành viên/Flash sale), tình trạng hàng, giờ cập nhật (badge vàng nếu > 24 giờ), "Rẻ nhất", liên kết "Mở trang" (`target=_blank`, `rel="noopener noreferrer"`, bỏ nếu URL không phải http(s)).
+- **Chọn để so sánh:** 2–5 sản phẩm; từ sản phẩm thứ 6 ô chọn bị tắt; nút "So sánh" chỉ bật khi đã chọn ≥ 2. Thứ tự cột trong ngăn theo thứ tự đang hiển thị.
+- **Ngăn so sánh** (`Sheet` bên phải, toàn màn hình trên điện thoại; `POST /compare`): hàng giá luôn có và đánh dấu "Rẻ nhất" theo `cheapest_product_id`; "Chỉ hiện khác biệt" bật sẵn (theo `differing_fields`), khi tắt thì trường khác biệt có nhãn chữ "Khác biệt"; hạng GPU (suy ra từ GPU) không hiện; thiếu giá trị hiện `—`. Wireframe có dấu ✓ cho "tốt nhất" ở từng thuộc tính, API chỉ cho biết sản phẩm rẻ nhất nên chỉ đánh dấu giá.
+- **Menu `⋯`:** Xem chi tiết · Thêm vào danh sách (chọn danh sách có sẵn hoặc tạo mới, số lượng 1–10.000) · Báo khi giảm giá (ngưỡng nhập tay hoặc gợi ý −5%/−10% làm tròn 1.000 ₫; kênh và nơi nhận tùy chọn, bỏ trống dùng mặc định cấu hình).
+- **Tầng 2:** `live_items` hiện thành bảng Tên, Giá, Trang, Liên kết với nhãn vàng "Tìm trực tiếp – chưa chuẩn hóa thông số".
+- **Hội thoại mở lại:** tin trợ lý đã lưu chỉ có `payload.product_ids`, nên bảng dựng bằng `GET /products/{id}` từng sản phẩm (giá là giá hiện tại, có thể khác lúc hỏi); sản phẩm không tải được thì bỏ qua.
+
 ## 4. Trạng thái giao diện (bắt buộc cho mọi màn hình có dữ liệu)
 
 | Trạng thái | Cách hiển thị |

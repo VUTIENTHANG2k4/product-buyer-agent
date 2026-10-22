@@ -1,5 +1,6 @@
 'use client'
 
+import { strings } from '@/lib/strings'
 import * as React from 'react'
 import { cn } from 'cn'
 import { Dialog as DialogPrimitive } from 'radix-ui'
@@ -63,7 +64,7 @@ function DialogContent({
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button variant="ghost" className="absolute top-4 right-4" size="icon-sm">
               <XIcon />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{strings.common.close}</span>
             </Button>
           </DialogPrimitive.Close>
         )}
@@ -95,7 +96,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline">{strings.common.close}</Button>
         </DialogPrimitive.Close>
       )}
     </div>
