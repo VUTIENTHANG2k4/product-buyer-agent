@@ -2,11 +2,10 @@
 
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
-
 ## Trạng thái
-- Đang làm: M7 API trên `milestone/M7-api`. Thứ tự đã duyệt: T6.8 ✅ → T6.9 ✅ → T7.1 ✅ → T7.3 ✅ → T7.4 ✅ → T7.2 ✅ → T7.5 ✅ (gộp T6.8, T6.9; không gộp T2.8). Đang làm: (–), hết task của M7; còn `/check`, `/review M7`, `qa-tester`, `/done M7`.
-- Backlog chưa làm (không chặn M7): T4.6–T4.8, T5.4–T5.7, T6.7–T6.13 (T6.8, T6.9 nên làm trước khi chat ghi dữ liệu thật). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-21 — `/next M7`
+- Đang làm: (–). M7 đã đóng trên `milestone/M7-api`, chờ người dùng merge. Kế tiếp đề xuất: M8 Frontend (`/next M8`); nên làm T8.9 trước T8.2. Kiểu API đã có ở `frontend/src/api/types.gen.ts` (T7.5).
+- Backlog chưa làm (không chặn M8): T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-10-22 — đóng M7 (`/done M7`)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -18,7 +17,7 @@
 | M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). Backlog: T4.6 (seed/test), T4.7, T4.8 |
 | M5 Chuẩn hóa & ghép | ✅ | Qua `code-reviewer` + `qa-tester`; T5.1, T5.2 xong, T5.3 hoãn sang M6. QA còn 8 lỗi nhỏ ghi thành test `xfail(strict)` (T5.4–T5.7) |
 | M6 Agent | ✅ | Gộp T5.3; qua `code-reviewer` + `qa-tester` (10 bug sửa ngay, 7 bug giữ `xfail(strict)` BUG-M6-11…17 → T6.8–T6.13). T6.7 tùy chọn |
-| M7 API | 🔄 | T7.1–T7.5; M6 đã merge vào `main` |
+| M7 API | ✅ | Gộp T6.8, T6.9; qua `code-reviewer` (3 Phải sửa đã sửa) + `qa-tester` (4 bug sửa ngay, 3 bug giữ `xfail(strict)` BUG-M7-3, 4, 6b → T7.7; còn T7.6 từ review). T2.8 chưa làm |
 | M8 Frontend | ⬜ | Có thêm T8.9, T8.10 (từ QA M0) |
 | M9 Theo dõi giá | ⬜ | |
 | M10 Tầng 2 | ⬜ | |
@@ -30,8 +29,8 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,32% (4548 pass + 56 xfail đã biết, ngưỡng 80% trong `make test-be`, ~4,5 phút) | 2026-10-21 |
-| Test frontend (Vitest) | 244 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-21 |
+| Coverage backend | 99,30% (5605 pass + 55 xfail đã biết, ngưỡng 80% trong `make test-be`, ~14,5 phút) | 2026-10-22 |
+| Test frontend (Vitest) | 248 pass + 4 expected-fail đã biết (chưa đo coverage) | 2026-10-22 |
 | Eval (intent accuracy / constraint satisfaction / hallucination) | 100% / 98,7% / 0 (clarification 100%, tool 96,4%, latency p50 15,7 s bị kéo dài bởi `LLM_MAX_RPM=12`; 29/31 câu đạt; `gemini-3.5-flash-lite`; chi tiết T6.7; **chưa đo lại** sau các sửa executor/guardrail của review và QA M6) | 2026-10-21 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
@@ -56,4 +55,5 @@
 - 2026-10-19 (M3b): robots.txt 403/429/challenge CDN → `RobotsBlocked` → lượt `BLOCKED` + nghỉ 24 giờ (429 không chờ `Retry-After`). Fetcher đọc thân theo luồng, từ chối > 5 MB sau giải nén (`ResponseTooLarge`). `clean_url` giữ mã hóa query gốc, sắp tham số, viết hoa hex: offer có query có thể đổi khóa so với trước. `ListingPage.pagination_loop` báo vòng lặp phân trang. `MockShopLocation` cho phép import registry mà không cần đủ env. Hạng GPU thêm RTX 3070/3070 Ti/3080 (ước lượng); chuỗi GPU > 500 ký tự → `None`. Chưa có QA biên cho Fetcher streaming và `clean_url`: nghi lỗi thì thử hai chỗ này trước.
 - 2026-10-19 (M4): FPT Shop duyệt qua sitemap (danh mục chỉ ~25 sản phẩm tĩnh), mỗi "trang" là lô 20 sản phẩm, JSON-LD `Product`; lỗi tải rời rạc bị bỏ qua, 3 lỗi liên tiếp mới dừng; 404/410 đếm vào `ListingPage.gone` (không cấm tắt offer). An Phát: trang nào cũng có form đăng ký chứa chữ captcha nên `AnPhatScraper.detect_challenge` loại đúng tên form đó (5xx không loại); `scripts.fetch_page` dùng detector của scraper. `detect_challenge` bỏ thân `<script>` nội tuyến (quét tuyến tính). Seed/test còn dùng hoangha/laptop88 (T4.6).
 - 2026-10-20 (M5): bộ trích xuất theo luật `normalize/extract.py` (không đoán; thiếu trường bắt buộc → `specs_confidence < 0,5`, chờ T5.3). Ghép mẫu `normalize/matcher.py` dùng `token_sort_ratio` + chốt chặn (không dùng `token_set_ratio` vì ghép nhầm), phụ kiện không có `model_code`, màu không phải khác biệt sản phẩm; mã model mạnh/yếu và giới hạn đã biết ở `docs/04` §7. Offer đã có không bao giờ được ghép lại (T5.4). Test có `xfail(strict=True)` mã `BUG-M5-n` trong `*_qa_m5.py`: XPASS báo đỏ, gỡ dấu khi sửa. `clean()` (specs/parsing.py) chuẩn hóa NFKC cho mọi văn bản đầu vào.
-- 2026-10-21 (M6): agent = `planner` → `ToolLoop` (8 tool + `FinalAnswer`) → `apply_guardrail`, chạy qua `AgentRunner` (chi tiết `docs/05` §3–§7). LLM thật: dùng `gemini-3.5-flash-lite` (`gemini-2.5-flash` đã ngừng, `gemini-3.8-flash` chậm 20–30 s); gói miễn phí 15 request/phút nên đặt `LLM_MAX_RPM=12`. `make eval` và pytest dùng chung test DB: không chạy đồng thời. Test `xfail(strict=True)` mã `BUG-M6-n` trong `*_qa_m6.py`: XPASS báo đỏ, gỡ dấu khi sửa. `AgentRun.id` là UUID ngẫu nhiên nên test không được dựa vào thứ tự run cùng `created_at`.
+- 2026-10-21 (M6): agent = `planner` → `ToolLoop` (8 tool + `FinalAnswer`) → `apply_guardrail`, chạy qua `AgentRunner` (chi tiết `docs/05` §3–§7). LLM thật: dùng `gemini-3.5-flash-lite` (`gemini-2.5-flash` đã ngừng, `gemini-3.8-flash` chậm 20–30 s); gói miễn phí 15 request/phút nên đặt `LLM_MAX_RPM=12`. `make eval` và pytest dùng chung test DB: không chạy đồng thời. Test `xfail(strict=True)` mã `BUG-M6-n` trong `*_qa_m6.py`: XPASS báo đỏ, gỡ dấu khi sửa. `AgentRun.id` là UUID ngẫu nhiên nên test không được dựa vào thứ tự run cùng `created_at`. 
+- 2026-10-22 (M7): API ở `backend/app/api/routers/`; `api` lấy session qua `services/database.py` (commit trước khi gửi response). Chat/thu thập chạy nền bằng `api/tasks.py`; SSE đọc lại `agent_run.events` từ DB. Đổi API thì `make gen-api` và commit `frontend/openapi.json` + `types.gen.ts` (test backend và CI báo đỏ nếu lệch). Dependency dựng Fetcher/runner phải là `async def` (nguyên tử). Docker Desktop tắt thì `make check` dừng ở pytest (ConnectionTimeout). Shell của Claude biến `\\x00` thành byte NUL: ghi script bằng Write, không dùng heredoc cho chuỗi có escape.
