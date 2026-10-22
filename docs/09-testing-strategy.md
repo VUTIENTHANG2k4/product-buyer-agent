@@ -71,7 +71,7 @@ flowchart TB
 | `make db-up` | Bật PostgreSQL (cần trước mọi lệnh test backend) |
 | `make check` | Lint + type + unit/integration/agent cả backend và frontend (cổng bắt buộc trước commit) |
 | `make test-be` / `make test-fe` | Chỉ một phía |
-| `make e2e` | Playwright E2E (tự khởi động backend với `LLM_PROVIDER=fake` và seed `e2e`) |
+| `make e2e` | Playwright E2E (tự khởi động backend với `LLM_PROVIDER=fake` và seed `e2e`; `LLM_PROVIDER=fake` dùng `ShoppingFakeChatModel` xác định, xem [05](05-agent-design.md) §2; test: `backend/tests/agent/test_fake_provider.py`) |
 | `make eval` | Eval với LLM thật |
 | `make test-live` | Test với trang thật (thủ công) |
 

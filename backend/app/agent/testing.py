@@ -1,4 +1,4 @@
-"""Model chat giả cho test và `LLM_PROVIDER=fake` (docs/05 §2).
+"""Model chat giả theo kịch bản cho test đơn vị (docs/05 §2; `LLM_PROVIDER=fake` dùng `fake_llm`).
 
 `ScriptedChatModel` phát lần lượt các phản hồi định sẵn: văn bản, `AIMessage` kèm tool call, hoặc
 đối tượng có cấu trúc cho `with_structured_output`. Hết kịch bản thì ném `ScriptExhausted` để

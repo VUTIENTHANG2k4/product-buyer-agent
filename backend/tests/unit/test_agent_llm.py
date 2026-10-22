@@ -8,6 +8,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, SecretStr
 
+from app.agent.fake_llm import ShoppingFakeChatModel
 from app.agent.llm import LLM_MAX_RETRIES, LLM_TIMEOUT_SECONDS, TEMPERATURE, get_chat_model
 from app.agent.testing import ScriptedChatModel, ScriptExhausted, tool_call_message
 from app.config import Settings
@@ -22,10 +23,10 @@ def make_settings(**overrides: object) -> Settings:
     return Settings.model_validate({**base, **overrides})
 
 
-def test_fake_provider_returns_scripted_model() -> None:
-    model = get_chat_model("planner", make_settings(llm_provider="fake"))
-    assert isinstance(model, ScriptedChatModel)
-    assert model.script == []
+def test_fake_provider_returns_the_deterministic_shopping_model_for_every_role() -> None:
+    settings = make_settings(llm_provider="fake")
+    for role in ("planner", "executor"):
+        assert isinstance(get_chat_model(role, settings), ShoppingFakeChatModel)
 
 
 def test_gemini_provider_uses_configured_model_timeout_and_retry() -> None:
