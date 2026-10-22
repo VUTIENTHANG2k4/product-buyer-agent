@@ -7,6 +7,7 @@ export const queryKeys = {
   },
   alerts: {
     all: ['alerts'] as const,
+    list: (status: string | null) => ['alerts', 'list', status ?? 'all'] as const,
   },
   products: {
     all: ['products'] as const,

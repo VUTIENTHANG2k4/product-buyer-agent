@@ -330,7 +330,7 @@ Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test
 | T8.3 | Bảng kết quả + ngăn so sánh | T8.2 | L | ✅ |
 | T8.4 | Chi tiết sản phẩm + biểu đồ giá | T8.1 | M | ✅ |
 | T8.5 | Danh sách mua | T8.1 | M | ✅ |
-| T8.6 | Cảnh báo giá | T8.1 | M | ⬜ |
+| T8.6 | Cảnh báo giá | T8.1 | M | ✅ |
 | T8.7 | Quản trị + hộp thoại challenge | T8.1 | M | ⬜ |
 | T8.8 | E2E luồng chính | T8.2–T8.7 | M | ⬜ |
 | T8.9 | Sửa `apiFetch`: hủy bằng lý do bất kỳ, thông điệp lỗi rỗng (phát sinh từ QA M0) | T0.5 | S | ✅ |

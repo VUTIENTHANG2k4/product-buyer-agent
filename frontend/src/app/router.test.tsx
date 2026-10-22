@@ -65,7 +65,7 @@ describe('router', () => {
     ['/c/abc', 'Hội thoại', /Không tìm thấy hội thoại này/],
     ['/lists', 'Danh sách mua', /Bạn chưa có danh sách mua nào/],
     ['/lists/7', 'Danh sách mua', /Danh sách này chưa có sản phẩm/],
-    ['/alerts', 'Cảnh báo giá', /T8\.6/],
+    ['/alerts', 'Cảnh báo giá', /Bạn chưa đặt cảnh báo giá nào/],
     ['/admin', 'Quản trị', /T8\.7/],
   ])('có route %s', async (path, heading, description) => {
     renderAt(path)

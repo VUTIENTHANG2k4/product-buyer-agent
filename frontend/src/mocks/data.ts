@@ -114,3 +114,20 @@ export function listDetail(
     ...overrides,
   }
 }
+
+export function alertView(overrides: Partial<Schemas['AlertView']> = {}): Schemas['AlertView'] {
+  return {
+    alert_id: 1,
+    product_id: 12,
+    product_name: 'MockBook Gaming 15 MG15-4060',
+    target_price: 26_000_000,
+    channel: 'email',
+    destination: 'mock@example.com',
+    status: 'active',
+    current_best_price: 27_490_000,
+    last_notified_price: null,
+    last_notified_at: null,
+    created_at: MOCK_NOW,
+    ...overrides,
+  }
+}

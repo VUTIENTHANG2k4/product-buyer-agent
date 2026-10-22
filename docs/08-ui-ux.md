@@ -143,6 +143,13 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 - **Cập nhật lạc quan:** sửa số lượng, ghi chú, nơi mua và xóa mục đổi giao diện ngay (kể cả tổng tiền), rồi tải lại từ máy chủ để lấy giá chính xác; máy chủ từ chối thì hoàn tác và hiện "Không cập nhật được danh sách: …".
 - **Tổng tiền:** số lượng × giá hiện tại của từng mục; mục không còn bán không tính và có ghi chú giải thích.
 
+### 3.12 Cảnh báo giá (đã dựng ở T8.6)
+- **Bố cục:** từ 640 px là bảng (sản phẩm liên kết tới trang chi tiết, giá hiện tại, ngưỡng, kênh + nơi nhận, trạng thái, lần báo gần nhất, thao tác); hẹp hơn là mỗi cảnh báo một thẻ cùng nội dung. Ô chọn "Lọc theo trạng thái" gọi `GET /alerts?status=`; lọc ra rỗng báo riêng, khác với "chưa đặt cảnh báo nào".
+- **Trạng thái:** huy hiệu có chữ (Đang theo dõi / Đã báo / Tạm dừng). Giá hiện tại ≤ ngưỡng thì ghi thêm "Đã tới ngưỡng". Chưa có giá → "Chưa có giá"; chưa từng báo → "Chưa báo lần nào" (đã báo thì hiện thời gian đầy đủ kèm giá lúc báo).
+- **Thao tác:** "Tạm dừng" (PATCH `status=paused`) / "Tiếp tục" / "Theo dõi lại" (cảnh báo đã báo, PATCH `status=active`); "Xóa" luôn hỏi xác nhận; lỗi (409, 404, 5xx) hiện ngay tại hàng/thẻ, trạng thái cũ giữ nguyên. Không cập nhật lạc quan: nút tắt trong lúc gửi rồi tải lại danh sách.
+- **"Gửi thử":** `POST /alerts/{id}/test` hiện nay luôn trả `sent: false` kèm `reason` (bộ gửi thuộc M9), giao diện hiện đúng lý do đó ("Chưa gửi được thông báo thử: …"), không bao giờ nói đã gửi khi `sent` là false.
+- Tạo cảnh báo dùng `CreateAlertDialog` (T8.3) từ bảng kết quả và trang chi tiết; không có nút tạo ở trang này vì cảnh báo luôn gắn với một sản phẩm đang xem.
+
 ## 4. Trạng thái giao diện (bắt buộc cho mọi màn hình có dữ liệu)
 
 | Trạng thái | Cách hiển thị |

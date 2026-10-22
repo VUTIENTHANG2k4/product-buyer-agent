@@ -35,6 +35,7 @@ export const handlers: RequestHandler[] = [
   http.get(apiUrl('products/:id'), ({ params }) =>
     HttpResponse.json(productFull({ product_id: Number(params.id) })),
   ),
+  http.get(apiUrl('alerts'), () => HttpResponse.json({ items: [] })),
   http.get(apiUrl('conversations'), () => HttpResponse.json({ items: [] })),
   http.get(apiUrl('conversations/:id/messages'), () => HttpResponse.json({ items: [] })),
 ]
