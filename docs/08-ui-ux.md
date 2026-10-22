@@ -136,6 +136,13 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 - **Thông số:** bảng nhãn tiếng Việt + đơn vị + giá trị liệt kê đọc được (vd. `ssd` → SSD), xếp theo thứ tự cố định; hạng GPU (suy ra) không hiện. Khi `specs_confidence < 0.8` hiện ghi chú "Một số thông số được trích tự động, hãy kiểm tra trên trang bán".
 - Mã sản phẩm sai (không phải số nguyên dương ≤ 2^31−1) báo ngay, không gọi API; 404 hiện thông điệp của API.
 
+### 3.11 Danh sách mua (đã dựng ở T8.5)
+- **Bố cục:** `/lists` mở danh sách đầu tiên (thay thế lịch sử; chưa có danh sách nào thì hiện trạng thái rỗng); `/lists/:id` hiện chi tiết. Từ 1024 px cột trái liệt kê danh sách kèm số mục và biểu mẫu tạo mới; hẹp hơn thì là ô chọn danh sách ở trên cùng.
+- **Danh sách:** tạo (tên 1–200 ký tự), đổi tên (hộp thoại), xóa (luôn hỏi xác nhận vì không hoàn tác được; xóa xong về `/lists`).
+- **Mỗi mục:** tên liên kết tới trang chi tiết, số lượng (nút −/+ hoặc gõ số rồi Enter/rời ô; 1–10.000, sai thì trả về giá trị cũ), giá lúc thêm → giá hiện tại với mũi tên ↓ **và chữ** "Giảm …" (↑ "Tăng …", hoặc "Không đổi"), nơi mua (trang đang được tính giá, đánh dấu "ưu tiên" hoặc "rẻ nhất", liên kết "Mở trang"), "Đổi nơi mua" (tải các offer của sản phẩm khi mở; "Tự chọn trang rẻ nhất" bỏ ưu tiên), ghi chú (≤ 500 ký tự, lưu khi rời ô, để trống là xóa), nút xóa mục.
+- **Cập nhật lạc quan:** sửa số lượng, ghi chú, nơi mua và xóa mục đổi giao diện ngay (kể cả tổng tiền), rồi tải lại từ máy chủ để lấy giá chính xác; máy chủ từ chối thì hoàn tác và hiện "Không cập nhật được danh sách: …".
+- **Tổng tiền:** số lượng × giá hiện tại của từng mục; mục không còn bán không tính và có ghi chú giải thích.
+
 ## 4. Trạng thái giao diện (bắt buộc cho mọi màn hình có dữ liệu)
 
 | Trạng thái | Cách hiển thị |

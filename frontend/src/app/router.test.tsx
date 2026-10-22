@@ -63,14 +63,14 @@ describe('router', () => {
 
   it.each([
     ['/c/abc', 'Hội thoại', /Không tìm thấy hội thoại này/],
-    ['/lists', 'Danh sách mua', /^Sẽ làm ở T8\.5\.$/],
-    ['/lists/7', 'Danh sách mua', /mã: 7/],
+    ['/lists', 'Danh sách mua', /Bạn chưa có danh sách mua nào/],
+    ['/lists/7', 'Danh sách mua', /Danh sách này chưa có sản phẩm/],
     ['/alerts', 'Cảnh báo giá', /T8\.6/],
     ['/admin', 'Quản trị', /T8\.7/],
-  ])('có route %s', (path, heading, description) => {
+  ])('có route %s', async (path, heading, description) => {
     renderAt(path)
     expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument()
-    expect(screen.getByText(description)).toBeInTheDocument()
+    expect(await screen.findByText(description)).toBeInTheDocument()
   })
 
   it('liên kết "Bỏ qua tới nội dung" là mục đầu tiên khi bấm Tab và chuyển focus vào <main>', async () => {

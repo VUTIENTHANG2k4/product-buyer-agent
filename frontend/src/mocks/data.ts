@@ -81,3 +81,36 @@ export function listSummary(
     ...overrides,
   }
 }
+
+export function listItem(
+  overrides: Partial<Schemas['ShoppingListItemView']> = {},
+): Schemas['ShoppingListItemView'] {
+  return {
+    item_id: 1,
+    product_id: 12,
+    name: 'MockBook Gaming 15 MG15-4060',
+    quantity: 1,
+    note: null,
+    preferred_offer_id: null,
+    price_at_add: 27_990_000,
+    current_price: 27_490_000,
+    price_delta: -500_000,
+    best_offer: offerView(),
+    ...overrides,
+  }
+}
+
+export function listDetail(
+  overrides: Partial<Schemas['ShoppingListDetail']> = {},
+): Schemas['ShoppingListDetail'] {
+  const items = overrides.items ?? [listItem()]
+  return {
+    list_id: 1,
+    name: 'Mock danh sách laptop',
+    item_count: items.length,
+    total_price: items.reduce((sum, item) => sum + item.quantity * (item.current_price ?? 0), 0),
+    updated_at: MOCK_NOW,
+    items,
+    ...overrides,
+  }
+}

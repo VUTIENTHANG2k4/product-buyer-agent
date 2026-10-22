@@ -63,10 +63,10 @@ describe('router · tham số route lạ', () => {
     expect(document.title).toBe('Danh sách mua · Buyer Agent')
   })
 
-  it('đường dẫn rất dài (5000 ký tự) vẫn render và không làm đổi tiêu đề', () => {
+  it('đường dẫn rất dài (5000 ký tự) vẫn render và không làm đổi tiêu đề', async () => {
     const id = 'a'.repeat(5000)
     renderAt(`/lists/${id}`)
-    expect(screen.getByText(`Sẽ làm ở T8.5. (mã: ${id})`)).toBeInTheDocument()
+    expect(await screen.findByText('Mã danh sách không hợp lệ.')).toBeInTheDocument()
     expect(document.title).toBe('Danh sách mua · Buyer Agent')
   })
 

@@ -19,6 +19,16 @@ export const handlers: RequestHandler[] = [
       data_as_of: null,
     }),
   ),
+  http.get(apiUrl('lists/:id'), ({ params }) =>
+    HttpResponse.json({
+      list_id: Number(params.id),
+      name: 'Mock danh sách',
+      item_count: 0,
+      total_price: 0,
+      updated_at: '2026-10-16T02:00:00Z',
+      items: [],
+    }),
+  ),
   http.get(apiUrl('products/:id/price-history'), () =>
     HttpResponse.json({ series: [], min_price: null, max_price: null }),
   ),
