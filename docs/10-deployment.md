@@ -27,19 +27,30 @@ make dev                         # API :8000, frontend :5173, mock-shop :8100
 make worker                      # (tùy chọn) bộ lập lịch; cần SCHEDULER_ENABLED=true trong .env
 ```
 
+Chạy cả hệ thống trong Docker (demo, không cần cài Python/Node):
+
+```bash
+make demo-up      # docker compose up -d --build: db, api (tự migrate), worker, mock-shop, web
+make demo-seed    # nạp dữ liệu hư cấu `dev` (lần đầu)
+# mở http://localhost:8080 (giao diện), http://localhost:8000/api/docs (API)
+docker compose logs -f worker     # xem lịch chạy (cần SCHEDULER_ENABLED=true trong .env rồi `docker compose up -d worker`)
+make db-down      # dừng tất cả (giữ dữ liệu trong volume pgdata)
+```
+
 ## 4. Docker Compose
 
-Service `db` có từ T0.3 (dev, test); các service còn lại thêm ở T9.4 (demo).
+Service `db` có từ T0.3 (dev, test); `api`, `worker`, `mock-shop`, `web` thêm ở T9.4 (demo). `docker compose up -d --build`
+(hoặc `make demo-up`) chạy cả năm service; `make db-up` chỉ bật `db`. Mọi cổng chỉ mở cho `127.0.0.1`.
 
 | Service | Image | Lệnh | Cổng | Volume |
 | --- | --- | --- | --- | --- |
 | `db` | `postgres:17` | mặc định; healthcheck `pg_isready` | 5432 (`POSTGRES_PORT`) | volume `pgdata`; `./docker/postgres/init:/docker-entrypoint-initdb.d` (tạo `product_buyer_test`) |
-| `api` | `backend/Dockerfile` | `uvicorn app.main:app --host 0.0.0.0 --port 8000` | 8000 | `./backend/data:/app/data` |
+| `api` | `backend/Dockerfile` (`product-buyer-backend:local`) | `alembic upgrade head` rồi `uvicorn app.main:app --host 0.0.0.0 --port 8000` | 8000 | `./backend/data:/app/data` |
 | `worker` | cùng image | `python -m app.worker` | – | dùng chung `data` |
 | `mock-shop` | cùng image | `uvicorn app.mock_shop.main:app --host 0.0.0.0 --port 8100` | 8100 | – |
-| `web` | `frontend/Dockerfile` (build Vite → nginx) | nginx, proxy `/api` → `api:8000` | 8080 | – |
+| `web` | `frontend/Dockerfile` (build Vite → nginx, cấu hình `frontend/nginx.conf`) | nginx, proxy `/api` → `api:8000` (tắt buffering cho SSE) | 8080 | – |
 
-`api` và `worker` phụ thuộc `db` (`depends_on: condition: service_healthy`) và dùng `DATABASE_URL` với host `db` thay cho `localhost` (đặt trong `environment` của compose). `api` chạy `alembic upgrade head` trước khi khởi động. Volume `./backend/data` chỉ còn chứa cache file ([ADR-0007](adr/0007-postgresql.md)).
+`api` phụ thuộc `db` (`depends_on: condition: service_healthy`); `worker` và `web` chờ `api` healthy (schema đã migrate). `api`, `worker`, `mock-shop` dùng chung một image, đọc cấu hình từ `.env` (không đóng `.env` vào image) và bị ghi đè hai khóa trong `environment`: `DATABASE_URL` với host `db` (mật khẩu có ký tự đặc biệt phải mã hóa URL) và `MOCK_SHOP_URL=http://mock-shop:8100` (`mock-shop` là tên service, được `config.py` chấp nhận như địa chỉ cục bộ; không thể trỏ ra trang thật). `SCRAPER_OFFLINE_ONLY` và `SCHEDULER_ENABLED` theo `.env` (mặc định `true`/`false`); `worker` thoát mã 0 khi lịch tắt và chỉ tự khởi động lại khi lỗi. Container chạy bằng người dùng không phải root. Volume `./backend/data` chỉ còn chứa cache file ([ADR-0007](adr/0007-postgresql.md)).
 
 ## 5. CI (GitHub Actions, `.github/workflows/ci.yml`)
 

@@ -65,7 +65,7 @@ CLAUDE.md                bộ nhớ dự án
 .claude/                 settings, hooks, rules, skills, agents
 .mcp.json                MCP servers
 .env.example             biến môi trường
-docker-compose.yml       PostgreSQL (từ T0.3), toàn bộ ứng dụng (từ T9.4)
+docker-compose.yml       PostgreSQL (từ T0.3), toàn bộ ứng dụng (từ T9.4; `make demo-up`)
 docs/                    01–11 đặc tả, ADR, eval, nguồn, ảnh UI, PROGRESS
 backend/, frontend/      (tạo ở M0)
 ```

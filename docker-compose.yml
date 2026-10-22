@@ -1,5 +1,20 @@
-# Dev/test: chỉ service `db`. Các service api, worker, mock-shop, web thêm ở T9.4 (docs/10 §4).
-# Docker Compose tự đọc `.env` ở thư mục gốc.
+# `docker compose up --build` chạy cả hệ thống demo (docs/10 §4): db, api, worker, mock-shop, web.
+# Dev/test hằng ngày chỉ cần `make db-up` (service `db`). Docker Compose tự đọc `.env` ở thư mục gốc.
+# Mọi cổng chỉ mở cho máy cục bộ (127.0.0.1).
+
+x-backend: &backend
+  build: ./backend
+  image: product-buyer-backend:local  # một image cho api, worker, mock-shop
+  # Cấu hình ứng dụng (UA, offline, SMTP, LLM...) lấy từ .env; chỉ các khóa dưới `environment` bị ghi đè
+  # cho khớp với mạng của Compose. Không đóng .env vào image (xem backend/.dockerignore).
+  env_file: .env
+  environment: &backend-env
+    # Trong mạng Compose, DB ở host `db` cổng 5432. Mật khẩu có ký tự đặc biệt phải mã hóa URL.
+    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-buyer}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-product_buyer}
+    MOCK_SHOP_URL: http://mock-shop:8100
+  volumes:
+    - ./backend/data:/app/data
+
 services:
   db:
     image: postgres:17
@@ -22,6 +37,51 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    <<: *backend
+    restart: unless-stopped
+    # Migrate rồi mới nhận request; seed dữ liệu demo là bước riêng (docs/10 §3).
+    command: ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      start_period: 20s
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  worker:
+    <<: *backend
+    # Thoát mã 0 khi SCHEDULER_ENABLED=false (mặc định): không tự khởi động lại, chỉ khởi động lại khi lỗi.
+    restart: on-failure
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      api:
+        condition: service_healthy # api đã migrate xong schema
+      mock-shop:
+        condition: service_started
+
+  mock-shop:
+    <<: *backend
+    restart: unless-stopped
+    command: ["uvicorn", "app.mock_shop.main:app", "--host", "0.0.0.0", "--port", "8100"]
+    ports:
+      - "127.0.0.1:8100:8100"
+
+  web:
+    build: ./frontend
+    image: product-buyer-web:local
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:80"
 
 volumes:
   pgdata:

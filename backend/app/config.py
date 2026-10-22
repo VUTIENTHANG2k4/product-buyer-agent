@@ -43,14 +43,16 @@ UserAgent = Annotated[
 ]
 
 
-LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+# `mock-shop` là tên service trong docker-compose (T9.4): tên một nhãn, không có dấu chấm, chỉ phân
+# giải được trong mạng của Compose nên không thể trỏ ra trang thật.
+LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "mock-shop"})
 
 
 def _check_mock_shop_url(value: str) -> str:
     """Mock-shop được miễn robots/ngoại tuyến/độ trễ trang thật nên chỉ được ở máy cục bộ."""
     parts = urlsplit(value)
     if parts.scheme not in ("http", "https") or parts.hostname not in LOCAL_HOSTS:
-        raise ValueError("must be an http(s) URL on localhost, 127.0.0.1 or ::1")
+        raise ValueError("must be an http(s) URL on localhost, 127.0.0.1, ::1 or mock-shop")
     return value.rstrip("/")
 
 

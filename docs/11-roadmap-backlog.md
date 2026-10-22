@@ -358,7 +358,7 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | T9.1 | Đánh giá cảnh báo + chống gửi trùng | T6.2, T2.6 | M | ✅ |
 | T9.2 | Notifier email + Telegram | T9.1 | S | ✅ |
 | T9.3 | Worker + lịch APScheduler | T2.6, T9.1 | M | ✅ |
-| T9.4 | Dockerfile + docker compose | T8.8 | M | ⬜ |
+| T9.4 | Dockerfile + docker compose | T8.8 | M | ✅ |
 
 **T9.1** — Xong khi: test đúng tiêu chí US-07 ([01 §5](01-requirements.md#5-user-story-và-tiêu-chí-chấp-nhận)); cảnh báo `triggered` gửi lại chỉ khi giá xuống thấp hơn `last_notified_price` thêm ≥ 1%.
 **T9.3** — Xong khi: job làm mới danh mục theo `CATALOG_REFRESH_CRON`, job làm mới offer đang được theo dõi theo `TRACKED_REFRESH_CRON` (chỉ trang chi tiết của offer có cảnh báo/danh sách), mỗi job chạy qua `scrape_service` (gọi pipeline rồi đánh giá cảnh báo, [03 §4](03-architecture.md#4-thành-phần-backend-c4-mức-3)); không chạy 2 lượt cùng (site, category); test với scheduler giả.
