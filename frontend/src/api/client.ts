@@ -37,9 +37,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-function isAbortError(error: unknown): boolean {
+function hasName(value: unknown, name: string): boolean {
   // So theo tên: DOMException của jsdom và của Node là hai lớp khác nhau nên instanceof không đáng tin.
-  return isRecord(error) && error.name === 'AbortError'
+  return isRecord(value) && value.name === name
+}
+
+/**
+ * Hủy chủ động (kể cả `abort(lý do bất kỳ)`, khi fetch ném đúng lý do đó) thì ném lại nguyên lỗi để
+ * lớp trên không coi là lỗi mạng và thử lại. `signal.timeout()` hết hạn (`TimeoutError`) vẫn là lỗi mạng.
+ */
+function isCancellation(error: unknown, signal: AbortSignal | null | undefined): boolean {
+  if (hasName(error, 'AbortError')) return true
+  return signal?.aborted === true && !hasName(signal.reason, 'TimeoutError')
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
@@ -50,7 +59,9 @@ async function toApiError(response: Response): Promise<ApiError> {
     const body: unknown = await response.json()
     if (isRecord(body) && isRecord(body.error)) {
       if (typeof body.error.code === 'string') code = body.error.code
-      if (typeof body.error.message === 'string') message = body.error.message
+      if (typeof body.error.message === 'string' && body.error.message.trim() !== '') {
+        message = body.error.message
+      }
       details = body.error.details
     }
   } catch {
@@ -73,7 +84,7 @@ export async function apiFetch<T>(path: string, init: ApiRequestInit = {}): Prom
   try {
     response = await fetch(apiUrl(path), { ...rest, headers: requestHeaders, body })
   } catch (error) {
-    if (isAbortError(error)) throw error
+    if (isCancellation(error, rest.signal)) throw error
     throw new ApiError(0, 'NETWORK_ERROR', strings.errors.network)
   }
 

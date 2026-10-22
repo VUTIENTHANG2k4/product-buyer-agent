@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: (–). M7 đã đóng trên `milestone/M7-api`, chờ người dùng merge. Kế tiếp đề xuất: M8 Frontend (`/next M8`); nên làm T8.9 trước T8.2. Kiểu API đã có ở `frontend/src/api/types.gen.ts` (T7.5).
+- Đang làm: M8 Frontend trên `milestone/M8-frontend`. Thứ tự (T8.9 ✅): T8.1 → T8.10 → T8.11 (backend, LLM giả E2E, mới) → T8.2 → T8.3 → T8.4 → T8.5 → T8.6 → T8.7 → T8.8. Kiểu API đã có ở `frontend/src/api/types.gen.ts` (T7.5). Dồn từ M6: trình hiển thị markdown tự lọc scheme `javascript:` (làm ở T8.2/T8.3).
 - Backlog chưa làm (không chặn M8): T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-22 — đóng M7 (`/done M7`)
 
@@ -18,7 +18,7 @@
 | M5 Chuẩn hóa & ghép | ✅ | Qua `code-reviewer` + `qa-tester`; T5.1, T5.2 xong, T5.3 hoãn sang M6. QA còn 8 lỗi nhỏ ghi thành test `xfail(strict)` (T5.4–T5.7) |
 | M6 Agent | ✅ | Gộp T5.3; qua `code-reviewer` + `qa-tester` (10 bug sửa ngay, 7 bug giữ `xfail(strict)` BUG-M6-11…17 → T6.8–T6.13). T6.7 tùy chọn |
 | M7 API | ✅ | Gộp T6.8, T6.9; qua `code-reviewer` (3 Phải sửa đã sửa) + `qa-tester` (4 bug sửa ngay, 3 bug giữ `xfail(strict)` BUG-M7-3, 4, 6b → T7.7; còn T7.6 từ review). T2.8 chưa làm |
-| M8 Frontend | ⬜ | Có thêm T8.9, T8.10 (từ QA M0) |
+| M8 Frontend | 🔄 | Có thêm T8.9, T8.10 (từ QA M0) |
 | M9 Theo dõi giá | ⬜ | |
 | M10 Tầng 2 | ⬜ | |
 | M11 Hoàn thiện | ⬜ | |

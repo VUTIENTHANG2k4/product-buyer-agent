@@ -1,4 +1,5 @@
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
+import { shouldRetry } from '@/app/queryClient'
 import { server } from '@/mocks/server'
 import { ApiError, apiFetch } from './client'
 
@@ -260,16 +261,17 @@ describe('apiFetch · thân lỗi dị dạng', () => {
     expect(error.name).toBe('ApiError')
   })
 
-  // Lỗi đã biết (thấp): message rỗng từ máy chủ được giữ nguyên. it.fails: hết lỗi thì test báo để gỡ.
-  it.fails(
-    'thông điệp lỗi từ máy chủ rỗng thì dùng thông điệp mặc định để không hiện hộp lỗi trống',
-    async () => {
+  it.each(['', '   ', '\n\t'])(
+    'thông điệp lỗi từ máy chủ %j thì dùng thông điệp mặc định để không hiện hộp lỗi trống',
+    async (message) => {
       server.use(
         http.get(`${BASE}/blank`, () =>
-          HttpResponse.json({ error: { code: 'X', message: '' } }, { status: 400 }),
+          HttpResponse.json({ error: { code: 'X', message } }, { status: 400 }),
         ),
       )
-      expect((await failure('/blank')).message).not.toBe('')
+      const error = await failure('/blank')
+      expect(error.message).toBe(unknownMessage)
+      expect(error.code).toBe('X')
     },
   )
 })
@@ -291,17 +293,31 @@ describe('apiFetch · hủy yêu cầu', () => {
     expect(calls).toBe(0)
   })
 
-  // Lỗi đã biết (thấp): chỉ nhận AbortError theo tên, abort(lý do khác) thành NETWORK_ERROR. it.fails như trên.
-  it.fails(
-    'abort kèm lý do tùy ý vẫn là hủy, không biến thành NETWORK_ERROR có thể bị retry',
-    async () => {
-      server.use(http.get(`${BASE}/never`, () => HttpResponse.json({})))
-      const controller = new AbortController()
-      controller.abort(new Error('người dùng rời trang'))
-      const error = await apiFetch('/never', { signal: controller.signal }).catch((e: unknown) => e)
-      expect(error).not.toBeInstanceOf(ApiError)
-    },
-  )
+  it('abort kèm lý do tùy ý vẫn là hủy, không biến thành NETWORK_ERROR có thể bị retry', async () => {
+    server.use(http.get(`${BASE}/never`, () => HttpResponse.json({})))
+    const controller = new AbortController()
+    const reason = new Error('người dùng rời trang')
+    controller.abort(reason)
+    const error = await apiFetch('/never', { signal: controller.signal }).catch((e: unknown) => e)
+    expect(error).not.toBeInstanceOf(ApiError)
+    expect(error).toBe(reason)
+    expect(shouldRetry(0, error)).toBe(false)
+  })
+
+  it('abort giữa chừng khi máy chủ đang xử lý cũng không bị thử lại', async () => {
+    server.use(
+      http.get(`${BASE}/slow-abort`, async () => {
+        await delay('infinite')
+        return HttpResponse.json({})
+      }),
+    )
+    const controller = new AbortController()
+    const pending = apiFetch('/slow-abort', { signal: controller.signal }).catch((e: unknown) => e)
+    controller.abort(new Error('đổi trang'))
+    const error = await pending
+    expect(error).not.toBeInstanceOf(ApiError)
+    expect(shouldRetry(0, error)).toBe(false)
+  })
 
   it('signal.timeout hết hạn được coi là lỗi mạng (status 0) để lớp trên có thể thử lại', async () => {
     server.use(http.get(`${BASE}/slow`, () => HttpResponse.json({})))
