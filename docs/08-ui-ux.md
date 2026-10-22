@@ -37,6 +37,8 @@ flowchart LR
 | `/alerts` | Cảnh báo giá | US-07 |
 | `/admin` | Nguồn, lượt thu thập, challenge | US-09, 10 |
 
+**Mục nổi trên thanh điều hướng (`aria-current="page"`).** Chỉ nổi khi đường dẫn khớp đúng route: `/` và `/c/:conversationId` nổi "Hỏi agent" (hội thoại thuộc luồng hỏi); `/lists` và `/lists/:id` nổi "Danh sách mua"; `/alerts`, `/admin` chỉ nổi ở đúng đường dẫn đó. `/products/:id` là trang con nên không nổi mục nào (có nút "Quay lại"); trang "Không tìm thấy" cũng không nổi mục nào.
+
 ## 3. Wireframe
 
 ### 3.1 Trang chính (chưa hỏi)

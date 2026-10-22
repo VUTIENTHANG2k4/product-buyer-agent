@@ -184,9 +184,19 @@ describe('NavBar · aria-current', () => {
     }
   })
 
-  // Lỗi đã biết (thấp): mục "Cảnh báo"/"Quản trị" nổi trên trang "Không tìm thấy" vì NavLink khớp tiền tố.
-  // it.fails: khi thêm `end` cho các mục không có route con, test sẽ báo để gỡ.
-  it.fails.each(['/alerts/x', '/admin/anything'])(
+  // Hội thoại thuộc luồng "Hỏi agent" (docs/08 §2); trang chi tiết sản phẩm là trang con, không nổi mục nào.
+  it.each(['/c/7', '/c/7/'])('%s làm nổi "Hỏi agent" và không mục nào khác', (path) => {
+    renderAt(path)
+    expect(currentLinks()).toEqual(['Hỏi agent'])
+  })
+
+  it('/c/7/khac là trang không tìm thấy nên "Hỏi agent" không nổi', () => {
+    renderAt('/c/7/khac')
+    expect(screen.getByRole('heading', { name: 'Không tìm thấy trang' })).toBeInTheDocument()
+    expect(currentLinks()).toEqual([])
+  })
+
+  it.each(['/alerts/x', '/admin/anything'])(
     '%s là trang không tìm thấy nên không mục nào được đánh dấu là trang hiện tại',
     (path) => {
       renderAt(path)

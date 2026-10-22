@@ -334,7 +334,7 @@ Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test
 | T8.7 | Quản trị + hộp thoại challenge | T8.1 | M | ⬜ |
 | T8.8 | E2E luồng chính | T8.2–T8.7 | M | ⬜ |
 | T8.9 | Sửa `apiFetch`: hủy bằng lý do bất kỳ, thông điệp lỗi rỗng (phát sinh từ QA M0) | T0.5 | S | ✅ |
-| T8.10 | Sửa `NavBar`: `aria-current` trên trang không tìm thấy (phát sinh từ QA M0) | T8.1 | S | ⬜ |
+| T8.10 | Sửa `NavBar`: `aria-current` trên trang không tìm thấy (phát sinh từ QA M0) | T8.1 | S | ✅ |
 
 Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái ở [08 §3–4](08-ui-ux.md#3-wireframe); test Vitest cho logic và trạng thái (tải/rỗng/lỗi); ảnh chụp màn hình sáng + tối, desktop + 375 px lưu vào `docs/ui/screens/`; người dùng duyệt ảnh.
 **T8.8** — Xong khi: 4 luồng E2E: hỏi → bảng; so sánh; thêm vào danh sách; tạo cảnh báo; chạy với `LLM_PROVIDER=fake` + seed `e2e`. Lưu ý từ T0.5: `e2e/**/*.ts` đang nằm trong `tsconfig.node.json` (không có DOM lib); nếu spec dùng `window`/`document` trong `page.evaluate`, tách `tsconfig.e2e.json` có lib DOM.
