@@ -38,7 +38,7 @@ from app.scrapers.http.errors import (
 )
 from app.scrapers.http.rate_limiter import DomainRateLimiter
 from app.scrapers.http.raw_cache import RawCache
-from app.scrapers.http.robots import RobotsCache
+from app.scrapers.http.robots import RobotsCache, RobotsSnapshot
 from app.scrapers.http.types import FetchResponse
 
 logger = logging.getLogger(__name__)
@@ -173,6 +173,10 @@ class Fetcher:
         await self._mock.aclose()
 
     # ---- API ----
+    def robots_snapshot(self, url: str) -> RobotsSnapshot | None:
+        """Tóm tắt robots.txt đã tải của domain chứa `url` (None nếu chưa tải); không gọi mạng."""
+        return self._robots.snapshot(_origin(url))
+
     async def get(self, url: str) -> FetchResponse:
         """Tải `url`, theo chuyển hướng trong cùng domain tối đa 5 lần.
 

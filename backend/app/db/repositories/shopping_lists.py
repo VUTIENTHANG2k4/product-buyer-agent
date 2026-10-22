@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, col, select
 
 from app.db.models import Offer, ShoppingList, ShoppingListItem, utc_now
+from app.db.repositories.ids import fits_int4
 
 
 def normalize_list_name(name: str) -> str:
@@ -29,7 +30,7 @@ class ShoppingListRepository:
         return shopping_list
 
     def get(self, list_id: int) -> ShoppingList | None:
-        return self._session.get(ShoppingList, list_id)
+        return self._session.get(ShoppingList, list_id) if fits_int4(list_id) else None
 
     def get_by_name(self, name: str) -> ShoppingList | None:
         statement = (
@@ -70,7 +71,7 @@ class ShoppingListRepository:
         return list(self._session.exec(statement))
 
     def get_item(self, item_id: int) -> ShoppingListItem | None:
-        return self._session.get(ShoppingListItem, item_id)
+        return self._session.get(ShoppingListItem, item_id) if fits_int4(item_id) else None
 
     def add_item(
         self,
@@ -89,12 +90,7 @@ class ShoppingListRepository:
         có) thay giá trị cũ. `quantity` phải ≥ 1. `preferred_offer_id` phải là offer của chính
         `product_id` (nếu không ném `ValueError`).
         """
-        if preferred_offer_id is not None:
-            owner = self._session.exec(
-                select(Offer.product_id).where(Offer.id == preferred_offer_id)
-            ).first()
-            if owner != product_id:
-                raise ValueError("preferred_offer_id không thuộc sản phẩm này")
+        self._require_offer_of(product_id, preferred_offer_id)
         moment = now or utc_now()
         statement = insert(ShoppingListItem).values(
             list_id=list_id,
@@ -131,14 +127,23 @@ class ShoppingListRepository:
         quantity: int | None = None,
         note: str | None = None,
         clear_note: bool = False,
+        preferred_offer_id: int | None = None,
+        clear_preferred_offer: bool = False,
         now: datetime | None = None,
     ) -> ShoppingListItem:
-        """Đặt lại `quantity` và/hoặc `note` (chỉ trường truyền vào); `clear_note` xóa ghi chú.
+        """Đặt lại `quantity`, `note` và/hoặc offer ưu tiên (chỉ trường truyền vào); `clear_note`
+        và `clear_preferred_offer` xóa giá trị. Offer ưu tiên phải thuộc sản phẩm của mục (nếu
+        không ném `ValueError`, và không đổi gì).
 
         Chạm `updated_at` của list.
         """
+        self._require_offer_of(item.product_id, preferred_offer_id)
         if quantity is not None:
             item.quantity = quantity
+        if clear_preferred_offer:
+            item.preferred_offer_id = None
+        elif preferred_offer_id is not None:
+            item.preferred_offer_id = preferred_offer_id
         if clear_note:
             item.note = None
         elif note is not None:
@@ -153,6 +158,18 @@ class ShoppingListRepository:
         self._session.delete(item)
         self._touch(list_id, now or utc_now())
         self._session.flush()
+
+    def _require_offer_of(self, product_id: int, offer_id: int | None) -> None:
+        """`offer_id` (nếu có) phải là offer của `product_id`, nếu không ném `ValueError`."""
+        if offer_id is None:
+            return
+        owner = (
+            self._session.exec(select(Offer.product_id).where(Offer.id == offer_id)).first()
+            if fits_int4(offer_id)
+            else None
+        )
+        if owner != product_id:
+            raise ValueError("preferred_offer_id không thuộc sản phẩm này")
 
     def _touch(self, list_id: int, moment: datetime) -> None:
         self._session.exec(

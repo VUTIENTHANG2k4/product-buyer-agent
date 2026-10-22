@@ -12,11 +12,12 @@ from sqlalchemy import select as core_select
 from sqlmodel import Session, col, select
 
 from app.db.models import Offer, Product
+from app.db.repositories.ids import fits_int4, keep_valid
 from app.db.repositories.offers import effective_price
 from app.domain.dto import INT8_MAX, SpecFilter, Vnd
 from app.domain.enums import Category, SiteKey, StockStatus
 
-ProductSort = Literal["price_asc", "price_desc", "rating_desc"]
+ProductSort = Literal["price_asc", "price_desc", "rating_desc", "updated_desc"]
 
 
 class ProductQuery(BaseModel):
@@ -103,15 +104,28 @@ class ProductRepository:
         return product
 
     def get(self, product_id: int) -> Product | None:
-        return self._session.get(Product, product_id)
+        return self._session.get(Product, product_id) if fits_int4(product_id) else None
 
     def get_many(self, product_ids: list[int]) -> list[Product]:
         """Các sản phẩm tồn tại trong `product_ids`, theo thứ tự của danh sách (id lạ bị bỏ)."""
-        if not product_ids:
+        valid = keep_valid(product_ids)
+        if not valid:
             return []
-        rows = self._session.exec(select(Product).where(col(Product.id).in_(product_ids))).all()
+        rows = self._session.exec(select(Product).where(col(Product.id).in_(valid))).all()
         by_id = {product.id: product for product in rows}
         return [by_id[pid] for pid in product_ids if pid in by_id]
+
+    def count_by_category(self) -> dict[Category, int]:
+        """Số sản phẩm còn ít nhất một offer đang bán, theo nhóm (nhóm không có sản phẩm: vắng)."""
+        has_offer = (
+            select(Offer.id)
+            .where(col(Offer.product_id) == col(Product.id), col(Offer.is_active).is_(True))
+            .exists()
+        )
+        statement = (
+            select(Product.category, func.count()).where(has_offer).group_by(col(Product.category))
+        )
+        return {Category(category): int(count) for category, count in self._session.exec(statement)}
 
     def find_by_model_key(self, category: Category, brand: str, model_code: str) -> Product | None:
         """Sản phẩm trùng (category, brand, model_code), khớp với chỉ mục unique một phần."""
@@ -167,6 +181,7 @@ class ProductRepository:
                 func.max(price).label("max_price"),
                 func.count().label("offers_count"),
                 func.max(Offer.rating).label("best_rating"),
+                func.max(Offer.scraped_at).label("latest_scraped_at"),
             )
             .where(and_(*offer_conditions))
             .group_by(col(Offer.product_id))
@@ -203,6 +218,8 @@ class ProductRepository:
             order = [offers.c.min_price.desc()]
         elif query.sort == "rating_desc":
             order = [offers.c.best_rating.desc().nulls_last(), offers.c.min_price.asc()]
+        elif query.sort == "updated_desc":
+            order = [offers.c.latest_scraped_at.desc(), offers.c.min_price.asc()]
         else:
             order = [offers.c.min_price.asc()]
         page = base.order_by(*order, col(Product.id)).limit(query.limit).offset(query.offset)

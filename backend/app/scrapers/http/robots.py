@@ -11,6 +11,7 @@ import re
 import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
+from typing import Literal
 from urllib.parse import urlsplit
 
 from app.scrapers.http.errors import RobotsUnavailable
@@ -190,6 +191,15 @@ def parse_robots(text: str, user_agent: str) -> RobotsRules:
     )
 
 
+@dataclass(frozen=True)
+class RobotsSnapshot:
+    """Tóm tắt robots.txt đã tải (cho trang quản trị): `partial` = có luật chặn một phần URL
+    hoặc chặn tất cả; `allowed` = không chặn gì. `crawl_delay` tính bằng giây."""
+
+    status: Literal["allowed", "partial"]
+    crawl_delay: float | None
+
+
 RobotsLoader = Callable[[str], Awaitable[tuple[int, str]]]
 """Tải `<origin>/robots.txt`, trả (mã trạng thái, nội dung); lỗi mạng ném `RobotsUnavailable`."""
 
@@ -217,6 +227,14 @@ class RobotsCache:
         if cached is not None and self._clock() - cached[0] < self._ttl:
             return cached[1]
         return None
+
+    def snapshot(self, origin: str) -> RobotsSnapshot | None:
+        """Tóm tắt quy tắc đã tải còn hạn của `origin`; chưa tải thì None. Không gọi mạng."""
+        hit = self._fresh(origin)
+        if hit is None:
+            return None
+        partial = hit.disallow_all or any(not rule.allow for rule in hit.rules)
+        return RobotsSnapshot("partial" if partial else "allowed", hit.crawl_delay)
 
     async def rules(self, origin: str) -> RobotsRules:
         """Quy tắc của `origin` (ví dụ `https://shop.example`). Ném `RobotsUnavailable` nếu lỗi."""

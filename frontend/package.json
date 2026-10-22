@@ -13,11 +13,15 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "gen:api": "openapi-typescript openapi.json -o src/api/types.gen.ts"
   },
   "overrides": {
     "eslint-plugin-jsx-a11y": {
       "eslint": "$eslint"
+    },
+    "openapi-typescript": {
+      "typescript": "$typescript"
     }
   },
   "dependencies": {
@@ -52,6 +56,7 @@
     "globals": "^17.13.0",
     "jsdom": "^29.1.1",
     "msw": "^2.15.0",
+    "openapi-typescript": "7.13.0",
     "prettier": "^3.9.10",
     "shadcn": "^4.22.0",
     "typescript": "~6.0.2",

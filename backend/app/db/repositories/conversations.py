@@ -7,6 +7,7 @@ from typing import Any
 from sqlmodel import Session, col, select
 
 from app.db.models import Conversation, Message, utc_now
+from app.db.repositories.ids import fits_int4
 from app.domain.enums import MessageRole
 
 
@@ -21,7 +22,9 @@ class ConversationRepository:
         return conversation
 
     def get(self, conversation_id: int) -> Conversation | None:
-        return self._session.get(Conversation, conversation_id)
+        return (
+            self._session.get(Conversation, conversation_id) if fits_int4(conversation_id) else None
+        )
 
     def list_recent(self, *, limit: int = 20) -> list[Conversation]:
         statement = (

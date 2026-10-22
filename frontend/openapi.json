@@ -1,0 +1,4316 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Product Buyer Agent API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Kiểm tra sức khỏe hệ thống",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Tìm sản phẩm đã thu thập",
+        "description": "Lọc theo thông số bằng tham số `spec.<field>__<op>=<value>` (cần `category`), ví dụ `spec.gpu_rank__gte=40`, `spec.ram_gb__gte=16`, `spec.connection__contains_any=wireless,bluetooth`. Trường và toán tử hợp lệ lấy từ `GET /categories`.",
+        "operationId": "list_products_api_products_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Category"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Từ khóa trong tên/hãng/mã",
+              "title": "Q"
+            },
+            "description": "Từ khóa trong tên/hãng/mã"
+          },
+          {
+            "name": "price_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 9223372036854775807,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price Min"
+            }
+          },
+          {
+            "name": "price_max",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 9223372036854775807,
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Price Max"
+            }
+          },
+          {
+            "name": "brand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "maxItems": 20
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Brand"
+            }
+          },
+          {
+            "name": "site",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteKey"
+                  },
+                  "maxItems": 10
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "price_asc",
+                "price_desc",
+                "rating_desc",
+                "updated_desc"
+              ],
+              "type": "string",
+              "default": "price_asc",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{product_id}": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Chi tiết sản phẩm và mọi offer đang bán",
+        "operationId": "get_product_api_products__product_id__get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id sản phẩm; id không tồn tại hoặc ngoài miền → 404",
+              "title": "Product Id"
+            },
+            "description": "Id sản phẩm; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductFull"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/products/{product_id}/price-history": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Lịch sử giá theo trang",
+        "operationId": "get_price_history_api_products__product_id__price_history_get",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id sản phẩm; id không tồn tại hoặc ngoài miền → 404",
+              "title": "Product Id"
+            },
+            "description": "Id sản phẩm; id không tồn tại hoặc ngoài miền → 404"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 180,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PriceHistoryResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/compare": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "So sánh 2–5 sản phẩm",
+        "operationId": "compare_products_api_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comparison"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Nhóm sản phẩm, tầng, số sản phẩm và trường lọc",
+        "operationId": "list_categories_api_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lists": {
+      "get": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Các danh sách mua",
+        "operationId": "list_lists_api_lists_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Tạo danh sách mua",
+        "operationId": "create_list_api_lists_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShoppingListSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lists/{list_id}": {
+      "get": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Chi tiết danh sách: các mục, giá hiện tại và chênh lệch so với lúc thêm",
+        "operationId": "get_list_api_lists__list_id__get",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404",
+              "title": "List Id"
+            },
+            "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShoppingListDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Đổi tên danh sách",
+        "operationId": "rename_list_api_lists__list_id__patch",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404",
+              "title": "List Id"
+            },
+            "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShoppingListSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Xóa danh sách và các mục của nó",
+        "operationId": "delete_list_api_lists__list_id__delete",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404",
+              "title": "List Id"
+            },
+            "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lists/{list_id}/items": {
+      "post": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Thêm sản phẩm vào danh sách (đã có thì cộng dồn số lượng)",
+        "operationId": "add_item_api_lists__list_id__items_post",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404",
+              "title": "List Id"
+            },
+            "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShoppingListItemView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/lists/{list_id}/items/{item_id}": {
+      "patch": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Đổi số lượng, ghi chú hoặc offer ưu tiên của một mục",
+        "operationId": "update_item_api_lists__list_id__items__item_id__patch",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404",
+              "title": "List Id"
+            },
+            "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404"
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id mục trong danh sách",
+              "title": "Item Id"
+            },
+            "description": "Id mục trong danh sách"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShoppingListItemView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Xóa một mục khỏi danh sách",
+        "operationId": "remove_item_api_lists__list_id__items__item_id__delete",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404",
+              "title": "List Id"
+            },
+            "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404"
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id mục trong danh sách",
+              "title": "Item Id"
+            },
+            "description": "Id mục trong danh sách"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alerts": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Các cảnh báo giá, mới nhất trước",
+        "operationId": "list_alerts_api_alerts_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AlertStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Đặt cảnh báo giá",
+        "description": "Thiếu `channel` hoặc `destination` thì lấy mặc định từ cấu hình (`ALERT_DEFAULT_CHANNEL`, `ALERT_DEFAULT_EMAIL`, `TELEGRAM_CHAT_ID`).",
+        "operationId": "create_alert_api_alerts_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột trạng thái",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alerts/{alert_id}": {
+      "patch": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Đổi ngưỡng hoặc tạm dừng/bật lại cảnh báo",
+        "operationId": "update_alert_api_alerts__alert_id__patch",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id cảnh báo; id không tồn tại hoặc ngoài miền → 404",
+              "title": "Alert Id"
+            },
+            "description": "Id cảnh báo; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột trạng thái",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Xóa cảnh báo",
+        "operationId": "delete_alert_api_alerts__alert_id__delete",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id cảnh báo; id không tồn tại hoặc ngoài miền → 404",
+              "title": "Alert Id"
+            },
+            "description": "Id cảnh báo; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alerts/{alert_id}/test": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Gửi thông báo thử tới kênh đã cấu hình",
+        "description": "Chưa gửi thật: bộ gửi email/Telegram thuộc M9 nên hiện luôn trả `sent: false`.",
+        "operationId": "test_alert_api_alerts__alert_id__test_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id cảnh báo; id không tồn tại hoặc ngoài miền → 404",
+              "title": "Alert Id"
+            },
+            "description": "Id cảnh báo; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/sources": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Các trang nguồn, tình trạng robots.txt và lượt chạy gần nhất",
+        "operationId": "list_sources_api_admin_sources_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/scrape-runs": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Các lượt thu thập, mới nhất trước",
+        "operationId": "list_scrape_runs_api_admin_scrape_runs_get",
+        "parameters": [
+          {
+            "name": "site",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SiteKey"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Category"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ScrapeStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeRunPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Bắt đầu một lượt thu thập (chạy nền)",
+        "description": "Trả `run_id` ngay; theo dõi bằng `GET /admin/scrape-runs/{id}`. Trang thật bị từ chối (`OFFLINE_MODE`) khi `SCRAPER_OFFLINE_ONLY=true`.",
+        "operationId": "start_scrape_run_api_admin_scrape_runs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrapeRunCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeRunStarted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột trạng thái",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/scrape-runs/{run_id}": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Chi tiết một lượt thu thập: thống kê và lỗi",
+        "operationId": "get_scrape_run_api_admin_scrape_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id lượt thu thập; không tồn tại hoặc ngoài miền → 404",
+              "title": "Run Id"
+            },
+            "description": "Id lượt thu thập; không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrapeRunView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/scrape-runs/{run_id}/challenge": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Challenge đang chờ người nhập đáp án",
+        "operationId": "get_challenge_api_admin_scrape_runs__run_id__challenge_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id lượt thu thập; không tồn tại hoặc ngoài miền → 404",
+              "title": "Run Id"
+            },
+            "description": "Id lượt thu thập; không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeView"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột trạng thái",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Gửi đáp án captcha (chỉ mock-shop) và cho lượt chạy tiếp",
+        "description": "Đáp án đúng: lượt chạy tiếp ở nền. Sai: 400 `CHALLENGE_FAILED`, lượt vẫn chờ.",
+        "operationId": "answer_challenge_api_admin_scrape_runs__run_id__challenge_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id lượt thu thập; không tồn tại hoặc ngoài miền → 404",
+              "title": "Run Id"
+            },
+            "description": "Id lượt thu thập; không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChallengeAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeAnswered"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Yêu cầu hoặc đáp án không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột trạng thái",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat": {
+      "post": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Gửi một câu cho agent (chạy nền)",
+        "description": "Trả `run_id` ngay; theo dõi tiến trình ở `GET /chat/{run_id}/events` (SSE) hoặc lấy kết quả ở `GET /chat/{run_id}`. Bỏ `conversation_id` để mở hội thoại mới.",
+        "operationId": "send_message_api_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dịch vụ tạm thời không khả dụng",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/{run_id}/events": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Tiến trình của một lượt chạy (SSE)",
+        "description": "Sự kiện `plan`, `clarification`, `tool_start`, `tool_end`, `final`, `error` (docs/05 §6). Kết nối sau khi lượt đã xong thì phát lại toàn bộ rồi đóng. Mỗi sự kiện có `id` là vị trí của nó; gửi `Last-Event-ID` để nhận tiếp từ sau vị trí đó.",
+        "operationId": "stream_events_api_chat__run_id__events_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id lượt chạy do `POST /chat` trả về",
+              "title": "Run Id"
+            },
+            "description": "Id lượt chạy do `POST /chat` trả về"
+          },
+          {
+            "name": "last-event-id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Last-Event-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "retry": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat/{run_id}": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Trạng thái và kết quả cuối của một lượt chạy",
+        "operationId": "get_run_api_chat__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id lượt chạy do `POST /chat` trả về",
+              "title": "Run Id"
+            },
+            "description": "Id lượt chạy do `POST /chat` trả về"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conversations": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Các hội thoại gần đây, mới nhất trước",
+        "operationId": "list_conversations_api_conversations_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conversations/{conversation_id}/messages": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "Tin nhắn của một hội thoại, cũ → mới",
+        "operationId": "list_messages_api_conversations__conversation_id__messages_get",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id hội thoại",
+              "title": "Conversation Id"
+            },
+            "description": "Id hội thoại"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AgentRunStatus": {
+        "type": "string",
+        "enum": [
+          "running",
+          "succeeded",
+          "needs_clarification",
+          "failed"
+        ],
+        "title": "AgentRunStatus"
+      },
+      "AlertChannel": {
+        "type": "string",
+        "enum": [
+          "email",
+          "telegram"
+        ],
+        "title": "AlertChannel"
+      },
+      "AlertCreate": {
+        "properties": {
+          "product_id": {
+            "type": "integer",
+            "title": "Product Id"
+          },
+          "target_price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "exclusiveMinimum": 0.0,
+            "title": "Target Price"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AlertChannel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "target_price"
+        ],
+        "title": "AlertCreate",
+        "description": "Yêu cầu tạo cảnh báo; thiếu kênh/nơi nhận thì lấy mặc định từ cấu hình."
+      },
+      "AlertPatch": {
+        "properties": {
+          "target_price": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Price"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "paused"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "title": "AlertPatch",
+        "description": "PATCH /alerts/{id}: đổi ngưỡng và/hoặc tạm dừng/bật lại (`triggered` do hệ thống đặt)."
+      },
+      "AlertStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "triggered",
+          "paused"
+        ],
+        "title": "AlertStatus"
+      },
+      "AlertTestResponse": {
+        "properties": {
+          "sent": {
+            "type": "boolean",
+            "title": "Sent"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sent"
+        ],
+        "title": "AlertTestResponse",
+        "description": "POST /alerts/{id}/test."
+      },
+      "AlertView": {
+        "properties": {
+          "alert_id": {
+            "type": "integer",
+            "title": "Alert Id"
+          },
+          "product_id": {
+            "type": "integer",
+            "title": "Product Id"
+          },
+          "product_name": {
+            "type": "string",
+            "title": "Product Name"
+          },
+          "target_price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Target Price"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/AlertChannel"
+          },
+          "destination": {
+            "type": "string",
+            "title": "Destination"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AlertStatus"
+          },
+          "current_best_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Best Price"
+          },
+          "last_notified_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Notified Price"
+          },
+          "last_notified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Notified At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alert_id",
+          "product_id",
+          "product_name",
+          "target_price",
+          "channel",
+          "destination",
+          "status",
+          "current_best_price",
+          "last_notified_price",
+          "last_notified_at",
+          "created_at"
+        ],
+        "title": "AlertView"
+      },
+      "AlertsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AlertView"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "AlertsResponse",
+        "description": "GET /alerts."
+      },
+      "CategoriesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryInfo"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "CategoriesResponse"
+      },
+      "Category": {
+        "type": "string",
+        "enum": [
+          "laptop",
+          "mouse",
+          "keyboard",
+          "headset",
+          "phone",
+          "other"
+        ],
+        "title": "Category"
+      },
+      "CategoryInfo": {
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "tier": {
+            "type": "integer",
+            "enum": [
+              1,
+              2
+            ],
+            "title": "Tier"
+          },
+          "product_count": {
+            "type": "integer",
+            "title": "Product Count"
+          },
+          "filter_fields": {
+            "items": {
+              "$ref": "#/components/schemas/SpecFieldInfo"
+            },
+            "type": "array",
+            "title": "Filter Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "tier",
+          "product_count",
+          "filter_fields"
+        ],
+        "title": "CategoryInfo",
+        "description": "Một nhóm sản phẩm: tầng, số sản phẩm đang bán và trường lọc được."
+      },
+      "ChallengeAnswer": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "pattern": "^[^\\x00]+$",
+            "title": "Answer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "title": "ChallengeAnswer",
+        "description": "POST /admin/scrape-runs/{id}/challenge: đáp án captcha của mock-shop."
+      },
+      "ChallengeAnswered": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "RUNNING",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ChallengeAnswered",
+        "description": "POST /admin/scrape-runs/{id}/challenge: đáp án đúng, lượt chạy tiếp ở nền."
+      },
+      "ChallengeKind": {
+        "type": "string",
+        "enum": [
+          "http_403",
+          "http_429",
+          "captcha",
+          "soft_block"
+        ],
+        "title": "ChallengeKind"
+      },
+      "ChallengeView": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ChallengeKind"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "prompt",
+          "image_url"
+        ],
+        "title": "ChallengeView",
+        "description": "Challenge đang chờ người nhập đáp án (chỉ mock-shop)."
+      },
+      "ChatAccepted": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "conversation_id": {
+            "type": "integer",
+            "title": "Conversation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "conversation_id"
+        ],
+        "title": "ChatAccepted"
+      },
+      "ChatRequest": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Message"
+          },
+          "conversation_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ChatRequest",
+        "description": "POST /chat. `conversation_id` bỏ trống thì tạo hội thoại mới."
+      },
+      "CompareRequest": {
+        "properties": {
+          "product_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 2,
+            "title": "Product Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_ids"
+        ],
+        "title": "CompareRequest",
+        "description": "POST /compare: 2–5 sản phẩm. Id không tồn tại (kể cả ngoài miền) → `PRODUCT_NOT_FOUND`."
+      },
+      "Comparison": {
+        "properties": {
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/ProductFull"
+            },
+            "type": "array",
+            "title": "Products"
+          },
+          "differing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Differing Fields"
+          },
+          "cheapest_product_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cheapest Product Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "products",
+          "differing_fields",
+          "cheapest_product_id"
+        ],
+        "title": "Comparison"
+      },
+      "ConversationView": {
+        "properties": {
+          "conversation_id": {
+            "type": "integer",
+            "title": "Conversation Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "conversation_id",
+          "title",
+          "created_at"
+        ],
+        "title": "ConversationView"
+      },
+      "ConversationsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConversationView"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ConversationsResponse",
+        "description": "GET /conversations."
+      },
+      "ErrorDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "details"
+        ],
+        "title": "ErrorDetail",
+        "description": "Nội dung lỗi (docs/07 §1–2). `details` luôn là object, có thể rỗng."
+      },
+      "ErrorEvent": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorEvent"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "Thân của mọi phản hồi lỗi 4xx/5xx."
+      },
+      "FinalEvent": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "table": {
+            "items": {
+              "$ref": "#/components/schemas/ProductRow"
+            },
+            "type": "array",
+            "title": "Table"
+          },
+          "live_items": {
+            "items": {
+              "$ref": "#/components/schemas/LiveItem"
+            },
+            "type": "array",
+            "title": "Live Items"
+          },
+          "suggestions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Suggestions"
+          },
+          "data_as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data As Of"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "table",
+          "live_items",
+          "suggestions",
+          "data_as_of"
+        ],
+        "title": "FinalEvent"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status"
+          },
+          "db": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "error"
+            ],
+            "title": "Db"
+          },
+          "llm_provider": {
+            "type": "string",
+            "title": "Llm Provider"
+          },
+          "offline_mode": {
+            "type": "boolean",
+            "title": "Offline Mode"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "db",
+          "llm_provider",
+          "offline_mode",
+          "version"
+        ],
+        "title": "HealthResponse",
+        "description": "GET /api/health. `status` là \"degraded\" khi CSDL không kết nối được."
+      },
+      "ItemCreate": {
+        "properties": {
+          "product_id": {
+            "type": "integer",
+            "title": "Product Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity",
+            "default": 1
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "preferred_offer_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Offer Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id"
+        ],
+        "title": "ItemCreate",
+        "description": "POST /lists/{id}/items. Sản phẩm đã có trong danh sách thì cộng dồn `quantity`."
+      },
+      "ItemPatch": {
+        "properties": {
+          "quantity": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantity"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "preferred_offer_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Offer Id"
+          }
+        },
+        "type": "object",
+        "title": "ItemPatch",
+        "description": "PATCH /lists/{id}/items/{item_id}. Trường bỏ vắng giữ nguyên; `null` ở `note` hoặc\n`preferred_offer_id` xóa giá trị đó."
+      },
+      "ListBody": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ListBody",
+        "description": "POST /lists và PATCH /lists/{id}: tên 1–100 ký tự sau khi chuẩn hóa (service kiểm)."
+      },
+      "ListsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ShoppingListSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "ListsResponse",
+        "description": "GET /lists."
+      },
+      "LiveItem": {
+        "properties": {
+          "site": {
+            "type": "string",
+            "title": "Site"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "scraped_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scraped At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site",
+          "title",
+          "url"
+        ],
+        "title": "LiveItem",
+        "description": "Một kết quả tìm trực tiếp tầng 2 (chưa chuẩn hóa)."
+      },
+      "MessageRole": {
+        "type": "string",
+        "enum": [
+          "user",
+          "assistant"
+        ],
+        "title": "MessageRole"
+      },
+      "MessageView": {
+        "properties": {
+          "message_id": {
+            "type": "integer",
+            "title": "Message Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/MessageRole"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payload"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message_id",
+          "role",
+          "content",
+          "payload",
+          "created_at"
+        ],
+        "title": "MessageView",
+        "description": "Một tin nhắn; `payload` của tin trợ lý chứa `product_ids` của bảng đã hiển thị."
+      },
+      "MessagesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MessageView"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "MessagesResponse",
+        "description": "GET /conversations/{id}/messages."
+      },
+      "OfferView": {
+        "properties": {
+          "offer_id": {
+            "type": "integer",
+            "title": "Offer Id"
+          },
+          "site": {
+            "$ref": "#/components/schemas/SiteKey"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Price"
+          },
+          "list_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "List Price"
+          },
+          "effective_price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Effective Price"
+          },
+          "price_type": {
+            "$ref": "#/components/schemas/PriceType"
+          },
+          "stock_status": {
+            "$ref": "#/components/schemas/StockStatus"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "scraped_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scraped At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "offer_id",
+          "site",
+          "title",
+          "url",
+          "price",
+          "effective_price",
+          "price_type",
+          "stock_status",
+          "scraped_at"
+        ],
+        "title": "OfferView",
+        "description": "Một offer đang bán. `effective_price` là giá dùng để so sánh (docs/04 §4)."
+      },
+      "PriceHistoryResult": {
+        "properties": {
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SiteSeries"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "min_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Price"
+          },
+          "max_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Price"
+          }
+        },
+        "type": "object",
+        "required": [
+          "series",
+          "min_price",
+          "max_price"
+        ],
+        "title": "PriceHistoryResult"
+      },
+      "PricePointView": {
+        "properties": {
+          "t": {
+            "type": "string",
+            "format": "date-time",
+            "title": "T"
+          },
+          "price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Price"
+          },
+          "price_type": {
+            "$ref": "#/components/schemas/PriceType"
+          }
+        },
+        "type": "object",
+        "required": [
+          "t",
+          "price",
+          "price_type"
+        ],
+        "title": "PricePointView"
+      },
+      "PriceType": {
+        "type": "string",
+        "enum": [
+          "regular",
+          "sale",
+          "member",
+          "flash",
+          "unknown"
+        ],
+        "title": "PriceType"
+      },
+      "ProductFull": {
+        "properties": {
+          "product_id": {
+            "type": "integer",
+            "title": "Product Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "brand": {
+            "type": "string",
+            "title": "Brand"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "model_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Code"
+          },
+          "specs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Specs"
+          },
+          "specs_confidence": {
+            "type": "number",
+            "title": "Specs Confidence"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/OfferView"
+            },
+            "type": "array",
+            "title": "Offers"
+          },
+          "min_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Price"
+          },
+          "max_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Price"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "name",
+          "brand",
+          "category",
+          "specs_confidence"
+        ],
+        "title": "ProductFull",
+        "description": "Sản phẩm với toàn bộ thông số và mọi offer đang bán (rẻ nhất trước)."
+      },
+      "ProductListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProductSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale"
+          },
+          "data_as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data As Of"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "stale",
+          "data_as_of"
+        ],
+        "title": "ProductListResponse",
+        "description": "GET /products. `stale` khi dữ liệu cũ hơn 24 giờ; `data_as_of` là mốc thu thập cũ nhất."
+      },
+      "ProductRow": {
+        "properties": {
+          "product_id": {
+            "type": "integer",
+            "title": "Product Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "brand": {
+            "type": "string",
+            "title": "Brand"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "key_specs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Key Specs"
+          },
+          "min_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Price"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/RowOffer"
+            },
+            "type": "array",
+            "title": "Offers"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "name",
+          "brand",
+          "category"
+        ],
+        "title": "ProductRow",
+        "description": "Dòng của bảng kết quả, dựng từ CSDL theo `product_id` (không từ số LLM viết)."
+      },
+      "ProductSummary": {
+        "properties": {
+          "product_id": {
+            "type": "integer",
+            "title": "Product Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "brand": {
+            "type": "string",
+            "title": "Brand"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "key_specs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Key Specs"
+          },
+          "min_price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Min Price"
+          },
+          "max_price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Max Price"
+          },
+          "best_offer": {
+            "$ref": "#/components/schemas/OfferView"
+          },
+          "offers_count": {
+            "type": "integer",
+            "title": "Offers Count"
+          },
+          "in_stock": {
+            "type": "boolean",
+            "title": "In Stock"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_id",
+          "name",
+          "brand",
+          "category",
+          "min_price",
+          "max_price",
+          "best_offer",
+          "offers_count",
+          "in_stock"
+        ],
+        "title": "ProductSummary",
+        "description": "Một dòng kết quả tìm kiếm (docs/05 §3)."
+      },
+      "QueryIntent": {
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Category"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tier": {
+            "type": "integer",
+            "enum": [
+              1,
+              2
+            ],
+            "title": "Tier",
+            "default": 1
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords"
+          },
+          "price_min": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Min"
+          },
+          "price_max": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Max"
+          },
+          "brands": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Brands"
+          },
+          "sites": {
+            "items": {
+              "$ref": "#/components/schemas/SiteKey"
+            },
+            "type": "array",
+            "title": "Sites"
+          },
+          "spec_filters": {
+            "items": {
+              "$ref": "#/components/schemas/SpecFilter"
+            },
+            "type": "array",
+            "title": "Spec Filters"
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "relevance",
+              "price_asc",
+              "price_desc",
+              "rating_desc"
+            ],
+            "title": "Sort",
+            "default": "relevance"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 10
+          },
+          "needs_clarification": {
+            "type": "boolean",
+            "title": "Needs Clarification",
+            "default": false
+          },
+          "clarification_question": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarification Question"
+          },
+          "plan_steps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Plan Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "QueryIntent",
+        "description": "Đầu ra planner: ý định mua sắm có cấu trúc."
+      },
+      "RowOffer": {
+        "properties": {
+          "site": {
+            "$ref": "#/components/schemas/SiteKey"
+          },
+          "price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Price"
+          },
+          "price_type": {
+            "$ref": "#/components/schemas/PriceType"
+          },
+          "stock_status": {
+            "$ref": "#/components/schemas/StockStatus"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "scraped_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scraped At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site",
+          "price",
+          "price_type",
+          "stock_status",
+          "url",
+          "scraped_at"
+        ],
+        "title": "RowOffer",
+        "description": "Một offer trong dòng bảng kết quả (docs/07 §3.2)."
+      },
+      "RunStatusResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Run Id"
+          },
+          "conversation_id": {
+            "type": "integer",
+            "title": "Conversation Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentRunStatus"
+          },
+          "intent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QueryIntent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "final": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FinalEvent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "clarification": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarification"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorEvent"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "conversation_id",
+          "status",
+          "intent"
+        ],
+        "title": "RunStatusResponse",
+        "description": "GET /chat/{run_id}: trạng thái và kết quả cuối (cùng nội dung với sự kiện SSE tương ứng)."
+      },
+      "ScrapeRunCreate": {
+        "properties": {
+          "site": {
+            "$ref": "#/components/schemas/SiteKey"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "max_pages": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Pages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site",
+          "category"
+        ],
+        "title": "ScrapeRunCreate",
+        "description": "POST /admin/scrape-runs. `max_pages` bỏ trống thì theo `SCRAPER_MAX_LISTING_PAGES`."
+      },
+      "ScrapeRunPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScrapeRunView"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "ScrapeRunPage",
+        "description": "GET /admin/scrape-runs."
+      },
+      "ScrapeRunStarted": {
+        "properties": {
+          "run_id": {
+            "type": "integer",
+            "title": "Run Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "ScrapeRunStarted",
+        "description": "POST /admin/scrape-runs → 202."
+      },
+      "ScrapeRunView": {
+        "properties": {
+          "run_id": {
+            "type": "integer",
+            "title": "Run Id"
+          },
+          "site": {
+            "$ref": "#/components/schemas/SiteKey"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ScrapeStatus"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/ScrapeTrigger"
+          },
+          "pages_fetched": {
+            "type": "integer",
+            "title": "Pages Fetched"
+          },
+          "items_parsed": {
+            "type": "integer",
+            "title": "Items Parsed"
+          },
+          "items_failed": {
+            "type": "integer",
+            "title": "Items Failed"
+          },
+          "offers_upserted": {
+            "type": "integer",
+            "title": "Offers Upserted"
+          },
+          "price_changes": {
+            "type": "integer",
+            "title": "Price Changes"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "challenge_kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChallengeKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "site",
+          "category",
+          "status",
+          "trigger",
+          "pages_fetched",
+          "items_parsed",
+          "items_failed",
+          "offers_upserted",
+          "price_changes",
+          "started_at",
+          "finished_at",
+          "error_message",
+          "challenge_kind"
+        ],
+        "title": "ScrapeRunView",
+        "description": "Một lượt thu thập: trạng thái, thống kê và lỗi (nếu có)."
+      },
+      "ScrapeStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "RUNNING",
+          "NEEDS_HUMAN",
+          "BLOCKED",
+          "SUCCEEDED",
+          "PARTIAL",
+          "FAILED"
+        ],
+        "title": "ScrapeStatus"
+      },
+      "ScrapeTrigger": {
+        "type": "string",
+        "enum": [
+          "schedule",
+          "manual",
+          "tracked_refresh",
+          "test"
+        ],
+        "title": "ScrapeTrigger"
+      },
+      "ShoppingListDetail": {
+        "properties": {
+          "list_id": {
+            "type": "integer",
+            "title": "List Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "item_count": {
+            "type": "integer",
+            "title": "Item Count"
+          },
+          "total_price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Total Price"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ShoppingListItemView"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "list_id",
+          "name",
+          "item_count",
+          "total_price",
+          "updated_at",
+          "items"
+        ],
+        "title": "ShoppingListDetail"
+      },
+      "ShoppingListItemView": {
+        "properties": {
+          "item_id": {
+            "type": "integer",
+            "title": "Item Id"
+          },
+          "product_id": {
+            "type": "integer",
+            "title": "Product Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "preferred_offer_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferred Offer Id"
+          },
+          "price_at_add": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price At Add"
+          },
+          "current_price": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9.223372036854776e+18,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Price"
+          },
+          "price_delta": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Delta"
+          },
+          "best_offer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "product_id",
+          "name",
+          "quantity",
+          "note",
+          "preferred_offer_id",
+          "price_at_add",
+          "current_price",
+          "price_delta",
+          "best_offer"
+        ],
+        "title": "ShoppingListItemView"
+      },
+      "ShoppingListSummary": {
+        "properties": {
+          "list_id": {
+            "type": "integer",
+            "title": "List Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "item_count": {
+            "type": "integer",
+            "title": "Item Count"
+          },
+          "total_price": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 0.0,
+            "title": "Total Price"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "list_id",
+          "name",
+          "item_count",
+          "total_price",
+          "updated_at"
+        ],
+        "title": "ShoppingListSummary"
+      },
+      "SiteKey": {
+        "type": "string",
+        "enum": [
+          "gearvn",
+          "hoangha",
+          "laptop88",
+          "fptshop",
+          "anphat",
+          "viettelstore",
+          "nguyenkim",
+          "mockshop"
+        ],
+        "title": "SiteKey"
+      },
+      "SiteSeries": {
+        "properties": {
+          "site": {
+            "$ref": "#/components/schemas/SiteKey"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/PricePointView"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site",
+          "points"
+        ],
+        "title": "SiteSeries"
+      },
+      "SourceView": {
+        "properties": {
+          "key": {
+            "$ref": "#/components/schemas/SiteKey"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "is_mock": {
+            "type": "boolean",
+            "title": "Is Mock"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            },
+            "type": "array",
+            "title": "Categories"
+          },
+          "robots_status": {
+            "type": "string",
+            "enum": [
+              "allowed",
+              "partial",
+              "unknown"
+            ],
+            "title": "Robots Status"
+          },
+          "effective_delay_s": {
+            "type": "number",
+            "title": "Effective Delay S"
+          },
+          "supports_live_search": {
+            "type": "boolean",
+            "title": "Supports Live Search"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScrapeRunView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cooldown_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cooldown Until"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "enabled",
+          "is_mock",
+          "categories",
+          "robots_status",
+          "effective_delay_s",
+          "supports_live_search",
+          "last_run",
+          "cooldown_until"
+        ],
+        "title": "SourceView",
+        "description": "Một trang nguồn: cấu hình, tình trạng robots.txt và lượt chạy gần nhất."
+      },
+      "SourcesResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SourceView"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "SourcesResponse",
+        "description": "GET /admin/sources."
+      },
+      "SpecFieldInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "integer",
+              "number",
+              "boolean",
+              "string",
+              "list"
+            ],
+            "title": "Kind"
+          },
+          "ops": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ops"
+          },
+          "choices": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Choices"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "ops"
+        ],
+        "title": "SpecFieldInfo",
+        "description": "Một trường lọc được trong khung thông số của nhóm (docs/07 `GET /categories`)."
+      },
+      "SpecFilter": {
+        "properties": {
+          "field": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Field"
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "eq",
+              "gte",
+              "lte",
+              "contains",
+              "contains_any",
+              "in"
+            ],
+            "title": "Op"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "field",
+          "op",
+          "value"
+        ],
+        "title": "SpecFilter",
+        "description": "Một điều kiện lọc trên trường trong khung specs.\n\n- `contains`: trường kiểu list chứa `value`.\n- `contains_any`: trường kiểu list chứa ít nhất một phần tử của `value` (list).\n- `in`: trường vô hướng thuộc `value` (list)."
+      },
+      "StockStatus": {
+        "type": "string",
+        "enum": [
+          "in_stock",
+          "out_of_stock",
+          "preorder",
+          "unknown"
+        ],
+        "title": "StockStatus"
+      }
+    }
+  }
+}

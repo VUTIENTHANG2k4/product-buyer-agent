@@ -13,6 +13,7 @@ from app.agent.guardrail import (
     Evidence,
     allowed_write_tools,
     apply_guardrail,
+    check_write_args,
 )
 from app.agent.schemas import FinalAnswer, LiveItem
 
@@ -100,10 +101,6 @@ def test_write_request_must_be_in_one_sentence() -> None:
     assert allowed_write_tools("Tìm laptop rẻ nhất. Thêm máy đầu tiên vào danh sách.") == {ADD_TOOL}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M6-13: phủ định ('đừng thêm vào danh sách', 'không cần đặt cảnh báo') vẫn mở khóa",
-)
 @pytest.mark.parametrize(
     "message",
     [
@@ -111,10 +108,69 @@ def test_write_request_must_be_in_one_sentence() -> None:
         "không cần đặt cảnh báo nhé",
         "tôi không muốn thêm máy này vào danh sách",
         "do not add it to my wishlist",
+        "Please don't set an alert",
+        "ĐỪNG THÊM MÁY NÀY VÀO DANH SÁCH",
+        unicodedata.normalize("NFD", "đừng đặt cảnh báo giá"),
+        "không đặt cảnh báo",
+        "không thêm vào danh sách",
+        "khỏi thêm vào danh sách",
+        "tôi không nghĩ nên thêm vào danh sách",
+        "Đừng thêm Lenovo Legion Pro 5 16IRX9 RTX 4070 vào danh sách",
     ],
 )
 def test_negated_write_request_does_not_unlock_a_write_tool(message: str) -> None:
     assert allowed_write_tools(message) == frozenset()
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("Đừng lo, thêm máy này vào danh sách giúp tôi", {ADD_TOOL}),
+        ("Đừng thêm máy thứ 2. Thêm máy đầu tiên vào danh sách.", {ADD_TOOL}),
+        ("không cần so sánh nữa, đặt cảnh báo giá cho máy đầu tiên", {ALERT_TOOL}),
+        ("Không biết máy nào tốt? Thêm máy đầu tiên vào danh sách", {ADD_TOOL}),
+        ("Đừng thêm vào danh sách, nhưng hãy đặt cảnh báo giá", {ALERT_TOOL}),
+        ("tìm laptop không quá 30 triệu và đặt cảnh báo giá", {ALERT_TOOL}),
+        ("thêm Lenovo Legion Pro 5 16IRX9 RTX 4070 vào danh sách", {ADD_TOOL}),
+    ],
+)
+def test_negation_only_cancels_the_request_it_belongs_to(message: str, expected: set[str]) -> None:
+    assert allowed_write_tools(message) == expected
+
+
+# ---- T6.9: ngưỡng cảnh báo sai thang ----
+@pytest.mark.parametrize(
+    ("price", "amounts"),
+    [
+        (25, set()),  # nhỏ hơn 10.000 luôn sai, kể cả khi người dùng không nêu số tiền
+        (9_999, {25_000_000}),
+        (25, {25_000_000}),  # "25 triệu" mà LLM gửi 25
+        (25_000, {25_000_000}),  # "25 triệu" mà LLM gửi 25 nghìn
+    ],
+)
+def test_alert_threshold_in_the_wrong_unit_is_rejected(price: int, amounts: set[int]) -> None:
+    result = check_write_args(ALERT_TOOL, {"target_price": price}, amounts)
+
+    assert result is not None
+    assert result["error"] == "INVALID_TARGET_PRICE"
+
+
+@pytest.mark.parametrize(
+    ("tool", "args", "amounts"),
+    [
+        (ALERT_TOOL, {"target_price": 25_000_000}, {25_000_000}),
+        (ALERT_TOOL, {"target_price": 24_000_000}, {25_000_000}),  # "rẻ hơn 1 triệu": hợp lệ
+        (ALERT_TOOL, {"target_price": 10_000}, set()),
+        (ALERT_TOOL, {"target_price": "25"}, {25_000_000}),  # sai kiểu: để tool báo lỗi tham số
+        (ALERT_TOOL, {"target_price": True}, set()),
+        (ALERT_TOOL, {}, set()),
+        (ADD_TOOL, {"target_price": 25}, set()),  # chỉ áp cho create_price_alert
+    ],
+)
+def test_valid_or_unrelated_write_arguments_pass(
+    tool: str, args: dict[str, object], amounts: set[int]
+) -> None:
+    assert check_write_args(tool, args, amounts) is None
 
 
 def test_regexes_stay_linear_on_long_hostile_input() -> None:

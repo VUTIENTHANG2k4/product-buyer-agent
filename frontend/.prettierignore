@@ -5,3 +5,4 @@ playwright-report
 test-results
 package-lock.json
 src/api/types.gen.ts
+openapi.json

@@ -10,7 +10,13 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMe
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel
 
-from app.agent.executor import FINAL_TOOL, MAX_CALLS_PER_STEP, LoopOutcome, ToolLoop
+from app.agent.executor import (
+    FINAL_TOOL,
+    MAX_CALLS_PER_STEP,
+    MAX_WRITE_CALLS,
+    LoopOutcome,
+    ToolLoop,
+)
 from app.agent.guardrail import ADD_TOOL, ALERT_TOOL, Evidence
 from app.agent.schemas import ToolEndEvent, ToolStartEvent
 from app.agent.testing import ScriptedChatModel, tool_call_message
@@ -91,13 +97,19 @@ async def drive(
     seen_ids: set[int] | None = None,
     max_steps: int = 8,
     clock: Callable[[], float] | None = None,
+    amounts: frozenset[int] = frozenset(),
 ) -> Driven:
     model = ScriptedChatModel(script=script)
     messages: list[BaseMessage] = [HumanMessage(content="yêu cầu")]
     outcome = LoopOutcome(evidence=Evidence(product_ids=set(seen_ids or ())))
     kwargs: dict[str, Any] = {} if clock is None else {"clock": clock}
     loop = ToolLoop(
-        model, [fake.tool for fake in tools], max_steps=max_steps, allowed_writes=allowed, **kwargs
+        model,
+        [fake.tool for fake in tools],
+        max_steps=max_steps,
+        allowed_writes=allowed,
+        user_amounts=amounts,
+        **kwargs,
     )
     events = [event async for event in loop.run(messages, outcome)]
     return Driven(events, outcome, messages, model)
@@ -243,6 +255,62 @@ async def test_blocked_write_attempts_twice_end_the_loop_with_a_synthesized_answ
     assert write.calls == []
     assert run.outcome.stop_reason == "tool_failures"
     assert run.error_codes() == ["WRITE_NOT_REQUESTED"] * 2
+
+
+# ---- T6.9: trần tool ghi và ngưỡng cảnh báo sai thang ----
+async def test_write_calls_per_turn_are_capped_even_when_each_one_is_allowed() -> None:
+    write = Fake(ADD_TOOL)
+    first = several(*[(ADD_TOOL, {"product_id": 7, "n": i}, f"a{i}") for i in range(5)])
+    second = several(*[(ADD_TOOL, {"product_id": 7, "n": i}, f"b{i}") for i in range(5)])
+
+    run = await drive(
+        [first, second, {"text": "Đã thêm."}],
+        [write],
+        allowed=frozenset({ADD_TOOL}),
+        seen_ids={7},
+    )
+
+    assert len(write.calls) == MAX_WRITE_CALLS
+    assert run.outcome.write_calls == MAX_WRITE_CALLS
+    assert run.error_codes() == ["TOO_MANY_WRITES"] * 5
+
+
+async def test_blocked_write_attempts_do_not_use_up_the_write_budget() -> None:
+    write = Fake(ADD_TOOL)
+
+    run = await drive(
+        [tool_call_message(ADD_TOOL, {"product_id": 8}, "c1"), final()],
+        [write],
+        allowed=frozenset({ADD_TOOL}),
+        seen_ids={7},
+    )
+
+    assert run.outcome.write_calls == 0
+    assert run.error_codes() == ["UNKNOWN_PRODUCT"]
+
+
+@pytest.mark.parametrize("price", [25, 25_000, 9_999])
+async def test_alert_threshold_in_the_wrong_unit_is_rejected_then_accepted_when_retried(
+    price: int,
+) -> None:
+    alert = Fake(ALERT_TOOL)
+    script = [
+        tool_call_message(ALERT_TOOL, {"product_id": 7, "target_price": price}, "c1"),
+        tool_call_message(ALERT_TOOL, {"product_id": 7, "target_price": 25_000_000}, "c2"),
+        final(),
+    ]
+
+    run = await drive(
+        script,
+        [alert],
+        allowed=frozenset({ALERT_TOOL}),
+        seen_ids={7},
+        amounts=frozenset({25_000_000}),
+    )
+
+    assert run.error_codes() == ["INVALID_TARGET_PRICE"]
+    assert len(alert.calls) == 1  # chỉ lần gọi đúng thang mới chạy tool
+    assert run.outcome.write_calls == 1
 
 
 # ---- kết quả tool sai định dạng / tool lỗi ----

@@ -19,7 +19,7 @@ from app.domain.enums import (
     StockStatus,
 )
 
-CatalogSort = Literal["relevance", "price_asc", "price_desc", "rating_desc"]
+CatalogSort = Literal["relevance", "price_asc", "price_desc", "rating_desc", "updated_desc"]
 MAX_QUANTITY = 2_147_483_647  # cột `quantity` là INT32
 
 
@@ -146,6 +146,27 @@ class Comparison(BaseModel):
     products: list[ProductFull]
     differing_fields: list[str]
     cheapest_product_id: int | None
+
+
+SpecKind = Literal["integer", "number", "boolean", "string", "list"]
+
+
+class SpecFieldInfo(BaseModel):
+    """Một trường lọc được trong khung thông số của nhóm (docs/07 `GET /categories`)."""
+
+    name: str
+    kind: SpecKind
+    ops: list[str]  # toán tử `SpecFilter.op` hợp lệ cho trường này
+    choices: list[str] | None = None  # giá trị cho phép khi trường là enum
+
+
+class CategoryInfo(BaseModel):
+    """Một nhóm sản phẩm: tầng, số sản phẩm đang bán và trường lọc được."""
+
+    key: Category
+    tier: Literal[1, 2]
+    product_count: int
+    filter_fields: list[SpecFieldInfo]
 
 
 class ShoppingListItemView(BaseModel):

@@ -69,6 +69,9 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Cài phụ thuộc
         run: cd frontend && npm ci
+      - name: Kiểu TS sinh từ OpenAPI không lệch
+        # openapi.json do test backend giữ khớp với API; ở đây kiểm types.gen.ts khớp openapi.json.
+        run: cd frontend && npm run gen:api && git diff --exit-code -- src/api/types.gen.ts
       - name: ESLint, Prettier, tsc, Vitest
         run: make test-fe
       - name: Build

@@ -262,8 +262,8 @@ Xong khi:
 | T6.5 | Executor + sự kiện + guardrail + bộ nhớ hội thoại | T6.3, T6.4 | L | ✅ |
 | T6.6 | Eval harness + báo cáo cơ sở | T6.5, T1.5 | M | ✅ |
 | T6.7 | Chỉnh prompt/seed sau eval cơ sở (phát sinh từ T6.6) | T6.6 | S | ⬜ |
-| T6.8 | Guardrail: chặn câu phủ định mở khóa tool ghi (BUG-M6-13) | T6.5 | S | ⬜ |
-| T6.9 | `create_price_alert` kiểm `target_price` sai thang + trần số lần gọi tool ghi mỗi lượt (BUG-M6-15) | T6.5 | S | ⬜ |
+| T6.8 | Guardrail: chặn câu phủ định mở khóa tool ghi (BUG-M6-13) | T6.5 | S | ✅ |
+| T6.9 | `create_price_alert` kiểm `target_price` sai thang + trần số lần gọi tool ghi mỗi lượt (BUG-M6-15) | T6.5 | S | ✅ |
 | T6.10 | Hậu xử lý: GPU "trở xuống" và số tiền cách nghìn bằng dấu cách (BUG-M6-11, 12) | T6.3 | S | ⬜ |
 | T6.11 | `FinalAnswer.text` không rỗng, chạy lại eval (BUG-M6-14) | T6.5 | S | ⬜ |
 | T6.12 | Trần `quantity` / `total_price` danh sách mua (BUG-M6-16) | T6.2 | S | ⬜ |
@@ -282,7 +282,7 @@ Xong khi:
 - **Gọi tool thừa** làm câu mất 30–50 giây: L07, L09, A06, T02 (gọi lại tool khi kết quả rỗng/chưa bật; A06 gọi `compare_products`/`get_product_detail` không được hỏi). Có thể giới hạn cứng số lần gọi cùng một tool trong `ToolLoop` thay vì chỉ dặn trong prompt.
 - **Latency p50** 15,7 giây chưa đại diện: `LLM_MAX_RPM=12` (giới hạn 15 request/phút của gói miễn phí) buộc mỗi lần gọi chờ ≥ 5 giây. Đo lại khi có hạn mức cao hơn (`--rpm 0`), và so với `gemini-3.8-flash`.
 - **Seed `eval` quá "sạch"** (từ QA M1): chưa thêm sản phẩm thiếu thông số / chỉ còn offer hết hàng; thêm kèm cập nhật `test_seed_data.py`.
-- Từ review M6 (chưa làm): (a) `LlmSpecsFiller` gọi LLM đồng bộ trong `_save_item` khi giao dịch của trang còn mở (nên gọi ở `_prepare_items` trước khi mở session lưu; cache `put` cũng nằm trong savepoint của mục); (b) `create_price_alert` chưa đối chiếu `target_price` với số tiền người dùng nêu; (c) `scripts/run_eval.py` import `tests.db_support` (chuyển helper ra `app/db`) và chưa bắt hết lỗi thiết lập (alembic, YAML) thành mã thoát 2; (d) 14 câu eval có `constraints` nhưng không có `min_results` (bảng rỗng vẫn "đạt": L10 hiện 0 kết quả); (e) xử lý `invalid_tool_calls` của LLM; thống nhất id tool call; log kèm `run_id`; (f) đổi tên `agent/prompts.py` (trùng tên thư mục `prompts/`); (g) N+1 trong `shopping_list_service`/`alert_service`, `update_item` chưa nhận `preferred_offer_id`, race tạo trùng danh sách/cảnh báo.
+- Từ review M6 (chưa làm): (a) `LlmSpecsFiller` gọi LLM đồng bộ trong `_save_item` khi giao dịch của trang còn mở (nên gọi ở `_prepare_items` trước khi mở session lưu; cache `put` cũng nằm trong savepoint của mục); (b) ✅ làm ở T6.9; (c) `scripts/run_eval.py` import `tests.db_support` (chuyển helper ra `app/db`) và chưa bắt hết lỗi thiết lập (alembic, YAML) thành mã thoát 2; (d) 14 câu eval có `constraints` nhưng không có `min_results` (bảng rỗng vẫn "đạt": L10 hiện 0 kết quả); (e) xử lý `invalid_tool_calls` của LLM; thống nhất id tool call; log kèm `run_id`; (f) đổi tên `agent/prompts.py` (trùng tên thư mục `prompts/`); (g) N+1 trong `shopping_list_service`/`alert_service`, `update_item` chưa nhận `preferred_offer_id`, race tạo trùng danh sách/cảnh báo.
 - Cảnh báo "số tiền lệch" còn dương tính giả khi LLM nêu ngưỡng/ước lượng chung ("trên 50 triệu"), chỉ ghi log nên chưa ảnh hưởng chỉ số.
 
 **Phát sinh từ QA M6** (2026-10-21; 10 bug đã sửa ngay, 7 bug còn lại giữ bằng `xfail(strict=True)` trong `*_qa_m6.py`; XPASS báo đỏ → gỡ dấu xfail khi sửa). Không chặn M7; T6.8 và T6.9 nên làm trước khi bật ghi từ chat thật (M7/M9):
@@ -292,20 +292,32 @@ Xong khi:
 - **T6.11** (BUG-M6-14): `FinalAnswer.text` rỗng/toàn khoảng trắng được chấp nhận. Đổi schema gửi cho Gemini nên phải chạy lại `make eval`.
 - **T6.12** (BUG-M6-16): giá 5 tỷ × `quantity` INT32 làm `total_price` vượt BIGINT và `get_list` ném `ValidationError`. Giới hạn `quantity` (ví dụ ≤ 10.000).
 - **T6.13** (BUG-M6-17): mọi ca crash nhưng chỉ số "không đo được" nên `all_thresholds_met` vẫn đạt (mã thoát 0); crash hoặc `error_code` phải cho mã thoát 1.
-- **Dồn sang M7:** giới hạn id INT4 và loại NUL ở tham số API (id lớn → 404, không phải 500); bộ dọn `agent_run` kẹt `running` khi `_finish` lỗi do DB. **Dồn sang M8:** trình hiển thị markdown tự lọc scheme `javascript:` (guardrail chỉ vet `http(s)`/`www.`).
+- **Dồn sang M7:** giới hạn id INT4 và loại NUL ở tham số API (id lớn → 404, không phải 500) ✅ làm ở T7.1 (repository `get/get_many/list_for_products` coi id ngoài miền là không tồn tại; `q`/`brand`/`spec.*` có NUL không gây 500; các body ghi của T7.3/T7.2 còn phải kiểm khi làm); bộ dọn `agent_run` kẹt `running` khi `_finish` lỗi do DB ✅ làm ở T7.2 (`fail_stale_runs`, 15 phút, chạy ở mỗi lượt chat mới). **Dồn sang M8:** trình hiển thị markdown tự lọc scheme `javascript:` (guardrail chỉ vet `http(s)`/`www.`).
 - Rủi ro chưa kiểm được: đồng thời thật (test dùng một connection chung), hành vi Gemini thật (`tool_call.id = None`, content dạng list) chỉ `make eval` bắt được; grounding của `LlmSpecsFiller` chỉ kiểm chuỗi, không kiểm số.
 
 ### M7 — API
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T7.1 | Products, categories, compare, price-history | T6.2 | M | ⬜ |
-| T7.2 | Chat + SSE + conversations | T6.5 | M | ⬜ |
-| T7.3 | Lists + alerts | T6.2 | S | ⬜ |
-| T7.4 | Admin + challenge HITL | T2.6 | M | ⬜ |
-| T7.5 | Sinh kiểu TypeScript từ OpenAPI | T7.1–T7.4, T0.2 | S | ⬜ |
+| T7.1 | Products, categories, compare, price-history | T6.2 | M | ✅ |
+| T7.2 | Chat + SSE + conversations | T6.5 | M | ✅ |
+| T7.3 | Lists + alerts | T6.2 | S | ✅ |
+| T7.4 | Admin + challenge HITL | T2.6 | M | ✅ |
+| T7.5 | Sinh kiểu TypeScript từ OpenAPI | T7.1–T7.4, T0.2 | S | ✅ |
 
 Ghi chú từ T6.2: `PATCH /lists/{id}/items/{item_id}` cần `preferred_offer_id`, nhưng `ShoppingListService.update_item`/repo chưa hỗ trợ (chỉ `quantity`, `note`, `clear_note`): thêm kèm kiểm offer thuộc sản phẩm. `GET /products` còn thiếu `sort=updated_desc` và `GET /categories` chưa có service.
+
+**T7.6** — Phát sinh từ review M7 (không chặn; làm trước khi chạy API với người dùng thật). Xong khi:
+- `ScrapeService.execute` chốt lượt (`FAILED`) khi task bị hủy trước khi vào `_crawl` (hiện lượt đã `start`/`reopen` mà task bị hủy giữa chừng, ví dụ tắt app ngay sau 202, kẹt `RUNNING` tới 2 giờ và chặn lượt mới); `StartedRun` chỉ `execute` được một lần.
+- `ScrapeService.reopen` kiểm `SCRAPER_OFFLINE_ONLY` theo site của lượt (hiện an toàn vì chỉ mock-shop vào `NEEDS_HUMAN`); thêm test khẳng định lượt trang thật không bao giờ vào `NEEDS_HUMAN`.
+- Test cho `lifespan` (tắt app hủy task nền và đóng Fetcher) và hai `reopen` đồng thời (một thành công, một `ChallengeNotPending`).
+- `events_since` cắt sự kiện ở mức SQL (hiện tải cả cột `events` mỗi nhịp 0,25 s); `GET /chat/{id}` bỏ qua sự kiện lưu hỏng thay vì trả 500; `existing_run` không tải cả `events`.
+- `GET /products`: tham số `spec.*` lặp (chỉ giữ giá trị cuối) và `price_min > price_max` (trả rỗng) ghi rõ trong docs/07 hoặc trả 422; cân nhắc từ chối `target_price` lớn bất thường so với số người dùng nêu (T6.9).
+
+**T7.7** — Phát sinh từ QA M7 (13 ca `xfail(strict=True)` mã `BUG-M7-n` trong `tests/api/*_qa_m7.py`; BUG-M7-1, 2, 5, 7 và nửa đầu của BUG-M7-6 đã sửa ngay; XPASS báo đỏ → gỡ dấu khi sửa). Còn lại, không chặn M8:
+- **BUG-M7-3** (trung-thấp): `q` không bỏ dấu, nên "chuot khong day" không tìm thấy "Chuột không dây" dù planner prompt nói hỗ trợ không dấu. Cần so khớp trên văn bản đã `fold` (cột tên đã chuẩn hóa hoặc extension `unaccent`; quyết định thiết kế vì đụng schema/chỉ mục).
+- **BUG-M7-4** (thấp): thân không giải mã được (UTF-8 hỏng, số nguyên 5000 chữ số) trả 400 `HTTP_400` thông điệp tiếng Anh thay vì 422 `VALIDATION_ERROR`; ánh xạ lỗi parse thân sang `ValidationFailed` ở `api/errors.py`.
+- **BUG-M7-6b** (thấp-trung): phủ định cách động từ quá 2 từ qua dấu phẩy ("Không muốn đâu, tôi thêm vào danh sách làm gì") vẫn mở khóa tool ghi; cần quyết định có coi mệnh đề trước là lời từ chối của mệnh đề sau không (dễ chặn nhầm).
 
 Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test integration cho mọi endpoint (thành công + ít nhất một lỗi); SSE test bằng client đọc luồng, gồm phát lại khi kết nối sau khi run xong.
 

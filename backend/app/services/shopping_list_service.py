@@ -138,14 +138,29 @@ class ShoppingListService:
         quantity: int | None = None,
         note: str | None = None,
         clear_note: bool = False,
+        preferred_offer_id: int | None = None,
+        clear_preferred_offer: bool = False,
     ) -> ShoppingListItemView:
+        """Đổi số lượng, ghi chú và/hoặc offer ưu tiên; offer phải thuộc sản phẩm của mục."""
         item = self._require_item(list_id, item_id)
         if quantity is not None:
             _check_quantity(quantity)
         _check_note(note)
-        updated = self._lists.update_item(
-            item, quantity=quantity, note=note, clear_note=clear_note, now=aware_now(self._now)
-        )
+        try:
+            updated = self._lists.update_item(
+                item,
+                quantity=quantity,
+                note=note,
+                clear_note=clear_note,
+                preferred_offer_id=preferred_offer_id,
+                clear_preferred_offer=clear_preferred_offer,
+                now=aware_now(self._now),
+            )
+        except ValueError as error:
+            raise ValidationFailed(
+                "Offer ưu tiên không thuộc sản phẩm này",
+                details={"preferred_offer_id": preferred_offer_id},
+            ) from error
         return self._item_views([updated])[0]
 
     def remove_item(self, list_id: int, item_id: int) -> None:

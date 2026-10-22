@@ -6,12 +6,13 @@
 """
 
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, Final
 
-from app.agent.intent import extract_amounts
+from app.agent.intent import MIN_AMOUNT_VND, extract_amounts
 from app.agent.schemas import MAX_SUGGESTIONS, FinalAnswer, LiveItem
+from app.agent.tools.base import Result, error_result
 from app.normalize.text import fold
 
 PRICE_TOLERANCE: Final = 0.01
@@ -35,7 +36,7 @@ LIVE_TOOL: Final = "live_search_other"
 # triệu", "tôi đang có cảnh báo nào?" là câu chỉ đọc và không được mở khóa tool ghi.
 _ADD_TO_LIST: Final = re.compile(
     r"\bvao (danh sach|wishlist|shopping list)\b"
-    r"|\b(them|luu|add)\b[^.?!]{0,40}\b(danh sach|wishlist|shopping list)\b"
+    r"|\b(them|luu|add)\b[^.?!]{0,80}\b(danh sach|wishlist|shopping list)\b"
 )
 _ALERT: Final = re.compile(
     r"\b(dat|tao|bat|them|cai|thiet lap|set|create)\b[^.?!]{0,15}\b(canh bao|alert)\b"
@@ -44,6 +45,22 @@ _ALERT: Final = re.compile(
     r"|\b(muon|hay|giup|can)\b[^.?!]{0,15}\btheo doi gia\b"
     r"|\bkhi\b[^.?!]{0,40}\b(xuong|giam|ha)\b[^.?!]{0,30}\b(duoi|thap hon|con)\b"
 )
+# Từ phủ định đứng ngay trước động từ yêu cầu ("đừng thêm …", "không cần đặt cảnh báo", "khỏi
+# thêm", "không nghĩ nên thêm"): cụm đó là lời từ chối, không phải yêu cầu. Chỉ xét trong cùng
+# mệnh đề và khi từ phủ định cách động từ tối đa 2 từ, nên "không quá 30 triệu và đặt cảnh báo"
+# (phủ định thuộc về giá) không bị chặn nhầm. Gắn với cuối cửa sổ (`$`).
+_NEGATION: Final = re.compile(
+    r"\b(dung(?! (?:quen|ngai)\b)|khong|ko|chang|khoi|thoi|chua|do not|don'?t|no need|never)"
+    r"\b(?: \w+){0,2} ?$"
+)
+_NEGATION_WINDOW: Final = 40
+_CLAUSE_LOOKBACK: Final = 200  # xem lại tối đa ngần này ký tự để tìm động từ của mệnh đề
+# Động từ yêu cầu; phủ định được xét ngay trước động từ GẦN NHẤT của mệnh đề, vì cụm khớp có thể
+# bắt đầu muộn ("đừng thêm <tên sản phẩm dài> vào danh sách" khớp từ "vào danh sách").
+_VERB: Final = re.compile(
+    r"\b(them|luu|add|dat|tao|bat|cai|thiet lap|set|create|bao|nhac|thong bao|notify)\b"
+)
+_SENTENCE_END: Final = ".?!,;"  # dấu ngắt câu/mệnh đề: phủ định ở mệnh đề trước không lan sang sau
 # Có cả "www." không scheme (markdown dạng GFM tự biến thành link) và scheme viết hoa.
 _URL: Final = re.compile(r"(?:https?://|www\.)[^\s)\]>\"'<]+", re.IGNORECASE)
 _URL_TRAILING: Final = ".,;:!?*_~`"  # dấu câu / markdown dính sau link ("**https://…**")
@@ -56,11 +73,53 @@ def allowed_write_tools(message: str) -> frozenset[str]:
     """Tool ghi mà câu của người dùng cho phép (rỗng nếu chỉ hỏi/tìm kiếm)."""
     folded = " ".join(fold(message).split())  # gộp khoảng trắng/xuống dòng giữa các từ
     allowed: set[str] = set()
-    if _ADD_TO_LIST.search(folded):
+    if _requested(_ADD_TO_LIST, folded):
         allowed.add(ADD_TOOL)
-    if _ALERT.search(folded):
+    if _requested(_ALERT, folded):
         allowed.add(ALERT_TOOL)
     return frozenset(allowed)
+
+
+def _requested(pattern: re.Pattern[str], folded: str) -> bool:
+    """Có cụm yêu cầu khớp `pattern` mà không bị từ phủ định đứng ngay trước trong cùng câu."""
+    for match in pattern.finditer(folded):
+        start = match.start()
+        lo = max(0, start - _CLAUSE_LOOKBACK)
+        segment = folded[lo:start]
+        cut = max(segment.rfind(mark) for mark in _SENTENCE_END)
+        lo, segment = lo + cut + 1, segment[cut + 1 :]  # chỉ giữ mệnh đề chứa cụm khớp
+        verbs = list(_VERB.finditer(segment))
+        # Cụm khớp tự bắt đầu bằng động từ thì phủ định phải đứng ngay trước nó; chỉ khi cụm bắt đầu
+        # muộn ("vào danh sách") mới lùi về động từ gần nhất của mệnh đề.
+        anchor = lo + verbs[-1].start() if verbs and not _VERB.match(folded, start) else start
+        window = folded[max(lo, anchor - _NEGATION_WINDOW) : anchor]
+        if not _NEGATION.search(window):
+            return True
+    return False
+
+
+def check_write_args(
+    tool: str, args: Mapping[str, Any], user_amounts: Collection[int]
+) -> Result | None:
+    """Lỗi cho LLM thử lại nếu tham số tool ghi sai thang tiền, None nếu hợp lệ.
+
+    `create_price_alert` với `target_price` < 10.000 VND, hoặc bằng số người dùng nêu chia cho
+    1.000 / 1.000.000 ("25 triệu" mà LLM gửi 25), sẽ không bao giờ kích hoạt nên bị từ chối.
+    """
+    if tool != ALERT_TOOL:
+        return None
+    price = args.get("target_price")
+    if isinstance(price, bool) or not isinstance(price, int):
+        return None  # sai kiểu: tool tự báo lỗi tham số
+    scaled = next((price * f for f in (1_000_000, 1_000) if price * f in user_amounts), None)
+    if price < MIN_AMOUNT_VND or scaled is not None:
+        hint = f" (người dùng nêu {scaled})" if scaled is not None else ""
+        return error_result(
+            "INVALID_TARGET_PRICE",
+            f"target_price tính bằng VND đầy đủ, ví dụ 25 triệu = 25000000{hint}; "
+            "hãy gọi lại với số đúng",
+        )
+    return None
 
 
 @dataclass
