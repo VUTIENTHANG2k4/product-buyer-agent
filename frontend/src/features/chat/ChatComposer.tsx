@@ -2,6 +2,7 @@ import { SendHorizontal } from 'lucide-react'
 import { useId, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { codePointLength } from '@/lib/length'
 import { strings } from '@/lib/strings'
 
 interface ChatComposerProps {
@@ -29,14 +30,18 @@ export function ChatComposer({
   const id = useId()
   const hintId = `${id}-hint`
   const trimmed = value.trim()
-  const tooLong = value.length > MAX
+  // Máy chủ kiểm độ dài của tin đã cắt khoảng trắng, tính theo điểm mã (emoji là 1).
+  const length = codePointLength(trimmed)
+  const tooLong = length > MAX
   const canSend = trimmed !== '' && !tooLong && !disabled && !pending
 
   async function submit() {
     if (!canSend) return
+    const sent = value
     try {
       await onSend(trimmed)
-      setValue('')
+      // Chữ gõ thêm trong lúc tin đang gửi thuộc tin kế tiếp: chỉ xóa khi ô nhập vẫn là tin vừa gửi.
+      setValue((current) => (current === sent ? '' : current))
     } catch {
       // Lỗi hiện ở nơi gọi (prop `error`); giữ nội dung để thử lại.
     }
@@ -69,7 +74,7 @@ export function ChatComposer({
             disabled={disabled}
             placeholder={placeholder}
             aria-invalid={tooLong || Boolean(error)}
-            aria-describedby={hint || value.length >= COUNTER_FROM ? hintId : undefined}
+            aria-describedby={hint || length >= COUNTER_FROM ? hintId : undefined}
             onChange={(event) => setValue(event.target.value)}
             onKeyDown={handleKeyDown}
             className="min-h-14 resize-none"
@@ -84,9 +89,9 @@ export function ChatComposer({
         <span role={hint ? 'alert' : undefined} className="text-destructive">
           {hint}
         </span>
-        {value.length >= COUNTER_FROM ? (
+        {length >= COUNTER_FROM ? (
           <span className={tooLong ? 'text-destructive' : 'text-muted-foreground'}>
-            {strings.chat.counter(value.length, MAX)}
+            {strings.chat.counter(length, MAX)}
           </span>
         ) : null}
       </div>

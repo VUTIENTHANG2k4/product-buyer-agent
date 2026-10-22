@@ -17,7 +17,7 @@ import { errorMessage } from '@/lib/errorMessage'
 import { safeUrl } from '@/lib/safeUrl'
 import { strings } from '@/lib/strings'
 import { useAnswerChallenge, useChallenge, useRefreshAdmin } from './api'
-import { isValidAnswer, MAX_ANSWER_LENGTH } from './answer'
+import { isValidAnswer } from './answer'
 
 export type ChallengeOutcome = 'answered' | 'not-pending'
 
@@ -114,7 +114,6 @@ function ChallengeForm({
           id={`${id}-answer`}
           value={answer}
           autoComplete="off"
-          maxLength={MAX_ANSWER_LENGTH}
           aria-invalid={error !== null}
           onChange={(event) => setAnswer(event.target.value)}
         />

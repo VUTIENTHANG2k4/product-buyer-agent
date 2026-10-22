@@ -12,6 +12,7 @@ const vndNumber = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 })
  * Dấu chấm phân nhóm được ghép tay để kết quả không phụ thuộc dữ liệu locale của môi trường.
  */
 export function formatVnd(amount: number): string {
+  if (!Number.isFinite(amount)) return '—'
   const rounded = Math.round(amount)
   const sign = rounded < 0 ? '-' : ''
   const digits = String(Math.abs(rounded)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')

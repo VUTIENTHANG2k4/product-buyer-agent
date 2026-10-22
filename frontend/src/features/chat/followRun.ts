@@ -52,6 +52,15 @@ async function readOnce(runId: string, options: FollowOptions): Promise<boolean>
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   const parser = new SseParser()
+  // `SseParser` giữ `id` của sự kiện trước cho sự kiện không có dòng `id:` (đúng đặc tả). Máy chủ
+  // không bao giờ dùng lại một id, nên id lặp lại ngay sau chính nó nghĩa là sự kiện này không có id
+  // riêng: báo `null` để reducer không coi là bản trùng và bỏ sót sự kiện (kể cả `final`/`error`).
+  let previousRawId: string | null = null
+  const idOf = (message: { id: string | null }): number | null => {
+    const fresh = message.id !== previousRawId
+    previousRawId = message.id
+    return fresh ? parseId(message.id) : null
+  }
   try {
     for (;;) {
       const { done, value } = await reader.read()
@@ -59,14 +68,14 @@ async function readOnce(runId: string, options: FollowOptions): Promise<boolean>
       for (const message of parser.push(decoder.decode(value, { stream: true }))) {
         const event = parseAgentEvent(message.event, message.data)
         if (!event) continue
-        options.onEvent(parseId(message.id), event)
+        options.onEvent(idOf(message), event)
         if (isTerminal(event)) return true
       }
     }
     for (const message of [...parser.push(decoder.decode()), ...parser.end()]) {
       const event = parseAgentEvent(message.event, message.data)
       if (!event) continue
-      options.onEvent(parseId(message.id), event)
+      options.onEvent(idOf(message), event)
       if (isTerminal(event)) return true
     }
     return false

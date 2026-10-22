@@ -16,7 +16,7 @@ function enumLabel(field: string, value: unknown): string {
 const ORDER = Object.keys(LABELS)
 
 export function specLabel(field: string): string {
-  return LABELS[field] ?? field
+  return Object.hasOwn(LABELS, field) ? LABELS[field]! : field
 }
 
 export function compareSpecFields(a: string, b: string): number {

@@ -46,12 +46,9 @@ export class SseParser {
     const text = this.pending
     this.pending = ''
     if (!text.endsWith('\r')) return []
-    const messages: SseMessage[] = []
-    for (const line of [text.slice(0, -1), '']) {
-      const message = this.line(line)
-      if (message) messages.push(message)
-    }
-    return messages
+    // Chỉ chốt dòng đang chờ; sự kiện chưa gặp dòng trống thật bị bỏ theo đặc tả (luồng đứt giữa chừng).
+    const message = this.line(text.slice(0, -1))
+    return message ? [message] : []
   }
 
   private line(line: string): SseMessage | null {

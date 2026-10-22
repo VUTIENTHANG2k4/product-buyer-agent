@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { useProduct } from '@/features/catalog/api'
 import { formatVnd } from '@/lib/format'
+import { codePointLength } from '@/lib/length'
 import { safeUrl } from '@/lib/safeUrl'
 import { strings } from '@/lib/strings'
 import type { ItemPatch, ShoppingListItem } from './api'
@@ -97,7 +98,7 @@ function NoteField({
     setText(note ?? '')
   }
   const id = useId()
-  const tooLong = text.length > MAX_NOTE
+  const tooLong = codePointLength(text) > MAX_NOTE
 
   function commit() {
     if (tooLong) return

@@ -22,7 +22,7 @@ export function suggestTargets(currentPrice: number): TargetSuggestion[] {
  * Chỉ nhận chữ số và dấu phân nhóm `.`/`,`/khoảng trắng; số lẻ hoặc chữ lạ → `null`.
  */
 export function parseTargetPrice(input: string): number | null {
-  const trimmed = input.replace(/[\s₫đĐ]|vnd/gi, '')
+  const trimmed = input.replace(/[\s₫]|vn[dđ]|đồng|[đĐ]/gi, '')
   // Dấu `.`/`,` chỉ hợp lệ khi phân nhóm hàng nghìn ("27.490.000"); "27.5" là số lẻ nên bị từ chối.
   if (/[.,]/.test(trimmed) && !/^\d{1,3}([.,]\d{3})+$/.test(trimmed)) return null
   const cleaned = trimmed.replace(/[.,]/g, '')

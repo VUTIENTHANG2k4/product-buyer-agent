@@ -229,12 +229,13 @@ describe('ConversationPage · hỏi tiếp', () => {
     )
     renderAt(`/c/7?run=${RUN}`)
     const alert = await screen.findByRole('alert', undefined, { timeout: 8000 })
-    expect(composer()).toBeEnabled()
+    // Trạng thái "đã xong" của lượt được báo lên trang qua effect, nên chờ thay vì kiểm ngay.
+    await waitFor(() => expect(composer()).toBeEnabled())
 
     run(RUN, [planFrame], 'hang')
     await userEvent.click(within(alert).getByRole('button', { name: 'Thử lại' }))
     await screen.findByText(sample.plan.steps[0] as string)
-    expect(composer()).toBeDisabled()
+    await waitFor(() => expect(composer()).toBeDisabled())
     expect(screen.getByRole('button', { name: 'Gửi' })).toBeDisabled()
   }, 15000)
 

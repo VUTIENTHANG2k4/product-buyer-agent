@@ -64,7 +64,8 @@ export function summarizeSites(series: readonly SiteSeries[]): SiteSummary[] {
 
 /** Số tiền rút gọn cho trục: 27490000 → "27,5 tr", 950000 → "950 N". */
 export function formatAxisPrice(value: number): string {
-  if (Math.abs(value) >= 1_000_000) {
+  // Quyết định đơn vị sau khi làm tròn tới nghìn: 999.600 ₫ là "1 tr", không phải "1000 N".
+  if (Math.abs(Math.round(value / 1000) * 1000) >= 1_000_000) {
     return `${(value / 1_000_000).toFixed(1).replace('.', ',').replace(',0', '')} tr`
   }
   return `${Math.round(value / 1000)} N`
