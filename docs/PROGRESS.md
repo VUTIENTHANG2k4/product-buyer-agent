@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: M9 Theo dõi giá & vận hành (nhánh `milestone/M9-price-tracking`). Thứ tự: T9.1 → T9.2 → T9.3 → T9.4. T9.1 xong; đang làm T9.2 (nối `AlertEvaluator` vào `ScrapeRuntime`/`scripts/scrape.py` khi có `build_notifiers`).
+- Đang làm: M9 Theo dõi giá & vận hành (nhánh `milestone/M9-price-tracking`). Thứ tự: T9.1 → T9.2 → T9.3 → T9.4. T9.1, T9.2 xong; đang làm T9.3.
 - Backlog chưa làm (không chặn M9): T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7, T8.12 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-22 — đóng M8 (`/done M8`)
 

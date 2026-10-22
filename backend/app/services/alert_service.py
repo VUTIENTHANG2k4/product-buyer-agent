@@ -6,7 +6,7 @@ mặc định lấy từ cấu hình (`ALERT_DEFAULT_CHANNEL`, `ALERT_DEFAULT_EM
 """
 
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from sqlmodel import Session
@@ -24,6 +24,8 @@ from app.db.repositories.price_alerts import LIVE_STATUSES
 from app.domain.catalog import AlertCreate, AlertView
 from app.domain.enums import AlertChannel, AlertStatus, SiteKey
 from app.domain.errors import AlertNotFound, DuplicateAlert, ProductNotFound, ValidationFailed
+from app.services.notifier.base import NotificationFailed, Notifier
+from app.services.notifier.message import format_vnd
 from app.services.views import Clock, aware_now, best_price, sellable
 
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -49,6 +51,12 @@ def should_notify(alert: PriceAlert, price: int | None) -> bool:
         last = alert.last_notified_price
         return last is None or price * 100 <= last * (100 - RENOTIFY_MIN_DROP_PERCENT)
     return False
+
+
+@dataclass(frozen=True)
+class AlertTestResult:
+    sent: bool
+    reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -146,6 +154,31 @@ class AlertService:
 
     def delete(self, alert_id: int) -> None:
         self._alerts.delete(self._require(alert_id))
+
+    def send_test(
+        self, alert_id: int, notifiers: Mapping[AlertChannel, Notifier]
+    ) -> AlertTestResult:
+        """Gửi thông báo thử tới nơi nhận của cảnh báo; không đổi trạng thái cảnh báo.
+
+        Kênh chưa cấu hình hoặc gửi lỗi trả `sent=False` kèm lý do (không ném lỗi).
+        """
+        alert = self._require(alert_id)
+        notifier = notifiers.get(alert.channel)
+        if notifier is None:
+            return AlertTestResult(
+                sent=False, reason=f"Kênh {alert.channel.value} chưa được cấu hình trong .env"
+            )
+        view = self._view(alert)
+        try:
+            notifier.send(
+                alert.destination,
+                "Thông báo thử từ Product Buyer Agent",
+                f"Cảnh báo giá cho {view.product_name}: ngưỡng {format_vnd(alert.target_price)}.\n"
+                "Đây chỉ là tin nhắn thử, cảnh báo của bạn không thay đổi.",
+            )
+        except NotificationFailed as error:
+            return AlertTestResult(sent=False, reason=str(error))
+        return AlertTestResult(sent=True)
 
     def find_due(self, offer_ids: Sequence[int] | None = None) -> list[DueAlert]:
         """Cảnh báo cần gửi sau khi giá của `offer_ids` đổi (`None`: xét mọi cảnh báo còn hiệu lực).

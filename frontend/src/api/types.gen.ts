@@ -231,7 +231,7 @@ export interface paths {
         put?: never;
         /**
          * Gửi thông báo thử tới kênh đã cấu hình
-         * @description Chưa gửi thật: bộ gửi email/Telegram thuộc M9 nên hiện luôn trả `sent: false`.
+         * @description Gửi thật một tin nhắn thử tới kênh và nơi nhận của cảnh báo, không đổi trạng thái cảnh báo. Kênh chưa cấu hình trong `.env` hoặc gửi lỗi thì trả `sent: false` kèm `reason`.
          */
         post: operations["test_alert_api_alerts__alert_id__test_post"];
         delete?: never;
