@@ -33,6 +33,13 @@ flowchart TB
 | Unit frontend | Vitest + Testing Library + MSW | `frontend/src/**/*.test.tsx` | Bảng sắp xếp theo giá; hiển thị nhãn "giá thành viên"; trạng thái rỗng/lỗi |
 | E2E | Playwright | `frontend/e2e/` | Hỏi → thấy kế hoạch → thấy bảng → chọn 2 → so sánh → thêm vào danh sách |
 
+### E2E Playwright (T8.8)
+
+- **Chạy:** `make e2e` (`cd frontend && npm run e2e`). Playwright tự khởi động hai server rồi tắt khi xong: backend `uv run python -m scripts.e2e_server --port 8010` và frontend `npm run dev` (cổng 5173 vì CORS của backend chỉ cho origin này; `VITE_API_BASE_URL` trỏ `localhost:8010`). Không dùng lại server có sẵn (`reuseExistingServer: false`): **tắt `make dev` trước**, vì Vite/API đang chạy sẽ trỏ vào DB dev.
+- **DB riêng:** `E2E_DATABASE_URL`, bỏ trống thì lấy tên DB của `DATABASE_URL` + `_e2e` (`product_buyer` → `product_buyer_e2e`). Script **từ chối** tên không kết thúc `_e2e` (test: `tests/unit/test_e2e_server.py`) vì `--reset` xóa sạch mọi bảng. Mỗi lần chạy: tạo DB nếu chưa có, `alembic upgrade head`, `seed --fixture e2e --reset --yes`, nên kết quả xác định và chạy lại lần hai vẫn xanh. `LLM_PROVIDER=fake` và `SCRAPER_OFFLINE_ONLY=true` được ép trong script.
+- **Spec** (`frontend/e2e/*.spec.ts`, chạy lần lượt vì dùng chung DB; mỗi spec đặt tên danh sách riêng): hỏi → kế hoạch → bảng (kèm trần giá và câu hỏi lại), chọn 2 → so sánh, thêm vào danh sách (tạo mới và cộng dồn số lượng), đặt cảnh báo (kèm báo trùng và "Gửi thử"). Selector theo vai trò/nhãn, không theo class. Cần Chromium của Playwright (cài thủ công khi cần; CI tự cài).
+- `e2e/**` có `tsconfig.e2e.json` riêng (có lib DOM cho `page.evaluate`/`evaluateAll`), tách khỏi `tsconfig.node.json`.
+
 ## 3. Dữ liệu test
 
 - **Fixture HTML** cho từng trang (xem [06 §8](06-scraping-design.md#8-fixtures)).

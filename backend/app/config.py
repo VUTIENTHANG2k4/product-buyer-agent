@@ -100,6 +100,8 @@ class Settings(BaseSettings):
     postgres_port: Port = 5432
     database_url: SecretStr
     test_database_url: SecretStr = SecretStr("")
+    # Chỉ `make e2e` dùng. Bỏ trống thì suy ra từ DATABASE_URL (thêm hậu tố `_e2e` vào tên DB).
+    e2e_database_url: SecretStr = SecretStr("")
 
     # Thu thập dữ liệu
     scraper_user_agent: UserAgent

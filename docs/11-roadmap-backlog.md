@@ -332,7 +332,7 @@ Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test
 | T8.5 | Danh sách mua | T8.1 | M | ✅ |
 | T8.6 | Cảnh báo giá | T8.1 | M | ✅ |
 | T8.7 | Quản trị + hộp thoại challenge | T8.1 | M | ✅ |
-| T8.8 | E2E luồng chính | T8.2–T8.7 | M | ⬜ |
+| T8.8 | E2E luồng chính | T8.2–T8.7 | M | ✅ |
 | T8.9 | Sửa `apiFetch`: hủy bằng lý do bất kỳ, thông điệp lỗi rỗng (phát sinh từ QA M0) | T0.5 | S | ✅ |
 | T8.10 | Sửa `NavBar`: `aria-current` trên trang không tìm thấy (phát sinh từ QA M0) | T8.1 | S | ✅ |
 | T8.11 | `LLM_PROVIDER=fake` trả lời xác định (backend; cho E2E và ảnh chụp, phát sinh từ kế hoạch M8) | T6.5 | S | ✅ |
