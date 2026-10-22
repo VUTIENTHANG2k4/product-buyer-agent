@@ -51,7 +51,7 @@ function isCancellation(error: unknown, signal: AbortSignal | null | undefined):
   return signal?.aborted === true && !hasName(signal.reason, 'TimeoutError')
 }
 
-async function toApiError(response: Response): Promise<ApiError> {
+export async function toApiError(response: Response): Promise<ApiError> {
   let code = `HTTP_${response.status}`
   let message: string = strings.errors.unknown
   let details: unknown

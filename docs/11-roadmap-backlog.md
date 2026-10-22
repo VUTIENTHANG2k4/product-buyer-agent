@@ -326,7 +326,7 @@ Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
 | T8.1 | Token, layout, điều hướng, API client | T7.5 | M | ✅ |
-| T8.2 | Trang chính + chat + tiến trình agent (SSE) | T8.1 | L | ⬜ |
+| T8.2 | Trang chính + chat + tiến trình agent (SSE) | T8.1 | L | ✅ |
 | T8.3 | Bảng kết quả + ngăn so sánh | T8.2 | L | ⬜ |
 | T8.4 | Chi tiết sản phẩm + biểu đồ giá | T8.1 | M | ⬜ |
 | T8.5 | Danh sách mua | T8.1 | M | ⬜ |

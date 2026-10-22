@@ -49,7 +49,7 @@ describe('router', () => {
   })
 
   it.each([
-    ['/c/abc', 'Hội thoại', /mã: abc/],
+    ['/c/abc', 'Hội thoại', /Không tìm thấy hội thoại này/],
     ['/lists', 'Danh sách mua', /^Sẽ làm ở T8\.5\.$/],
     ['/lists/7', 'Danh sách mua', /mã: 7/],
     ['/alerts', 'Cảnh báo giá', /T8\.6/],

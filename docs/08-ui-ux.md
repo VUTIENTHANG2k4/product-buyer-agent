@@ -111,6 +111,15 @@ Bảng: sản phẩm, giá hiện tại, ngưỡng, kênh, trạng thái (Đang 
 ### 3.7 Quản trị
 Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần chạy gần nhất (badge trạng thái), nút "Chạy ngay" theo nhóm, cảnh báo chất lượng. Bảng lượt chạy với lọc. Lượt `NEEDS_HUMAN` có nút "Xử lý" mở hộp thoại hiện đề bài captcha của mock-shop và ô nhập đáp án. Lượt `BLOCKED` hiện lý do và thời điểm được thử lại. Banner trên cùng nếu đang ở chế độ offline.
 
+### 3.8 Hành vi hội thoại (đã dựng ở T8.2)
+- **Gửi tin:** trang chính gửi `POST /chat` rồi chuyển sang `/c/:conversationId?run=<run_id>`; ô nhập báo lỗi của API ngay dưới ô (giữ nguyên nội dung đã gõ). Enter gửi, Shift+Enter xuống dòng, không gửi khi đang gõ dấu bằng bộ gõ IME; tối đa 1000 ký tự, bộ đếm hiện từ 900.
+- **Tiến trình:** theo dõi bằng `fetch` + luồng (không `EventSource`, vì cần header `Last-Event-ID` và hủy được); mất kết nối thì nối lại 3 lần (chờ 0,5 / 1 / 2 giây) rồi lấy kết quả bằng `GET /chat/{run_id}`; nếu lượt vẫn chạy thì hiện lỗi mất kết nối kèm "Thử lại". API không gắn bước kế hoạch với từng tool, nên một bước kế hoạch coi là xong khi số tool đã chạy xong vượt qua vị trí của nó.
+- **`?run=`:** chỉ có nghĩa ở lần mở trang đầu. Lượt đó phát lại toàn bộ từ SSE (kể cả tin người dùng và câu trả lời), nên lịch sử được cắt ở tin người dùng cuối để không hiện hai lần. Mỗi câu hỏi tiếp theo đổi `?run=` sang lượt mới nhất để tải lại trang vẫn đúng.
+- **Ô nhập khi đang chạy:** bị tắt cho đến khi lượt hiện tại kết thúc (`final`, `error` hoặc `clarification`).
+- **Hỏi lại (`clarification`):** bong bóng câu hỏi nổi bật, người dùng trả lời ở ô nhập (API chỉ trả câu hỏi, không có nút trả lời nhanh); nút nhanh chỉ dành cho `suggestions` của `final`.
+- **Trang chính:** dòng "Nguồn … · Cập nhật: … trước" lấy từ `GET /products?page_size=1` (`data_as_of`; badge vàng khi > 24 giờ); danh mục rỗng thì trỏ tới trang Quản trị; "Hội thoại gần đây" (5 mục từ `GET /conversations`) để mở lại `/c/:id`, ẩn khi chưa có.
+- **Markdown của câu trả lời:** HTML thô hiện như văn bản, ảnh không được tải, chỉ liên kết `http(s):` và `mailto:` bấm được (`javascript:`, `data:`, đường dẫn tương đối bị bỏ), liên kết mở tab mới với `rel="noopener noreferrer"`.
+
 ## 4. Trạng thái giao diện (bắt buộc cho mọi màn hình có dữ liệu)
 
 | Trạng thái | Cách hiển thị |

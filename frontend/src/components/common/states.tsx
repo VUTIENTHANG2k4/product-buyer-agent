@@ -5,13 +5,22 @@ import { errorMessage } from '@/lib/errorMessage'
 import { strings } from '@/lib/strings'
 
 interface ErrorStateProps {
-  error: unknown
+  error?: unknown
+  /** Thông điệp đã có sẵn (vd. từ sự kiện SSE `error`); ưu tiên hơn `error`. */
+  message?: string
   onRetry?: () => void
+  retryLabel?: string
   title?: string
 }
 
 /** Trạng thái lỗi (docs/08 §4): thông điệp tiếng Việt + nút "Thử lại". */
-export function ErrorState({ error, onRetry, title = strings.common.errorTitle }: ErrorStateProps) {
+export function ErrorState({
+  error,
+  message,
+  onRetry,
+  retryLabel = strings.common.retry,
+  title = strings.common.errorTitle,
+}: ErrorStateProps) {
   return (
     <div
       role="alert"
@@ -20,11 +29,11 @@ export function ErrorState({ error, onRetry, title = strings.common.errorTitle }
       <CircleAlert className="size-6 text-destructive" aria-hidden="true" />
       <div className="space-y-1">
         <p className="font-medium">{title}</p>
-        <p className="text-sm text-muted-foreground">{errorMessage(error)}</p>
+        <p className="text-sm text-muted-foreground">{message ?? errorMessage(error)}</p>
       </div>
       {onRetry ? (
         <Button variant="outline" size="sm" onClick={onRetry}>
-          {strings.common.retry}
+          {retryLabel}
         </Button>
       ) : null}
     </div>
