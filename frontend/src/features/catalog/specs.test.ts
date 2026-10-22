@@ -24,7 +24,13 @@ describe('formatSpecValue', () => {
     ['buttons', 6, '6'],
     ['is_gaming', true, 'Có'],
     ['rgb', false, 'Không'],
-    ['connection', ['wireless', 'bluetooth'], 'wireless, bluetooth'],
+    ['connection', ['wireless_2_4', 'bluetooth'], 'Không dây 2.4 GHz, Bluetooth'],
+    ['connection', ['gia_tri_la'], 'gia_tri_la'],
+    ['cpu_vendor', 'amd', 'AMD'],
+    ['storage_type', 'ssd', 'SSD'],
+    ['form_factor', '75', '75%'],
+    ['backlight', 'rgb', 'RGB'],
+    ['switch_type', 'mechanical', 'Cơ'],
     ['cpu_model', 'i7-13620H', 'i7-13620H'],
   ])('%s = %j → %s', (field, value, expected) => {
     expect(formatSpecValue(field, value)).toBe(expected)

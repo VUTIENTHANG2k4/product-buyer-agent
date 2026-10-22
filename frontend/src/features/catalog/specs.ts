@@ -36,6 +36,41 @@ const LABELS: Record<string, string> = {
   driver_mm: 'Driver',
 }
 
+/** Nhãn tiếng Việt của giá trị liệt kê (enum) của khung specs; giá trị lạ giữ nguyên. */
+const VALUE_LABELS: Record<string, Record<string, string>> = {
+  cpu_vendor: { intel: 'Intel', amd: 'AMD', apple: 'Apple', qualcomm: 'Qualcomm' },
+  storage_type: { ssd: 'SSD', hdd: 'HDD' },
+  connection: {
+    wired: 'Có dây',
+    wireless_2_4: 'Không dây 2.4 GHz',
+    bluetooth: 'Bluetooth',
+    wired_3_5: 'Jack 3.5 mm',
+    usb: 'USB',
+  },
+  shape: { ergo_right: 'Công thái học (tay phải)', ambidextrous: 'Đối xứng' },
+  switch_type: { mechanical: 'Cơ', membrane: 'Màng', optical: 'Quang', magnetic: 'Từ' },
+  form_factor: {
+    full: 'Full-size',
+    tkl: 'TKL',
+    '75': '75%',
+    '65': '65%',
+    '60': '60%',
+    other: 'Khác',
+  },
+  backlight: { none: 'Không có', single: 'Một màu', rgb: 'RGB' },
+  form: {
+    over_ear: 'Chụp tai (over-ear)',
+    on_ear: 'Đặt lên tai (on-ear)',
+    in_ear: 'Nhét tai (in-ear)',
+    tws: 'Không dây hoàn toàn (TWS)',
+  },
+}
+
+function enumLabel(field: string, value: unknown): string {
+  const text = String(value)
+  return VALUE_LABELS[field]?.[text] ?? text
+}
+
 /** Thứ tự hiển thị trong bảng so sánh/chi tiết; trường không có trong danh sách xếp sau, theo tên. */
 const ORDER = Object.keys(LABELS)
 
@@ -65,7 +100,7 @@ function isMissing(value: unknown): boolean {
 export function formatSpecValue(field: string, value: unknown): string {
   if (isMissing(value)) return '—'
   if (typeof value === 'boolean') return value ? 'Có' : 'Không'
-  if (Array.isArray(value)) return value.map(String).join(', ')
+  if (Array.isArray(value)) return value.map((item) => enumLabel(field, item)).join(', ')
   if (typeof value === 'number') {
     switch (field) {
       case 'ram_gb':
@@ -89,7 +124,7 @@ export function formatSpecValue(field: string, value: unknown): string {
         return String(value)
     }
   }
-  return String(value)
+  return enumLabel(field, value)
 }
 
 /** Các cặp (nhãn, giá trị) của một bộ thông số, bỏ trường thiếu; `limit` để cắt cho gọn. */

@@ -1,7 +1,8 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronUp, ImageOff } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Price } from '@/components/common/badges'
+import { ProductImage } from '@/components/common/ProductImage'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -15,7 +16,6 @@ import {
 import { CreateAlertDialog, type AlertProduct } from '@/features/alerts/CreateAlertDialog'
 import { specEntries } from '@/features/catalog/specs'
 import { AddToListDialog, type DialogProduct } from '@/features/lists/AddToListDialog'
-import { safeUrl } from '@/lib/safeUrl'
 import { strings } from '@/lib/strings'
 import { useMediaQuery } from '@/lib/useMediaQuery'
 import { cn } from '@/lib/utils'
@@ -33,31 +33,6 @@ import {
 } from './rows'
 
 const MAX_KEY_SPECS = 4
-
-function ProductImage({ url }: { url: string | null | undefined }) {
-  const [failed, setFailed] = useState(false)
-  const src = url ? safeUrl(url) : ''
-  if (!src || failed) {
-    return (
-      <span
-        className="flex size-12 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
-        aria-hidden="true"
-      >
-        <ImageOff className="size-5" />
-      </span>
-    )
-  }
-  return (
-    <img
-      src={src}
-      alt=""
-      loading="lazy"
-      referrerPolicy="no-referrer"
-      onError={() => setFailed(true)}
-      className="size-12 shrink-0 rounded-md bg-muted object-contain"
-    />
-  )
-}
 
 function KeySpecs({ row }: { row: ProductRow }) {
   const entries = specEntries(row.key_specs, MAX_KEY_SPECS)

@@ -42,23 +42,19 @@ function currentLinks(): string[] {
 
 describe('router · tham số route lạ', () => {
   it.each([
-    ['/products/%3Cscript%3Ealert(1)%3C%2Fscript%3E', '<script>alert(1)</script>'],
-    ['/products/%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E', '<img src=x onerror=alert(1)>'],
-    ['/products/..%2F..%2Fadmin', '../../admin'],
-    ['/products/a%20b%26c%3Dd%3F%23e', 'a b&c=d?#e'],
-    ['/products/' + encodeURIComponent('Đà Nẵng ₫ 🙂'), 'Đà Nẵng ₫ 🙂'],
-  ])('%s hiện mã như văn bản thuần, không chèn phần tử và không đổi tiêu đề', (path, id) => {
+    '/products/%3Cscript%3Ealert(1)%3C%2Fscript%3E',
+    '/products/%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E',
+    '/products/..%2F..%2Fadmin',
+    '/products/a%20b%26c%3Dd%3F%23e',
+    '/products/' + encodeURIComponent('Đà Nẵng ₫ 🙂'),
+    '/products/' + encodeURIComponent('Lenovo Legion Ấ'.normalize('NFD')),
+    '/products/0',
+    '/products/2147483648',
+  ])('%s: mã không hợp lệ → thông báo cố định, không chèn phần tử, không đổi tiêu đề', (path) => {
     const { container } = renderAt(path)
-    expect(screen.getByText(`Sẽ làm ở T8.4. (mã: ${id})`)).toBeInTheDocument()
+    expect(screen.getByText('Mã sản phẩm không hợp lệ.')).toBeInTheDocument()
     expect(container.querySelector('script, img')).toBeNull()
     expect(document.title).toBe('Chi tiết sản phẩm · Buyer Agent')
-  })
-
-  it('giữ nguyên dạng Unicode của mã: NFD không bị đổi thành NFC khi hiển thị', () => {
-    const nfd = 'Lenovo Legion Ấ'.normalize('NFD')
-    renderAt(`/products/${encodeURIComponent(nfd)}`)
-    const description = screen.getByText(/^Sẽ làm ở T8\.4\./)
-    expect(description.textContent).toBe(`Sẽ làm ở T8.4. (mã: ${nfd})`)
   })
 
   it('/lists/%20 (mã toàn khoảng trắng) vẫn hiện trang danh sách chi tiết, không sập', () => {

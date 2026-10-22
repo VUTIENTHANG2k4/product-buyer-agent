@@ -1,8 +1,12 @@
 import { QueryClient } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
+import { apiUrl } from '@/api/client'
+import { productFull } from '@/mocks/data'
+import { server } from '@/mocks/server'
 import { Providers } from './providers'
 import { routes } from './router'
 
@@ -42,10 +46,19 @@ describe('router', () => {
     expect(screen.getByRole('link', { name: 'Hỏi agent' })).not.toHaveAttribute('aria-current')
   })
 
-  it('đọc tham số của /products/:id', () => {
+  it('đọc tham số của /products/:id và tải đúng sản phẩm đó', async () => {
+    let requested = ''
+    server.use(
+      http.get(apiUrl('products/:id'), ({ params }) => {
+        requested = String(params.id)
+        return HttpResponse.json(productFull({ product_id: 42, name: 'MockBook Số 42' }))
+      }),
+    )
     renderAt('/products/42')
-    expect(screen.getByRole('heading', { name: 'Chi tiết sản phẩm' })).toBeInTheDocument()
-    expect(screen.getByText(/mã: 42/)).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'MockBook Số 42' }),
+    ).toBeInTheDocument()
+    expect(requested).toBe('42')
   })
 
   it.each([

@@ -10,6 +10,8 @@ interface QueryBoundaryProps<T> {
   /** Bộ phận hiển thị khi dữ liệu rỗng; mặc định mọi dữ liệu đều "không rỗng". */
   isEmpty?: (data: T) => boolean
   empty?: ReactNode
+  /** Tiêu đề hộp lỗi; mặc định "Không tải được dữ liệu". */
+  errorTitle?: string
   children: (data: T) => ReactNode
 }
 
@@ -22,6 +24,7 @@ export function QueryBoundary<T>({
   skeleton,
   isEmpty,
   empty,
+  errorTitle,
   children,
 }: QueryBoundaryProps<T>) {
   if (query.data !== undefined) {
@@ -31,7 +34,9 @@ export function QueryBoundary<T>({
     return <>{children(query.data)}</>
   }
   if (query.isError) {
-    return <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+    return (
+      <ErrorState error={query.error} title={errorTitle} onRetry={() => void query.refetch()} />
+    )
   }
   return <LoadingBlock>{skeleton}</LoadingBlock>
 }

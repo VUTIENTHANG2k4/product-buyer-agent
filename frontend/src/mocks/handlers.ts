@@ -1,5 +1,6 @@
 import { http, HttpResponse, type RequestHandler } from 'msw'
 import { apiUrl } from '@/api/client'
+import { productFull } from './data'
 
 /**
  * Handler dùng chung cho mọi test; handler theo màn hình thêm ở chính test đó (`server.use`).
@@ -17,6 +18,12 @@ export const handlers: RequestHandler[] = [
       stale: false,
       data_as_of: null,
     }),
+  ),
+  http.get(apiUrl('products/:id/price-history'), () =>
+    HttpResponse.json({ series: [], min_price: null, max_price: null }),
+  ),
+  http.get(apiUrl('products/:id'), ({ params }) =>
+    HttpResponse.json(productFull({ product_id: Number(params.id) })),
   ),
   http.get(apiUrl('conversations'), () => HttpResponse.json({ items: [] })),
   http.get(apiUrl('conversations/:id/messages'), () => HttpResponse.json({ items: [] })),

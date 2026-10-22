@@ -129,6 +129,13 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 - **Tầng 2:** `live_items` hiện thành bảng Tên, Giá, Trang, Liên kết với nhãn vàng "Tìm trực tiếp – chưa chuẩn hóa thông số".
 - **Hội thoại mở lại:** tin trợ lý đã lưu chỉ có `payload.product_ids`, nên bảng dựng bằng `GET /products/{id}` từng sản phẩm (giá là giá hiện tại, có thể khác lúc hỏi); sản phẩm không tải được thì bỏ qua.
 
+### 3.10 Chi tiết sản phẩm (đã dựng ở T8.4)
+- **Đầu trang:** nút "Quay lại" (về trang trước trong lịch sử; mở thẳng đường dẫn thì về trang chính), ảnh, tên (h1), hãng · mã model, khoảng giá (hoặc một giá nếu thấp nhất = cao nhất), nút Thêm vào danh sách / Báo khi giảm giá (dùng chung hộp thoại với bảng kết quả).
+- **Giá theo trang:** rẻ nhất lên đầu; giá hiệu lực, giá niêm yết (khi cao hơn), loại giá, tình trạng hàng, giờ cập nhật (badge vàng nếu > 24 giờ), liên kết "Mở trang".
+- **Lịch sử giá:** Recharts, một đường bậc thang mỗi trang (màu `--chart-1…5`), chọn 7/30/90 ngày (mặc định 30; `GET /products/{id}/price-history?days=`); biểu đồ có `role="img"` kèm mô tả và bản tóm tắt chữ (thấp nhất / cao nhất / mới nhất của từng trang) cho trình đọc màn hình. Không có điểm nào → trạng thái rỗng; lỗi tải lịch sử không ảnh hưởng phần còn lại của trang.
+- **Thông số:** bảng nhãn tiếng Việt + đơn vị + giá trị liệt kê đọc được (vd. `ssd` → SSD), xếp theo thứ tự cố định; hạng GPU (suy ra) không hiện. Khi `specs_confidence < 0.8` hiện ghi chú "Một số thông số được trích tự động, hãy kiểm tra trên trang bán".
+- Mã sản phẩm sai (không phải số nguyên dương ≤ 2^31−1) báo ngay, không gọi API; 404 hiện thông điệp của API.
+
 ## 4. Trạng thái giao diện (bắt buộc cho mọi màn hình có dữ liệu)
 
 | Trạng thái | Cách hiển thị |
