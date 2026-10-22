@@ -24,7 +24,7 @@ cp .env.example .env             # điền GOOGLE_API_KEY, ALERT_DEFAULT_EMAIL, 
 make db-up                       # docker compose up -d db (PostgreSQL 17, chờ healthcheck)
 make setup                       # uv sync + npm ci + alembic upgrade head + seed dev
 make dev                         # API :8000, frontend :5173, mock-shop :8100
-make worker                      # (tùy chọn) bộ lập lịch
+make worker                      # (tùy chọn) bộ lập lịch; cần SCHEDULER_ENABLED=true trong .env
 ```
 
 ## 4. Docker Compose

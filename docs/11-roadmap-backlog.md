@@ -357,7 +357,7 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | --- | --- | --- | --- | --- |
 | T9.1 | Đánh giá cảnh báo + chống gửi trùng | T6.2, T2.6 | M | ✅ |
 | T9.2 | Notifier email + Telegram | T9.1 | S | ✅ |
-| T9.3 | Worker + lịch APScheduler | T2.6, T9.1 | M | ⬜ |
+| T9.3 | Worker + lịch APScheduler | T2.6, T9.1 | M | ✅ |
 | T9.4 | Dockerfile + docker compose | T8.8 | M | ⬜ |
 
 **T9.1** — Xong khi: test đúng tiêu chí US-07 ([01 §5](01-requirements.md#5-user-story-và-tiêu-chí-chấp-nhận)); cảnh báo `triggered` gửi lại chỉ khi giá xuống thấp hơn `last_notified_price` thêm ≥ 1%.

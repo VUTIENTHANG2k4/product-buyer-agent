@@ -174,6 +174,24 @@ run(site, category, trigger, max_pages) -> ScrapeRun
      (services/alert_evaluation.py: alert_service.find_due → notifier.send → mark_sent, commit từng cảnh báo)
 ```
 
+**Làm mới giá offer đang theo dõi (T9.3):** `ScrapePipeline.refresh_offers(site, category, offer_ids)` chỉ tải
+`offer.url` (qua Fetcher) của các offer được chọn, rồi ghi `price`/`stock_status` + lịch sử giá từ
+`ProductDetail`. `list_price`/`price_type` chỉ đổi khi `ProductDetail.price_type != unknown`, tồn kho chỉ đổi khi
+`stock_status != unknown` (GearVN và FPT Shop đọc giá gốc gạch ngang; An Phát chỉ đọc giá bán vì `availability` của
+JSON-LD luôn `InStock` khác nút "Đặt hàng" ở thẻ danh sách; mock-shop không có giá gốc ở trang chi tiết). Lượt
+dùng `trigger=tracked_refresh`, chung khóa và thời gian nghỉ của (site, category) với lượt đầy đủ (không chạy cùng
+lúc), **không bao giờ tắt offer** (kể cả 404/410, chỉ tính `items_failed`), 3 lần tải lỗi liên tiếp thì dừng, và không
+được tính làm mốc "lượt trước" khi so số sản phẩm (`latest_succeeded` bỏ qua `tracked_refresh`). `ScrapeService.refresh_tracked(site)`
+chọn offer bằng `OfferRepository.list_tracked` (sản phẩm có cảnh báo `active`/`triggered` hoặc nằm trong một danh sách
+mua), chạy mỗi nhóm một lượt rồi đánh giá cảnh báo như lượt đầy đủ.
+
+**Worker (`app/worker.py`, `make worker`):** APScheduler `AsyncIOScheduler` (UTC) với hai job `catalog_refresh`
+(`CATALOG_REFRESH_CRON`, thu thập đầy đủ từng nhóm của từng trang đang bật, trang chạy song song, nhóm tuần tự,
+`trigger=schedule`) và `tracked_refresh` (`TRACKED_REFRESH_CRON`, `refresh_tracked` từng trang). `max_instances=1`,
+`coalesce=True`, `misfire_grace_time=300`. Ngoại tuyến chỉ chạy mock-shop. Nhóm đang có lượt khác
+(`ScrapeAlreadyRunning`) bị bỏ qua; trang đang nghỉ (`SiteCooldown`) bỏ qua phần còn lại. Cron sai báo lỗi và thoát mã 2
+ngay lúc khởi động; `SCHEDULER_ENABLED=false` thì worker thoát mã 0 mà không thu thập gì.
+
 Cảnh báo chất lượng: tỷ lệ parse thành công < 80% hoặc số sản phẩm giảm > 50% so với lượt trước → log `WARNING` và hiển thị trên trang quản trị (dấu hiệu trang đổi giao diện).
 
 Chi tiết đã cài đặt (T2.6; `app/scrapers/pipeline.py`, `app/services/scrape_service.py`, `scripts/scrape.py`):

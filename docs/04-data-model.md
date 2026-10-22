@@ -317,6 +317,10 @@ class ProductDetail(BaseModel):        # đầu ra parser trang chi tiết
     raw_specs: dict[str, str]
     model_code_hint: str | None        # MPN/SKU từ JSON-LD nếu có
     brand_hint: str | None
+    price: int | None                  # giá bán đọc từ chính trang chi tiết (T9.3); None nếu không đọc được/bị che
+    list_price: int | None
+    price_type: PriceType              # unknown = trang không cho biết giá gốc/loại giá → giữ giá trị đã lưu
+    stock_status: StockStatus          # unknown = giữ tồn kho đã lưu
 
 class Challenge(BaseModel):           # dấu hiệu bị chặn/captcha (06 §4); lưu vào scrape_run.challenge
     kind: ChallengeKind

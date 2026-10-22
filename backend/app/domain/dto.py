@@ -60,6 +60,13 @@ class ProductDetail(BaseModel):
     raw_specs: dict[str, str] = Field(default_factory=dict)
     model_code_hint: str | None = None  # MPN/SKU từ JSON-LD nếu có
     brand_hint: str | None = None
+    # Giá đọc được từ chính trang chi tiết (dùng khi chỉ làm mới giá của offer đang theo dõi,
+    # docs/06 §7). `price_type = unknown` nghĩa là trang không cho biết giá gốc/loại giá: nơi dùng
+    # giữ nguyên `list_price`/`price_type` của offer; `stock_status = unknown` cũng giữ nguyên.
+    price: Vnd | None = None
+    list_price: Vnd | None = None
+    price_type: PriceType = PriceType.unknown
+    stock_status: StockStatus = StockStatus.unknown
 
 
 class Challenge(BaseModel):

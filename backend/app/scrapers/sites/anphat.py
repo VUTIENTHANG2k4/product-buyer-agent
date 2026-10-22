@@ -23,7 +23,7 @@ from app.normalize.price import parse_price
 from app.normalize.url import clean_url
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.http.types import FetchResponse
-from app.scrapers.parsing import json_ld_objects, node_text
+from app.scrapers.parsing import json_ld_objects, node_text, schema_offer, schema_price
 
 logger = logging.getLogger(__name__)
 
@@ -257,6 +257,10 @@ class AnPhatScraper(BaseScraper):
         return ProductDetail.model_validate(
             {
                 "url": clean_url(url),
+                # Chỉ lấy giá bán từ JSON-LD. Trang không cho biết giá gốc/loại giá chắc chắn, và
+                # `availability` của JSON-LD luôn InStock (khác nút "Đặt hàng" ở thẻ danh sách),
+                # nên để `price_type`/`stock_status` là `unknown`: nơi dùng giữ giá trị đã lưu.
+                "price": schema_price(schema_offer(product).get("price")),
                 "raw_specs": specs,
                 # `sku` là "Mã SP" và `mpn` là số nội bộ của An Phát, không phải mã hãng.
                 "model_code_hint": None,
