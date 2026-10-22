@@ -1,5 +1,6 @@
 import { Bell, Bot, ListChecks, Settings, type LucideIcon } from 'lucide-react'
 import { NavLink } from 'react-router'
+import { useLists } from '@/features/lists/api'
 import { cn } from '@/lib/utils'
 import { strings } from '@/lib/strings'
 
@@ -10,14 +11,22 @@ interface NavItem {
   end?: boolean
 }
 
-const items: NavItem[] = [
-  { to: '/', label: strings.nav.home, icon: Bot, end: true },
-  { to: '/lists', label: strings.nav.lists, icon: ListChecks },
-  { to: '/alerts', label: strings.nav.alerts, icon: Bell },
-  { to: '/admin', label: strings.nav.admin, icon: Settings },
-]
-
 export function NavBar() {
+  const lists = useLists()
+  // Tổng số mục trong mọi danh sách; chưa tải được hoặc chưa có mục nào thì không hiện số.
+  const listCount = lists.data?.items.reduce((sum, list) => sum + list.item_count, 0) ?? 0
+
+  const items: NavItem[] = [
+    { to: '/', label: strings.nav.home, icon: Bot, end: true },
+    {
+      to: '/lists',
+      label: listCount > 0 ? strings.nav.listsWithCount(listCount) : strings.nav.lists,
+      icon: ListChecks,
+    },
+    { to: '/alerts', label: strings.nav.alerts, icon: Bell },
+    { to: '/admin', label: strings.nav.admin, icon: Settings },
+  ]
+
   return (
     <nav aria-label={strings.nav.label} className="flex flex-wrap items-center gap-1">
       {items.map(({ to, label, icon: Icon, end }) => (

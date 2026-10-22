@@ -6,9 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Buyer Agent</title>
     <script>
-      // Theo chế độ sáng/tối của hệ điều hành (nút đổi thủ công làm ở T8.1).
+      // Lựa chọn đã lưu (khóa trùng THEME_STORAGE_KEY ở src/lib/theme.ts), mặc định theo hệ điều hành.
       try {
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        var stored = null
+        try {
+          stored = window.localStorage.getItem('buyer-agent-theme')
+        } catch (e) {
+          /* localStorage bị chặn: coi như chưa lưu */
+        }
+        if (
+          stored === 'dark' ||
+          (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
           document.documentElement.classList.add('dark')
         }
       } catch (e) {

@@ -138,6 +138,7 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 | `--border` | `#E7E5E4` | `#292524` | Viền |
 
 - Các token còn lại theo quy ước shadcn/ui (`--card`, `--popover`, `--secondary`, `--accent` là nền hover, `--input`, `--ring`, `--chart-1…5`, kèm `*-foreground`) cũng nằm trong `frontend/src/styles/globals.css`. Giá trị cụ thể ở file đó; đổi màu thì sửa đúng file đó.
+- **Chế độ sáng/tối:** nút "Giao diện" ở thanh trên (Sáng / Tối / Theo hệ thống, mặc định theo hệ điều hành); lựa chọn lưu ở `localStorage` khóa `buyer-agent-theme` và đặt lớp `dark` trên `<html>` (script trong `index.html` áp trước khi tải để không nháy).
 - **Font:** "Be Vietnam Pro" (Google Fonts, hỗ trợ đầy đủ dấu tiếng Việt) cho chữ; `font-variant-numeric: tabular-nums` cho cột giá.
 - **Cỡ chữ:** 14 px nội dung bảng, 16 px nội dung chung, 20/24/30 px tiêu đề.
 - **Bo góc:** 8 px (thẻ, ô nhập), 6 px (nút), 999 px (badge).
