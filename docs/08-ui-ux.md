@@ -150,6 +150,14 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 - **"Gửi thử":** `POST /alerts/{id}/test` hiện nay luôn trả `sent: false` kèm `reason` (bộ gửi thuộc M9), giao diện hiện đúng lý do đó ("Chưa gửi được thông báo thử: …"), không bao giờ nói đã gửi khi `sent` là false.
 - Tạo cảnh báo dùng `CreateAlertDialog` (T8.3) từ bảng kết quả và trang chi tiết; không có nút tạo ở trang này vì cảnh báo luôn gắn với một sản phẩm đang xem.
 
+### 3.13 Quản trị thu thập (đã dựng ở T8.7)
+- **Banner:** từ `GET /health`: `offline_mode` → "Đang ở chế độ offline" (chỉ mock-shop thu thập được); `db: error` → cảnh báo CSDL; dòng nhỏ nêu nhà cung cấp LLM + phiên bản. `/health` lỗi thì không hiện banner, phần còn lại vẫn dùng được.
+- **Thẻ nguồn** (`GET /admin/sources`): tên, nhãn "Mô phỏng"/"Đã tắt", `robots_status` (cho phép / chặn một phần / chưa kiểm tra), độ trễ áp dụng, "Có tìm kiếm trực tiếp", lượt chạy gần nhất (huy hiệu, mã, nhóm, giờ, bộ đếm, lý do nếu `BLOCKED`/`FAILED`/`PARTIAL`), dòng "Đang nghỉ … thử lại được sau …" khi `cooldown_until` còn ở tương lai. API không có trường "cảnh báo chất lượng" riêng nên giao diện chỉ hiện bộ đếm (số lỗi đọc) và `error_message`.
+- **Chạy ngay:** một nút cho mỗi nhóm của nguồn (tắt khi nguồn bị tắt hoặc đang gửi), `POST /admin/scrape-runs` → "Đã bắt đầu lượt #N". Lỗi đồng bộ có câu riêng: `OFFLINE_MODE`, `SCRAPE_ALREADY_RUNNING` (kèm mã lượt), `SITE_COOLDOWN` (kèm giờ thử lại, giờ Việt Nam); lỗi khác dùng thông điệp của máy chủ. Nút không bị tắt trước khi gửi ở chế độ offline: máy chủ là nơi quyết định.
+- **Bảng lượt chạy** (`GET /admin/scrape-runs`, 10 lượt/trang, mới nhất trước): lọc trang/nhóm/trạng thái (đổi lọc về trang 1), phân trang trước/sau, dạng thẻ dưới 640 px. `BLOCKED` hiện lý do; thời điểm thử lại chỉ hiện cho lượt mới nhất của nguồn (lấy từ `cooldown_until`), không suy đoán cho lượt cũ.
+- **Tự làm mới:** mỗi 3 giây khi trang đang xem có lượt `RUNNING`/`PENDING` (bảng) hoặc lượt gần nhất của một nguồn đang chạy (thẻ nguồn); dừng hẳn khi hết lượt chạy. Biểu tượng quay tắt khi người dùng bật giảm chuyển động.
+- **Hộp thoại challenge:** lượt `NEEDS_HUMAN` có nút "Xử lý" (ở thẻ nguồn và ở bảng). Hộp thoại tải `GET …/challenge` mỗi lần mở (không dùng lại bản cũ), hiện loại, đề bài (chỉ là chữ; HTML trong đề bài không được dựng) và ảnh nếu `image_url` là http(s) (không gửi referrer). **Chỉ người nhập đáp án** (1–200 ký tự, không NUL); giao diện không đoán hay giải đáp án. Kết cục: 200 → đóng và báo, lượt chạy tiếp ở nền; 400 `CHALLENGE_FAILED` → giữ hộp thoại và cho thử lại; 409 `CHALLENGE_NOT_PENDING` (khi tải hoặc khi gửi) → đóng, báo "không còn chờ đáp án" và làm mới. Trang thật bị chặn không có luồng này, chỉ dừng ở "Bị chặn".
+
 ## 4. Trạng thái giao diện (bắt buộc cho mọi màn hình có dữ liệu)
 
 | Trạng thái | Cách hiển thị |

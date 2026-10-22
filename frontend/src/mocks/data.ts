@@ -131,3 +131,53 @@ export function alertView(overrides: Partial<Schemas['AlertView']> = {}): Schema
     ...overrides,
   }
 }
+
+export function scrapeRunView(
+  overrides: Partial<Schemas['ScrapeRunView']> = {},
+): Schemas['ScrapeRunView'] {
+  return {
+    run_id: 1,
+    site: 'mockshop',
+    category: 'laptop',
+    status: 'SUCCEEDED',
+    trigger: 'manual',
+    pages_fetched: 5,
+    items_parsed: 80,
+    items_failed: 2,
+    offers_upserted: 78,
+    price_changes: 4,
+    started_at: MOCK_NOW,
+    finished_at: '2026-10-16T02:03:00Z',
+    error_message: null,
+    challenge_kind: null,
+    ...overrides,
+  }
+}
+
+export function sourceView(overrides: Partial<Schemas['SourceView']> = {}): Schemas['SourceView'] {
+  return {
+    key: 'mockshop',
+    enabled: true,
+    is_mock: true,
+    categories: ['laptop', 'mouse'],
+    robots_status: 'allowed',
+    effective_delay_s: 5,
+    supports_live_search: false,
+    last_run: null,
+    cooldown_until: null,
+    ...overrides,
+  }
+}
+
+export function healthView(
+  overrides: Partial<Schemas['HealthResponse']> = {},
+): Schemas['HealthResponse'] {
+  return {
+    status: 'ok',
+    db: 'ok',
+    llm_provider: 'fake',
+    offline_mode: false,
+    version: '0.1.0',
+    ...overrides,
+  }
+}

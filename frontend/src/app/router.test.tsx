@@ -66,7 +66,7 @@ describe('router', () => {
     ['/lists', 'Danh sách mua', /Bạn chưa có danh sách mua nào/],
     ['/lists/7', 'Danh sách mua', /Danh sách này chưa có sản phẩm/],
     ['/alerts', 'Cảnh báo giá', /Bạn chưa đặt cảnh báo giá nào/],
-    ['/admin', 'Quản trị', /T8\.7/],
+    ['/admin', 'Quản trị', /Chưa có nguồn nào được cấu hình/],
   ])('có route %s', async (path, heading, description) => {
     renderAt(path)
     expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument()

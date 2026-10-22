@@ -1,6 +1,6 @@
 import { http, HttpResponse, type RequestHandler } from 'msw'
 import { apiUrl } from '@/api/client'
-import { productFull } from './data'
+import { healthView, productFull } from './data'
 
 /**
  * Handler dùng chung cho mọi test; handler theo màn hình thêm ở chính test đó (`server.use`).
@@ -36,6 +36,11 @@ export const handlers: RequestHandler[] = [
     HttpResponse.json(productFull({ product_id: Number(params.id) })),
   ),
   http.get(apiUrl('alerts'), () => HttpResponse.json({ items: [] })),
+  http.get(apiUrl('health'), () => HttpResponse.json(healthView())),
+  http.get(apiUrl('admin/sources'), () => HttpResponse.json({ items: [] })),
+  http.get(apiUrl('admin/scrape-runs'), () =>
+    HttpResponse.json({ items: [], total: 0, page: 1, page_size: 10 }),
+  ),
   http.get(apiUrl('conversations'), () => HttpResponse.json({ items: [] })),
   http.get(apiUrl('conversations/:id/messages'), () => HttpResponse.json({ items: [] })),
 ]
