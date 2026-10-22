@@ -12,20 +12,23 @@ interface RunTurnProps {
   userText?: string
   /** Gửi lại một tin nhắn (nút "Hỏi lại" sau lỗi của agent, hoặc bấm gợi ý tiếp). */
   onAsk: (text: string) => void
-  /** Báo cho trang biết lượt đã kết thúc (để mở lại ô nhập). */
-  onFinish?: (runId: string) => void
+  /**
+   * Báo cho trang biết lượt đã kết thúc hay đang chạy lại (để mở/khóa ô nhập): `false` khi người dùng
+   * bấm "Thử lại" sau mất kết nối và lượt quay về trạng thái đang kết nối.
+   */
+  onFinishedChange?: (runId: string, finished: boolean) => void
   /** Chặn các nút gửi tin nhắn mới (đang có lượt khác chạy). */
   busy?: boolean
 }
 
 /** Một lượt hỏi–đáp: tin người dùng, tiến trình agent, rồi câu trả lời / câu hỏi lại / lỗi. */
-export function RunTurn({ runId, userText, onAsk, onFinish, busy = false }: RunTurnProps) {
+export function RunTurn({ runId, userText, onAsk, onFinishedChange, busy = false }: RunTurnProps) {
   const { state, reconnect } = useAgentRun(runId)
   const finished = isFinished(state.phase)
 
   useEffect(() => {
-    if (finished) onFinish?.(runId)
-  }, [finished, onFinish, runId])
+    onFinishedChange?.(runId, finished)
+  }, [finished, onFinishedChange, runId])
 
   return (
     <div className="space-y-4">

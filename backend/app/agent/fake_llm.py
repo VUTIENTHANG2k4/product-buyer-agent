@@ -34,12 +34,6 @@ _CATEGORY_WORDS: Final = (
     (Category.keyboard, ("ban phim", "keyboard")),
     (Category.headset, ("tai nghe", "headset", "headphone")),
 )
-_NOUN: Final = {
-    Category.laptop: "laptop",
-    Category.mouse: "chuột",
-    Category.keyboard: "bàn phím",
-    Category.headset: "tai nghe",
-}
 _MAX_WORDS: Final = ("duoi", "toi da", "khong qua", "<")
 _MIN_WORDS: Final = ("tren", "tu ", "it nhat", ">")
 

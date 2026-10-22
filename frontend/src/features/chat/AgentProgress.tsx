@@ -8,7 +8,12 @@ import { isFinished, type AgentRunState, type ToolStep } from './agentRunReducer
 function StepIcon({ state }: { state: 'done' | 'current' | 'pending' }) {
   if (state === 'done') return <Check className="size-4 text-success" aria-hidden="true" />
   if (state === 'current') {
-    return <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
+    return (
+      <Loader2
+        className="size-4 animate-spin text-primary motion-reduce:animate-none"
+        aria-hidden="true"
+      />
+    )
   }
   return <Circle className="size-4 text-muted-foreground" aria-hidden="true" />
 }
@@ -24,7 +29,11 @@ function ToolRow({ tool }: { tool: ToolStep }) {
   return (
     <li className="flex items-center gap-2 text-xs text-muted-foreground">
       <Icon
-        className={cn('size-3.5 shrink-0', color, tool.status === 'running' && 'animate-spin')}
+        className={cn(
+          'size-3.5 shrink-0',
+          color,
+          tool.status === 'running' && 'animate-spin motion-reduce:animate-none',
+        )}
         aria-hidden="true"
       />
       <span className="sr-only">{strings.chat.toolStatus[tool.status]}: </span>
@@ -70,7 +79,10 @@ export function AgentProgress({ state }: { state: AgentRunState }) {
       <div aria-live="polite" className={cn('mt-2 space-y-2', !open && 'hidden')}>
         {waiting ? (
           <p className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
+            <Loader2
+              className="size-4 animate-spin text-primary motion-reduce:animate-none"
+              aria-hidden="true"
+            />
             {strings.chat.analyzing}
           </p>
         ) : null}

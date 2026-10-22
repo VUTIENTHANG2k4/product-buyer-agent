@@ -42,6 +42,8 @@ function AddToListForm({ product, onClose }: { product: DialogProduct; onClose: 
   const [quantity, setQuantity] = useState('1')
   const [error, setError] = useState<string | null>(null)
   const [added, setAdded] = useState<{ listId: number; name: string } | null>(null)
+  // Danh sách vừa tạo ở lần gửi trước mà bước thêm mục lỗi: thử lại dùng lại nó, không tạo bản thứ hai.
+  const [created, setCreated] = useState<{ list_id: number; name: string } | null>(null)
 
   const items = lists.data?.items ?? []
   // Mặc định chọn danh sách đầu tiên; chưa có danh sách nào thì tạo mới.
@@ -59,9 +61,13 @@ function AddToListForm({ product, onClose }: { product: DialogProduct; onClose: 
       return
     }
     try {
-      const list = creating
-        ? await createList.mutateAsync(newName.trim())
-        : items.find((item) => String(item.list_id) === selected)
+      let list: { list_id: number; name: string } | undefined
+      if (creating) {
+        list = created ?? (await createList.mutateAsync(newName.trim()))
+        setCreated(list)
+      } else {
+        list = items.find((item) => String(item.list_id) === selected)
+      }
       if (!list) return
       await addItem.mutateAsync({
         listId: list.list_id,

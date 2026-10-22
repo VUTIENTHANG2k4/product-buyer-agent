@@ -69,10 +69,15 @@ function ConversationView({ conversationId }: { conversationId: number }) {
   }
 
   const busy = turns.some((turn) => !finished.has(turn.runId)) || send.isPending
-  const onFinish = useCallback(
-    (runId: string) => setFinished((previous) => new Set(previous).add(runId)),
-    [],
-  )
+  const onFinishedChange = useCallback((runId: string, isFinished: boolean) => {
+    setFinished((previous) => {
+      if (previous.has(runId) === isFinished) return previous
+      const next = new Set(previous)
+      if (isFinished) next.add(runId)
+      else next.delete(runId)
+      return next
+    })
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: 'end' })
@@ -114,7 +119,7 @@ function ConversationView({ conversationId }: { conversationId: number }) {
             runId={turn.runId}
             userText={turn.text ?? (index === 0 ? initialText : undefined)}
             onAsk={(text) => void ask(text).catch(() => undefined)}
-            onFinish={onFinish}
+            onFinishedChange={onFinishedChange}
             busy={busy}
           />
         ))}

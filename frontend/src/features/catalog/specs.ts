@@ -1,70 +1,11 @@
 import { formatNumber } from '@/lib/format'
+import { strings } from '@/lib/strings'
 
 /** Nhãn tiếng Việt của các trường thông số (khớp khung specs ở backend, docs/04 §5). */
-const LABELS: Record<string, string> = {
-  cpu_model: 'CPU',
-  cpu_vendor: 'Hãng CPU',
-  gpu_model: 'GPU',
-  gpu_vram_gb: 'VRAM',
-  gpu_rank: 'Hạng GPU',
-  ram_gb: 'RAM',
-  storage_gb: 'Ổ cứng',
-  storage_type: 'Loại ổ cứng',
-  screen_in: 'Màn hình',
-  resolution: 'Độ phân giải',
-  refresh_hz: 'Tần số quét',
-  panel: 'Tấm nền',
-  weight_kg: 'Khối lượng',
-  os: 'Hệ điều hành',
-  is_gaming: 'Laptop gaming',
-  connection: 'Kết nối',
-  dpi_max: 'DPI tối đa',
-  sensor: 'Cảm biến',
-  buttons: 'Số nút',
-  weight_g: 'Khối lượng',
-  rgb: 'Đèn RGB',
-  shape: 'Hình dáng',
-  switch_type: 'Loại switch',
-  switch_name: 'Switch',
-  form_factor: 'Kích thước',
-  hot_swap: 'Hot-swap',
-  backlight: 'Đèn nền',
-  form: 'Kiểu tai nghe',
-  has_mic: 'Micro',
-  anc: 'Chống ồn',
-  surround_7_1: 'Âm thanh 7.1',
-  driver_mm: 'Driver',
-}
+const LABELS: Record<string, string> = strings.specs.labels
 
 /** Nhãn tiếng Việt của giá trị liệt kê (enum) của khung specs; giá trị lạ giữ nguyên. */
-const VALUE_LABELS: Record<string, Record<string, string>> = {
-  cpu_vendor: { intel: 'Intel', amd: 'AMD', apple: 'Apple', qualcomm: 'Qualcomm' },
-  storage_type: { ssd: 'SSD', hdd: 'HDD' },
-  connection: {
-    wired: 'Có dây',
-    wireless_2_4: 'Không dây 2.4 GHz',
-    bluetooth: 'Bluetooth',
-    wired_3_5: 'Jack 3.5 mm',
-    usb: 'USB',
-  },
-  shape: { ergo_right: 'Công thái học (tay phải)', ambidextrous: 'Đối xứng' },
-  switch_type: { mechanical: 'Cơ', membrane: 'Màng', optical: 'Quang', magnetic: 'Từ' },
-  form_factor: {
-    full: 'Full-size',
-    tkl: 'TKL',
-    '75': '75%',
-    '65': '65%',
-    '60': '60%',
-    other: 'Khác',
-  },
-  backlight: { none: 'Không có', single: 'Một màu', rgb: 'RGB' },
-  form: {
-    over_ear: 'Chụp tai (over-ear)',
-    on_ear: 'Đặt lên tai (on-ear)',
-    in_ear: 'Nhét tai (in-ear)',
-    tws: 'Không dây hoàn toàn (TWS)',
-  },
-}
+const VALUE_LABELS: Record<string, Record<string, string>> = strings.specs.values
 
 function enumLabel(field: string, value: unknown): string {
   const text = String(value)
@@ -99,7 +40,7 @@ function isMissing(value: unknown): boolean {
 /** Giá trị thông số đọc được: có đơn vị, "Có/Không" cho boolean; thiếu thì `—`. */
 export function formatSpecValue(field: string, value: unknown): string {
   if (isMissing(value)) return '—'
-  if (typeof value === 'boolean') return value ? 'Có' : 'Không'
+  if (typeof value === 'boolean') return value ? strings.specs.yes : strings.specs.no
   if (Array.isArray(value)) return value.map((item) => enumLabel(field, item)).join(', ')
   if (typeof value === 'number') {
     switch (field) {

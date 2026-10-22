@@ -352,6 +352,30 @@ describe('ListsPage · sửa số lượng', () => {
     ])
   })
 
+  it('bàn phím: bấm + liên tiếp vẫn giữ focus ở nút + (không dựng lại cụm điều khiển)', async () => {
+    const fake = await open()
+    const plus = screen.getByRole('button', { name: 'Tăng số lượng MockBook Gaming 15' })
+    plus.focus()
+    await userEvent.keyboard('{Enter}')
+    await waitFor(() => expect(qty('MockBook Gaming 15')).toHaveValue('3'))
+    expect(plus).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Tăng số lượng MockBook Gaming 15' })).toBe(plus)
+    await userEvent.keyboard(' ')
+    await waitFor(() => expect(qty('MockBook Gaming 15')).toHaveValue('4'))
+    expect(plus).toHaveFocus()
+    expect(fake.writes).toHaveLength(2)
+  })
+
+  it('gõ số rồi Enter: ô nhập vẫn giữ focus sau khi lưu', async () => {
+    await open()
+    const input = qty('MockBook Gaming 15')
+    await userEvent.clear(input)
+    await userEvent.type(input, '6{Enter}')
+    await waitFor(() => expect(screen.getByText('165.490.000 ₫')).toBeInTheDocument())
+    expect(input).toHaveFocus()
+    expect(input).toHaveValue('6')
+  })
+
   it('nút − tắt ở số lượng 1', async () => {
     await open()
     expect(screen.getByRole('button', { name: 'Giảm số lượng Chuột Mock M1' })).toBeDisabled()
@@ -424,6 +448,16 @@ describe('ListsPage · ghi chú, nơi mua, xóa mục', () => {
     await userEvent.clear(existing)
     await userEvent.tab()
     await waitFor(() => expect(fake.writes).toContain('PATCH lists/1/items/2 {"note":null}'))
+  })
+
+  it('Enter lưu ghi chú nhưng ô nhập vẫn giữ focus và giá trị', async () => {
+    const fake = await open()
+    const note = screen.getByLabelText('Ghi chú cho MockBook Gaming 15')
+    await userEvent.type(note, 'màu bạc{Enter}')
+    await waitFor(() => expect(fake.writes).toHaveLength(1))
+    await waitFor(() => expect(fake.lists[0]?.items[0]?.note).toBe('màu bạc'))
+    expect(note).toHaveFocus()
+    expect(note).toHaveValue('màu bạc')
   })
 
   it('ghi chú không đổi thì không gọi API; quá 500 ký tự thì báo lỗi và không lưu', async () => {

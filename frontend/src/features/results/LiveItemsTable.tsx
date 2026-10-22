@@ -12,6 +12,11 @@ import type { Schemas } from '@/api/types'
 import { safeUrl } from '@/lib/safeUrl'
 import { strings } from '@/lib/strings'
 
+/** `LiveItem.site` là chuỗi tự do của API: biết khóa trang thì hiện tên, không thì giữ nguyên. */
+function siteName(site: string): string {
+  return site in strings.sites ? strings.sites[site as Schemas['SiteKey']] : site
+}
+
 /** Kết quả tìm trực tiếp tầng 2 (docs/08 §3.2): bảng đơn giản, nhãn vàng "chưa chuẩn hóa thông số". */
 export function LiveItemsTable({ items }: { items: readonly Schemas['LiveItem'][] }) {
   if (items.length === 0) return null
@@ -42,7 +47,7 @@ export function LiveItemsTable({ items }: { items: readonly Schemas['LiveItem'][
                       <Price amount={item.price} />
                     )}
                   </TableCell>
-                  <TableCell>{item.site}</TableCell>
+                  <TableCell>{siteName(item.site)}</TableCell>
                   <TableCell>
                     {href ? (
                       <a

@@ -26,6 +26,13 @@ function QuantityControl({
   onChange: (quantity: number) => void
 }) {
   const [text, setText] = useState(String(quantity))
+  // Số lượng đổi từ ngoài (cập nhật lạc quan, hoàn tác, tải lại): đồng bộ ô nhập mà KHÔNG dựng lại
+  // cụm điều khiển, nếu không focus bàn phím rơi về <body> sau mỗi lần bấm −/+.
+  const [seen, setSeen] = useState(quantity)
+  if (quantity !== seen) {
+    setSeen(quantity)
+    setText(String(quantity))
+  }
   const value = Number(text)
   const valid = /^\d+$/.test(text) && value >= 1 && value <= MAX_ITEM_QUANTITY
 
@@ -83,6 +90,12 @@ function NoteField({
   onChange: (note: string | null) => void
 }) {
   const [text, setText] = useState(note ?? '')
+  // Đồng bộ khi ghi chú đổi từ ngoài, không dựng lại ô nhập (giữ focus sau khi Enter lưu).
+  const [seen, setSeen] = useState(note)
+  if (note !== seen) {
+    setSeen(note)
+    setText(note ?? '')
+  }
   const id = useId()
   const tooLong = text.length > MAX_NOTE
 
@@ -192,7 +205,6 @@ export function ListItemCard({ item, onUpdate, onRemove }: ListItemCardProps) {
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">{strings.lists.quantity}</p>
           <QuantityControl
-            key={item.quantity}
             name={item.name}
             quantity={item.quantity}
             onChange={(quantity) => onUpdate(item.item_id, { quantity })}
@@ -236,7 +248,6 @@ export function ListItemCard({ item, onUpdate, onRemove }: ListItemCardProps) {
       </div>
 
       <NoteField
-        key={item.note ?? ''}
         name={item.name}
         note={item.note}
         onChange={(note) => onUpdate(item.item_id, { note })}

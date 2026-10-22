@@ -219,6 +219,25 @@ describe('ConversationPage · lượt đang theo dõi (?run=)', () => {
 })
 
 describe('ConversationPage · hỏi tiếp', () => {
+  it('mất kết nối rồi bấm "Thử lại": ô nhập mở khi báo lỗi và khóa lại khi lượt nối lại đang chạy', async () => {
+    history(message(1, 'user', 'laptop'))
+    server.use(
+      http.get(apiUrl(`chat/${RUN}/events`), () => HttpResponse.error()),
+      http.get(apiUrl(`chat/${RUN}`), () =>
+        HttpResponse.json({ run_id: RUN, conversation_id: 7, status: 'running', intent: null }),
+      ),
+    )
+    renderAt(`/c/7?run=${RUN}`)
+    const alert = await screen.findByRole('alert', undefined, { timeout: 8000 })
+    expect(composer()).toBeEnabled()
+
+    run(RUN, [planFrame], 'hang')
+    await userEvent.click(within(alert).getByRole('button', { name: 'Thử lại' }))
+    await screen.findByText(sample.plan.steps[0] as string)
+    expect(composer()).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Gửi' })).toBeDisabled()
+  }, 15000)
+
   it('trong lúc lượt chạy dở, ô nhập và nút Gửi bị tắt', async () => {
     history(message(1, 'user', 'laptop'))
     run(RUN, [planFrame], 'hang')

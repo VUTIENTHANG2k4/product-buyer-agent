@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from '@playwright/test'
+import { expect, type APIRequestContext, type Locator, type Page } from '@playwright/test'
 
 /** Câu hỏi mà model giả (`ShoppingFakeChatModel`) hiểu: nhóm hàng + trần giá → bảng laptop từ seed `e2e`. */
 export const LAPTOP_QUESTION = 'laptop gaming dưới 30 triệu'
@@ -27,6 +27,23 @@ export async function productNameAt(table: Locator, index: number): Promise<stri
 export async function chooseRowAction(page: Page, productName: string, action: string) {
   await page.getByRole('button', { name: `Thao tác với ${productName}` }).click()
   await page.getByRole('menuitem', { name: action }).click()
+}
+
+/** Gốc API của backend E2E (cùng cổng với `playwright.config.ts`). */
+const API_URL = 'http://localhost:8010/api'
+
+/**
+ * Xóa mọi cảnh báo qua API trước mỗi test cần tạo cảnh báo: nếu Playwright chạy lại (retry) một test
+ * đã tạo cảnh báo trước khi lỗi thì lần chạy lại không bị 409 `DUPLICATE_ALERT` che mất lỗi thật.
+ */
+export async function clearAlerts(request: APIRequestContext): Promise<void> {
+  const response = await request.get(`${API_URL}/alerts`)
+  expect(response.ok()).toBeTruthy()
+  const { items } = (await response.json()) as { items: { alert_id: number }[] }
+  for (const alert of items) {
+    const deleted = await request.delete(`${API_URL}/alerts/${alert.alert_id}`)
+    expect(deleted.ok()).toBeTruthy()
+  }
 }
 
 /** Tên duy nhất cho mỗi lần chạy, để spec không đụng dữ liệu của spec khác trong cùng DB. */

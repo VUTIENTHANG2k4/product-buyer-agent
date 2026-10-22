@@ -1,8 +1,15 @@
 """Hàm thuần của `scripts/e2e_server.py`: chọn DB E2E an toàn và môi trường tiến trình con."""
 
+import os
+from types import SimpleNamespace
+from typing import Any
+
 import pytest
+import uvicorn
+from pydantic import SecretStr
 from sqlalchemy.engine import make_url
 
+from scripts import e2e_server
 from scripts.e2e_server import (
     UnsafeE2eDatabase,
     admin_url,
@@ -95,3 +102,72 @@ def test_admin_url_targets_postgres_database_on_same_server() -> None:
         5435,
         "buyer",
     )
+
+
+class TestMainGuard:
+    """`main()` phải dừng TRƯỚC mọi thao tác phá hủy khi tên DB không an toàn."""
+
+    @staticmethod
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError(
+            "không được chạm DB, migrate, seed hay chạy API khi tên DB không an toàn"
+        )
+
+    def test_refuses_unsafe_explicit_database_without_touching_anything(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        settings = SimpleNamespace(
+            database_url=SecretStr(DEV_URL),
+            e2e_database_url=SecretStr(DEV_URL),  # chính DB dev: tuyệt đối không được reset
+        )
+        monkeypatch.setattr(e2e_server, "get_settings", lambda: settings)
+        monkeypatch.setattr(e2e_server, "ensure_database", self._boom)
+        monkeypatch.setattr(e2e_server, "_run", self._boom)
+        monkeypatch.setattr(uvicorn, "run", self._boom)
+
+        with caplog.at_level("ERROR", logger="e2e_server"):
+            code = e2e_server.main(["--port", "8099"])
+
+        assert code == 2
+        assert "_e2e" in caplog.text
+
+    def test_safe_database_runs_migrate_then_seed_reset_then_serves(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        settings = SimpleNamespace(database_url=SecretStr(DEV_URL), e2e_database_url=SecretStr(""))
+        steps: list[str] = []
+
+        def ensure(url: Any) -> bool:
+            steps.append(f"ensure {url.database}")
+            return True
+
+        def run(args: Any, env: Any) -> None:
+            steps.append(f"{' '.join(args)} -> {make_url(env['DATABASE_URL']).database}")
+
+        def serve(*_args: Any, **kwargs: Any) -> None:
+            steps.append(f"serve {kwargs['port']}")
+
+        monkeypatch.setattr(e2e_server, "get_settings", _cache_clearable(settings))
+        monkeypatch.setattr(e2e_server, "ensure_database", ensure)
+        monkeypatch.setattr(e2e_server, "_run", run)
+        monkeypatch.setattr(uvicorn, "run", serve)
+        monkeypatch.setattr(os, "environ", {})
+
+        assert e2e_server.main(["--port", "8099"]) == 0
+
+        assert steps == [
+            "ensure product_buyer_e2e",
+            "alembic upgrade head -> product_buyer_e2e",
+            "scripts.seed --fixture e2e --reset --yes -> product_buyer_e2e",
+            "serve 8099",
+        ]
+
+
+def _cache_clearable(settings: SimpleNamespace):  # type: ignore[no-untyped-def]
+    """`main()` gọi `get_settings.cache_clear()`: bản giả cần có thuộc tính đó."""
+
+    def fake() -> SimpleNamespace:
+        return settings
+
+    fake.cache_clear = lambda: None  # type: ignore[attr-defined]
+    return fake

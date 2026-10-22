@@ -33,6 +33,23 @@ describe('LiveItemsTable', () => {
     expect(link).toHaveAttribute('target', '_blank')
   })
 
+  it('cột Trang hiện tên trang cho khóa đã biết, khóa lạ thì giữ nguyên chữ', () => {
+    render(
+      <LiveItemsTable
+        items={[
+          item,
+          { ...item, site: 'trang-moi', title: 'Loa Mock lạ trang' },
+          { ...item, site: 'mockshop', title: 'Loa Mock shop' },
+        ]}
+      />,
+    )
+    const cells = screen.getAllByRole('row').map((row) => row.textContent)
+    expect(cells[1]).toContain('GearVN')
+    expect(cells[2]).toContain('trang-moi')
+    expect(cells[3]).toContain('Mock Shop')
+    expect(cells[1]).not.toContain('gearvn')
+  })
+
   it('không rõ giá thì hiện chữ thay vì số; URL nguy hiểm không thành liên kết', () => {
     render(
       <LiveItemsTable

@@ -1,3 +1,4 @@
+import { strings } from '@/lib/strings'
 /** Múi giờ hiển thị (docs/03 §Thời gian): dữ liệu lưu UTC, giao diện theo giờ Việt Nam. */
 export const DISPLAY_TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
@@ -78,12 +79,12 @@ export function formatRelative(iso: string, now: Date = new Date()): string {
   const date = parseInstant(iso)
   if (!date) return '—'
   const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-  if (seconds < 60) return 'vừa xong'
+  if (seconds < 60) return strings.time.justNow
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes} phút trước`
+  if (minutes < 60) return strings.time.minutesAgo(minutes)
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} giờ trước`
-  return `${Math.floor(hours / 24)} ngày trước`
+  if (hours < 24) return strings.time.hoursAgo(hours)
+  return strings.time.daysAgo(Math.floor(hours / 24))
 }
 
 /** Cũ hơn 24 giờ (đúng 24 giờ chưa tính là cũ). Chuỗi không hợp lệ → không báo cũ. */

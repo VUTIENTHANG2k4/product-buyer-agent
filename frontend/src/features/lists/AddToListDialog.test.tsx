@@ -91,6 +91,39 @@ describe('AddToListDialog', () => {
     ])
   })
 
+  it('tạo danh sách xong mà thêm mục lỗi: thử lại dùng lại danh sách vừa tạo, không tạo bản thứ hai', async () => {
+    lists()
+    const calls: string[] = []
+    let itemAttempts = 0
+    server.use(
+      http.post(apiUrl('lists'), () => {
+        calls.push('create')
+        return HttpResponse.json(listSummary({ list_id: 9, name: 'Học kỳ mới' }), { status: 201 })
+      }),
+      http.post(apiUrl('lists/:id/items'), ({ request }) => {
+        itemAttempts += 1
+        calls.push(`item ${new URL(request.url).pathname}`)
+        return itemAttempts === 1
+          ? HttpResponse.json(
+              { error: { code: 'INTERNAL_ERROR', message: 'Lỗi hệ thống', details: {} } },
+              { status: 500 },
+            )
+          : HttpResponse.json({ item_id: 1 }, { status: 201 })
+      }),
+    )
+    renderDialog()
+    await waitFor(() => expect(select()).toHaveValue('new'))
+    await userEvent.type(screen.getByLabelText('Tên danh sách mới'), 'Học kỳ mới')
+    await userEvent.click(submit())
+    expect(await screen.findByRole('alert')).toHaveTextContent('Lỗi hệ thống')
+
+    await userEvent.click(submit())
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Đã thêm vào danh sách "Học kỳ mới".',
+    )
+    expect(calls).toEqual(['create', 'item /api/lists/9/items', 'item /api/lists/9/items'])
+  })
+
   it('chọn "Tạo danh sách mới" khi đã có danh sách thì hiện ô nhập tên', async () => {
     lists(listSummary({ list_id: 1, name: 'Mock A' }))
     renderDialog()

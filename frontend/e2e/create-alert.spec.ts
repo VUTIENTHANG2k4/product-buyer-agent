@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test'
-import { askAgent, chooseRowAction, productNameAt } from './helpers.ts'
+import { askAgent, chooseRowAction, clearAlerts, productNameAt } from './helpers.ts'
 
 test.describe('Luồng 4: đặt cảnh báo giảm giá', () => {
+  test.beforeEach(async ({ request }) => {
+    await clearAlerts(request)
+  })
+
   test('chọn ngưỡng gợi ý −5%, tạo cảnh báo rồi thấy nó ở /alerts với trạng thái đang theo dõi', async ({
     page,
   }) => {
