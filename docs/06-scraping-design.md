@@ -170,7 +170,8 @@ run(site, category, trigger, max_pages) -> ScrapeRun
   4. Kết thúc: SUCCEEDED / PARTIAL (items_failed > 20% hoặc chạm max_pages) / FAILED / BLOCKED / NEEDS_HUMAN
   5. Trả về ScrapeRun + danh sách offer_id đổi giá. Pipeline KHÔNG gọi services; việc đánh giá cảnh báo do
      `services/scrape_service.py` (lớp gọi pipeline, dùng chung cho worker và API quản trị) thực hiện:
-     scrape_service.run(site, category) → pipeline.run(...) → alert_service.evaluate(changed_offer_ids)
+     scrape_service.run(site, category) → pipeline.run(...) → AlertEvaluator(changed_offer_ids)
+     (services/alert_evaluation.py: alert_service.find_due → notifier.send → mark_sent, commit từng cảnh báo)
 ```
 
 Cảnh báo chất lượng: tỷ lệ parse thành công < 80% hoặc số sản phẩm giảm > 50% so với lượt trước → log `WARNING` và hiển thị trên trang quản trị (dấu hiệu trang đổi giao diện).

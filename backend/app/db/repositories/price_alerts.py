@@ -71,6 +71,15 @@ class PriceAlertRepository:
         )
         return list(self._session.exec(statement))
 
+    def list_live(self) -> list[PriceAlert]:
+        """Mọi cảnh báo còn hiệu lực (`active`, `triggered`), theo id."""
+        statement = (
+            select(PriceAlert)
+            .where(col(PriceAlert.status).in_(LIVE_STATUSES))
+            .order_by(col(PriceAlert.id))
+        )
+        return list(self._session.exec(statement))
+
     def find_live(
         self, product_id: int, channel: AlertChannel, destination: str
     ) -> PriceAlert | None:

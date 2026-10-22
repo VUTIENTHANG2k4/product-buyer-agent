@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (M8 đã đóng). Kế tiếp đề xuất: M9 Theo dõi giá (`/next M9`), chọn nhánh mới từ `main` sau khi người dùng merge `milestone/M8-frontend`.
+- Đang làm: M9 Theo dõi giá & vận hành (nhánh `milestone/M9-price-tracking`). Thứ tự: T9.1 → T9.2 → T9.3 → T9.4. T9.1 xong; đang làm T9.2 (nối `AlertEvaluator` vào `ScrapeRuntime`/`scripts/scrape.py` khi có `build_notifiers`).
 - Backlog chưa làm (không chặn M9): T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7, T8.12 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-22 — đóng M8 (`/done M8`)
 
@@ -19,7 +19,7 @@
 | M6 Agent | ✅ | Gộp T5.3; qua `code-reviewer` + `qa-tester` (10 bug sửa ngay, 7 bug giữ `xfail(strict)` BUG-M6-11…17 → T6.8–T6.13). T6.7 tùy chọn |
 | M7 API | ✅ | Gộp T6.8, T6.9; qua `code-reviewer` (3 Phải sửa đã sửa) + `qa-tester` (4 bug sửa ngay, 3 bug giữ `xfail(strict)` BUG-M7-3, 4, 6b → T7.7; còn T7.6 từ review). T2.8 chưa làm |
 | M8 Frontend | ✅ | Gộp T8.9–T8.11; qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (9 bug sửa ngay, 278 test `*.qa-m8`); 30 ảnh `docs/ui/screens/` đã trình người dùng một lần (cho tiếp tục); E2E 8/8. Còn T8.12 (4 điểm nhỏ cần quyết định) |
-| M9 Theo dõi giá | ⬜ | |
+| M9 Theo dõi giá | 🔄 | T9.1–T9.4 |
 | M10 Tầng 2 | ⬜ | |
 | M11 Hoàn thiện | ⬜ | |
 

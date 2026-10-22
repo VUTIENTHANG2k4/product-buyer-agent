@@ -4,6 +4,7 @@ Quy ước chung của mọi repository: nhận `Session` qua `__init__`, chỉ 
 (service/pipeline giữ transaction). Thời gian truyền vào qua `now` (UTC), mặc định `utc_now()`.
 """
 
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any, NamedTuple
 
@@ -103,6 +104,14 @@ class OfferRepository:
 
     def get_by_url(self, url: str) -> Offer | None:
         return self._session.exec(select(Offer).where(Offer.url == url)).first()
+
+    def product_ids_of(self, offer_ids: Sequence[int]) -> list[int]:
+        """Id sản phẩm (không trùng, tăng dần) của các offer; id không tồn tại bị bỏ qua."""
+        valid = keep_valid(offer_ids)
+        if not valid:
+            return []
+        statement = select(Offer.product_id).where(col(Offer.id).in_(valid)).distinct()
+        return sorted(self._session.exec(statement))
 
     def list_for_product(self, product_id: int, *, active_only: bool = True) -> list[Offer]:
         """Offer của một sản phẩm, rẻ nhất trước (theo giá hiệu lực)."""

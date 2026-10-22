@@ -355,7 +355,7 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T9.1 | Đánh giá cảnh báo + chống gửi trùng | T6.2, T2.6 | M | ⬜ |
+| T9.1 | Đánh giá cảnh báo + chống gửi trùng | T6.2, T2.6 | M | ✅ |
 | T9.2 | Notifier email + Telegram | T9.1 | S | ⬜ |
 | T9.3 | Worker + lịch APScheduler | T2.6, T9.1 | M | ⬜ |
 | T9.4 | Dockerfile + docker compose | T8.8 | M | ⬜ |
