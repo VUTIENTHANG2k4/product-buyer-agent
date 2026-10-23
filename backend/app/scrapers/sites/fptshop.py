@@ -259,13 +259,26 @@ def _is_struck(node: LexborNode) -> bool:
     )
 
 
+def _own_site_path(href: str) -> str:
+    """Link tuyệt đối tới chính FPT Shop (`https://fptshop.com.vn/...`) thành đường dẫn tương đối.
+
+    Chỉ bỏ tiền tố đúng bằng máy chủ gốc: `fptshop.com.vn.evil.example` hay `fptshop.com.vn@evil`
+    còn lại chuỗi không bắt đầu bằng `/` nên không qua được `_PRODUCT_HREF`.
+    """
+    for scheme in ("https://", "http://"):
+        prefix = scheme + urlsplit(_BASE_URL).netloc
+        if href.startswith(prefix):
+            return href[len(prefix) :]
+    return href
+
+
 def _search_card(anchor: LexborNode, page_url: str) -> ListingItem | None:
     """Thẻ kết quả tìm kiếm (`a` có `h3`) → `ListingItem`; `None` nếu không phải thẻ sản phẩm.
 
     Giá bán là ô giá đúng dạng `12.990.000đ` đứng cuối; giá gốc gạch ngang là phần tử
     `.line-through` (có thể kèm `-18%` cùng ô). Không có ô giá nào → `price=None` (không đoán).
     """
-    href = anchor.attributes.get("href") or ""
+    href = _own_site_path(anchor.attributes.get("href") or "")
     heading = anchor.css_first("h3")
     if heading is None or not _PRODUCT_HREF.match(href):
         return None

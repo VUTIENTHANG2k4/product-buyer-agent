@@ -50,12 +50,20 @@ REASON_FAILED: Final = "không tải được trang tìm kiếm"
 
 def normalize_query(query: str) -> str:
     """NFC, chữ thường, gộp khoảng trắng; ném `ValidationFailed` nếu rỗng hoặc quá dài."""
-    text = " ".join(unicodedata.normalize("NFC", query).casefold().split())
+    text = collapse_query(query).casefold()
     if not text:
         raise ValidationFailed("Từ khóa tìm kiếm không được để trống.")
     if len(text) > MAX_QUERY_CHARS:
         raise ValidationFailed(f"Từ khóa tìm kiếm tối đa {MAX_QUERY_CHARS} ký tự.")
+    if any(unicodedata.category(char) in {"Cc", "Cs"} for char in text):
+        # NUL và surrogate lẻ không lưu được vào khóa cache PostgreSQL (DataError → lỗi 500).
+        raise ValidationFailed("Từ khóa tìm kiếm chứa ký tự điều khiển không hợp lệ.")
     return text
+
+
+def collapse_query(query: str) -> str:
+    """NFC và gộp khoảng trắng, giữ chữ hoa/thường: từ khóa gửi cho trang (≤ độ dài đã kiểm)."""
+    return " ".join(unicodedata.normalize("NFC", query).split())
 
 
 def cache_key(site: SiteKey, normalized_query: str) -> str:
@@ -105,7 +113,7 @@ class LiveSearchService:
             for scraper_cls in self._candidates(skipped):
                 site = scraper_cls.config.key
                 found, from_cache, reason = await self._search_site(
-                    scraper_cls, query.strip(), normalized, now
+                    scraper_cls, collapse_query(query), normalized, now
                 )
                 if reason is not None:
                     skipped.append(SkippedSite(site=site, reason=reason))
@@ -166,17 +174,17 @@ class LiveSearchService:
             logger.exception("Tìm trực tiếp: %s lỗi không mong đợi", site)
             return [], False, REASON_FAILED
         stored: list[dict[str, Any]] = []
+        seen_urls: set[str] = set()
         for listing in found:
             try:
-                stored.append(
-                    {
-                        "title": listing.title,
-                        "price": listing.price,
-                        "url": clean_url(str(listing.url)),
-                    }
-                )
+                url = clean_url(str(listing.url))
             except ValueError:  # URL không làm sạch được (quá dài, scheme lạ): bỏ mục này
                 logger.warning("Tìm trực tiếp: bỏ mục có URL không hợp lệ ở %s", site)
+                continue
+            title = collapse_query(listing.title.replace(chr(0), ""))  # NFC, gộp khoảng trắng
+            if title and url not in seen_urls:  # cùng sản phẩm lặp lại: giữ một
+                seen_urls.add(url)
+                stored.append({"title": title, "price": listing.price, "url": url})
         if not stored:
             logger.warning(
                 "Tìm trực tiếp: %s không trả kết quả cho %r (cache như cũ)", site, normalized

@@ -5,6 +5,7 @@ phẩm là thẻ `a.product-card`, đọc theo thuộc tính `data-slot` (lớp 
 dùng JSON-LD `Product`. `parse_*` là hàm thuần; thẻ không đọc được bị bỏ qua, đếm vào `skipped`.
 """
 
+import contextlib
 import logging
 import re
 import unicodedata
@@ -17,7 +18,7 @@ from selectolax.lexbor import LexborHTMLParser, LexborNode
 from app.domain.dto import ListingItem, ListingPage, ProductDetail
 from app.domain.enums import Category, PriceType, SiteKey
 from app.normalize.price import parse_price
-from app.normalize.url import clean_url
+from app.normalize.url import clean_url, host_key
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.parsing import (
     json_ld_objects,
@@ -33,6 +34,14 @@ _BASE_URL = "https://gearvn.com"
 # Giá hiển thị đúng dạng "24.990.000đ" (chữ đ thường): khuyến mãi như "300.000Đ" không khớp.
 _PRICE_TEXT = re.compile(r"^\d{1,3}(?:\.\d{3})+đ$")
 _HTTP_URL = TypeAdapter(HttpUrl)
+
+
+def _own_hosts(page_url: str) -> set[str]:
+    """Máy chủ của GearVN và của trang đang đọc (có thể là bản `www.` sau chuyển hướng)."""
+    hosts = {host_key(_BASE_URL)}
+    with contextlib.suppress(ValueError):  # page_url không tuyệt đối: chỉ nhận máy chủ gốc
+        hosts.add(host_key(page_url))
+    return hosts
 
 
 def _prices(card: LexborNode) -> list[int]:
@@ -179,6 +188,8 @@ class GearVNScraper(BaseScraper):
         if not href:
             raise ValueError("card without product link")
         url = clean_url(urljoin(page_url, href))
+        if host_key(url) not in _own_hosts(page_url):
+            raise ValueError("card link points to another host")
         segments = urlsplit(url).path.split("/")[1:]
         if len(segments) < 2 or segments[0] != "products" or not segments[1]:
             raise ValueError("card link is not a product page")
