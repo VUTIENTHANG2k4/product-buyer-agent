@@ -3,9 +3,9 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: M11 Hoàn thiện (nhánh `milestone/M11-polish`): T11.1 ✅ (eval cuối; latency p50 chưa đạt, ghi ở bảng đo) → T11.2 ✅ (docs/README/sơ đồ theo code thực tế) → T11.3 ✅ (diễn tập demo 7 bước, E2E 10/10; ghi ở docs/10 §7). Còn: `/check`, `/review M11`, `qa-tester`, `/done M11`.
-- Backlog chưa làm (không chặn M11): T11.4 (lệnh đổi giá demo), T11.5 (latency p50, cần quyết định), T10.4, T9.5–T9.8, T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7, T8.12 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-23 — M11: T11.1–T11.3 xong, đã qua `make check` và `code-reviewer`; còn `qa-tester`, `/done M11`
+- Đang làm: – (M11 đã đóng). Chờ người dùng merge `milestone/M11-polish` vào `main`; sau đó chỉ còn backlog (không có milestone nào chưa làm) và pha mở rộng X.
+- Backlog chưa làm: T11.4 (lệnh đổi giá demo), T11.5 (latency p50, cần quyết định), T10.4, T9.5–T9.8, T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7, T8.12 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-10-23 — đóng M11 (`/done M11`)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -21,7 +21,7 @@
 | M8 Frontend | ✅ | Gộp T8.9–T8.11; qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (9 bug sửa ngay, 278 test `*.qa-m8`); 30 ảnh `docs/ui/screens/` đã trình người dùng một lần (cho tiếp tục); E2E 8/8. Còn T8.12 (4 điểm nhỏ cần quyết định) |
 | M9 Theo dõi giá | ✅ | Qua `code-reviewer` (4 Phải sửa + 10/11 Nên sửa đã sửa) + `qa-tester` (8 bug sửa ngay, 227 test `*_qa_m9`); T9.1–T9.4 xong, `make demo-up` chạy cả hệ thống bằng Docker ([ADR-0009](adr/0009-mock-shop-compose-host.md)). Còn T9.5–T9.8 |
 | M10 Tầng 2 | ✅ | Qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (5 bug sửa ngay, 346 test `*_qa_m10`); tầng 2 thật = GearVN + FPT Shop, Viettel Store/Nguyễn Kim bỏ vì tìm kiếm cần JS ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)). Còn T10.4 |
-| M11 Hoàn thiện | 🔄 | Nhánh `milestone/M11-polish`: T11.1–T11.3 |
+| M11 Hoàn thiện | ✅ | Qua `code-reviewer` (2 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (1 bug sửa ngay, 27 test `*_qa_m11`); T11.1–T11.3 xong: eval cuối (intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; **latency p50 26–31 s chưa đạt**), README/docs theo code, diễn tập demo 7 bước. Còn T11.4, T11.5 (T11.5 chờ người dùng quyết định) |
 
 ## Bị chặn / cần người dùng quyết định
 - Không có (nguồn đã đổi sang FPT Shop + An Phát, người dùng đã duyệt T0.4 ngày 2026-10-19; [ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)).
@@ -29,7 +29,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,11% (6544 pass + 55 xfail đã biết, ngưỡng 80% trong `make test-be`, ~12 phút) | 2026-10-23 |
+| Coverage backend | 99,11% (6578 pass + 55 xfail đã biết, ngưỡng 80% trong `make test-be`, ~8 phút; một lần `test_second_correct_answer_after_resume_is_409…` đỏ khi chạy cả bộ rồi xanh khi chạy lại 3 lần riêng và cả bộ, chưa tìm ra nguyên nhân: nếu lặp lại, nghi tác vụ nền trong `admin_settle`) | 2026-10-23 |
 | Test frontend (Vitest + E2E) | 1067 Vitest pass (không còn expected-fail), 10 E2E Playwright (`make e2e`); chưa đo coverage | 2026-10-23 |
 | Eval (intent accuracy / constraint satisfaction / hallucination) | Lượt 1: 100% / 100% / 0, 31/31 câu (clarification 100%, tool 100%). Lượt cuối (sau trần gọi lặp `live_search_other`): 96,4% / 98,6% / 0, 29/31 (A03 `LLM_UNAVAILABLE` tạm thời, L10 dao động); chạy lại A03, L10 đều đạt. Tool 96,4%. **Latency p50 26–31 s: chưa đạt ≤ 15 s** (không do `LLM_MAX_RPM`: `--rpm 1000` vẫn 21–32 s; ≥ 3 lần gọi Gemini/câu, mỗi lần 4–10 s hôm nay). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-10-23*.md` (T11.1) | 2026-10-23 |
 

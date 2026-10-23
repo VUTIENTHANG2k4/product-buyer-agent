@@ -2,7 +2,7 @@
 
 Đồ án: **Ứng dụng Agentic AI trong Thương mại điện tử.** Một AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt (ví dụ "laptop gaming dưới 30 triệu, RTX 4060 trở lên"), tự lập kế hoạch, lấy dữ liệu đã thu thập từ GearVN, FPT Shop, An Phát, trả bảng so sánh có nguồn, hỗ trợ danh sách mua và cảnh báo giảm giá.
 
-> Trạng thái: M0–M10 hoàn tất, đang ở M11 (hoàn thiện). Tiến độ chi tiết: [docs/PROGRESS.md](docs/PROGRESS.md).
+> Trạng thái: M0–M11 hoàn tất; còn một số mục backlog (T11.5: giảm độ trễ trả lời). Tiến độ chi tiết: [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Chức năng
 - **Hỏi bằng tiếng Việt**: agent lập kế hoạch, hiện tiến trình (SSE), trả bảng so sánh dựng từ cơ sở dữ liệu (không từ số do LLM viết); hỏi lại khi câu quá mơ hồ.
@@ -54,7 +54,7 @@ Kịch bản trình diễn: [docs/10-deployment.md](docs/10-deployment.md#7-kị
 ## Chất lượng đã đo
 | Chỉ số | Giá trị |
 | --- | --- |
-| Backend | 6544 test pass (+ 55 `xfail` đã biết), coverage 99,11% |
+| Backend | 6578 test pass (+ 55 `xfail` đã biết), coverage 99,11% |
 | Frontend | 1067 test Vitest, 10 test E2E Playwright |
 | Eval agent (31 câu, `gemini-3.5-flash-lite`, 2026-10-23) | intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination, hỏi lại 100%; latency p50 26–31 s (chưa đạt mục tiêu 15 s, do thời gian trả lời của Gemini) |
 
