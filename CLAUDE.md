@@ -13,7 +13,7 @@ AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt, l
 - Frontend `frontend/`: React + Vite + TypeScript strict, Tailwind + shadcn/ui, TanStack Query, React Router, Recharts, Vitest + MSW, Playwright.
 - Mock-shop `backend/app/mock_shop/`: trang giả lập phân trang + captcha cho test/demo.
 
-## Lệnh (có sau T0.3; trước đó chạy lệnh tương ứng trong từng thư mục)
+## Lệnh
 | Lệnh | Việc |
 | --- | --- |
 | `make db-up` / `make db-down` | Bật / tắt PostgreSQL (Docker Compose, service `db`) |

@@ -18,7 +18,7 @@
 | – | [PROGRESS](PROGRESS.md) | Đang ở đâu | Đầu mỗi phiên |
 | – | [ADR](adr/README.md) | Vì sao chọn như vậy | Khi muốn đổi quyết định |
 | – | [Eval](eval/queries.yaml) | Bộ câu hỏi đánh giá agent | M6, M11 |
-| – | [Nguồn](sources/_template.md) · [gearvn](sources/gearvn.md) · [fptshop](sources/fptshop.md) · [anphat](sources/anphat.md) · [hoangha](sources/hoangha.md) và [laptop88](sources/laptop88.md) (không dùng, ADR-0008) · [viettelstore](sources/viettelstore.md) · [nguyenkim](sources/nguyenkim.md) | Kết quả khảo sát từng trang (mục 1–2 do T0.4) | M3, M4, M10 |
+| – | [Nguồn](sources/_template.md) · [gearvn](sources/gearvn.md) · [fptshop](sources/fptshop.md) · [anphat](sources/anphat.md) · [hoangha](sources/hoangha.md) và [laptop88](sources/laptop88.md) (không dùng, ADR-0008) · [viettelstore](sources/viettelstore.md) và [nguyenkim](sources/nguyenkim.md) (khảo sát, bỏ khỏi tầng 2 vì cần JS, ADR-0010) | Kết quả khảo sát từng trang (mục 1–2 do T0.4) | M3, M4, M10 |
 | – | [Ảnh UI](ui/README.md) | Phác thảo / ảnh tham khảo | M8 |
 
 ## Truy vết yêu cầu → thiết kế → task
@@ -35,3 +35,5 @@
 | US-11 Hỏi lại | 05 §4 | T6.3, T6.5 |
 | US-12 Dùng tốt trên điện thoại | 08 §6 | T8.1–T8.7 (ảnh chụp 375 px) |
 | G5 Lịch sự với nguồn | 02 §3, 06 §3 | T0.4, T2.1 |
+| G1–G4 Chất lượng agent (đo bằng eval) | 05 §7, `eval/queries.yaml` | T6.6, T11.1 |
+| Chạy cả hệ thống, trình diễn | 10 §3–4, §7 | T9.4, T11.3 |

@@ -1,7 +1,7 @@
 # 03. Thiết kế kiến trúc
 
-> Phiên bản 1.0 · 2026-10-16
-> Liên quan: [04 Dữ liệu](04-data-model.md) · [05 Agent](05-agent-design.md) · [06 Thu thập](06-scraping-design.md) · [07 API](07-api-spec.md) · ADR [0001](adr/0001-gemini-langchain.md)–[0006](adr/0006-mock-shop-hitl.md)
+> Phiên bản 1.1 · 2026-10-23 (đối chiếu với code sau M10)
+> Liên quan: [04 Dữ liệu](04-data-model.md) · [05 Agent](05-agent-design.md) · [06 Thu thập](06-scraping-design.md) · [07 API](07-api-spec.md) · ADR [0001](adr/0001-gemini-langchain.md)–[0010](adr/0010-tier2-sites-gearvn-fptshop.md)
 
 ## 1. Nguyên tắc kiến trúc
 
@@ -66,7 +66,7 @@ flowchart LR
 ```mermaid
 flowchart TB
   subgraph api_layer[app/api]
-    routes[routers: products, chat, lists, alerts, admin]
+    routes[routers: products, categories, chat, lists, alerts, admin, health]
   end
   subgraph agent_layer[app/agent]
     planner[planner.py<br/>QueryIntent]
@@ -95,7 +95,7 @@ flowchart TB
     price[price.py]
     specs[specs/*.py theo nhóm]
     matcher[matcher.py ghép model]
-    llmext[llm_extractor.py]
+    llmext[llm_extract.py]
   end
   subgraph data[app/db]
     models[models.py SQLModel]
@@ -208,46 +208,57 @@ sequenceDiagram
 
 Planner trả `tier = 2` → executor gọi `live_search_other(query, price_min?, price_max?)` → `live_search_service` (tuần tự, một lượt tìm tại một thời điểm) với từng trang cho phép tầng 2 (GearVN, FPT Shop; ở chế độ offline chỉ mock-shop và trang thật vào `sites_skipped`; [ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)): kiểm tra cache của **(trang, từ khóa)** (khóa `live:v1:<trang>:<từ khóa NFC, chữ thường, gọn khoảng trắng>`, TTL `LIVE_SEARCH_CACHE_TTL_HOURS` = 6 giờ) → nếu thiếu, gọi `live_search()` qua Fetcher dùng chung (độ trễ ≥ 5 s/domain), giữ tối đa 10 kết quả mỗi trang vào cache → **sau đó** lọc theo khoảng giá (bỏ mục không có giá khi có lọc giá) rồi cắt `limit_per_site`, nên cache không phụ thuộc giá → trả về kèm nhãn `unnormalized`. Lỗi một trang (ngoại tuyến, robots, mạng) chỉ đưa trang đó vào `sites_skipped`, không cache; trang chặn (challenge/403, robots 403/429) ghi mục `live:v1:blocked:<trang>` và nghỉ 24 giờ (cũng nghỉ nếu có `ScrapeRun` `BLOCKED` trong 24 giờ). Từ khóa chứa ký tự điều khiển (NUL, mã < 0x20, surrogate lẻ) bị từ chối bằng `ValidationFailed` (PostgreSQL không lưu được khóa cache như vậy); trang nhận từ khóa đã NFC và gộp khoảng trắng (giữ chữ hoa/thường) nên không vượt giới hạn 200 ký tự của mock-shop. URL trùng sau `clean_url` trong một trang chỉ giữ mục đầu. Không lưu vào bảng `Product`/`Offer`.
 
-## 6. Cấu trúc thư mục (mục tiêu sau M0)
+## 6. Cấu trúc thư mục (theo code sau M10)
 
 ```
 product-buyer-agent/
 ├── CLAUDE.md
-├── Makefile                      # lệnh chuẩn: setup, dev, check, test, e2e, eval, scrape
-├── docker-compose.yml            # service db (T0.3); api, worker, mock-shop, web (T9.4)
-├── docker/postgres/init/         # script khởi tạo: tạo database product_buyer_test
+├── Makefile                      # lệnh chuẩn: setup, dev, check, e2e, eval, scrape, seed, demo-up…
+├── docker-compose.yml            # db (dev/test); api, worker, mock-shop, web (demo, `make demo-up`)
+├── docker/postgres/init/         # tạo database product_buyer_test
 ├── .github/workflows/ci.yml
 ├── backend/
 │   ├── pyproject.toml            # uv, ruff, mypy, pytest
-│   ├── alembic/                  # migration
+│   ├── Dockerfile                # image chung cho api, worker, mock-shop
+│   ├── alembic/versions/         # 0001 schema đầu, 0002 thêm site fptshop/anphat
 │   ├── app/
 │   │   ├── main.py               # FastAPI app factory
-│   │   ├── worker.py             # entry worker + scheduler
+│   │   ├── worker.py             # entry worker + scheduler (APScheduler)
 │   │   ├── config.py             # pydantic-settings
-│   │   ├── logging.py
-│   │   ├── api/                  # routers/, schemas.py, deps.py, errors.py (handler + middleware lỗi chuẩn), sse.py
-│   │   ├── agent/                # planner.py, executor.py, llm.py, events.py, guardrails.py, tools/, prompts/
-│   │   ├── services/             # catalog, compare, shopping_list, alert, live_search, scrape, notifier/
-│   │   ├── scrapers/             # base.py, registry.py, pipeline.py, http/, sites/
-│   │   ├── normalize/            # price.py, url.py, brand.py, model_code.py, matcher.py, llm_extractor.py, specs/
+│   │   ├── api/                  # routers/ (products, categories, chat, lists, alerts, admin, health),
+│   │   │                         #   schemas.py, deps.py, errors.py, sse.py, tasks.py (chạy nền)
+│   │   ├── agent/                # planner.py, executor.py (ToolLoop), guardrail.py, runner.py, memory.py,
+│   │   │                         #   intent.py, spec_filler.py, schemas.py, llm.py, fake_llm.py, testing.py,
+│   │   │                         #   tools/ (8 tool), prompts/ (planner, executor, extractor .md)
+│   │   ├── services/             # catalog, compare, shopping_list, alert, alert_evaluation, live_search,
+│   │   │                         #   scrape_service, scrape_runtime, admin, conversation, health, database,
+│   │   │                         #   notifier/ (email, telegram)
+│   │   ├── scrapers/             # base.py, challenge.py, registry.py, pipeline.py, parsing.py,
+│   │   │                         #   http/ (fetcher, robots, rate_limiter, raw_cache), sites/ (gearvn,
+│   │   │                         #   fptshop, anphat, mockshop)
+│   │   ├── normalize/            # price.py, url.py, brand.py, model_code.py, names.py, matcher.py,
+│   │   │                         #   extract.py, llm_extract.py, specs/ (khung thông số theo nhóm, gpu_rank)
 │   │   ├── db/                   # engine.py, models.py, repositories/
-│   │   ├── domain/               # enums.py, dto.py (ListingItem, ProductDetail, QueryIntent…), errors.py (AppError theo 07 §2)
-│   │   └── mock_shop/            # main.py, data.json, templates/
-│   ├── scripts/                  # seed.py, run_eval.py, scrape.py
+│   │   ├── domain/               # enums.py, dto.py, catalog.py, chat.py, admin.py, live_search.py,
+│   │   │                         #   errors.py (AppError theo 07 §2)
+│   │   └── mock_shop/            # main.py, pages.py, state.py, catalog.py, data.json
+│   ├── scripts/                  # seed, scrape, fetch_page, run_eval + eval_core, dump_openapi,
+│   │                             #   e2e_server, save_mockshop_fixtures (chạy `python -m scripts.<tên>`)
 │   ├── data/                     # cache/, raw/ (gitignore); CSDL nằm trong PostgreSQL
 │   └── tests/
-│       ├── unit/  integration/  agent/  live/
-│       ├── fixtures/<site>/*.html
-│       └── conftest.py
+│       ├── unit/  integration/  agent/  api/  live/
+│       ├── fixtures/<site>/*.html, fixtures/seed/*.json
+│       └── conftest.py  factories.py  fakes.py
 ├── frontend/
-│   ├── package.json  vite.config.ts  components.json  (Tailwind v4: cấu hình bằng CSS, không có tailwind.config.ts)
+│   ├── package.json  vite.config.ts  components.json  openapi.json  Dockerfile  nginx.conf
 │   ├── src/
 │   │   ├── app/ (router, providers)  pages/  components/ui/ (shadcn)  components/
-│   │   ├── features/ (chat, compare, product, lists, alerts, admin)
-│   │   ├── api/ (client.ts, types.gen.ts)  hooks/  lib/  styles/ (globals.css: token)
-│   │   (test Vitest đặt cạnh mã nguồn: src/**/*.test.tsx; MSW handler ở src/mocks/)
-│   └── e2e/ (playwright)
-└── docs/
+│   │   ├── features/ (admin, alerts, catalog, chat, lists, results)
+│   │   ├── api/ (client.ts, types.gen.ts)  lib/  styles/ (globals.css: token)  mocks/ (MSW)
+│   │   (test Vitest đặt cạnh mã nguồn: src/**/*.test.tsx)
+│   └── e2e/ (Playwright: ask-agent, compare, add-to-list, create-alert, live-search)
+├── reports/                      # báo cáo eval (gitignore)
+└── docs/                         # 01–11, adr/, eval/, sources/, ui/, PROGRESS.md
 ```
 
 ## 7. Quyết định công nghệ
@@ -273,7 +284,7 @@ product-buyer-agent/
 ## 8. Mối quan tâm xuyên suốt
 
 - **Cấu hình:** `app/config.py` (pydantic-settings) là nơi duy nhất đọc biến môi trường.
-- **Log:** log có cấu trúc (JSON khi chạy production, dạng dễ đọc khi dev), mỗi lượt chạy và mỗi agent run có `run_id`.
+- **Log:** dùng `logging` chuẩn của Python; worker cấu hình định dạng ở `app/worker.py` (`basicConfig`), API dùng cấu hình mặc định của Uvicorn. Chưa có `app/logging.py` và log JSON; `run_id` của lượt thu thập/agent nằm trong bản ghi `scrape_run` / `agent_run` (không tự gắn vào mọi dòng log). Việc nhỏ chưa có task.
 - **Thời gian:** lưu UTC trong DB, hiển thị giờ Việt Nam (Asia/Ho_Chi_Minh) ở frontend.
 - **Tiền tệ:** lưu `int` đơn vị đồng (VND), không dùng float.
 - **Lỗi:** API trả lỗi dạng `{"error": {"code": "...", "message": "...", "details": {}}}`; mã lỗi và dạng `details` ở [07 §1–2](07-api-spec.md). Lỗi nghiệp vụ là `AppError` (`domain/errors.py`); `api/errors.py` chuyển mọi lỗi (kể cả 404/405/422 và lỗi không lường trước) sang dạng này.
