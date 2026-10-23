@@ -19,6 +19,7 @@ from sqlmodel import Session
 from app.config import Settings
 from app.db.models import utc_now
 from app.domain.errors import AppError
+from app.services.live_search_service import LiveSearchService
 from app.services.views import Clock
 
 MAX_RESULT_CHARS: Final = 4_000
@@ -30,11 +31,16 @@ A = TypeVar("A", bound=BaseModel)
 
 @dataclass(frozen=True)
 class ToolContext:
-    """Thứ tool cần: cách mở session (mỗi lần gọi một session), cấu hình, đồng hồ."""
+    """Thứ tool cần: cách mở session (mỗi lần gọi một session), cấu hình, đồng hồ.
+
+    `live_search` là service tìm trực tiếp tầng 2 (dùng chung Fetcher của API); `None` thì tool
+    `live_search_other` báo chưa khả dụng thay vì tìm.
+    """
 
     session_factory: Callable[[], Session]
     settings: Settings
     now: Clock = utc_now
+    live_search: LiveSearchService | None = None
 
 
 def clip(text: str, limit: int = MAX_TEXT_CHARS) -> str:

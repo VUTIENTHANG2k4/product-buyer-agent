@@ -374,8 +374,8 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
 | T10.1 | Khảo sát + parser tìm kiếm tầng 2: Viettel Store, Nguyễn Kim bị bỏ (cần JS, ADR-0010) → FPT Shop; kiểm GearVN nhóm ngoài tầng 1 | T0.4, T2.2 | M | ✅ |
-| T10.2 | `live_search_service` + cache 6 giờ | T10.1, T2.1 | M | ⬜ |
-| T10.3 | Nối agent (planner tier 2, tool) + bảng tầng 2 ở frontend | T10.2, T6.5, T8.3 | M | ⬜ |
+| T10.2 | `live_search_service` + cache 6 giờ | T10.1, T2.1 | M | ✅ |
+| T10.3 | Nối agent (planner tier 2, tool) + bảng tầng 2 ở frontend | T10.2, T6.5, T8.3 | M | ✅ |
 
 **T10.1** — Đã xong 2026-10-23. Khảo sát (qua Fetcher, người dùng đã duyệt điều khoản và cho tải fixture) cho thấy tìm kiếm của Viettel Store và Nguyễn Kim nạp kết quả bằng JavaScript (HTML tĩnh không có sản phẩm), nên theo quyết định của người dùng hai trang này **bỏ khỏi tầng 2** ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)); thay bằng `FptShopScraper.search_url/parse_search` (`/tim-kiem?s=`, 24 thẻ/trang, giá bán + giá gốc) và kiểm GearVN với "loa bluetooth" (8/8 thẻ). Test: `test_fptshop_search.py`, `test_gearvn_search_t10.py`; fixture `search_*.html` trong `tests/fixtures/{fptshop,gearvn}/`; docs/sources, 01, 02, 03, 06 đã cập nhật.
 

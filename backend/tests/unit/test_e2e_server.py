@@ -84,6 +84,10 @@ class TestEnvironment:
         assert env["LLM_PROVIDER"] == "fake"
         assert env["SCRAPER_OFFLINE_ONLY"] == "true"
         assert env["KEEP"] == "1"
+        # Tầng 2 offline dùng mock-shop cục bộ không độ trễ, không captcha.
+        assert env["MOCK_SHOP_URL"] == "http://127.0.0.1:8100"
+        assert env["MOCK_SHOP_DELAY_SECONDS"] == "0"
+        assert int(env["MOCK_SHOP_CAPTCHA_AFTER"]) >= 100_000
 
     def test_does_not_modify_the_mapping_it_was_given(self) -> None:
         base = {"DATABASE_URL": DEV_URL}
@@ -151,6 +155,7 @@ class TestMainGuard:
         monkeypatch.setattr(e2e_server, "ensure_database", ensure)
         monkeypatch.setattr(e2e_server, "_run", run)
         monkeypatch.setattr(uvicorn, "run", serve)
+        monkeypatch.setattr(e2e_server, "start_mock_shop", lambda: steps.append("mock-shop"))
         monkeypatch.setattr(os, "environ", {})
 
         assert e2e_server.main(["--port", "8099"]) == 0
@@ -159,6 +164,7 @@ class TestMainGuard:
             "ensure product_buyer_e2e",
             "alembic upgrade head -> product_buyer_e2e",
             "scripts.seed --fixture e2e --reset --yes -> product_buyer_e2e",
+            "mock-shop",  # mock-shop chạy trước API để tầng 2 có dữ liệu
             "serve 8099",
         ]
 

@@ -124,14 +124,22 @@ SessionFactoryDep = Annotated[SessionFactory, Depends(get_session_factory)]
 async def get_agent_runner(
     request: Request, settings: SettingsDep, factory: SessionFactoryDep
 ) -> AgentRunner:
-    """Runner dùng chung, dựng ở lần chat đầu tiên. Thiếu khóa LLM -> `LlmUnavailable` (503)."""
+    """Runner dùng chung, dựng ở lần chat đầu tiên. Thiếu khóa LLM -> `LlmUnavailable` (503).
+
+    Tìm trực tiếp tầng 2 dùng chung Fetcher với thu thập (`ScrapeRuntime`) để giữ một bộ giới hạn
+    ≥ 5 s/domain trong tiến trình API.
+    """
     runner: AgentRunner | None = getattr(request.app.state, "agent_runner", None)
     if runner is None:
+        planner_model = get_chat_model("planner", settings)
+        executor_model = get_chat_model("executor", settings)
+        runtime = await get_scrape_runtime(request, settings)
         runner = AgentRunner(
             factory,
             settings,
-            planner_model=get_chat_model("planner", settings),
-            executor_model=get_chat_model("executor", settings),
+            planner_model=planner_model,
+            executor_model=executor_model,
+            live_search=runtime.live_search,
         )
         request.app.state.agent_runner = runner
     return runner

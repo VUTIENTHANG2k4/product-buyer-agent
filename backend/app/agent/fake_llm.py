@@ -3,8 +3,9 @@
 Khác `ScriptedChatModel` (kịch bản định sẵn từng lượt, dùng trong test đơn vị), model này đọc câu
 hỏi và trả lời theo luật cố định, nên backend thật chạy được nhiều câu hỏi khác nhau mà không cần
 khóa LLM: planner nhận ra nhóm hàng + giá + GPU, executor gọi `search_catalog` một lần rồi trả
-`FinalAnswer` từ kết quả tool. Không gọi mạng, không dùng ngẫu nhiên. Câu hỏi không nêu nhóm hàng
-thì planner hỏi lại.
+`FinalAnswer` từ kết quả tool. Nhóm ngoài tầng 1 (loa, SSD, màn hình) là tầng 2: executor gọi
+`live_search_other` rồi trả `live_items` lấy nguyên từ kết quả tool. Không gọi mạng, không dùng
+ngẫu nhiên. Câu hỏi không nêu nhóm hàng thì planner hỏi lại.
 """
 
 import json
@@ -18,7 +19,7 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.runnables import Runnable, RunnableLambda
 
 from app.agent.intent import extract_amounts
-from app.agent.schemas import FinalAnswer
+from app.agent.schemas import FinalAnswer, LiveItem
 from app.domain.dto import QueryIntent
 from app.domain.enums import Category
 from app.normalize.text import fold
@@ -33,6 +34,14 @@ _CATEGORY_WORDS: Final = (
     (Category.mouse, ("chuot", "mouse")),
     (Category.keyboard, ("ban phim", "keyboard")),
     (Category.headset, ("tai nghe", "headset", "headphone")),
+)
+# Nhóm tầng 2 (không dấu) -> từ khóa tìm trực tiếp; cụm dài đứng trước.
+_TIER2_QUERIES: Final = (
+    ("loa bluetooth", "loa bluetooth"),
+    ("loa", "loa"),
+    ("ssd", "ssd"),
+    ("o cung", "ổ cứng"),
+    ("man hinh", "màn hình"),
 )
 _MAX_WORDS: Final = ("duoi", "toi da", "khong qua", "<")
 _MIN_WORDS: Final = ("tren", "tu ", "it nhat", ">")
@@ -52,7 +61,8 @@ def plan_from_text(text: str) -> QueryIntent:
     category = next(
         (cat for cat, words in _CATEGORY_WORDS if any(word in folded for word in words)), None
     )
-    if category is None:
+    live_query = next((query for word, query in _TIER2_QUERIES if word in folded), None)
+    if category is None and live_query is None:
         return QueryIntent(needs_clarification=True, clarification_question=CLARIFICATION)
 
     price_min: int | None = None
@@ -65,6 +75,14 @@ def plan_from_text(text: str) -> QueryIntent:
             price_min = min(amounts)
         else:
             price_max = max(amounts)
+    if category is None and live_query is not None:
+        return QueryIntent(
+            category=Category.other,
+            tier=2,
+            keywords=[live_query],
+            price_min=price_min,
+            price_max=price_max,
+        )
     return QueryIntent(
         category=category, price_min=price_min, price_max=price_max, sort="price_asc"
     )
@@ -100,8 +118,41 @@ def _intent_from_turn(messages: Sequence[BaseMessage]) -> QueryIntent | None:
     return None
 
 
+def _live_answer(live: dict[str, Any]) -> FinalAnswer:
+    """`FinalAnswer` tầng 2: `live_items` copy nguyên từ `items` của `live_search_other`."""
+    items: list[dict[str, Any]] = list(live.get("items", []))[:MAX_TABLE_ROWS]
+    skipped = [str(entry["site"]) for entry in live.get("sites_skipped", [])]
+    note = f" (bỏ qua: {', '.join(skipped)})" if skipped else ""
+    if not items:
+        return FinalAnswer(
+            text=f"Chưa tìm thấy kết quả trực tiếp phù hợp{note}. Bạn thử đổi từ khóa nhé."
+        )
+    priced = [item for item in items if item.get("price") is not None]
+    cheapest = min(priced, key=lambda item: int(item["price"])) if priced else None
+    text = f"Kết quả tìm trực tiếp, chưa chuẩn hóa thông số: {len(items)} kết quả{note}."
+    if cheapest is not None:
+        text += f" Rẻ nhất là **{cheapest['title']}**, giá {_vnd(int(cheapest['price']))}."
+    return FinalAnswer(
+        text=text,
+        live_items=[
+            LiveItem(
+                site=str(item["site"]),
+                title=str(item["title"]),
+                price=item.get("price"),
+                url=str(item["url"]),
+                scraped_at=item.get("scraped_at"),
+            )
+            for item in items
+        ],
+        follow_up_suggestions=["Nới khoảng giá", "Tìm từ khóa khác"],
+    )
+
+
 def answer_from_results(results: Sequence[dict[str, Any]]) -> FinalAnswer:
     """`FinalAnswer` chỉ dùng id/giá có trong kết quả `search_catalog` (không bịa gì thêm)."""
+    live = next((result for result in results if result.get("label") == "unnormalized"), None)
+    if live is not None:
+        return _live_answer(live)
     search = next((result for result in results if "items" in result), None)
     items: list[dict[str, Any]] = list(search["items"]) if search else []
     if not items:
@@ -155,7 +206,16 @@ class ShoppingFakeChatModel(BaseChatModel):
             }
         else:
             intent = _intent_from_turn(messages)
-            if intent is None or intent.tier != 1 or intent.category is None:
+            args: dict[str, Any]
+            if intent is not None and intent.tier == 2 and intent.keywords:
+                args = {
+                    "query": " ".join(intent.keywords),
+                    "price_min": intent.price_min,
+                    "price_max": intent.price_max,
+                    "limit_per_site": 5,
+                }
+                call = {"name": "live_search_other", "args": args, "id": "call_live"}
+            elif intent is None or intent.tier != 1 or intent.category is None:
                 answer = FinalAnswer(text="Bản demo chỉ tìm laptop, chuột, bàn phím và tai nghe.")
                 call = {"name": FinalAnswer.__name__, "args": answer.model_dump(), "id": "f1"}
             else:
