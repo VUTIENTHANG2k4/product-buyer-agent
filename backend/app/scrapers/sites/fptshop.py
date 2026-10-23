@@ -21,7 +21,7 @@ from pydantic import HttpUrl, TypeAdapter, ValidationError
 from selectolax.lexbor import LexborHTMLParser, LexborNode
 
 from app.domain.dto import ListingItem, ListingPage, ProductDetail
-from app.domain.enums import Category, PriceType, SiteKey, StockStatus
+from app.domain.enums import Category, PriceType, SiteKey
 from app.normalize.price import parse_price
 from app.normalize.url import clean_url
 from app.scrapers.base import BaseScraper, SiteConfig
@@ -34,7 +34,13 @@ from app.scrapers.http.errors import (
     RobotsBlocked,
     RobotsDisallowed,
 )
-from app.scrapers.parsing import json_ld_objects, node_text
+from app.scrapers.parsing import (
+    json_ld_objects,
+    node_text,
+    schema_offer,
+    schema_price,
+    schema_stock,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,17 +64,6 @@ _ACCESSORY_PREFIX: dict[Category, str] = {
 _LOC = re.compile(r"<loc>(?:\s*<!\[CDATA\[([^\]]*)\]\]>\s*|([^<]*))</loc>", re.IGNORECASE)
 _PRICE_TEXT = re.compile(r"^\d{1,3}(?:\.\d{3})+đ$")
 _HTTP_URL = TypeAdapter(HttpUrl)
-_STOCK: dict[str, StockStatus] = {
-    "instock": StockStatus.in_stock,
-    "onlineonly": StockStatus.in_stock,
-    "limitedavailability": StockStatus.in_stock,
-    "outofstock": StockStatus.out_of_stock,
-    "soldout": StockStatus.out_of_stock,
-    "discontinued": StockStatus.out_of_stock,
-    "preorder": StockStatus.preorder,
-    "presale": StockStatus.preorder,
-    "backorder": StockStatus.preorder,
-}
 
 
 # ---- sitemap (hàm thuần) ----------------------------------------------------------------------
@@ -159,22 +154,20 @@ def _product(tree: LexborHTMLParser) -> dict[str, Any] | None:
     return None
 
 
-def _offer(product: dict[str, Any]) -> dict[str, Any]:
-    offers = product.get("offers")
-    if isinstance(offers, list):
-        offers = next((o for o in offers if isinstance(o, dict)), None)
-    return offers if isinstance(offers, dict) else {}
-
-
-def _vnd(value: object) -> int | None:
-    """Giá trong JSON-LD (số hoặc chuỗi số) → VND nguyên trong miền hợp lệ, ngược lại `None`."""
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, float):
-        return parse_price(int(value)) if value.is_integer() else None
-    if isinstance(value, int | str):
-        return parse_price(value)
-    return None
+def _price_fields(tree: LexborHTMLParser, product: dict[str, Any]) -> dict[str, Any]:
+    """Giá bán, giá gốc gạch ngang, loại giá và tồn kho của một trang sản phẩm."""
+    offer = schema_offer(product)
+    price = schema_price(offer.get("price"))
+    list_price = _struck_price(tree, price) if price is not None else None
+    price_type = PriceType.unknown
+    if price is not None:
+        price_type = PriceType.sale if list_price is not None else PriceType.regular
+    return {
+        "price": price,
+        "list_price": list_price,
+        "price_type": price_type,
+        "stock_status": schema_stock(offer),
+    }
 
 
 def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
@@ -195,13 +188,6 @@ def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
                 return struck
             block = block.parent
     return None
-
-
-def _stock(offer: dict[str, Any]) -> StockStatus:
-    availability = offer.get("availability")
-    if not isinstance(availability, str):
-        return StockStatus.unknown
-    return _STOCK.get(availability.rsplit("/", 1)[-1].lower(), StockStatus.unknown)
 
 
 def _image_url(page_url: str, product: dict[str, Any]) -> str | None:
@@ -289,12 +275,7 @@ class FptShopScraper(BaseScraper):
         if product is None:
             raise ValueError("product page without JSON-LD Product")
         page_url = clean_url(url)
-        offer = _offer(product)
-        price = _vnd(offer.get("price"))
-        list_price = _struck_price(tree, price) if price is not None else None
-        price_type = PriceType.unknown
-        if price is not None:
-            price_type = PriceType.sale if list_price is not None else PriceType.regular
+        prices = _price_fields(tree, product)
         # Tên trong `h1` đầy đủ hơn JSON-LD (laptop có CPU/RAM/SSD/màn hình/GPU).
         name = product.get("name")
         title = _clean(node_text(tree.css_first("h1"))) or (
@@ -307,10 +288,7 @@ class FptShopScraper(BaseScraper):
                 "site": SiteKey.fptshop,
                 "url": page_url,
                 "title": title,
-                "price": price,
-                "list_price": list_price,
-                "price_type": price_type,
-                "stock_status": _stock(offer),
+                **prices,
                 "image_url": _image_url(page_url, product),
                 "rating": rating,
                 "rating_count": rating_count,
@@ -321,10 +299,12 @@ class FptShopScraper(BaseScraper):
         )
 
     def parse_detail(self, html: str, url: str) -> ProductDetail:
-        product = _product(LexborHTMLParser(html)) or {}
+        tree = LexborHTMLParser(html)
+        product = _product(tree) or {}
         return ProductDetail.model_validate(
             {
                 "url": clean_url(url),
+                **_price_fields(tree, product),
                 "raw_specs": _additional_properties(product),
                 # `mpn` = `sku` = mã nội bộ của FPT Shop, không phải mã hãng.
                 "model_code_hint": None,

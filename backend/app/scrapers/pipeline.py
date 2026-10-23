@@ -38,9 +38,11 @@ from app.domain.enums import (
     Category,
     ChallengeKind,
     MatchMethod,
+    PriceType,
     ScrapeStatus,
     ScrapeTrigger,
     SiteKey,
+    StockStatus,
 )
 from app.domain.errors import (
     ChallengeFailed,
@@ -60,7 +62,7 @@ from app.normalize.price import MAX_PRICE_VND, MIN_PRICE_VND
 from app.normalize.url import clean_url, host_key, scheme_twin
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.challenge import ChallengeDetected, robots_block_challenge
-from app.scrapers.http.errors import FetchError, FetchFailed, RobotsBlocked
+from app.scrapers.http.errors import FetchError, FetchFailed, HttpStatusError, RobotsBlocked
 from app.scrapers.http.types import FormFetcher
 from app.scrapers.registry import get_scraper
 
@@ -74,6 +76,8 @@ NEEDS_HUMAN_STALE_AFTER = timedelta(hours=1)  # bỏ cuộc nếu không ai nh�
 FAILED_RATIO_LIMIT = 0.2  # items_failed / items_parsed > 20% → PARTIAL
 DROP_RATIO_LIMIT = 0.5  # số sản phẩm giảm > 50% so với lượt trước → cảnh báo
 DEFAULT_MAX_DETAIL_REQUESTS = 20  # giới hạn số trang chi tiết tải thêm mỗi lượt
+MAX_CONSECUTIVE_REFRESH_FAILURES = 3  # lỗi tải liên tiếp khi làm mới giá thì dừng lượt
+_GONE_STATUSES = (404, 410)  # sản phẩm đã gỡ: không phải dấu hiệu trang đang hỏng
 _ACTIVE = (ScrapeStatus.PENDING, ScrapeStatus.RUNNING, ScrapeStatus.NEEDS_HUMAN)
 
 SessionFactory = Callable[[], Session]
@@ -133,6 +137,8 @@ class _RunContext:
     started_at: datetime
     expect_items: bool
     previous_items: int | None  # items_parsed của lượt SUCCEEDED gần nhất
+    # Lượt chỉ làm mới giá vài offer (`refresh_offers`): không bao giờ tắt offer "không còn thấy".
+    partial_scope: bool = False
 
 
 @dataclass(frozen=True)
@@ -455,6 +461,179 @@ class ScrapePipeline:
             scraper, context, progress, start_page=progress.pages + 1, max_pages=limit
         )
 
+    async def refresh_offers(
+        self,
+        site: SiteKey,
+        category: Category,
+        offer_ids: Sequence[int],
+        *,
+        trigger: ScrapeTrigger = ScrapeTrigger.tracked_refresh,
+    ) -> PipelineResult:
+        """Làm mới giá của các offer đang được theo dõi bằng đúng trang chi tiết của chúng.
+
+        Chỉ tải `offer.url` (qua Fetcher), ghi `price`/`stock_status` và lịch sử giá; `list_price`
+        và `price_type` chỉ đổi khi trang cho biết (`price_type != unknown`). Không tắt offer nào,
+        kể cả khi trang trả 404. Dùng khóa và thời gian nghỉ của (site, category) như lượt đầy
+        đủ nên không chạy cùng lúc với lượt đầy đủ của nhóm đó. Ném `ScrapeAlreadyRunning`,
+        `SiteCooldown`, `InvalidScrapeRequest` (nhóm không thuộc trang) như `start`; kết cục khác
+        nằm trong kết quả.
+        """
+        scraper = get_scraper(site, self._fetcher)
+        if category not in scraper.config.categories:
+            raise InvalidScrapeRequest(f"{site} has no category {category}")
+        context = await asyncio.to_thread(
+            self._start_run, site, category, trigger, scraper.config.is_mock, partial_scope=True
+        )
+        logger.info(
+            "[run %s] làm mới giá %s offer của %s/%s",
+            context.run_id,
+            len(offer_ids),
+            site,
+            category,
+        )
+        progress = _Progress()
+        challenge: Challenge | None = None
+        error: str | None = None
+        crashed = False
+        try:
+            targets = await asyncio.to_thread(self._refresh_targets, site, category, offer_ids)
+            error = await self._refresh_loop(scraper, context, progress, targets)
+        except ChallengeDetected as detected:
+            challenge = detected.challenge
+        except RobotsBlocked as blocked:
+            challenge = robots_block_challenge(context.site, blocked.url, blocked.status)
+            logger.warning("[run %s] robots.txt bị chặn (HTTP %s)", context.run_id, blocked.status)
+        except asyncio.CancelledError:
+            await asyncio.shield(
+                asyncio.to_thread(
+                    self._finish, scraper, context, progress, None, "Lượt thu thập bị huỷ.", True
+                )
+            )
+            raise
+        except Exception as exc:
+            crashed = True
+            error = _error_text(exc)
+            logger.exception("[run %s] lỗi không lường trước", context.run_id)
+        return await asyncio.to_thread(
+            self._finish, scraper, context, progress, challenge, error, crashed
+        )
+
+    async def _refresh_loop(
+        self,
+        scraper: BaseScraper,
+        context: _RunContext,
+        progress: _Progress,
+        targets: list[tuple[int, str]],
+    ) -> str | None:
+        """Tải từng trang chi tiết rồi lưu giá; trả thông điệp lỗi nếu phải dừng sớm."""
+        consecutive = 0
+        for offer_id, url in targets:
+            progress.parsed += 1
+            try:
+                detail = await scraper.fetch_detail(url)
+            except (ChallengeDetected, RobotsBlocked):
+                raise  # trang chặn ta: dừng cả lượt như lượt đầy đủ
+            except (FetchError, ValueError) as exc:
+                progress.failed += 1
+                progress.unsafe += 1
+                gone = isinstance(exc, HttpStatusError) and exc.status in _GONE_STATUSES
+                consecutive = 0 if gone else consecutive + 1
+                logger.warning(
+                    "[run %s] không tải được offer %s (%s)",
+                    context.run_id,
+                    offer_id,
+                    type(exc).__name__,
+                )
+                if consecutive >= MAX_CONSECUTIVE_REFRESH_FAILURES:
+                    return f"{consecutive} lần tải liên tiếp thất bại, dừng lượt làm mới giá."
+                continue
+            consecutive = 0
+            progress.pages += 1
+            if detail.price is None:
+                progress.failed += 1  # giá bị che/không đọc được: giữ giá cũ, không phải lỗi trang
+                continue
+            try:
+                changed = await asyncio.to_thread(self._save_refresh, offer_id, detail)
+            except (ValueError, ValidationError, SQLAlchemyError) as exc:
+                progress.failed += 1
+                progress.unsafe += 1
+                logger.warning(
+                    "[run %s] không lưu được offer %s (%s)",
+                    context.run_id,
+                    offer_id,
+                    type(exc).__name__,
+                )
+                continue
+            progress.upserted += 1
+            if changed:
+                progress.price_changes += 1
+                progress.changed_ids.append(offer_id)
+        return None
+
+    def _refresh_targets(
+        self, site: SiteKey, category: Category, offer_ids: Sequence[int]
+    ) -> list[tuple[int, str]]:
+        """(id, url) của các offer còn hoạt động thuộc đúng trang và nhóm đã yêu cầu."""
+        with self._session_factory() as session:
+            offers = OfferRepository(session)
+            products = ProductRepository(session)
+            targets: list[tuple[int, str]] = []
+            for offer_id in dict.fromkeys(offer_ids):
+                offer = offers.get(offer_id)
+                if offer is None or not offer.is_active or offer.site is not site:
+                    continue
+                product = products.get(offer.product_id)
+                if product is not None and product.category is category:
+                    targets.append((_offer_id(offer), offer.url))
+            return targets
+
+    def _save_refresh(self, offer_id: int, detail: ProductDetail) -> bool:
+        """Ghi giá từ trang chi tiết vào offer; trả `True` nếu `price` đổi so với lần ghi trước
+        (loại giá và tồn kho vẫn được lưu vào lịch sử nhưng không tính là đổi giá)."""
+        moment = self._now()
+        with self._session_factory() as session:
+            offers = OfferRepository(session)
+            offer = offers.get(offer_id)
+            if offer is None or detail.price is None:
+                raise ValueError(f"offer {offer_id} is missing or the page has no price")
+            keep_price_type = detail.price_type is PriceType.unknown
+            list_price = offer.list_price if keep_price_type else detail.list_price
+            price_type = offer.price_type if keep_price_type else detail.price_type
+            if (
+                keep_price_type
+                and price_type is PriceType.sale
+                and list_price is not None
+                and detail.price >= list_price
+            ):
+                list_price, price_type = None, PriceType.regular  # khuyến mãi đã kết thúc
+            with session.begin_nested():
+                result = offers.upsert(
+                    OfferUpsert(
+                        product_id=offer.product_id,
+                        site=offer.site,
+                        url=offer.url,
+                        title=offer.title,
+                        price=detail.price,
+                        list_price=list_price,
+                        price_type=price_type,
+                        stock_status=(
+                            offer.stock_status
+                            if detail.stock_status is StockStatus.unknown
+                            else detail.stock_status
+                        ),
+                        site_sku=offer.site_sku,
+                        rating=offer.rating,
+                        rating_count=offer.rating_count,
+                        raw_specs=dict(offer.raw_specs),
+                        match_method=offer.match_method,
+                        match_score=offer.match_score,
+                    ),
+                    now=moment,
+                )
+                snapshot = PriceHistoryRepository(session).record_snapshot(result.offer, now=moment)
+            session.commit()
+            return snapshot.price_changed
+
     def _limit(self, max_pages: int | None) -> int:
         limit = max_pages if max_pages is not None else self._default_max_pages
         if limit < 1:
@@ -463,7 +642,13 @@ class ScrapePipeline:
 
     # ---- vòng đời ScrapeRun (chạy trong thread) ----
     def _start_run(
-        self, site: SiteKey, category: Category, trigger: ScrapeTrigger, is_mock: bool
+        self,
+        site: SiteKey,
+        category: Category,
+        trigger: ScrapeTrigger,
+        is_mock: bool,
+        *,
+        partial_scope: bool = False,
     ) -> _RunContext:
         moment = self._now()
         with self._session_factory() as session:
@@ -484,7 +669,8 @@ class ScrapePipeline:
                     until = blocked.started_at + BLOCK_COOLDOWN
                     if until > moment:
                         raise SiteCooldown(details={"retry_after": until, "run_id": blocked.id})
-            previous = runs.latest_succeeded(site, category)
+            # Lượt làm mới chỉ chạm vài offer: so với lượt đầy đủ sẽ luôn báo "số sản phẩm giảm".
+            previous = None if partial_scope else runs.latest_succeeded(site, category)
             run = runs.create(site, category, trigger, now=moment)
             session.commit()
             return _RunContext(
@@ -494,6 +680,7 @@ class ScrapePipeline:
                 started_at=moment,
                 expect_items=previous is not None and previous.items_parsed > 0,
                 previous_items=previous.items_parsed if previous is not None else None,
+                partial_scope=partial_scope,
             )
 
     @staticmethod
@@ -527,6 +714,8 @@ class ScrapePipeline:
             run = peek
             if (
                 run.status is not ScrapeStatus.NEEDS_HUMAN
+                or run.trigger
+                is ScrapeTrigger.tracked_refresh  # không có trang danh sách để tiếp tục
                 or run.challenge is None
                 or moment - run.started_at >= NEEDS_HUMAN_STALE_AFTER
             ):
@@ -760,7 +949,12 @@ class ScrapePipeline:
                 price=item.price,
                 list_price=item.list_price,
                 price_type=item.price_type,
-                stock_status=item.stock_status,
+                # Thẻ danh sách không cho biết tồn kho (GearVN): giữ giá trị đã biết thay vì xóa nó.
+                stock_status=(
+                    item.stock_status
+                    if item.stock_status is not StockStatus.unknown or existing is None
+                    else existing.stock_status
+                ),
                 site_sku=site_sku,
                 rating=rating,
                 rating_count=rating_count,
@@ -797,7 +991,7 @@ class ScrapePipeline:
                 offers_upserted=progress.upserted,
                 price_changes=progress.price_changes,
             )
-            if verdict.deactivate:
+            if verdict.deactivate and not context.partial_scope:
                 # Chỉ lượt đầy đủ và đáng tin mới được tắt offer không còn thấy (docs/06 §7).
                 gone = OfferRepository(session).deactivate_unseen(
                     context.site, context.category, context.started_at
@@ -844,7 +1038,12 @@ class ScrapePipeline:
     ) -> _Verdict:
         if challenge is not None:
             # Chỉ mock-shop có luồng nhập đáp án, và chỉ cho captcha; mọi trường hợp khác là chặn.
-            human = scraper.config.is_mock and challenge.kind is ChallengeKind.captcha
+            # Lượt làm mới giá không có trang để tiếp tục: gặp captcha là dừng (BLOCKED), không chờ.
+            human = (
+                scraper.config.is_mock
+                and challenge.kind is ChallengeKind.captcha
+                and not context.partial_scope
+            )
             return _Verdict(ScrapeStatus.NEEDS_HUMAN if human else ScrapeStatus.BLOCKED, None)
         if error is not None:
             if crashed or progress.pages == 0:

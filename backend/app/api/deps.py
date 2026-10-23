@@ -1,6 +1,6 @@
 """Dependency dùng chung của các router."""
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from typing import Annotated
 
 from fastapi import Depends, Request
@@ -11,6 +11,7 @@ from app.agent.runner import AgentRunner
 from app.agent.spec_filler import build_spec_filler
 from app.api.tasks import TaskRegistry
 from app.config import Settings, get_settings
+from app.domain.enums import AlertChannel
 from app.services import health_service
 from app.services.admin_service import AdminService
 from app.services.alert_service import AlertService
@@ -18,6 +19,7 @@ from app.services.catalog_service import CatalogService
 from app.services.compare_service import CompareService
 from app.services.database import SessionFactory, session_factory, session_scope
 from app.services.health_service import DbStatus
+from app.services.notifier import Notifier, build_notifiers
 from app.services.scrape_runtime import ScrapeRuntime
 from app.services.scrape_service import ScrapeService
 from app.services.shopping_list_service import ShoppingListService
@@ -64,8 +66,14 @@ def get_alert_service(session: SessionDep, settings: SettingsDep) -> AlertServic
     return AlertService(session, settings)
 
 
+def get_notifiers(settings: SettingsDep) -> Mapping[AlertChannel, Notifier]:
+    """Bộ gửi thông báo của các kênh đã cấu hình; test ghi đè bằng bộ gửi giả."""
+    return build_notifiers(settings)
+
+
 ShoppingListServiceDep = Annotated[ShoppingListService, Depends(get_shopping_list_service)]
 AlertServiceDep = Annotated[AlertService, Depends(get_alert_service)]
+NotifiersDep = Annotated[Mapping[AlertChannel, Notifier], Depends(get_notifiers)]
 
 
 def get_task_registry(request: Request) -> TaskRegistry:

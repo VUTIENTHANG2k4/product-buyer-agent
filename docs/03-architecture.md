@@ -79,7 +79,8 @@ flowchart TB
     catalog[catalog_service]
     compare[compare_service]
     lists[shopping_list_service]
-    alerts[alert_service]
+    alerts[alert_service<br/>find_due, should_notify]
+    evaluator[alert_evaluation<br/>AlertEvaluator]
     live[live_search_service]
     notifier[notifier: email, telegram]
     scrapesvc[scrape_service<br/>chạy pipeline + đánh giá cảnh báo]
@@ -115,9 +116,10 @@ flowchart TB
   pipeline --> normalize
   pipeline --> repos
   llmext --> llmf
-  alerts --> notifier
+  evaluator --> alerts
+  evaluator --> notifier
   scrapesvc --> pipeline
-  scrapesvc --> alerts
+  scrapesvc --> evaluator
 ```
 
 Quy tắc phụ thuộc (kiểm tra trong review):
@@ -199,7 +201,7 @@ sequenceDiagram
   PL->>R: upsert Product + Offer, thêm PriceHistory
   PL->>R: ScrapeRun → SUCCEEDED (kèm thống kê)
   PL-->>W: ScrapeRun + offer_id đổi giá
-  W->>W: alert_service.evaluate(offer_ids)
+  W->>W: AlertEvaluator(offer_ids): alert_service.find_due, notifier.send, mark_sent
 ```
 
 ### 5.3 Tầng 2 (nhóm khác)

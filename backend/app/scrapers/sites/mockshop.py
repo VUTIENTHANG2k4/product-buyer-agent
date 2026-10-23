@@ -18,7 +18,13 @@ from app.normalize.price import parse_price
 from app.normalize.url import clean_url
 from app.scrapers.base import BaseScraper, SiteConfig
 from app.scrapers.http.types import FetchResponse
-from app.scrapers.parsing import json_ld_objects, node_text
+from app.scrapers.parsing import (
+    json_ld_objects,
+    node_text,
+    schema_offer,
+    schema_price,
+    schema_stock,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -187,9 +193,13 @@ class MockShopScraper(BaseScraper):
         product = next((o for o in json_ld_objects(tree) if o.get("@type") == "Product"), {})
         brand = product.get("brand")
         mpn = product.get("mpn") or product.get("sku")
+        offer = schema_offer(product)
+        price = schema_price(offer.get("price"))
         return ProductDetail.model_validate(
             {
                 "url": clean_url(url),
+                "price": price,
+                "stock_status": schema_stock(offer),
                 "raw_specs": raw_specs,
                 "model_code_hint": mpn if isinstance(mpn, str) and mpn else None,
                 "brand_hint": brand.get("name") if isinstance(brand, dict) else None,

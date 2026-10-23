@@ -211,7 +211,7 @@ def test_unknown_or_out_of_range_alert_id_is_404_alert_not_found(
 
 
 # ---- gửi thử ----
-def test_alert_test_reports_that_nothing_was_sent_until_notifications_exist(
+def test_alert_test_reports_that_nothing_was_sent_when_the_channel_is_not_configured(
     client: TestClient, db_session: Session
 ) -> None:
     product = priced_product(db_session)
@@ -220,8 +220,7 @@ def test_alert_test_reports_that_nothing_was_sent_until_notifications_exist(
     response = client.post(f"/api/alerts/{alert_id}/test")
 
     assert response.status_code == 200
-    assert response.json()["sent"] is False
-    assert response.json()["reason"]
+    assert response.json() == {"sent": False, "reason": "Kênh email chưa được cấu hình trong .env"}
 
 
 @pytest.mark.parametrize("value", [True, "1000", 1000.0, 2.5])

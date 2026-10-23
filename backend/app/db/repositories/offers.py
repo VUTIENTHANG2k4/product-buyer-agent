@@ -4,21 +4,24 @@ Quy ước chung của mọi repository: nhận `Session` qua `__init__`, chỉ 
 (service/pipeline giữ transaction). Thời gian truyền vào qua `now` (UTC), mặc định `utc_now()`.
 """
 
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import ColumnElement, case, column, func, literal_column, update
+from sqlalchemy import ColumnElement, case, column, func, literal_column, or_, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, col, select
 
-from app.db.models import Offer, Product, utc_now
+from app.db.models import Offer, PriceAlert, Product, ShoppingListItem, utc_now
 from app.db.repositories.ids import fits_int4, keep_valid
+from app.db.repositories.price_alerts import LIVE_STATUSES
 from app.domain.dto import FiniteFloat, NonEmptyStr, Vnd
 from app.domain.enums import Category, MatchMethod, PriceType, SiteKey, StockStatus
 
 # Chỉ mục btree của UNIQUE (url) từ chối khóa lớn hơn ~2.704 byte (ProgramLimitExceeded).
 MAX_URL_BYTES = 2704
+MAX_IN_PARAMETERS = 10_000  # PostgreSQL: tối đa 65.535 tham số mỗi câu lệnh
 
 
 def _contains_nul(value: Any) -> bool:
@@ -87,6 +90,13 @@ class OfferUpsert(BaseModel):
         return value
 
 
+class TrackedOffer(NamedTuple):
+    """Offer đang được theo dõi và nhóm của sản phẩm (để chọn lượt làm mới giá theo nhóm)."""
+
+    offer_id: int
+    category: Category
+
+
 class UpsertResult(NamedTuple):
     """Kết quả `upsert`: offer sau khi ghi và việc dòng này mới được tạo hay đã có từ trước."""
 
@@ -103,6 +113,40 @@ class OfferRepository:
 
     def get_by_url(self, url: str) -> Offer | None:
         return self._session.exec(select(Offer).where(Offer.url == url)).first()
+
+    def product_ids_of(self, offer_ids: Sequence[int]) -> list[int]:
+        """Id sản phẩm (không trùng, tăng dần) của các offer; id không tồn tại bị bỏ qua."""
+        valid = list(dict.fromkeys(keep_valid(offer_ids)))
+        found: set[int] = set()
+        # PostgreSQL nhận tối đa 65.535 tham số mỗi câu lệnh: chia lô để lượt thu thập rất lớn
+        # không làm hỏng bước đánh giá cảnh báo (BUG-M9-6).
+        for start in range(0, len(valid), MAX_IN_PARAMETERS):
+            batch = valid[start : start + MAX_IN_PARAMETERS]
+            found.update(
+                self._session.exec(select(Offer.product_id).where(col(Offer.id).in_(batch)))
+            )
+        return sorted(found)
+
+    def list_tracked(self, site: SiteKey) -> list[TrackedOffer]:
+        """Offer còn hoạt động của `site` mà người dùng đang theo dõi: sản phẩm có cảnh báo còn
+        hiệu lực (`active`, `triggered`) hoặc nằm trong một danh sách mua. Theo id tăng dần."""
+        alerted = select(PriceAlert.product_id).where(col(PriceAlert.status).in_(LIVE_STATUSES))
+        listed = select(ShoppingListItem.product_id)
+        statement = (
+            select(Offer.id, Product.category)
+            .join(Product, col(Product.id) == col(Offer.product_id))
+            .where(
+                Offer.site == site,
+                col(Offer.is_active).is_(True),
+                or_(col(Offer.product_id).in_(alerted), col(Offer.product_id).in_(listed)),
+            )
+            .order_by(col(Offer.id))
+        )
+        return [
+            TrackedOffer(offer_id=offer_id, category=Category(category))
+            for offer_id, category in self._session.exec(statement)
+            if offer_id is not None
+        ]
 
     def list_for_product(self, product_id: int, *, active_only: bool = True) -> list[Offer]:
         """Offer của một sản phẩm, rẻ nhất trước (theo giá hiệu lực)."""

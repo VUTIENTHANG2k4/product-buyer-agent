@@ -55,6 +55,11 @@ strict = true
 files = ["app", "scripts"]
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+# APScheduler 3.x không có stub và không có py.typed.
+module = ["apscheduler.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

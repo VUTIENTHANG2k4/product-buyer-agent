@@ -8,14 +8,22 @@ from app.config import Settings
 from app.normalize.llm_extract import LlmSpecsFiller
 from app.scrapers.http.factory import build_fetcher
 from app.scrapers.http.fetcher import Fetcher
+from app.services.alert_evaluation import AlertEvaluator
 from app.services.database import session_factory
+from app.services.notifier import build_notifiers
 from app.services.scrape_service import ScrapeService
 
 
 class ScrapeRuntime:
-    def __init__(self, service: ScrapeService, fetcher: Fetcher) -> None:
+    def __init__(
+        self,
+        service: ScrapeService,
+        fetcher: Fetcher,
+        alert_evaluator: AlertEvaluator | None = None,
+    ) -> None:
         self.service = service
         self.fetcher = fetcher
+        self.alert_evaluator = alert_evaluator  # worker gọi `evaluate(None)` sau mỗi job
 
     @classmethod
     def build(
@@ -23,13 +31,12 @@ class ScrapeRuntime:
     ) -> "ScrapeRuntime":
         """Dựng Fetcher thật và `ScrapeService` từ cấu hình; `spec_filler`: LLM dự phòng."""
         fetcher = build_fetcher(settings)
+        factory = session_factory(settings.database_url.get_secret_value())
+        evaluator = AlertEvaluator(factory, build_notifiers(settings), settings)
         service = ScrapeService(
-            session_factory(settings.database_url.get_secret_value()),
-            fetcher,
-            settings,
-            spec_filler=spec_filler,
+            factory, fetcher, settings, on_price_changes=evaluator, spec_filler=spec_filler
         )
-        return cls(service, fetcher)
+        return cls(service, fetcher, evaluator)
 
     async def aclose(self) -> None:
         await self.fetcher.aclose()

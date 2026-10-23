@@ -26,6 +26,8 @@ from app.scrapers.http.errors import FetchError
 from app.scrapers.http.factory import build_fetcher
 from app.scrapers.pipeline import PipelineResult
 from app.scrapers.registry import SiteNotAvailable
+from app.services.alert_evaluation import AlertEvaluator
+from app.services.notifier import build_notifiers
 from app.services.scrape_service import ScrapeService
 
 logger = logging.getLogger("scrape")
@@ -122,9 +124,17 @@ async def _main(args: argparse.Namespace) -> int:
     settings = get_settings()
     engine = get_engine(settings.database_url.get_secret_value())
     ask: Callable[[str], str] | None = input if sys.stdin.isatty() else None
+
+    def factory() -> Session:
+        return Session(engine)
+
     async with build_fetcher(settings) as fetcher:
         service = ScrapeService(
-            lambda: Session(engine), fetcher, settings, spec_filler=build_spec_filler(settings)
+            factory,
+            fetcher,
+            settings,
+            on_price_changes=AlertEvaluator(factory, build_notifiers(settings), settings),
+            spec_filler=build_spec_filler(settings),
         )
         return await run_command(
             service,

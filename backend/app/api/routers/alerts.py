@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Response, status
 
-from app.api.deps import AlertServiceDep
+from app.api.deps import AlertServiceDep, NotifiersDep
 from app.api.errors import error_responses
 from app.api.schemas import AlertPatch, AlertsResponse, AlertTestResponse
 from app.domain.catalog import AlertCreate, AlertView
@@ -66,9 +66,15 @@ def delete_alert(alert_id: AlertId, service: AlertServiceDep) -> Response:
     "/alerts/{alert_id}/test",
     response_model=AlertTestResponse,
     summary="Gửi thông báo thử tới kênh đã cấu hình",
-    description="Chưa gửi thật: bộ gửi email/Telegram thuộc M9 nên hiện luôn trả `sent: false`.",
+    description=(
+        "Gửi thật một tin nhắn thử tới kênh và nơi nhận của cảnh báo, "
+        "không đổi trạng thái cảnh báo. Kênh chưa cấu hình trong `.env` hoặc gửi lỗi thì trả "
+        "`sent: false` kèm `reason`."
+    ),
     responses=error_responses(404, 422),
 )
-def test_alert(alert_id: AlertId, service: AlertServiceDep) -> AlertTestResponse:
-    service.get(alert_id)  # 404 nếu cảnh báo không tồn tại
-    return AlertTestResponse(sent=False, reason="Chưa bật thông báo (bộ gửi thuộc M9)")
+def test_alert(
+    alert_id: AlertId, service: AlertServiceDep, notifiers: NotifiersDep
+) -> AlertTestResponse:
+    result = service.send_test(alert_id, notifiers)
+    return AlertTestResponse(sent=result.sent, reason=result.reason)

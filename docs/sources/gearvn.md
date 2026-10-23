@@ -89,7 +89,7 @@ Trang chủ (2 MB) chỉ dùng để tìm URL danh mục, không lưu. Chưa có
 - Chuẩn hóa ở scraper: tiêu đề gộp khoảng trắng (giữ dấu cách giữa thẻ inline); nhãn và giá trị `additionalProperty` về NFC và bỏ ký tự NUL; `src` ảnh hỏng chỉ làm `image_url=None`; thẻ phải trỏ tới `/products/<slug>`; JSON-LD trong `@graph` được đọc, JSON-LD lồng quá sâu bị bỏ qua. Tiêu đề chưa NFC hay lọc ký tự điều khiển: để M5.
 - `robots.txt` không chặn agent AI, nhưng khảo sát chỉ dùng bot dự án (khoảng 10 trang, 2026-10-19). Không gọi `/api/`.
 - Số lượng: bàn phím 27 trang; với độ trễ 5–6 s một lượt đầy đủ mất vài phút (xem `SCRAPER_MAX_LISTING_PAGES`).
-- Tình trạng kho: thẻ danh sách luôn `StockStatus.unknown` (kể cả "Liên hệ tư vấn"); `availability` của trang chi tiết chưa được đọc vì `ProductDetail` không có trường tồn kho.
+- Tình trạng kho: thẻ danh sách luôn `StockStatus.unknown` (kể cả "Liên hệ tư vấn"); `availability` của trang chi tiết được đọc từ T9.3 (`ProductDetail.stock_status`) và chỉ dùng khi làm mới giá offer đang theo dõi; lượt đầy đủ vẫn giữ tồn kho đã biết thay vì ghi đè bằng `unknown`.
 - 503 kèm trang chờ Cloudflare (`cf-mitigated: challenge`…) được Fetcher trả ngay và coi là challenge → `BLOCKED` và nghỉ 24 giờ (T2.7c); chưa gặp trên GearVN, chỉ có test với phản hồi giả.
 - **Kết quả chạy thật (T3.3, 2026-10-19)**, `make scrape SITE=gearvn CAT=<nhóm> PAGES=1`, bot dự án, `SCRAPER_OFFLINE_ONLY=false` do người dùng tự đặt (đã nhắc đặt lại `true`):
 

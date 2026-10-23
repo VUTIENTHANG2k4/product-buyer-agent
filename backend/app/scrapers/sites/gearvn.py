@@ -19,7 +19,13 @@ from app.domain.enums import Category, PriceType, SiteKey
 from app.normalize.price import parse_price
 from app.normalize.url import clean_url
 from app.scrapers.base import BaseScraper, SiteConfig
-from app.scrapers.parsing import json_ld_objects, node_text
+from app.scrapers.parsing import (
+    json_ld_objects,
+    node_text,
+    schema_offer,
+    schema_price,
+    schema_stock,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +72,20 @@ def _image_url(page_url: str, src: str | None) -> str | None:
 def _clean(text: str) -> str:
     """NFC, bỏ ký tự NUL (PostgreSQL không lưu được) và khoảng trắng hai đầu."""
     return unicodedata.normalize("NFC", text.replace("\x00", "")).strip()
+
+
+def _strikethrough_price(offer: dict[str, Any], price: int) -> int | None:
+    """Giá gốc gạch ngang trong `priceSpecification` của offer (phải lớn hơn giá bán)."""
+    specs = offer.get("priceSpecification")
+    for spec in specs if isinstance(specs, list) else [specs]:
+        if not isinstance(spec, dict):
+            continue
+        kind = spec.get("priceType")
+        if isinstance(kind, str) and kind.endswith("StrikethroughPrice"):
+            struck = schema_price(spec.get("price"))
+            if struck is not None and struck > price:
+                return struck
+    return None
 
 
 def _is_product(obj: dict[str, Any]) -> bool:
@@ -200,9 +220,19 @@ class GearVNScraper(BaseScraper):
         tree = LexborHTMLParser(html)
         product = next((obj for obj in json_ld_objects(tree) if _is_product(obj)), {})
         mpn = product.get("mpn")
+        offer = schema_offer(product)
+        price = schema_price(offer.get("price"))
+        list_price = _strikethrough_price(offer, price) if price is not None else None
+        price_type = PriceType.unknown
+        if price is not None:
+            price_type = PriceType.sale if list_price is not None else PriceType.regular
         return ProductDetail.model_validate(
             {
                 "url": clean_url(url),
+                "price": price,
+                "list_price": list_price,
+                "price_type": price_type,
+                "stock_status": schema_stock(offer),
                 "raw_specs": _additional_properties(product),
                 # `sku` của GearVN là mã nội bộ, không phải mã hãng: chỉ lấy `mpn` nếu trang có.
                 "model_code_hint": mpn.strip() if isinstance(mpn, str) and mpn.strip() else None,

@@ -14,8 +14,8 @@ FE := cd frontend &&
 # $(call require,<đường dẫn>,<task cung cấp>): dừng nếu đường dẫn chưa tồn tại.
 require = $(if $(wildcard $(1)),,$(error Chưa khả dụng: thiếu $(1) (làm ở $(2))))
 
-.PHONY: help db-up db-down setup dev dev-api dev-web dev-mock worker mock-shop \
-	check test-be test-fe e2e eval test-live scrape seed gen-api migrate
+.PHONY: help db-up db-down demo-up demo-seed setup dev dev-api dev-web dev-mock worker \
+	mock-shop check test-be test-fe e2e eval test-live scrape seed gen-api migrate
 
 help: ## Liệt kê mọi lệnh
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -25,6 +25,12 @@ db-up: ## Bật PostgreSQL (Docker Compose, service db) và chờ healthcheck
 
 db-down: ## Tắt PostgreSQL (giữ dữ liệu trong volume pgdata)
 	docker compose down
+
+demo-up: ## Build và chạy cả hệ thống bằng Docker (web :8080, api :8000, mock-shop :8100)
+	docker compose up -d --build
+
+demo-seed: ## Nạp dữ liệu hư cấu `dev` vào DB của hệ thống Docker (cần demo-up)
+	docker compose run --rm api python -m scripts.seed --fixture dev
 
 setup: db-up ## Bật DB, cài phụ thuộc, migrate, seed dev
 	$(BE) uv sync --locked

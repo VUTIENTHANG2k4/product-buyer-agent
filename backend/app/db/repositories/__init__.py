@@ -10,6 +10,7 @@ from app.db.repositories.conversations import ConversationRepository, MessageRep
 from app.db.repositories.offers import (
     OfferRepository,
     OfferUpsert,
+    TrackedOffer,
     UpsertResult,
     effective_price,
     effective_price_of,
@@ -47,6 +48,7 @@ __all__ = [
     "ScrapeRunRepository",
     "ShoppingListRepository",
     "SnapshotResult",
+    "TrackedOffer",
     "UpsertResult",
     "effective_price",
     "effective_price_of",

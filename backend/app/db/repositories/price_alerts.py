@@ -71,6 +71,15 @@ class PriceAlertRepository:
         )
         return list(self._session.exec(statement))
 
+    def list_live(self) -> list[PriceAlert]:
+        """Mọi cảnh báo còn hiệu lực (`active`, `triggered`), theo id."""
+        statement = (
+            select(PriceAlert)
+            .where(col(PriceAlert.status).in_(LIVE_STATUSES))
+            .order_by(col(PriceAlert.id))
+        )
+        return list(self._session.exec(statement))
+
     def find_live(
         self, product_id: int, channel: AlertChannel, destination: str
     ) -> PriceAlert | None:
@@ -95,9 +104,32 @@ class PriceAlertRepository:
         return alert
 
     def set_target_price(self, alert: PriceAlert, target_price: int) -> PriceAlert:
+        """Đổi ngưỡng. Ngưỡng mới là một cảnh báo mới: xóa mốc đã báo và đưa `triggered` về `active`
+        để lần giá chạm ngưỡng mới được báo ngay (không bị mốc giảm 1% của ngưỡng cũ chặn)."""
+        if target_price != alert.target_price:
+            alert.last_notified_price = None
+            alert.last_notified_at = None
+            if alert.status is AlertStatus.triggered:
+                alert.status = AlertStatus.active
         alert.target_price = target_price
         self._session.flush()
         return alert
+
+    def lock(self, alert_id: int, *, skip_locked: bool) -> PriceAlert | None:
+        """Khóa dòng cảnh báo (`SELECT … FOR UPDATE`) và đọc lại trạng thái mới nhất từ CSDL.
+
+        Giữ khóa tới khi nơi gọi commit/rollback. `skip_locked=True`: dòng đang bị giao dịch khác
+        khóa (đang gửi thông báo) thì trả `None` thay vì chờ. Cũng trả `None` nếu đã bị xóa.
+        """
+        if not fits_int4(alert_id):
+            return None
+        statement = (
+            select(PriceAlert)
+            .where(PriceAlert.id == alert_id)
+            .with_for_update(skip_locked=skip_locked)
+            .execution_options(populate_existing=True)
+        )
+        return self._session.exec(statement).first()
 
     def mark_notified(
         self, alert: PriceAlert, price: int, *, now: datetime | None = None

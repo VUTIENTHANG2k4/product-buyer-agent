@@ -9,7 +9,7 @@ from collections.abc import Awaitable, Callable, Sequence
 
 from app.config import Settings
 from app.db.models import utc_now
-from app.db.repositories import ScrapeRunRepository
+from app.db.repositories import OfferRepository, ScrapeRunRepository
 from app.domain.admin import ChallengeView
 from app.domain.dto import Challenge
 from app.domain.enums import Category, ScrapeStatus, ScrapeTrigger, SiteKey
@@ -18,6 +18,8 @@ from app.domain.errors import (
     InvalidScrapeRequest,
     OfflineMode,
     RunNotFound,
+    ScrapeAlreadyRunning,
+    SiteCooldown,
 )
 from app.normalize.llm_extract import LlmSpecsFiller
 from app.scrapers.http.types import FormFetcher
@@ -138,6 +140,40 @@ class ScrapeService:
         config = get_scraper(site, self._fetcher).config
         if self._settings.scraper_offline_only and not config.is_mock:
             raise OfflineMode(details={"site": site.value})
+
+    async def refresh_tracked(self, site: SiteKey) -> list[PipelineResult]:
+        """Làm mới giá các offer đang được theo dõi của `site` (cảnh báo còn hiệu lực hoặc có trong
+        danh sách mua) rồi đánh giá cảnh báo; mỗi nhóm sản phẩm là một lượt `tracked_refresh`.
+
+        Chỉ tải trang chi tiết của chính các offer đó. `OfflineMode` nếu trang thật mà
+        `SCRAPER_OFFLINE_ONLY=true`. Một nhóm đang có lượt khác chạy (`ScrapeAlreadyRunning`) hoặc
+        trang đang nghỉ sau khi bị chặn (`SiteCooldown`) thì bỏ qua phần còn lại và trả những lượt
+        đã xong.
+        """
+        self._ensure_allowed(site)
+        by_category: dict[Category, list[int]] = {}
+        with self._session_factory() as session:
+            for tracked in OfferRepository(session).list_tracked(site):
+                by_category.setdefault(tracked.category, []).append(tracked.offer_id)
+        results: list[PipelineResult] = []
+        for category, offer_ids in by_category.items():
+            if category not in get_scraper(site, self._fetcher).config.categories:
+                continue
+            try:
+                result = await self._pipeline.refresh_offers(site, category, offer_ids)
+            except (ScrapeAlreadyRunning, SiteCooldown) as error:
+                logger.info("bỏ qua làm mới giá %s/%s: %s", site, category, error.code)
+                if isinstance(error, SiteCooldown):
+                    break
+                continue
+            except Exception:
+                # Lỗi bất ngờ của một nhóm (mất kết nối CSDL khi tạo lượt...) không được làm mất các
+                # nhóm còn lại, như job `catalog_refresh` (BUG-M9-8).
+                logger.exception("lỗi không lường trước khi làm mới giá %s/%s", site, category)
+                continue
+            await self._evaluate(result)
+            results.append(result)
+        return results
 
     async def resume(
         self, run_id: int, answer: str, *, max_pages: int | None = None

@@ -12,7 +12,13 @@ from app.scrapers.http.fetcher import Fetcher
 
 @pytest.mark.parametrize(
     "url",
-    ["http://localhost:8100", "http://127.0.0.1:9000", "https://localhost", "http://[::1]:8100"],
+    [
+        "http://localhost:8100",
+        "http://127.0.0.1:9000",
+        "https://localhost",
+        "http://[::1]:8100",
+        "http://mock-shop:8100",  # tên service trong docker-compose
+    ],
 )
 def test_local_mock_shop_urls_are_accepted(url: str) -> None:
     assert Settings(mock_shop_url=url).mock_shop_url == url
@@ -33,6 +39,9 @@ def test_trailing_slash_is_removed() -> None:
         "localhost:8100",
         "",
         "http://10.0.0.5:8100",
+        "http://mock-shop.evil.example:8100",
+        "http://mock-shop.local",
+        "http://mock-shop-2:8100",
     ],
 )
 def test_non_local_or_malformed_mock_shop_urls_are_rejected(url: str) -> None:

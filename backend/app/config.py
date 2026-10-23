@@ -43,14 +43,17 @@ UserAgent = Annotated[
 ]
 
 
-LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+# `mock-shop` là tên service trong docker-compose (T9.4): tên một nhãn, không có dấu chấm nên không
+# thể là tên miền của trang thật. Ngoài Docker nó chỉ phân giải nếu người dùng tự khai báo (hosts,
+# search domain): đó là lựa chọn có chủ ý trong `.env`, giống việc đặt IP cục bộ khác.
+LOCAL_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "mock-shop"})
 
 
 def _check_mock_shop_url(value: str) -> str:
     """Mock-shop được miễn robots/ngoại tuyến/độ trễ trang thật nên chỉ được ở máy cục bộ."""
     parts = urlsplit(value)
     if parts.scheme not in ("http", "https") or parts.hostname not in LOCAL_HOSTS:
-        raise ValueError("must be an http(s) URL on localhost, 127.0.0.1 or ::1")
+        raise ValueError("must be an http(s) URL on localhost, 127.0.0.1, ::1 or mock-shop")
     return value.rstrip("/")
 
 
@@ -119,7 +122,7 @@ class Settings(BaseSettings):
     # Lịch chạy
     scheduler_enabled: bool = False
     catalog_refresh_cron: str = "0 */12 * * *"
-    tracked_refresh_cron: str = "0 */6 * * *"
+    tracked_refresh_cron: str = "30 */6 * * *"
 
     # Thông báo giá
     smtp_host: str = ""

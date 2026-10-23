@@ -98,13 +98,17 @@ class ScrapeRunRepository:
         return self._session.exec(statement).first()
 
     def latest_succeeded(self, site: SiteKey, category: Category) -> ScrapeRun | None:
-        """Lượt `SUCCEEDED` gần nhất, để so số sản phẩm với lượt trước (docs/06 §7)."""
+        """Lượt `SUCCEEDED` gần nhất, để so số sản phẩm với lượt trước (docs/06 §7).
+
+        Lượt `tracked_refresh` chỉ chạm vài offer nên không được tính làm mốc so sánh.
+        """
         statement = (
             select(ScrapeRun)
             .where(
                 ScrapeRun.site == site,
                 ScrapeRun.category == category,
                 ScrapeRun.status == ScrapeStatus.SUCCEEDED,
+                ScrapeRun.trigger != ScrapeTrigger.tracked_refresh,
             )
             .order_by(col(ScrapeRun.started_at).desc(), col(ScrapeRun.id).desc())
         )
