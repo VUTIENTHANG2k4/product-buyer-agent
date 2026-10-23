@@ -21,6 +21,7 @@ from app.domain.enums import Category, MatchMethod, PriceType, SiteKey, StockSta
 
 # Chỉ mục btree của UNIQUE (url) từ chối khóa lớn hơn ~2.704 byte (ProgramLimitExceeded).
 MAX_URL_BYTES = 2704
+MAX_IN_PARAMETERS = 10_000  # PostgreSQL: tối đa 65.535 tham số mỗi câu lệnh
 
 
 def _contains_nul(value: Any) -> bool:
@@ -115,11 +116,16 @@ class OfferRepository:
 
     def product_ids_of(self, offer_ids: Sequence[int]) -> list[int]:
         """Id sản phẩm (không trùng, tăng dần) của các offer; id không tồn tại bị bỏ qua."""
-        valid = keep_valid(offer_ids)
-        if not valid:
-            return []
-        statement = select(Offer.product_id).where(col(Offer.id).in_(valid)).distinct()
-        return sorted(self._session.exec(statement))
+        valid = list(dict.fromkeys(keep_valid(offer_ids)))
+        found: set[int] = set()
+        # PostgreSQL nhận tối đa 65.535 tham số mỗi câu lệnh: chia lô để lượt thu thập rất lớn
+        # không làm hỏng bước đánh giá cảnh báo (BUG-M9-6).
+        for start in range(0, len(valid), MAX_IN_PARAMETERS):
+            batch = valid[start : start + MAX_IN_PARAMETERS]
+            found.update(
+                self._session.exec(select(Offer.product_id).where(col(Offer.id).in_(batch)))
+            )
+        return sorted(found)
 
     def list_tracked(self, site: SiteKey) -> list[TrackedOffer]:
         """Offer còn hoạt động của `site` mà người dùng đang theo dõi: sản phẩm có cảnh báo còn

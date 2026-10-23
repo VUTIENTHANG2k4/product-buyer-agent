@@ -166,6 +166,11 @@ class ScrapeService:
                 if isinstance(error, SiteCooldown):
                     break
                 continue
+            except Exception:
+                # Lỗi bất ngờ của một nhóm (mất kết nối CSDL khi tạo lượt...) không được làm mất các
+                # nhóm còn lại, như job `catalog_refresh` (BUG-M9-8).
+                logger.exception("lỗi không lường trước khi làm mới giá %s/%s", site, category)
+                continue
             await self._evaluate(result)
             results.append(result)
         return results

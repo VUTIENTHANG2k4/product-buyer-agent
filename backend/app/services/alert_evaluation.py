@@ -72,9 +72,12 @@ class AlertEvaluator:
                         failed += 1
                         session.commit()
                         continue
-                    if service.mark_sent(due.alert_id, due.price):
-                        sent += 1
+                    recorded = service.mark_sent(due.alert_id, due.price)
                     session.commit()
+                    # Đếm sau commit: commit lỗi thì cảnh báo không được ghi là đã gửi (sẽ gửi lại
+                    # lần sau) nên chỉ tính vào `failed`, không tính cả hai (BUG-M9-5).
+                    if recorded:
+                        sent += 1
                 except SQLAlchemyError:
                     logger.exception("[alert %s] lỗi CSDL khi đánh giá", due.alert_id)
                     session.rollback()

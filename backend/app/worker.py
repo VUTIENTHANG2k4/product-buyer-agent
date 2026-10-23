@@ -19,7 +19,7 @@ import logging
 import signal
 import sys
 from collections.abc import Awaitable, Callable, Iterator
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -44,11 +44,17 @@ MISFIRE_GRACE_SECONDS = 300  # bù lượt lỡ do tiến trình bận hoặc v�
 
 
 def parse_cron(name: str, expression: str) -> CronTrigger:
-    """Crontab 5 trường (UTC) → trigger; sai thì ném `ValueError` nêu tên biến cấu hình."""
+    """Crontab 5 trường (UTC) → trigger; sai (hoặc không bao giờ chạy) thì ném `ValueError` nêu tên
+    biến cấu hình."""
     try:
-        return CronTrigger.from_crontab(expression.strip(), timezone=UTC)
+        trigger = CronTrigger.from_crontab(expression.strip(), timezone=UTC)
     except ValueError as error:
         raise ValueError(f"{name} không hợp lệ ({expression!r}): {error}") from None
+    if trigger.get_next_fire_time(None, datetime.now(UTC)) is None:
+        # Ngày không tồn tại (31 tháng 2...): hợp lệ về cú pháp nhưng job không bao giờ chạy
+        # (BUG-M9-3); báo ngay lúc khởi động thay vì im lặng không thu thập gì.
+        raise ValueError(f"{name} không hợp lệ ({expression!r}): lịch không bao giờ chạy")
+    return trigger
 
 
 class ScheduledJobs:

@@ -31,7 +31,10 @@ from app.services.views import Clock, aware_now, best_price, sellable
 
 logger = logging.getLogger(__name__)
 
-_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+# Một địa chỉ thường: dấu phẩy/chấm phẩy/ngoặc/dấu hai chấm biến chuỗi thành danh sách hoặc nhóm địa
+# chỉ trong header `To` (BUG-M9-4: "victim,attacker@x.com" gửi tới cả "victim" và attacker@x.com).
+_ADDRESS_CHARS = r"[^@\s,;:<>()\[\]\\\"]"
+_EMAIL = re.compile(rf"^{_ADDRESS_CHARS}+@{_ADDRESS_CHARS}+\.{_ADDRESS_CHARS}+$")
 MAX_DESTINATION_LENGTH = 320
 MAX_TARGET_PRICE = 2**63 - 1  # cận trên BIGINT
 RENOTIFY_MIN_DROP_PERCENT = 1  # đã báo rồi thì chỉ báo lại khi giá giảm thêm ≥ 1%
@@ -124,7 +127,12 @@ class AlertService:
     ) -> AlertView:
         """Đổi ngưỡng và/hoặc trạng thái (active/paused). Kiểm tra hết rồi mới ghi, nên lỗi
         không để lại thay đổi một phần; đổi sang ngưỡng trùng cảnh báo khác → `DuplicateAlert`."""
-        alert = self._require(alert_id)
+        # Khóa dòng và đọc lại: nếu worker đang gửi cảnh báo này thì chờ nó commit rồi mới sửa trên
+        # trạng thái mới nhất. Đọc không khóa làm UPDATE chỉ ghi cột đã đổi, để lại `triggered` và
+        # `last_notified_price` của ngưỡng cũ cạnh ngưỡng mới (BUG-M9-7).
+        alert = self._alerts.lock(alert_id, skip_locked=False)
+        if alert is None:
+            raise AlertNotFound(details={"alert_id": alert_id})
         if target_price is not None and not 0 < target_price <= MAX_TARGET_PRICE:
             raise ValidationFailed(
                 f"Giá mục tiêu phải trong khoảng 1..{MAX_TARGET_PRICE}",
