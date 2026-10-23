@@ -252,6 +252,13 @@ def _brand_name(product: dict[str, Any]) -> str | None:
     return name.strip() if isinstance(name, str) and name.strip() else None
 
 
+def _is_struck(node: LexborNode) -> bool:
+    """Ô giá gạch ngang (giá gốc): chính nó hoặc phần tử con có lớp `line-through`."""
+    return "line-through" in (node.attributes.get("class") or "") or (
+        node.css_first(".line-through") is not None
+    )
+
+
 def _search_card(anchor: LexborNode, page_url: str) -> ListingItem | None:
     """Thẻ kết quả tìm kiếm (`a` có `h3`) → `ListingItem`; `None` nếu không phải thẻ sản phẩm.
 
@@ -265,7 +272,11 @@ def _search_card(anchor: LexborNode, page_url: str) -> ListingItem | None:
     title = _clean(node_text(heading))
     if not title:
         raise ValueError("search card without title")
-    shown = [parse_price(text) for p in anchor.css("p") if _PRICE_TEXT.match(text := node_text(p))]
+    shown = [
+        parse_price(text)
+        for p in anchor.css("p")
+        if not _is_struck(p) and _PRICE_TEXT.match(text := node_text(p))
+    ]
     price = next((value for value in reversed(shown) if value is not None), None)
     list_price: int | None = None
     if price is not None:

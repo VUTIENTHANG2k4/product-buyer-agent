@@ -176,6 +176,16 @@ def test_parse_search_ignores_a_struck_price_that_is_not_higher_than_the_sale_pr
     assert (item.price, item.list_price, item.price_type) == (1_000_000, None, PriceType.regular)
 
 
+def test_parse_search_never_takes_a_struck_price_as_the_sale_price(
+    scraper: FptShopScraper,
+) -> None:
+    # Giá bán biến mất (che giá/hết hàng) nhưng giá gốc gạch ngang còn: không đoán, price=None.
+    block = '<p><span class="line-through">6.990.000đ</span></p><p>-18%</p>'
+    (item,) = scraper.parse_search(_card("/phu-kien/loa-thu", "Loa thử", block), LOA_URL)
+
+    assert (item.price, item.list_price, item.price_type) == (None, None, PriceType.unknown)
+
+
 def test_parse_search_skips_links_that_are_not_product_cards(scraper: FptShopScraper) -> None:
     html = (
         _card("/ho-tro/gioi-thieu/them", "Nhiều cấp", "<p>1.000.000đ</p>")  # đường dẫn 3 cấp

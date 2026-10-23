@@ -376,8 +376,11 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | T10.1 | Khảo sát + parser tìm kiếm tầng 2: Viettel Store, Nguyễn Kim bị bỏ (cần JS, ADR-0010) → FPT Shop; kiểm GearVN nhóm ngoài tầng 1 | T0.4, T2.2 | M | ✅ |
 | T10.2 | `live_search_service` + cache 6 giờ | T10.1, T2.1 | M | ✅ |
 | T10.3 | Nối agent (planner tier 2, tool) + bảng tầng 2 ở frontend | T10.2, T6.5, T8.3 | M | ✅ |
+| T10.4 | Củng cố tầng 2 sau review M10 (không chặn M11) | T10.3 | S | ⬜ |
 
 **T10.1** — Đã xong 2026-10-23. Khảo sát (qua Fetcher, người dùng đã duyệt điều khoản và cho tải fixture) cho thấy tìm kiếm của Viettel Store và Nguyễn Kim nạp kết quả bằng JavaScript (HTML tĩnh không có sản phẩm), nên theo quyết định của người dùng hai trang này **bỏ khỏi tầng 2** ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)); thay bằng `FptShopScraper.search_url/parse_search` (`/tim-kiem?s=`, 24 thẻ/trang, giá bán + giá gốc) và kiểm GearVN với "loa bluetooth" (8/8 thẻ). Test: `test_fptshop_search.py`, `test_gearvn_search_t10.py`; fixture `search_*.html` trong `tests/fixtures/{fptshop,gearvn}/`; docs/sources, 01, 02, 03, 06 đã cập nhật.
+
+**T10.4** — Phát sinh từ review M10 (mục "Gợi ý"): (a) `LiveSearchCacheRepository.purge_older_than` chưa ai gọi nên bảng `live_search_cache` chỉ tăng: gọi từ job dọn của worker; (b) `live_search` giữ 10 thẻ đầu rồi mới lọc giá (truy vấn có trần giá chặt có thể bỏ sót thẻ 11–24): cân nhắc lấy nhiều hơn hoặc lọc trước khi cắt; (c) kết quả rỗng cũng cache đủ 6 giờ (soft-block HTTP 200 khó thấy): TTL ngắn hơn cho kết quả rỗng; (d) `asyncio.Lock` giữ suốt lượt tìm nên nhiều người dùng đồng thời xếp hàng (đo NFR-01 ≤ 45 s); (e) bộ giới hạn độ trễ vẫn riêng từng tiến trình (T9.8).
 
 Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng độ trễ; mỗi trang ≤ `limit_per_site` kết quả; nhãn "chưa chuẩn hóa"; test kịch bản "loa bluetooth dưới 1 triệu" với fixture.
 

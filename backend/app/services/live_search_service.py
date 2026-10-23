@@ -23,7 +23,13 @@ from app.domain.live_search import LiveSearchItem, LiveSearchResult, SkippedSite
 from app.normalize.url import clean_url
 from app.scrapers.base import BaseScraper
 from app.scrapers.challenge import ChallengeDetected
-from app.scrapers.http.errors import FetchError, OfflineModeError, RobotsBlocked, RobotsDisallowed
+from app.scrapers.http.errors import (
+    FetchError,
+    OfflineModeError,
+    RobotsBlocked,
+    RobotsDisallowed,
+    RobotsUnavailable,
+)
 from app.scrapers.http.types import PageFetcher
 from app.scrapers.pipeline import BLOCK_COOLDOWN
 from app.scrapers.registry import SCRAPERS
@@ -144,14 +150,20 @@ class LiveSearchService:
             found = await scraper.live_search(query, MAX_PER_SITE)
         except (ChallengeDetected, RobotsBlocked):
             logger.warning("Tìm trực tiếp: %s chặn truy cập, nghỉ %s", site, BLOCK_COOLDOWN)
-            await self._write_cache(blocked_key(site), [{"reason": REASON_BLOCKED}], now)
+            if not scraper_cls.config.is_mock:  # mock-shop không bao giờ nghỉ
+                await self._write_cache(blocked_key(site), [{"reason": REASON_BLOCKED}], now)
             return [], False, REASON_BLOCKED
         except OfflineModeError:
             return [], False, REASON_OFFLINE
+        except RobotsUnavailable:  # robots.txt lỗi mạng/5xx: không tải, nhưng không phải bị cấm
+            return [], False, REASON_FAILED
         except RobotsDisallowed:
             return [], False, REASON_ROBOTS
         except FetchError as error:
             logger.warning("Tìm trực tiếp: %s lỗi %s", site, type(error).__name__)
+            return [], False, REASON_FAILED
+        except Exception:  # parser/scraper lỗi bất ngờ: một trang hỏng không làm hỏng cả lượt
+            logger.exception("Tìm trực tiếp: %s lỗi không mong đợi", site)
             return [], False, REASON_FAILED
         stored: list[dict[str, Any]] = []
         for listing in found:
@@ -165,6 +177,10 @@ class LiveSearchService:
                 )
             except ValueError:  # URL không làm sạch được (quá dài, scheme lạ): bỏ mục này
                 logger.warning("Tìm trực tiếp: bỏ mục có URL không hợp lệ ở %s", site)
+        if not stored:
+            logger.warning(
+                "Tìm trực tiếp: %s không trả kết quả cho %r (cache như cũ)", site, normalized
+            )
         await self._write_cache(cache_key(site, normalized), stored, now)
         return [_item(site, entry, now) for entry in stored], False, None
 

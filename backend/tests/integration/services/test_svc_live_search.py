@@ -21,6 +21,7 @@ from app.scrapers.http.errors import (
     OfflineModeError,
     RobotsBlocked,
     RobotsDisallowed,
+    RobotsUnavailable,
 )
 from app.scrapers.http.types import FetchResponse
 from app.scrapers.sites.mockshop import MockShopScraper
@@ -402,6 +403,50 @@ async def test_a_failing_site_is_skipped_with_a_reason_and_not_cached(
     assert [(s.site, s.reason) for s in first.sites_skipped] == [(GEARVN, reason)]
     assert first.sites_searched == [FPT] and len(first.items) == 1
     assert log.count("gearvn:loa:10") == 2  # lỗi không vào cache, lần sau thử lại
+
+
+async def test_an_unexpected_scraper_error_skips_only_that_site(
+    factory: Callable[[], Session], clock: Clock
+) -> None:
+    log: list[str] = []
+    scrapers = {
+        GEARVN: fake_scraper(GEARVN, ValueError("parser bug"), log=log),
+        FPT: fake_scraper(FPT, [listing(FPT, 1, 1)], log=log),
+    }
+    svc = service(factory, clock, scrapers)
+
+    first = await svc.search("loa")
+    await svc.search("loa")
+
+    assert [(s.site, s.reason) for s in first.sites_skipped] == [(GEARVN, REASON_FAILED)]
+    assert first.sites_searched == [FPT] and len(first.items) == 1
+    assert log.count("gearvn:loa:10") == 2  # không cache lỗi
+
+
+async def test_robots_txt_that_cannot_be_loaded_is_a_failure_not_a_prohibition(
+    factory: Callable[[], Session], clock: Clock
+) -> None:
+    scrapers = {GEARVN: fake_scraper(GEARVN, RobotsUnavailable("5xx", url=URL))}
+
+    result = await service(factory, clock, scrapers).search("loa")
+
+    assert [(s.site, s.reason) for s in result.sites_skipped] == [(GEARVN, REASON_FAILED)]
+
+
+async def test_the_mock_shop_never_gets_a_blocked_marker(
+    factory: Callable[[], Session], clock: Clock, db_session: Session
+) -> None:
+    challenge = ChallengeDetected(soft_block_challenge(SiteKey.mockshop, URL))
+    scrapers = {SiteKey.mockshop: fake_scraper(SiteKey.mockshop, challenge, is_mock=True)}
+
+    await service(factory, clock, scrapers, offline=True).search("loa")
+
+    assert (
+        LiveSearchCacheRepository(db_session).get(
+            "live:v1:blocked:mockshop", max_age=timedelta(hours=24), now=NOW
+        )
+        is None
+    )
 
 
 @pytest.mark.parametrize(
