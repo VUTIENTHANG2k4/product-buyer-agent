@@ -245,7 +245,6 @@ class ToolLoop:
                 f"Đã gọi {name} đủ số lần cho phép trong lượt; hãy dùng kết quả đã có",
             )
         else:
-            outcome.calls_by_tool[name] = outcome.calls_by_tool.get(name, 0) + 1
             if name in WRITE_TOOLS:
                 outcome.write_calls += 1
             try:
@@ -253,6 +252,8 @@ class ToolLoop:
             except Exception:
                 logger.exception("Tool %s lỗi hệ thống", name)
                 result = error_result("TOOL_ERROR", "Lỗi hệ thống khi chạy tool")
+            if result.get("error") != "VALIDATION_ERROR":  # sai tham số: chưa tới Fetcher
+                outcome.calls_by_tool[name] = outcome.calls_by_tool.get(name, 0) + 1
 
         ok = result.get("ok") is not False
         if ok:
