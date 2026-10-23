@@ -359,8 +359,14 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | T9.2 | Notifier email + Telegram | T9.1 | S | ✅ |
 | T9.3 | Worker + lịch APScheduler | T2.6, T9.1 | M | ✅ |
 | T9.4 | Dockerfile + docker compose | T8.8 | M | ✅ |
+| T9.5 | Cron theo tên ngày trong tuần (phát sinh từ QA M9) | T9.3 | S | ⬜ |
+| T9.6 | `POST /alerts/{id}/test`: giới hạn tần suất, ghi chú không có xác thực (phát sinh từ QA M9) | T9.2 | S | ⬜ |
+| T9.7 | Ngắt mạch theo kênh khi gửi thông báo lỗi liên tiếp + `stop_grace_period` cho worker (phát sinh từ QA M9) | T9.1 | S | ⬜ |
+| T9.8 | Khóa độ trễ theo domain dùng chung giữa `api` và `worker` (phát sinh từ review M9) | T9.3 | M | ⬜ |
 
 **T9.1** — Xong khi: test đúng tiêu chí US-07 ([01 §5](01-requirements.md#5-user-story-và-tiêu-chí-chấp-nhận)); cảnh báo `triggered` gửi lại chỉ khi giá xuống thấp hơn `last_notified_price` thêm ≥ 1%.
+**T9.1–T9.4** — ✅ xong (M9 qua `code-reviewer`: 4 Phải sửa + 10/11 Nên sửa đã sửa; `qa-tester`: 8 bug BUG-M9-1…8 đã sửa kèm 227 test `*_qa_m9`). Thiết kế đã chốt: giá theo dõi lấy từ trang chi tiết (`ProductDetail` có giá), cảnh báo `triggered` chỉ gửi lại khi giảm thêm ≥ 1% và không tái kích hoạt khi giá tăng rồi giảm, đổi ngưỡng = cảnh báo mới. [ADR-0009](adr/0009-mock-shop-compose-host.md) cho host `mock-shop` trong Compose.
+**Phát sinh từ review/QA M9** (không chặn M10/M11): **T9.5** APScheduler đánh số thứ trong tuần 0 = thứ Hai (`0 0 * * 1` chạy thứ Ba, `7` bị từ chối): đổi số sang tên ngày trong `parse_cron` hoặc từ chối trường ngày-trong-tuần dạng số. **T9.6** `POST /alerts/{id}/test` không xác thực và không giới hạn tần suất (ai gọi được API đều khiến server gửi mail thật): giới hạn (ví dụ 1 lần/10 giây/cảnh báo) và ghi vào docs/10. **T9.7** SMTP chết + N cảnh báo đến hạn làm mỗi lần đánh giá chặn ~N×15 giây (cảnh báo lỗi bị thử lại ở mỗi hook và mỗi lần quét): ngắt mạch theo kênh trong một lượt; thêm `stop_grace_period` cho `worker` (hiện 10 giây mặc định: đang gửi lúc `docker stop` có thể gửi trùng sau khởi động lại). **T9.8** bộ giới hạn độ trễ domain nằm trong từng tiến trình `Fetcher`, nên `api` (quản trị bấm thu thập) và `worker` có thể vượt ≥ 5 s/domain (docs/06 §7): khóa theo domain trong CSDL. Ghi nhận khác: email luôn dùng STARTTLS ở cổng ≠ 465 (không dùng được máy chủ debug không TLS); `make eval` không chạy trong container (image `--no-dev` thiếu `pyyaml`); `list_for_products` vẫn có trần 65.535 sản phẩm; seed dev có cảnh báo tới `mock@example.com` (cấu hình SMTP thật thì worker sẽ gửi thật).
 **T9.3** — Xong khi: job làm mới danh mục theo `CATALOG_REFRESH_CRON`, job làm mới offer đang được theo dõi theo `TRACKED_REFRESH_CRON` (chỉ trang chi tiết của offer có cảnh báo/danh sách), mỗi job chạy qua `scrape_service` (gọi pipeline rồi đánh giá cảnh báo, [03 §4](03-architecture.md#4-thành-phần-backend-c4-mức-3)); không chạy 2 lượt cùng (site, category); test với scheduler giả.
 
 ### M10 — Tầng 2 (nhóm khác)
