@@ -389,7 +389,7 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
 | T11.1 | Eval cuối với LLM thật, chỉnh prompt đến khi đạt ngưỡng | M6–M10 | M | ✅ |
-| T11.2 | Cập nhật tài liệu theo code thực tế + README + sơ đồ | T11.1 | M | ⬜ |
+| T11.2 | Cập nhật tài liệu theo code thực tế + README + sơ đồ | T11.1 | M | ✅ |
 | T11.3 | Diễn tập kịch bản demo ([10 §7](10-deployment.md#7-kịch-bản-demo-bảo-vệ-gợi-ý)) | T9.4 | S | ⬜ |
 
 ### X — Mở rộng (chỉ khi M0–M11 xong)
