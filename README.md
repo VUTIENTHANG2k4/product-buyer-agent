@@ -1,77 +1,93 @@
 # Product Scraper & Buyer Agent
 
-Đồ án: **Ứng dụng Agentic AI trong Thương mại điện tử.** Một AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt (ví dụ "laptop gaming dưới 30 triệu, RTX 4060 trở lên"), tự lập kế hoạch, lấy dữ liệu thu thập từ GearVN, Hoàng Hà Mobile, Laptop88, trả bảng so sánh có nguồn, hỗ trợ danh sách mua và cảnh báo giảm giá.
+Đồ án: **Ứng dụng Agentic AI trong Thương mại điện tử.** Một AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt (ví dụ "laptop gaming dưới 30 triệu, RTX 4060 trở lên"), tự lập kế hoạch, lấy dữ liệu đã thu thập từ GearVN, FPT Shop, An Phát, trả bảng so sánh có nguồn, hỗ trợ danh sách mua và cảnh báo giảm giá.
 
-> Trạng thái: **bộ khung đặc tả** — chưa có code ứng dụng. Code được xây dần theo backlog bằng Claude Code, bắt đầu từ task T0.1.
+> Trạng thái: M0–M11 hoàn tất; còn một số mục backlog (T11.5: giảm độ trễ trả lời). Tiến độ chi tiết: [docs/PROGRESS.md](docs/PROGRESS.md).
 
-## Phạm vi đã chốt
+## Chức năng
+- **Hỏi bằng tiếng Việt**: agent lập kế hoạch, hiện tiến trình (SSE), trả bảng so sánh dựng từ cơ sở dữ liệu (không từ số do LLM viết); hỏi lại khi câu quá mơ hồ.
 - **Tầng 1** (đầy đủ: lọc theo thông số, so sánh giữa trang, lịch sử giá): laptop, chuột, bàn phím, tai nghe.
-- **Tầng 2** (cơ bản: tên, giá, link): mọi nhóm khác, tìm trực tiếp trên GearVN, Viettel Store, Nguyễn Kim (mock-shop khi chạy offline).
-- **Mock-shop** nội bộ để minh họa phân trang và captcha giả lập (xử lý bằng human-in-the-loop).
-- Stack: Python/FastAPI/LangChain + Gemini/PostgreSQL · React/Vite/TypeScript/Tailwind/shadcn/ui.
+- **Tầng 2** (cơ bản: tên, giá, link, nhãn "chưa chuẩn hóa"): nhóm khác, tìm trực tiếp trên GearVN và FPT Shop (cache 6 giờ). Khi chạy offline chỉ tìm trên mock-shop.
+- **Danh sách mua** và **cảnh báo giảm giá** (email/Telegram), worker làm mới giá theo lịch.
+- **Trang quản trị** `/admin`: nguồn dữ liệu, lượt thu thập, xử lý captcha giả lập (human-in-the-loop).
+- **Mock-shop** nội bộ minh họa phân trang và captcha giả lập.
 
-Chi tiết: [docs/README.md](docs/README.md).
+Stack: Python 3.11+ / FastAPI / LangChain + Gemini / PostgreSQL 17 · React / Vite / TypeScript / Tailwind / shadcn/ui. Kiến trúc: [docs/03-architecture.md](docs/03-architecture.md). Mục lục tài liệu: [docs/README.md](docs/README.md).
 
-## Bắt đầu với Claude Code
+## Chạy thử
 
-### 1. Chuẩn bị máy
-- Python 3.11+ và [uv](https://docs.astral.sh/uv/) (hook của dự án chạy bằng `uv`, nên `uv` phải có trong PATH).
-- Node.js 20 LTS+, npm, Git. Windows: dùng Git Bash hoặc WSL2 để chạy `make`; cài GNU make bằng `winget install ezwinports.make` (bản make của MSYS2 làm mất biến môi trường nên `docker compose` không chạy được).
-- **Docker Desktop** (bắt buộc): PostgreSQL 17 chạy bằng Docker Compose cho cả dev và test ([ADR-0007](docs/adr/0007-postgresql.md)).
-- Claude Code (CLI hoặc extension VS Code).
-- API key Gemini (Google AI Studio) cho `make eval` và chạy thật. Test không cần key.
-- (Tùy chọn) API key Context7 để Claude tra tài liệu thư viện mới nhất. Claude Code đọc key này từ **biến môi trường shell**, không từ `.env`: chạy `export CONTEXT7_API_KEY=...` (PowerShell: `$env:CONTEXT7_API_KEY="..."`) trước khi mở `claude`.
+### Yêu cầu máy
+- Python 3.11+ và [uv](https://docs.astral.sh/uv/); Node.js 20 LTS+ và npm; Git.
+- **Docker Desktop** (bắt buộc): PostgreSQL 17 chạy bằng Docker Compose cho dev, test và demo ([ADR-0007](docs/adr/0007-postgresql.md)).
+- Windows: dùng Git Bash hoặc WSL2 để chạy `make`; cài GNU make bằng `winget install ezwinports.make` (bản make của MSYS2 làm mất biến môi trường nên `docker compose` không chạy được).
+- API key Gemini (Google AI Studio) cho `make eval` và hỏi agent bằng LLM thật. Test không cần key.
 
-### 2. Khởi tạo
+### Phát triển
 ```bash
-cd product-buyer-agent
-git init && git add . && git commit -m "chore: project specification skeleton"
-cp .env.example .env        # điền GOOGLE_API_KEY, ALERT_DEFAULT_EMAIL, SCRAPER_USER_AGENT (email liên hệ), đổi POSTGRES_PASSWORD…
-export CONTEXT7_API_KEY=... # tùy chọn, cho MCP Context7
-claude                      # mở Claude Code tại thư mục gốc
+cp .env.example .env     # điền GOOGLE_API_KEY, ALERT_DEFAULT_EMAIL, SCRAPER_USER_AGENT (email liên hệ), POSTGRES_PASSWORD…
+make setup               # bật DB, cài phụ thuộc, migrate, seed dev
+make dev                 # API :8000, frontend :5173, mock-shop :8100
 ```
-Bật PostgreSQL bằng `make db-up` trước khi chạy `make dev` / `make check` (`make setup` tự gọi `db-up`). `make help` liệt kê mọi lệnh; lệnh thuộc task chưa làm sẽ báo "Chưa khả dụng". Nếu cổng 5432 đã bị chiếm, đặt `POSTGRES_PORT` khác (ví dụ 5435) và sửa cổng trong `DATABASE_URL` / `TEST_DATABASE_URL` trong `.env` cho khớp.
+Nếu cổng 5432 đã bị chiếm, đặt `POSTGRES_PORT` khác (ví dụ 5435) và sửa cổng trong `DATABASE_URL` / `TEST_DATABASE_URL` / `E2E_DATABASE_URL` cho khớp.
 
-Lần đầu mở, Claude Code hỏi cho phép MCP server trong `.mcp.json` (Playwright, Context7): chọn đồng ý.
-
-### 3. Làm task đầu tiên
+### Demo trong Docker (không cần cài Python/Node)
+```bash
+make demo-up             # db, api (tự migrate), worker, mock-shop, web
+make demo-seed           # nạp dữ liệu hư cấu (lần đầu)
+# giao diện http://localhost:8080 · API http://localhost:8000/api/docs
+make db-down             # dừng tất cả, giữ dữ liệu
 ```
-/next
-```
-Claude chọn T0.1, tóm tắt yêu cầu. Sau đó vào Plan mode (Shift+Tab) và:
-```
-/plan-task T0.1
-```
-Duyệt kế hoạch → Claude code + test → `/check` → `/review` → `/done T0.1`. Lặp lại với `/next`.
+Kịch bản trình diễn: [docs/10-deployment.md](docs/10-deployment.md#7-kịch-bản-demo-bảo-vệ).
 
-Sau mỗi milestone: nhờ Claude gọi subagent `qa-tester`, rồi gõ `/clear` để bắt đầu phiên gọn.
+### Lệnh thường dùng
+| Lệnh | Việc |
+| --- | --- |
+| `make check` | Cổng chất lượng: ruff, mypy, pytest, eslint, tsc, vitest |
+| `make e2e` | Playwright E2E (LLM giả; cần cổng 5173/8010/8100 trống) |
+| `make eval` | Đánh giá agent với LLM thật (cần `GOOGLE_API_KEY`), báo cáo ở `reports/` |
+| `make scrape SITE=mockshop CAT=laptop` | Một lượt thu thập |
+| `make seed FIXTURE=dev\|eval\|e2e` | Nạp dữ liệu hư cấu |
+| `make worker` | Bộ lập lịch (cần `SCHEDULER_ENABLED=true`) |
+| `make gen-api` | Sinh kiểu TypeScript từ OpenAPI |
+| `make help` | Liệt kê mọi lệnh |
 
-## Bộ công cụ cho Claude Code
+## Chất lượng đã đo
+| Chỉ số | Giá trị |
+| --- | --- |
+| Backend | 6578 test pass (+ 55 `xfail` đã biết), coverage 99,11% |
+| Frontend | 1067 test Vitest, 10 test E2E Playwright |
+| Eval agent (31 câu, `gemini-3.5-flash-lite`, 2026-10-23) | intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination, hỏi lại 100%; latency p50 26–31 s (chưa đạt mục tiêu 15 s, do thời gian trả lời của Gemini) |
 
-| Thành phần | Vị trí | Vai trò |
-| --- | --- | --- |
-| Bộ nhớ dự án | `CLAUDE.md` | Tổng quan, lệnh, quy trình, quy tắc bắt buộc; tự nạp `docs/PROGRESS.md` |
-| Quy tắc theo thư mục (thay cho CLAUDE.md con) | `.claude/rules/*.md` | Tự nạp khi Claude làm việc với file backend, frontend, scraping, test |
-| Skill quy trình | `.claude/skills/{next,plan-task,check,review,done,eval}` | Gọi bằng `/tên` |
-| Skill kiến thức | `.claude/skills/{add-scraper,add-category,agent-tool,ui-screen,write-tests}` | Claude tự dùng khi làm việc tương ứng |
-| Subagent | `.claude/agents/{code-reviewer,qa-tester}.md` | Review diff; viết test biên cuối milestone |
-| Hook | `.claude/hooks/*.py` + `.claude/settings.json` | Chặn lệnh nguy hiểm, bảo vệ `.env` và ADR, tự format sau khi sửa file |
-| Quyền | `.claude/settings.json` | Cho phép sẵn lệnh test/lint/git cục bộ; hỏi trước khi push/curl; cấm force push, `rm -rf`, đọc `.env` |
-| MCP | `.mcp.json` | Playwright (khảo sát trang, chụp UI), Context7 (tài liệu thư viện) |
+Chi tiết và cách đo: [docs/PROGRESS.md](docs/PROGRESS.md), [docs/05-agent-design.md](docs/05-agent-design.md#7-đánh-giá-agent-eval).
 
 ## Cấu trúc
 ```
-CLAUDE.md                bộ nhớ dự án
+CLAUDE.md                bộ nhớ dự án cho Claude Code
 .claude/                 settings, hooks, rules, skills, agents
-.mcp.json                MCP servers
+.mcp.json                MCP servers (Playwright, Context7)
 .env.example             biến môi trường
-docker-compose.yml       PostgreSQL (từ T0.3), toàn bộ ứng dụng (từ T9.4; `make demo-up`)
+docker-compose.yml       db (dev/test) và cả hệ thống (demo)
+backend/                 FastAPI, agent, scrapers, normalize, services, db, mock_shop, scripts, tests
+frontend/                React + Vite, Playwright e2e
 docs/                    01–11 đặc tả, ADR, eval, nguồn, ảnh UI, PROGRESS
-backend/, frontend/      (tạo ở M0)
+reports/                 báo cáo eval (không đưa vào git)
 ```
+Sơ đồ chi tiết: [docs/03-architecture.md](docs/03-architecture.md#6-cấu-trúc-thư-mục-theo-code-sau-m10).
 
-## Tùy chỉnh giao diện theo ý bạn
-Đặt phác thảo/ảnh tham khảo vào `docs/ui/` (tên file theo màn hình), sửa bảng token ở `docs/08-ui-ux.md` §5, rồi giao việc bằng skill `ui-screen`.
+## Làm việc với Claude Code
+Dự án được xây theo milestone bằng Claude Code. Quy trình và quy tắc bắt buộc nằm ở [CLAUDE.md](CLAUDE.md); backlog ở [docs/11-roadmap-backlog.md](docs/11-roadmap-backlog.md).
+
+| Thành phần | Vị trí | Vai trò |
+| --- | --- | --- |
+| Bộ nhớ dự án | `CLAUDE.md` | Tổng quan, lệnh, quy trình, quy tắc; tự nạp `docs/PROGRESS.md` |
+| Quy tắc theo thư mục | `.claude/rules/*.md` | Tự nạp khi làm với file backend, frontend, scraping, test |
+| Skill quy trình | `.claude/skills/{next,plan-task,check,review,done,eval}` | Gọi bằng `/tên` |
+| Skill kiến thức | `.claude/skills/{add-scraper,add-category,agent-tool,ui-screen,write-tests}` | Claude tự dùng khi phù hợp |
+| Subagent | `.claude/agents/{code-reviewer,qa-tester}.md` | Review diff; viết test biên cuối milestone |
+| Hook / quyền | `.claude/hooks/*.py`, `.claude/settings.json` | Chặn lệnh nguy hiểm, bảo vệ `.env` và ADR, tự format |
+| MCP | `.mcp.json` | Playwright (khảo sát trang, chụp UI), Context7 (tài liệu thư viện) |
+
+Claude Code đọc `CONTEXT7_API_KEY` từ **biến môi trường shell**, không từ `.env`. Vòng lặp mỗi milestone: `/next` → Plan mode → `/plan-task` → code + test → `/check` → `/review` → `qa-tester` → `/done`.
 
 ## Tuân thủ
-Dự án chỉ thu thập dữ liệu sản phẩm công khai, tôn trọng robots.txt, độ trễ ≥ 5 giây mỗi trang (Laptop88 10 giây), User-Agent trung thực, không đăng nhập, không đặt hàng hộ, không vượt captcha thật. Mặc định chạy offline (mock-shop + fixture). Điều khoản sử dụng của từng trang phải được đọc và duyệt ở task T0.4 trước khi chạy với trang thật. Xem [docs/02-scope-and-sources.md](docs/02-scope-and-sources.md).
+Dự án chỉ thu thập dữ liệu sản phẩm công khai, tôn trọng robots.txt, độ trễ ≥ 5 giây mỗi domain (lớn hơn nếu robots.txt có `Crawl-delay`), User-Agent trung thực, không đăng nhập, không đặt hàng hộ, không vượt captcha thật. Mặc định chạy offline (`SCRAPER_OFFLINE_ONLY=true`: mock-shop + fixture); chạy với trang thật chỉ khi người dùng tự bật. Điều khoản sử dụng của từng trang đã được đọc và duyệt ở T0.4 (xem [docs/sources/](docs/sources/)). Chi tiết: [docs/02-scope-and-sources.md](docs/02-scope-and-sources.md).

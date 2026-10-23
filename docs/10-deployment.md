@@ -17,7 +17,7 @@
 - Windows: dùng Git Bash hoặc WSL2 cho lệnh `make` (hoặc chạy lệnh tương ứng trong Makefile bằng tay). Cài make bằng `winget install ezwinports.make`; bản make của MSYS2 (`pacman -S make`) làm mất biến môi trường Windows nên `docker compose` không tìm thấy plugin.
 - Nếu cổng 5432 đã bị chiếm: đặt `POSTGRES_PORT` khác trong `.env` và sửa cổng trong `DATABASE_URL`/`TEST_DATABASE_URL` cho khớp. `docker-compose.yml` chỉ mở cổng DB trên `127.0.0.1`.
 
-## 3. Chạy cục bộ (sau milestone M0)
+## 3. Chạy cục bộ
 
 ```bash
 cp .env.example .env             # điền GOOGLE_API_KEY, ALERT_DEFAULT_EMAIL, POSTGRES_PASSWORD...
@@ -77,16 +77,30 @@ flowchart LR
 | Bị chặn | Trạng thái `BLOCKED` + tạm nghỉ 24 giờ tự động; xem lại độ trễ và khối lượng; nếu lặp lại thì tắt trang đó (`enabled=false` trong `SiteConfig`) |
 | Sao lưu | `docker compose exec db pg_dump -U $POSTGRES_USER -Fc $POSTGRES_DB > backup.dump`; khôi phục bằng `pg_restore` |
 | Volume `pgdata` có từ trước (thiếu `product_buyer_test`) | Script init chỉ chạy khi volume rỗng: `docker compose exec db createdb -U $POSTGRES_USER product_buyer_test` |
-| Xóa sạch DB dev | `make db-down` rồi `docker volume rm` volume `pgdata`, sau đó `make db-up && make setup` |
+| Xóa sạch DB dev | `docker compose down -v` (xóa cả volume `pgdata` và `appdata`) rồi `make db-up && make setup` |
 | Chi phí LLM | Xem số lần gọi trong `agent_run.tool_calls` và log; cache trích xuất giảm số gọi |
 | Đổi model LLM | Sửa `GEMINI_MODEL` trong `.env`, chạy `make eval` so sánh trước/sau |
 
-## 7. Kịch bản demo bảo vệ (gợi ý)
+## 7. Kịch bản demo bảo vệ
 
-1. Mở `/admin`: giới thiệu nguồn, robots.txt, độ trễ, chế độ tuân thủ.
-2. Chạy thu thập mock-shop → gặp captcha giả → xử lý trong hộp thoại → lượt chạy hoàn tất (minh họa phân trang + captcha giả lập).
-3. Hỏi: "laptop gaming dưới 30 triệu RTX 4060 trở lên" → xem kế hoạch, tiến trình, bảng so sánh 3 trang.
-4. "So sánh 2 máy rẻ nhất" → ngăn so sánh. "Thêm máy đầu vào danh sách mua". "Báo tôi khi máy này dưới …".
-5. Chạy làm mới giá (seed thay đổi giá) → nhận email/Telegram.
-6. Hỏi nhóm khác: "loa bluetooth dưới 1 triệu" → kết quả tầng 2 có nhãn (ở chế độ offline, tầng 2 tìm trên mock-shop; muốn dùng trang thật phải tắt offline có chủ ý).
-7. Trình bày báo cáo eval (`reports/eval-*.md`).
+Đã diễn tập ngày 2026-10-23 (T11.3); cột "Kết quả diễn tập" dưới đây là kết quả của lần đó.
+
+Chuẩn bị: `make demo-up` rồi `make demo-seed`; mở http://localhost:8080. Muốn DB sạch (không lẫn dữ liệu dev cũ): `docker compose down -v` (xóa cả volume `pgdata` và `appdata`), rồi chạy lại hai lệnh trên. Cần `GOOGLE_API_KEY` trong `.env`; không đổi `SCRAPER_OFFLINE_ONLY`.
+
+| # | Bước | Cách làm | Kết quả diễn tập |
+| --- | --- | --- | --- |
+| 1 | Giới thiệu nguồn | `/admin` | Đạt. Banner "Đang ở chế độ offline", 4 nguồn (GearVN, FPT Shop, An Phát, Mock Shop) kèm độ trễ 5 s (Mock Shop 1 s) và lượt chạy gần nhất. |
+| 2 | Thu thập + captcha giả | `/admin` → "Chạy ngay: Mock Shop – Laptop" → "Xử lý" → nhập mã | Đạt, nhưng xem ghi chú A. Một lượt 3 trang mất khoảng 1–9 phút (lần đầu chậm do LLM điền thông số thiếu, có cache về sau); sau khi nhập mã `SUCCEEDED` trong vài giây (26 mục, 1 lỗi: sản phẩm hư cấu cố ý không có giá). |
+| 3 | Hỏi tầng 1 | "laptop gaming dưới 30 triệu RTX 4060 trở lên" | Đạt, ~30 s. Kế hoạch 3 bước, bảng 7 laptop (25,49–29,49 triệu), mỗi máy 1–3 trang bán. |
+| 4 | So sánh, danh sách mua, cảnh báo | Tick 2 máy → "So sánh"; menu "⋯" → "Thêm vào danh sách" → "Báo khi giảm giá" | Đạt. Ngăn so sánh đánh dấu giá rẻ nhất và chỉ hiện khác biệt; thêm vào danh sách và tạo cảnh báo (gợi ý −5%) đều xác nhận. |
+| 5 | Làm mới giá → cảnh báo | Xem ghi chú B | Đạt một phần: giá đổi được ghi (`price_changes = 1`) và cảnh báo được đánh giá, nhưng **không gửi** vì kênh email chưa cấu hình (log `[alert 3] kênh email chưa được cấu hình, bỏ qua`). |
+| 6 | Tầng 2 | "loa bluetooth dưới 1 triệu" | Đạt sau một lần "Hỏi lại" (Gemini trả 504 `DEADLINE_EXCEEDED` ở lần đầu). Bảng "Tìm trực tiếp – chưa chuẩn hóa thông số" với 2 loa từ Mock Shop; GearVN và FPT Shop bị bỏ qua vì offline. |
+| 7 | Báo cáo eval | `reports/eval-2026-10-23.md` | Có. 31 câu, intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; latency p50 26–31 s (chưa đạt 15 s). |
+
+Ghi chú khi trình diễn:
+- **A. Captcha:** mock-shop chỉ đòi captcha sau `MOCK_SHOP_CAPTCHA_AFTER` (mặc định 5) request trang nội dung chưa có cookie, nên một lượt 3 trang trên mock-shop mới khởi động **không** gặp captcha. Để chắc chắn gặp, đặt `MOCK_SHOP_CAPTCHA_AFTER=2` trong `.env` rồi `docker compose up -d mock-shop`, hoặc chạy hai nhóm liên tiếp rồi chạy lại Laptop.
+- **B. Đổi giá:** mock-shop không có điều khiển giá. Cách diễn tập: thêm một dòng `price_history` cao hơn rồi đặt `offer.price` bằng giá đó cho một offer có URL `http://mock-shop:8100/...`, tạo cảnh báo với ngưỡng nằm giữa hai mức giá, rồi chạy lại lượt Mock Shop – Laptop. Chỉ sửa `offer.price` mà không thêm `price_history` thì pipeline không thấy đổi giá. Chưa có lệnh sẵn (T11.4). Để thấy email thật cần cấu hình `SMTP_HOST` và `ALERT_EMAIL_FROM` ([`.env.example`](../.env.example)); không thì chỉ cho xem log hoặc trang `/alerts`.
+- **Gemini lỗi tạm thời (429/503/504):** giao diện hiện "Không gọi được mô hình ngôn ngữ lúc này" kèm nút "Hỏi lại"; bấm lại là được. Nên đặt `LLM_MAX_RPM=12` nếu dùng gói miễn phí.
+- **Console trình duyệt có 7 lỗi `ERR_NAME_NOT_RESOLVED`:** ảnh sản phẩm hư cấu ở `mock-images.example`, không ảnh hưởng chức năng.
+- **Dữ liệu lẫn:** DB dev có dữ liệu thu thập cũ (URL `localhost:8100`), thu thập trong Docker tạo offer mới với URL `mock-shop:8100` nên cùng một mẫu mock xuất hiện thành hai sản phẩm (ví dụ "Laptop MSI Mock Katana 15 X25"). Dùng DB sạch như phần chuẩn bị để tránh.
+- Ô lọc "Trang" ở `/admin` còn liệt kê Hoàng Hà, Laptop88, Viettel Store, Nguyễn Kim (giá trị cũ của enum, T4.6).

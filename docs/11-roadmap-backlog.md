@@ -388,10 +388,16 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |
 | --- | --- | --- | --- | --- |
-| T11.1 | Eval cuối với LLM thật, chỉnh prompt đến khi đạt ngưỡng | M6–M10 | M | ⬜ |
-| T11.2 | Cập nhật tài liệu theo code thực tế + README + sơ đồ | T11.1 | M | ⬜ |
-| T11.3 | Diễn tập kịch bản demo ([10 §7](10-deployment.md#7-kịch-bản-demo-bảo-vệ-gợi-ý)) | T9.4 | S | ⬜ |
+| T11.1 | Eval cuối với LLM thật, chỉnh prompt đến khi đạt ngưỡng | M6–M10 | M | ✅ |
+| T11.2 | Cập nhật tài liệu theo code thực tế + README + sơ đồ | T11.1 | M | ✅ |
+| T11.3 | Diễn tập kịch bản demo ([10 §7](10-deployment.md#7-kịch-bản-demo-bảo-vệ)) | T9.4 | S | ✅ |
+| T11.4 | Lệnh đổi giá cho demo (`make demo-price-drop`) + `MOCK_SHOP_CAPTCHA_AFTER` thấp cho demo (phát sinh từ T11.3; không chặn bảo vệ) | T11.3 | S | ⬜ |
+| T11.5 | Giảm latency p50 của agent xuống ≤ 15 s (G4): hiện 26–31 s do ≥ 3 lần gọi Gemini mỗi câu (phát sinh từ T11.1; cần người dùng quyết định làm hay chấp nhận ngoại lệ) | T11.1 | M | ⬜ |
 
+**T11.4** — Phát sinh từ diễn tập T11.3 (docs/10 §7 ghi A, B). Xong khi: một lệnh (script trong `backend/scripts/` + target Makefile) đổi giá một offer `mock-shop` kèm dòng `price_history` rồi tạo cảnh báo mẫu, để bước 5 của demo lặp lại được mà không sửa SQL tay; `docker-compose.yml` đặt `MOCK_SHOP_CAPTCHA_AFTER` đủ thấp để một lượt Laptop luôn gặp captcha (hoặc nêu rõ trong `.env.example`); test script; cập nhật 10 §7. Ghi thêm (không làm ở đây): cùng mẫu mock xuất hiện hai sản phẩm khi dữ liệu dev cũ (URL `localhost:8100`) lẫn dữ liệu Docker (`mock-shop:8100`), và lượt Laptop đầu tiên trong Docker chậm vì LLM điền thông số.
+
+**T11.5** — Phát sinh từ T11.1 và review M11. Eval 2026-10-23 (`gemini-3.5-flash-lite`): latency p50 26–31 s so với G4 ≤ 15 s; không do `LLM_MAX_RPM` (chạy `--rpm 1000` vẫn 21–32 s). Mỗi câu cần ≥ 3 lần gọi Gemini (planner ~4–10 s, vòng tool, câu trả lời cuối), mỗi lần 4–10 s hôm nay (ngày 2026-10-21 đo được 15,7 s). Xong khi: p50 ≤ 15 s trong `make eval` (ví dụ gộp planner với bước chọn tool, bỏ lần tổng hợp cuối khi kết quả tool đủ, chạy planner và tìm danh mục song song, so với model khác), **hoặc** người dùng ghi nhận chấp nhận ngoại lệ vào docs/01 (G4, NFR-01) và docs/05 §7. Hiện chưa có quyết định của người dùng nên các tài liệu đó vẫn ghi ngưỡng ≤ 15 s kèm chú thích "chưa đạt".
+
 ### X — Mở rộng (chỉ khi M0–M11 xong)
 
 | ID | Task | Ước lượng | Trạng thái |
