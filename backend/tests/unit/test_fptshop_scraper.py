@@ -131,7 +131,7 @@ def test_config_describes_fptshop() -> None:
     assert (config.key, config.base_url, config.min_delay_s) == (SiteKey.fptshop, BASE, 5.0)
     assert (config.requires_js, config.supports_live_search, config.is_mock) == (
         False,
-        False,
+        True,  # tầng 2 từ T10.1: /tim-kiem?s= dựng sẵn ở máy chủ
         False,
     )
     assert config.enabled is True

@@ -17,7 +17,7 @@
 flowchart TB
   user([Người mua / Quản trị viên])
   system[Product Buyer Agent]
-  shops[(Trang bán lẻ<br/>GearVN, FPT Shop, An Phát,<br/>Viettel Store, Nguyễn Kim)]
+  shops[(Trang bán lẻ<br/>GearVN, FPT Shop, An Phát)]
   llm[Dịch vụ LLM<br/>Gemini / OpenAI]
   notify[Kênh thông báo<br/>SMTP, Telegram]
   user -- "yêu cầu tiếng Việt, xem so sánh" --> system
@@ -88,7 +88,7 @@ flowchart TB
   subgraph scraping[app/scrapers]
     base[base.py BaseScraper]
     fetcher[http/fetcher.py<br/>robots, rate limit, retry]
-    sites[sites/gearvn.py, fptshop.py,<br/>anphat.py, viettelstore.py,<br/>nguyenkim.py, mockshop.py]
+    sites[sites/gearvn.py, fptshop.py,<br/>anphat.py, mockshop.py]
     pipeline[pipeline.py]
   end
   subgraph normalize[app/normalize]
@@ -206,7 +206,7 @@ sequenceDiagram
 
 ### 5.3 Tầng 2 (nhóm khác)
 
-Planner trả `tier = 2` → executor gọi `live_search_other(query, price_min?, price_max?)` → service kiểm tra cache (6 giờ) → nếu thiếu, gọi `search_url()` của các trang cho phép tầng 2 (GearVN, Viettel Store, Nguyễn Kim; ở chế độ offline chỉ mock-shop), tuần tự, đúng độ trễ → parse tối đa 10 kết quả mỗi trang → lọc theo khoảng giá nếu có (bỏ mục không có giá) → trả về kèm nhãn `unnormalized`. Không lưu vào bảng `Product`.
+Planner trả `tier = 2` → executor gọi `live_search_other(query, price_min?, price_max?)` → service kiểm tra cache (6 giờ) → nếu thiếu, gọi `search_url()` của các trang cho phép tầng 2 (GearVN, FPT Shop; ở chế độ offline chỉ mock-shop; [ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)), tuần tự, đúng độ trễ → parse tối đa 10 kết quả mỗi trang → lọc theo khoảng giá nếu có (bỏ mục không có giá) → trả về kèm nhãn `unnormalized`. Không lưu vào bảng `Product`.
 
 ## 6. Cấu trúc thư mục (mục tiêu sau M0)
 

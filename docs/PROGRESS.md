@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (M9 đã đóng). Kế tiếp đề xuất: M10 Tầng 2 (`/next M10`), chọn nhánh mới từ `main` sau khi người dùng merge `milestone/M9-price-tracking`; M11 cần M8, M9, M10.
+- Đang làm: M10 Tầng 2 (nhánh `milestone/M10-tier2-live-search`): T10.1 ✅ → T10.2 → T10.3 (đang làm T10.2). Tầng 2 thật = GearVN + FPT Shop (ADR-0010). Docker Desktop phải bật để chạy test tích hợp (`make db-up`). M11 cần M8, M9, M10.
 - Backlog chưa làm (không chặn M10): T9.5–T9.8, T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7, T8.12 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-23 — đóng M9 (`/done M9`)
 
@@ -20,7 +20,7 @@
 | M7 API | ✅ | Gộp T6.8, T6.9; qua `code-reviewer` (3 Phải sửa đã sửa) + `qa-tester` (4 bug sửa ngay, 3 bug giữ `xfail(strict)` BUG-M7-3, 4, 6b → T7.7; còn T7.6 từ review). T2.8 chưa làm |
 | M8 Frontend | ✅ | Gộp T8.9–T8.11; qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (9 bug sửa ngay, 278 test `*.qa-m8`); 30 ảnh `docs/ui/screens/` đã trình người dùng một lần (cho tiếp tục); E2E 8/8. Còn T8.12 (4 điểm nhỏ cần quyết định) |
 | M9 Theo dõi giá | ✅ | Qua `code-reviewer` (4 Phải sửa + 10/11 Nên sửa đã sửa) + `qa-tester` (8 bug sửa ngay, 227 test `*_qa_m9`); T9.1–T9.4 xong, `make demo-up` chạy cả hệ thống bằng Docker ([ADR-0009](adr/0009-mock-shop-compose-host.md)). Còn T9.5–T9.8 |
-| M10 Tầng 2 | ⬜ | |
+| M10 Tầng 2 | 🔄 | T10.1–T10.3; kết luận điều khoản Viettel Store/Nguyễn Kim còn chờ người dùng duyệt |
 | M11 Hoàn thiện | ⬜ | |
 
 ## Bị chặn / cần người dùng quyết định

@@ -147,10 +147,10 @@ Hoàng Hà Mobile và Laptop88 đã bị loại khỏi danh sách nguồn từ 2
 | Trang | Nhóm (tầng 1) | `min_delay_s` | `requires_js` | Tầng 2 | Ghi chú đã biết |
 | --- | --- | --- | --- | --- | --- |
 | `gearvn` | laptop, mouse, keyboard, headset | 5 | Không (HTML dựng sẵn ở máy chủ, T3.1) | Có | Danh sách không có JSON-LD sản phẩm (parse thẻ `a.product-card`), chi tiết có JSON-LD `Product` + `additionalProperty`; chip thông số trên thẻ không có nhãn; sản phẩm ngừng kinh doanh hiện "Liên hệ tư vấn" (không giá) |
-| `fptshop` | laptop, mouse, keyboard, headset | 5 | Không (trang chi tiết có JSON-LD `Product` trong HTML dựng sẵn, T4.1) | Không (chưa khảo sát) | Danh mục chỉ có ~25 sản phẩm trong HTML (phần còn lại qua nút "Xem thêm"/API) nên duyệt **qua sitemap + trang chi tiết**; phụ kiện nhận diện nhóm bằng tiền tố slug; `mpn` = `sku` = mã nội bộ; giá flash sale theo suất không lưu |
+| `fptshop` | laptop, mouse, keyboard, headset | 5 | Không (trang chi tiết có JSON-LD `Product` trong HTML dựng sẵn, T4.1) | Có (`/tim-kiem?s=<từ khóa>`, ~24 thẻ `a` có `h3` trong HTML dựng sẵn, T10.1) | Danh mục chỉ có ~25 sản phẩm trong HTML (phần còn lại qua nút "Xem thêm"/API) nên duyệt **qua sitemap + trang chi tiết**; phụ kiện nhận diện nhóm bằng tiền tố slug; `mpn` = `sku` = mã nội bộ; giá flash sale theo suất không lưu |
 | `anphat` | laptop, mouse, keyboard, headset | 5 (`Crawl-delay: 5`) | Không (thẻ sản phẩm trong HTML tĩnh, T4.3) | **Không** (robots.txt chặn `/tim`) | Phân trang `?page=N` (24 sản phẩm/trang laptop, 30 các nhóm khác; hết trang = 0 thẻ; `has_next` suy từ tổng "N kết quả"); thẻ không có thông số (nạp bằng JS qua `/ajax/` bị chặn) nên pipeline tải trang chi tiết; mọi trang có form đăng ký chứa chữ captcha nên scraper ghi đè `detect_challenge`; giá ẩn `d-none` (Build PC, combo TP.HCM) bỏ qua |
-| `viettelstore` | (mở rộng) | 5 | Xác định khi khảo sát | Có | Tên điện thoại chứa dung lượng |
-| `nguyenkim` | (mở rộng) | 5 | Xác định khi khảo sát | Có | |
+| `viettelstore` | (mở rộng) | 5 | **Có** (tìm kiếm nạp bằng `ajax.aspx`, T10.1) | **Không** (ADR-0010) | Chưa có scraper; tên điện thoại chứa dung lượng |
+| `nguyenkim` | (mở rộng) | 5 | **Có** (Next.js, kết quả tìm kiếm nạp phía trình duyệt, T10.1) | **Không** (ADR-0010) | Chưa có scraper |
 | `mockshop` | cả 4 | `MOCK_SHOP_DELAY_SECONDS` | Không | Có (dev/test/demo) | Dùng cho test và demo |
 
 ## 7. Pipeline (`app/scrapers/pipeline.py`)
