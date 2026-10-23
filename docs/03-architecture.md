@@ -206,7 +206,7 @@ sequenceDiagram
 
 ### 5.3 Tầng 2 (nhóm khác)
 
-Planner trả `tier = 2` → executor gọi `live_search_other(query, price_min?, price_max?)` → service kiểm tra cache (6 giờ) → nếu thiếu, gọi `search_url()` của các trang cho phép tầng 2 (GearVN, FPT Shop; ở chế độ offline chỉ mock-shop; [ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)), tuần tự, đúng độ trễ → parse tối đa 10 kết quả mỗi trang → lọc theo khoảng giá nếu có (bỏ mục không có giá) → trả về kèm nhãn `unnormalized`. Không lưu vào bảng `Product`.
+Planner trả `tier = 2` → executor gọi `live_search_other(query, price_min?, price_max?)` → `live_search_service` (tuần tự, một lượt tìm tại một thời điểm) với từng trang cho phép tầng 2 (GearVN, FPT Shop; ở chế độ offline chỉ mock-shop và trang thật vào `sites_skipped`; [ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)): kiểm tra cache của **(trang, từ khóa)** (khóa `live:v1:<trang>:<từ khóa NFC, chữ thường, gọn khoảng trắng>`, TTL `LIVE_SEARCH_CACHE_TTL_HOURS` = 6 giờ) → nếu thiếu, gọi `live_search()` qua Fetcher dùng chung (độ trễ ≥ 5 s/domain), giữ tối đa 10 kết quả mỗi trang vào cache → **sau đó** lọc theo khoảng giá (bỏ mục không có giá khi có lọc giá) rồi cắt `limit_per_site`, nên cache không phụ thuộc giá → trả về kèm nhãn `unnormalized`. Lỗi một trang (ngoại tuyến, robots, mạng) chỉ đưa trang đó vào `sites_skipped`, không cache; trang chặn (challenge/403, robots 403/429) ghi mục `live:v1:blocked:<trang>` và nghỉ 24 giờ (cũng nghỉ nếu có `ScrapeRun` `BLOCKED` trong 24 giờ). Không lưu vào bảng `Product`/`Offer`.
 
 ## 6. Cấu trúc thư mục (mục tiêu sau M0)
 

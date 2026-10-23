@@ -1158,5 +1158,175 @@
         "Trọng lượng": "300g"
       }
     }
+  ],
+  "search_only": [
+    {
+      "slug": "edifier-mock-mini-m1-mk-lo001",
+      "category": "speaker",
+      "name": "Loa Bluetooth Edifier Mock Mini M1",
+      "brand": "Edifier",
+      "sku": "MK-LO001",
+      "price": 590000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.3,
+      "rating_count": 41,
+      "specs": {
+        "Kết nối": "Bluetooth 5.3",
+        "Công suất": "10W",
+        "Pin": "12 giờ"
+      }
+    },
+    {
+      "slug": "sony-mock-boom-b3-mk-lo002",
+      "category": "speaker",
+      "name": "Loa Bluetooth Sony Mock Boom B3",
+      "brand": "Sony",
+      "sku": "MK-LO002",
+      "price": 890000,
+      "list_price": 1190000,
+      "in_stock": true,
+      "rating": 4.5,
+      "rating_count": 77,
+      "specs": {
+        "Kết nối": "Bluetooth 5.2",
+        "Công suất": "20W",
+        "Chống nước": "IP67"
+      }
+    },
+    {
+      "slug": "jbl-mock-flip-f2-mk-lo003",
+      "category": "speaker",
+      "name": "Loa Bluetooth JBL Mock Flip F2",
+      "brand": "JBL",
+      "sku": "MK-LO003",
+      "price": 1490000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.6,
+      "rating_count": 120,
+      "specs": {
+        "Kết nối": "Bluetooth 5.3",
+        "Công suất": "30W",
+        "Chống nước": "IP67"
+      }
+    },
+    {
+      "slug": "marshall-mock-stage-s4-mk-lo004",
+      "category": "speaker",
+      "name": "Loa Bluetooth Marshall Mock Stage S4",
+      "brand": "Marshall",
+      "sku": "MK-LO004",
+      "price": 3290000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.8,
+      "rating_count": 15,
+      "specs": {
+        "Kết nối": "Bluetooth 5.3",
+        "Công suất": "80W"
+      }
+    },
+    {
+      "slug": "xiaomi-mock-play-p5-mk-lo005",
+      "category": "speaker",
+      "name": "Loa Bluetooth Xiaomi Mock Play P5",
+      "brand": "Xiaomi",
+      "sku": "MK-LO005",
+      "price": null,
+      "list_price": null,
+      "in_stock": true,
+      "rating": null,
+      "rating_count": 0,
+      "specs": {
+        "Kết nối": "Bluetooth 5.0",
+        "Công suất": "5W"
+      }
+    },
+    {
+      "slug": "kingston-mock-nv3-1tb-mk-ss001",
+      "category": "storage",
+      "name": "Ổ cứng SSD Kingston Mock NV3 1TB NVMe",
+      "brand": "Kingston",
+      "sku": "MK-SS001",
+      "price": 1990000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.4,
+      "rating_count": 58,
+      "specs": {
+        "Dung lượng": "1TB",
+        "Chuẩn": "M.2 NVMe",
+        "Tốc độ đọc": "3500MB/s"
+      }
+    },
+    {
+      "slug": "samsung-mock-990-2tb-mk-ss002",
+      "category": "storage",
+      "name": "Ổ cứng SSD Samsung Mock 990 2TB NVMe",
+      "brand": "Samsung",
+      "sku": "MK-SS002",
+      "price": 3790000,
+      "list_price": 4290000,
+      "in_stock": true,
+      "rating": 4.7,
+      "rating_count": 33,
+      "specs": {
+        "Dung lượng": "2TB",
+        "Chuẩn": "M.2 NVMe",
+        "Tốc độ đọc": "7450MB/s"
+      }
+    },
+    {
+      "slug": "wd-mock-blue-500gb-mk-ss003",
+      "category": "storage",
+      "name": "Ổ cứng SSD WD Mock Blue 500GB SATA",
+      "brand": "WD",
+      "sku": "MK-SS003",
+      "price": 1190000,
+      "list_price": null,
+      "in_stock": false,
+      "rating": 4.2,
+      "rating_count": 20,
+      "specs": {
+        "Dung lượng": "500GB",
+        "Chuẩn": "2.5 inch SATA III",
+        "Tốc độ đọc": "560MB/s"
+      }
+    },
+    {
+      "slug": "dell-mock-g27-2k-mk-mn001",
+      "category": "monitor",
+      "name": "Màn hình Dell Mock G27 27 inch 2K 165Hz",
+      "brand": "Dell",
+      "sku": "MK-MN001",
+      "price": 5290000,
+      "list_price": null,
+      "in_stock": true,
+      "rating": 4.5,
+      "rating_count": 64,
+      "specs": {
+        "Kích thước": "27 inch",
+        "Độ phân giải": "2560x1440",
+        "Tần số quét": "165Hz"
+      }
+    },
+    {
+      "slug": "lg-mock-24f-fhd-mk-mn002",
+      "category": "monitor",
+      "name": "Màn hình LG Mock 24F 24 inch FHD",
+      "brand": "LG",
+      "sku": "MK-MN002",
+      "price": 2890000,
+      "list_price": 3290000,
+      "in_stock": true,
+      "rating": 4.1,
+      "rating_count": 27,
+      "specs": {
+        "Kích thước": "24 inch",
+        "Độ phân giải": "1920x1080",
+        "Tần số quét": "75Hz"
+      }
+    }
   ]
 }

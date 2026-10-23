@@ -1,4 +1,8 @@
-"""Danh mục hư cấu của mock-shop: 60 sản phẩm trong `data.json` (tên có chữ "Mock")."""
+"""Danh mục hư cấu của mock-shop: 60 sản phẩm tầng 1 và vài sản phẩm nhóm khác (tầng 2).
+
+Cả hai nằm trong `data.json` (tên có chữ "Mock"). Nhóm ngoài tầng 1 (`search_only`) chỉ xuất hiện ở
+`/search` và trang chi tiết, không có trang danh mục: dùng cho tìm trực tiếp offline (docs/06 §5).
+"""
 
 import json
 import unicodedata
@@ -11,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 DATA_FILE: Final = Path(__file__).with_name("data.json")
 PAGE_SIZE: Final = 12
 CATEGORIES: Final = ("laptop", "mouse", "keyboard", "headset")
+SEARCH_ONLY_CATEGORIES: Final = ("speaker", "storage", "monitor")  # nhóm tầng 2, không có /c/<nhóm>
 
 
 class MockProduct(BaseModel):
@@ -42,6 +47,21 @@ def load_catalog() -> tuple[MockProduct, ...]:
     unknown = {product.category for product in products} - set(CATEGORIES)
     if unknown:
         raise ValueError(f"unknown categories in mock-shop data: {sorted(unknown)}")
+    return products
+
+
+@lru_cache
+def load_search_catalog() -> tuple[MockProduct, ...]:
+    """Sản phẩm tầng 1 cộng sản phẩm `search_only`; ném lỗi nếu slug trùng hoặc nhóm lạ."""
+    raw = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    extras = tuple(MockProduct.model_validate(item) for item in raw.get("search_only", []))
+    unknown = {product.category for product in extras} - set(SEARCH_ONLY_CATEGORIES)
+    if unknown:
+        raise ValueError(f"unknown search-only categories in mock-shop data: {sorted(unknown)}")
+    products = (*load_catalog(), *extras)
+    slugs = [product.slug for product in products]
+    if len(set(slugs)) != len(slugs):
+        raise ValueError("duplicate slug in mock-shop data")
     return products
 
 
