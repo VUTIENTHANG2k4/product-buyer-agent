@@ -4,8 +4,8 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
 - Đang làm: M11 Hoàn thiện (nhánh `milestone/M11-polish`): T11.1 ✅ (eval cuối; latency p50 chưa đạt, ghi ở bảng đo) → T11.2 ✅ (docs/README/sơ đồ theo code thực tế) → T11.3 ✅ (diễn tập demo 7 bước, E2E 10/10; ghi ở docs/10 §7). Còn: `/check`, `/review M11`, `qa-tester`, `/done M11`.
-- Backlog chưa làm (không chặn M10): T9.5–T9.8, T10.4, T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7, T8.12 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-23 — đóng M10 (`/done M10`)
+- Backlog chưa làm (không chặn M11): T11.4 (lệnh đổi giá demo), T11.5 (latency p50, cần quyết định), T10.4, T9.5–T9.8, T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7, T8.12 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-10-23 — M11: T11.1–T11.3 xong, đã qua `make check` và `code-reviewer`; còn `qa-tester`, `/done M11`
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |

@@ -228,16 +228,16 @@ product-buyer-agent/
 │   │   ├── api/                  # routers/ (products, categories, chat, lists, alerts, admin, health),
 │   │   │                         #   schemas.py, deps.py, errors.py, sse.py, tasks.py (chạy nền)
 │   │   ├── agent/                # planner.py, executor.py (ToolLoop), guardrail.py, runner.py, memory.py,
-│   │   │                         #   intent.py, spec_filler.py, schemas.py, llm.py, fake_llm.py, testing.py,
+│   │   │                         #   intent.py, spec_filler.py, schemas.py, prompts.py, llm.py, fake_llm.py, testing.py,
 │   │   │                         #   tools/ (8 tool), prompts/ (planner, executor, extractor .md)
 │   │   ├── services/             # catalog, compare, shopping_list, alert, alert_evaluation, live_search,
-│   │   │                         #   scrape_service, scrape_runtime, admin, conversation, health, database,
+│   │   │                         #   scrape_service, scrape_runtime, admin, conversation, health, database, spec_filters, views,
 │   │   │                         #   notifier/ (email, telegram)
 │   │   ├── scrapers/             # base.py, challenge.py, registry.py, pipeline.py, parsing.py,
-│   │   │                         #   http/ (fetcher, robots, rate_limiter, raw_cache), sites/ (gearvn,
+│   │   │                         #   http/ (fetcher, robots, rate_limiter, raw_cache, factory, types, errors), sites/ (gearvn,
 │   │   │                         #   fptshop, anphat, mockshop)
 │   │   ├── normalize/            # price.py, url.py, brand.py, model_code.py, names.py, matcher.py,
-│   │   │                         #   extract.py, llm_extract.py, specs/ (khung thông số theo nhóm, gpu_rank)
+│   │   │                         #   text.py, extract.py, llm_extract.py, specs/ (khung thông số theo nhóm, gpu_rank)
 │   │   ├── db/                   # engine.py, models.py, repositories/
 │   │   ├── domain/               # enums.py, dto.py, catalog.py, chat.py, admin.py, live_search.py,
 │   │   │                         #   errors.py (AppError theo 07 §2)

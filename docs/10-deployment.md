@@ -17,7 +17,7 @@
 - Windows: dùng Git Bash hoặc WSL2 cho lệnh `make` (hoặc chạy lệnh tương ứng trong Makefile bằng tay). Cài make bằng `winget install ezwinports.make`; bản make của MSYS2 (`pacman -S make`) làm mất biến môi trường Windows nên `docker compose` không tìm thấy plugin.
 - Nếu cổng 5432 đã bị chiếm: đặt `POSTGRES_PORT` khác trong `.env` và sửa cổng trong `DATABASE_URL`/`TEST_DATABASE_URL` cho khớp. `docker-compose.yml` chỉ mở cổng DB trên `127.0.0.1`.
 
-## 3. Chạy cục bộ (sau milestone M0)
+## 3. Chạy cục bộ
 
 ```bash
 cp .env.example .env             # điền GOOGLE_API_KEY, ALERT_DEFAULT_EMAIL, POSTGRES_PASSWORD...
@@ -77,13 +77,15 @@ flowchart LR
 | Bị chặn | Trạng thái `BLOCKED` + tạm nghỉ 24 giờ tự động; xem lại độ trễ và khối lượng; nếu lặp lại thì tắt trang đó (`enabled=false` trong `SiteConfig`) |
 | Sao lưu | `docker compose exec db pg_dump -U $POSTGRES_USER -Fc $POSTGRES_DB > backup.dump`; khôi phục bằng `pg_restore` |
 | Volume `pgdata` có từ trước (thiếu `product_buyer_test`) | Script init chỉ chạy khi volume rỗng: `docker compose exec db createdb -U $POSTGRES_USER product_buyer_test` |
-| Xóa sạch DB dev | `make db-down` rồi `docker volume rm` volume `pgdata`, sau đó `make db-up && make setup` |
+| Xóa sạch DB dev | `docker compose down -v` (xóa cả volume `pgdata` và `appdata`) rồi `make db-up && make setup` |
 | Chi phí LLM | Xem số lần gọi trong `agent_run.tool_calls` và log; cache trích xuất giảm số gọi |
 | Đổi model LLM | Sửa `GEMINI_MODEL` trong `.env`, chạy `make eval` so sánh trước/sau |
 
-## 7. Kịch bản demo bảo vệ (đã diễn tập 2026-10-23)
+## 7. Kịch bản demo bảo vệ
 
-Chuẩn bị: `make demo-up` rồi `make demo-seed`; mở http://localhost:8080. Muốn DB sạch (không lẫn dữ liệu dev cũ): `docker compose down`, `docker volume rm` volume `pgdata`, rồi chạy lại hai lệnh trên. Cần `GOOGLE_API_KEY` trong `.env`; không đổi `SCRAPER_OFFLINE_ONLY`.
+Đã diễn tập ngày 2026-10-23 (T11.3); cột "Kết quả diễn tập" dưới đây là kết quả của lần đó.
+
+Chuẩn bị: `make demo-up` rồi `make demo-seed`; mở http://localhost:8080. Muốn DB sạch (không lẫn dữ liệu dev cũ): `docker compose down -v` (xóa cả volume `pgdata` và `appdata`), rồi chạy lại hai lệnh trên. Cần `GOOGLE_API_KEY` trong `.env`; không đổi `SCRAPER_OFFLINE_ONLY`.
 
 | # | Bước | Cách làm | Kết quả diễn tập |
 | --- | --- | --- | --- |

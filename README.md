@@ -37,7 +37,7 @@ make demo-seed           # nạp dữ liệu hư cấu (lần đầu)
 # giao diện http://localhost:8080 · API http://localhost:8000/api/docs
 make db-down             # dừng tất cả, giữ dữ liệu
 ```
-Kịch bản trình diễn: [docs/10-deployment.md](docs/10-deployment.md#7-kịch-bản-demo-bảo-vệ-gợi-ý).
+Kịch bản trình diễn: [docs/10-deployment.md](docs/10-deployment.md#7-kịch-bản-demo-bảo-vệ).
 
 ### Lệnh thường dùng
 | Lệnh | Việc |

@@ -8,8 +8,9 @@ số bước, sự kiện từng tool, chặn tool ghi khi người dùng không
 import json
 import logging
 import time
-from collections.abc import AsyncIterator, Callable, Collection, Sequence
+from collections.abc import AsyncIterator, Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Final, Literal
 
 from langchain_core.exceptions import OutputParserException
@@ -33,7 +34,7 @@ MAX_WRITE_CALLS: Final = 5  # tool ghi tối đa mỗi lượt
 TOOL_FAILURE_LIMIT: Final = 2  # cùng một tool lỗi 2 lần thì dừng (docs/05 §5)
 # Trần số lần chạy thật của một tool mỗi lượt. Tìm trực tiếp đi qua Fetcher (độ trễ ≥ 5 s/trang)
 # nên gọi lặp làm lượt rất chậm: eval T03 từng gọi 8 lần (78 s). Tool ghi có trần riêng ở trên.
-TOOL_CALL_CAPS: Final = {"live_search_other": 2}
+TOOL_CALL_CAPS: Final[Mapping[str, int]] = MappingProxyType({"live_search_other": 2})
 
 StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures"]
 
@@ -44,8 +45,8 @@ _SYNTHESIS_HINTS: Final = {
         "không gọi thêm tool và không bịa thêm."
     ),
     "tool_failures": (
-        "Một tool liên tục lỗi. Hãy tổng hợp FinalAnswer từ những kết quả đã có và nói rõ phần "
-        "nào chưa lấy được."
+        "Một tool liên tục lỗi hoặc đã hết số lần gọi cho phép trong lượt. Hãy tổng hợp "
+        "FinalAnswer từ những kết quả đã có và nói rõ phần nào chưa lấy được."
     ),
 }
 

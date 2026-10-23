@@ -14,7 +14,7 @@ Mục tiêu đo được:
 | G1 | Hiểu đúng yêu cầu | Tỷ lệ trích đúng ý định (nhóm, khoảng giá, thông số bắt buộc) trên bộ eval | ≥ 90% |
 | G2 | Kết quả đúng ràng buộc | Tỷ lệ sản phẩm trả về thỏa mọi ràng buộc người dùng nêu | ≥ 95% |
 | G3 | Không bịa | Sản phẩm/giá/link không có trong dữ liệu | 0 |
-| G4 | Nhanh | Thời gian trả lời câu hỏi tầng 1 (p50) | ≤ 15 giây |
+| G4 | Nhanh | Thời gian trả lời câu hỏi tầng 1 (p50) | ≤ 15 giây (chưa đạt: 26–31 s ngày 2026-10-23, theo dõi ở T11.5) |
 | G5 | Lịch sự với nguồn | Request vi phạm robots.txt hoặc độ trễ tối thiểu | 0 |
 
 ## 2. Phạm vi
