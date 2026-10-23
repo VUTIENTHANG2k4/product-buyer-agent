@@ -147,6 +147,8 @@ erDiagram
 
 `SCRAPE_RUN`, `LLM_EXTRACTION_CACHE`, `LIVE_SEARCH_CACHE` không có khóa ngoại.
 
+`LIVE_SEARCH_CACHE.cache_key` (T10.2): `live:v1:<site>:<từ khóa chuẩn hóa>` cho kết quả một trang (`results` = danh sách `{title, price, url}`, tối đa 10; `created_at` là lúc tìm), và `live:v1:blocked:<site>` đánh dấu trang đang nghỉ 24 giờ. Hết hạn do service quyết định (`LIVE_SEARCH_CACHE_TTL_HOURS`), không có cột `expires_at`.
+
 ## 3. Bảng chi tiết và ràng buộc
 
 | Bảng | Ràng buộc / chỉ mục | Ghi chú |

@@ -129,6 +129,7 @@ class Evidence:
     product_ids: set[int] = field(default_factory=set)
     urls: set[str] = field(default_factory=set)
     live_urls: set[str] = field(default_factory=set)
+    live_entries: dict[str, dict[str, Any]] = field(default_factory=dict)  # url -> mục gốc của tool
     prices: set[int] = field(default_factory=set)
     data_as_of: set[str] = field(default_factory=set)
 
@@ -137,6 +138,10 @@ class Evidence:
         if result.get("ok") is False:
             return
         self._walk(result, tool)
+        if tool == LIVE_TOOL:
+            for entry in result.get("items") or []:
+                if isinstance(entry, Mapping) and isinstance(entry.get("url"), str):
+                    self.live_entries.setdefault(entry["url"], dict(entry))
 
     def _walk(self, node: Any, tool: str) -> None:
         if isinstance(node, Mapping):
@@ -195,11 +200,24 @@ def apply_guardrail(
 
     kept_live: list[LiveItem] = []
     dropped_urls: list[str] = []
+    shown_live: set[str] = set()
     for item in answer.live_items:
-        if item.url in evidence.live_urls:
-            kept_live.append(item)
-        else:
+        source = evidence.live_entries.get(item.url)
+        if source is None:
             dropped_urls.append(item.url)
+        elif item.url not in shown_live:
+            # Chỉ URL do LLM chọn; tên, giá, trang, thời điểm lấy lại từ kết quả tool (bảng không
+            # được dựng từ chữ LLM viết).
+            shown_live.add(item.url)
+            kept_live.append(
+                LiveItem(
+                    site=str(source.get("site", item.site)),
+                    title=str(source.get("title", item.title)),
+                    price=source.get("price"),
+                    url=item.url,
+                    scraped_at=source.get("scraped_at"),
+                )
+            )
 
     reference = [*evidence.prices, *user_amounts]
     # Id sản phẩm in trong câu ("ID: 118687") trông như số tiền nhưng không phải tiền.

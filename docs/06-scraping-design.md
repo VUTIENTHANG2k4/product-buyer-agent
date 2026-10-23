@@ -127,7 +127,7 @@ Mock-shop cũng hỗ trợ tìm trực tiếp (tầng 2) để tầng 2 chạy �
 
 Chi tiết đã cài đặt (T2.3, `app/mock_shop/`; `create_app(captcha_after, slow_seconds, clock)` dựng app độc lập, `main.py` có sẵn `app` cho uvicorn):
 
-- Dữ liệu `data.json`: 60 sản phẩm (26 laptop = 3 trang 12/12/2, 12 chuột = đúng 1 trang đầy, 11 bàn phím, 11 tai nghe), tên dạng "Laptop ASUS Mock …", có ca biên cố ý: giá "Liên hệ" (không có `offers` trong JSON-LD), hết hàng, giảm giá (`old-price`).
+- Dữ liệu `data.json`: thêm khóa `search_only` (T10.2) gồm 10 sản phẩm hư cấu nhóm tầng 2 (5 loa bluetooth gồm một ca "Liên hệ" và một ca giảm giá, 3 SSD, 2 màn hình) chỉ xuất hiện ở `/search` và `/p/<slug>`, không có `/c/<nhóm>` nên không đổi hợp đồng "60 sản phẩm tầng 1" của `load_catalog()`; `load_search_catalog()` gộp cả hai. Phần tầng 1: 60 sản phẩm (26 laptop = 3 trang 12/12/2, 12 chuột = đúng 1 trang đầy, 11 bàn phím, 11 tai nghe), tên dạng "Laptop ASUS Mock …", có ca biên cố ý: giá "Liên hệ" (không có `offers` trong JSON-LD), hết hàng, giảm giá (`old-price`).
 - Trang danh sách/tìm kiếm có cả JSON-LD `ItemList` và thẻ `li.product-card` (`.product-name`, `.price`, `.old-price`, `.stock`, `.rating`, `ul.mini-specs`); liên kết `rel="next"`/`rel="prev"` là đường dẫn tương đối; `page` < 1 hoặc không phải số → 422, nhóm lạ → 404.
 - Captcha: chỉ `/c/*`, `/p/*`, `/search` được đếm (không đếm `robots.txt`, `/captcha`, `/__control/*`). Request thứ `MOCK_SHOP_CAPTCHA_AFTER + 1` không có cookie hợp lệ trở đi nhận HTTP 200 với `<div id="captcha" data-token="…">MÃ</div>` và form POST `/captcha` gồm `token`, `answer` (`application/x-www-form-urlencoded`); mã (5 ký tự, không có I/O/0/1) giữ nguyên tới khi giải đúng. Đáp án không phân biệt hoa/thường; đúng → cookie `mock_pass` (`Max-Age=600`), đặt lại bộ đếm; sai hoặc sai `token` → 400, không cookie. `MOCK_SHOP_CAPTCHA_AFTER` phải ≥ 1.
 - `?fail=500|slow|empty` áp dụng cho `/c`, `/p`, `/search` (sau kiểm captcha) và được giữ trong liên kết phân trang; `slow` chờ `slow_seconds` (mặc định 5) rồi trả trang bình thường; giá trị khác → 422.
@@ -147,10 +147,10 @@ Hoàng Hà Mobile và Laptop88 đã bị loại khỏi danh sách nguồn từ 2
 | Trang | Nhóm (tầng 1) | `min_delay_s` | `requires_js` | Tầng 2 | Ghi chú đã biết |
 | --- | --- | --- | --- | --- | --- |
 | `gearvn` | laptop, mouse, keyboard, headset | 5 | Không (HTML dựng sẵn ở máy chủ, T3.1) | Có | Danh sách không có JSON-LD sản phẩm (parse thẻ `a.product-card`), chi tiết có JSON-LD `Product` + `additionalProperty`; chip thông số trên thẻ không có nhãn; sản phẩm ngừng kinh doanh hiện "Liên hệ tư vấn" (không giá) |
-| `fptshop` | laptop, mouse, keyboard, headset | 5 | Không (trang chi tiết có JSON-LD `Product` trong HTML dựng sẵn, T4.1) | Không (chưa khảo sát) | Danh mục chỉ có ~25 sản phẩm trong HTML (phần còn lại qua nút "Xem thêm"/API) nên duyệt **qua sitemap + trang chi tiết**; phụ kiện nhận diện nhóm bằng tiền tố slug; `mpn` = `sku` = mã nội bộ; giá flash sale theo suất không lưu |
+| `fptshop` | laptop, mouse, keyboard, headset | 5 | Không (trang chi tiết có JSON-LD `Product` trong HTML dựng sẵn, T4.1) | Có (`/tim-kiem?s=<từ khóa>`, ~24 thẻ `a` có `h3` trong HTML dựng sẵn, T10.1) | Danh mục chỉ có ~25 sản phẩm trong HTML (phần còn lại qua nút "Xem thêm"/API) nên duyệt **qua sitemap + trang chi tiết**; phụ kiện nhận diện nhóm bằng tiền tố slug; `mpn` = `sku` = mã nội bộ; giá flash sale theo suất không lưu |
 | `anphat` | laptop, mouse, keyboard, headset | 5 (`Crawl-delay: 5`) | Không (thẻ sản phẩm trong HTML tĩnh, T4.3) | **Không** (robots.txt chặn `/tim`) | Phân trang `?page=N` (24 sản phẩm/trang laptop, 30 các nhóm khác; hết trang = 0 thẻ; `has_next` suy từ tổng "N kết quả"); thẻ không có thông số (nạp bằng JS qua `/ajax/` bị chặn) nên pipeline tải trang chi tiết; mọi trang có form đăng ký chứa chữ captcha nên scraper ghi đè `detect_challenge`; giá ẩn `d-none` (Build PC, combo TP.HCM) bỏ qua |
-| `viettelstore` | (mở rộng) | 5 | Xác định khi khảo sát | Có | Tên điện thoại chứa dung lượng |
-| `nguyenkim` | (mở rộng) | 5 | Xác định khi khảo sát | Có | |
+| `viettelstore` | (mở rộng) | 5 | **Có** (tìm kiếm nạp bằng `ajax.aspx`, T10.1) | **Không** (ADR-0010) | Chưa có scraper; tên điện thoại chứa dung lượng |
+| `nguyenkim` | (mở rộng) | 5 | **Có** (Next.js, kết quả tìm kiếm nạp phía trình duyệt, T10.1) | **Không** (ADR-0010) | Chưa có scraper |
 | `mockshop` | cả 4 | `MOCK_SHOP_DELAY_SECONDS` | Không | Có (dev/test/demo) | Dùng cho test và demo |
 
 ## 7. Pipeline (`app/scrapers/pipeline.py`)

@@ -298,3 +298,87 @@ def test_links_in_text_must_come_from_tool_results() -> None:
 def test_text_without_links_is_untouched() -> None:
     verdict = apply_guardrail(FinalAnswer(text="Không có link."), evidence_of_search())
     assert (verdict.answer.text, verdict.dropped_text_urls) == ("Không có link.", ())
+
+
+def live_evidence() -> Evidence:
+    evidence = Evidence()
+    evidence.add_result(
+        "live_search_other",
+        {
+            "ok": True,
+            "items": [
+                {
+                    "site": "gearvn",
+                    "title": "Loa Bluetooth Mock 1",
+                    "price": 590_000,
+                    "url": "https://l.example/1",
+                    "scraped_at": "2026-10-20T12:00:00+00:00",
+                },
+                {
+                    "site": "fptshop",
+                    "title": "Loa Mock Không Giá",
+                    "price": None,
+                    "url": "https://l.example/2",
+                    "scraped_at": "2026-10-20T12:00:00+00:00",
+                },
+            ],
+        },
+    )
+    return evidence
+
+
+def test_live_items_are_rebuilt_from_the_tool_result_not_from_llm_text() -> None:
+    answer = FinalAnswer(
+        text="x",
+        live_items=[
+            LiveItem(
+                site="evil",
+                title="Loa siêu rẻ",
+                price=59_000,  # LLM sửa 590.000 thành 59.000 nhưng giữ URL thật
+                url="https://l.example/1",
+                scraped_at="2030-01-01T00:00:00+00:00",
+            ),
+            LiveItem(site="gearvn", title="x", price=1, url="https://l.example/2"),
+        ],
+    )
+
+    verdict = apply_guardrail(answer, live_evidence())
+
+    assert [i.model_dump() for i in verdict.answer.live_items] == [
+        {
+            "site": "gearvn",
+            "title": "Loa Bluetooth Mock 1",
+            "price": 590_000,
+            "url": "https://l.example/1",
+            "scraped_at": "2026-10-20T12:00:00+00:00",
+        },
+        {
+            "site": "fptshop",
+            "title": "Loa Mock Không Giá",
+            "price": None,  # tool không có giá thì bảng cũng không có giá
+            "url": "https://l.example/2",
+            "scraped_at": "2026-10-20T12:00:00+00:00",
+        },
+    ]
+    assert verdict.dropped_live_urls == ()
+
+
+def test_the_same_live_url_is_shown_once() -> None:
+    link = LiveItem(site="gearvn", title="a", url="https://l.example/1")
+
+    verdict = apply_guardrail(FinalAnswer(text="x", live_items=[link, link]), live_evidence())
+
+    assert [i.url for i in verdict.answer.live_items] == ["https://l.example/1"]
+
+
+def test_a_url_from_another_tool_is_not_a_live_item_source() -> None:
+    evidence = live_evidence()
+    evidence.add_result("search_catalog", SEARCH_RESULT)
+    answer = FinalAnswer(
+        text="x", live_items=[LiveItem(site="s", title="t", url="https://a.example/1")]
+    )
+
+    verdict = apply_guardrail(answer, evidence)
+
+    assert verdict.answer.live_items == []
+    assert verdict.dropped_live_urls == ("https://a.example/1",)

@@ -44,7 +44,7 @@ Thứ tự ưu tiên 06 §6 chỉ áp dụng được một phần: trang danh s
   - giá: xem mục 5; khuyến mãi quà tặng: `[data-slot=product-promotion]` (chỉ là văn bản, không phải giá);
   - không có điểm đánh giá, số lượt đánh giá, mã sản phẩm hay tình trạng kho trên thẻ.
 - Phân trang: `<link rel="next" href="…?page=N+1">` và `<link rel="prev">` ở `<head>` (scraper chỉ trả `next_url` khi cùng đường dẫn với trang hiện tại; nếu trỏ ra ngoài danh mục thì `has_next` vẫn đúng nhưng `next_url` rỗng và `crawl_category` tự dựng `?page=N+1`); trang cuối (mouse `?page=8`, 19 thẻ) chỉ có `rel="prev"` → `has_next = False`. `canonical` của trang N chứa `?page=N`.
-- Trang tìm kiếm `/search?q=<từ khóa>` (robots.txt cho phép, trang `noindex`): cùng thẻ `a.product-card`, 20 thẻ, không có `rel=next` (chưa kiểm tra phân trang của tìm kiếm; tầng 2 chỉ cần trang đầu).
+- Trang tìm kiếm `/search?q=<từ khóa>` (robots.txt cho phép, trang `noindex`): cùng thẻ `a.product-card`, 20 thẻ, không có `rel=next` (chưa kiểm tra phân trang của tìm kiếm; tầng 2 chỉ cần trang đầu). T10.1 (2026-10-23) kiểm với nhóm ngoài tầng 1 ("loa bluetooth"): 8 thẻ, `parse_search` mặc định đọc đủ 8/8 (giá bán, giá gốc, kể cả giảm sâu −67%); từ khóa không có kết quả: 0 thẻ.
 
 **Trang chi tiết** (`/products/<slug>`):
 - JSON-LD `Product`: `name`, `brand.name`, `category`, `image[]`, `sku` (mã nội bộ của GearVN, ví dụ `LAP-ACER-ASPIRE-LITE-AL15-53P-56QH`; **không có `mpn`**), `offers.price` (giá bán, số nguyên VND), `offers.priceSpecification` với `priceType = StrikethroughPrice` (giá gốc, chỉ có khi đang giảm), `offers.availability` (`https://schema.org/InStock`…).
@@ -78,6 +78,8 @@ Lưu ngày 2026-10-19 bằng bot dự án qua Fetcher (robots.txt, độ trễ �
 | `detail_laptop-acer-aspire-lite-15-al15-53p-56qh.html` | Laptop đang giảm 20% (có `StrikethroughPrice`) |
 | `detail_chuot-gaming-khong-day-logitech-pro-x3-superstrike-lightspeed-black.html` | Chuột đang giảm 16%, có khuyến mãi PRE-ORDER |
 | `search_chuot_razer.html` | `/search?q=chuot+razer` (20 thẻ) |
+| `search_loa_bluetooth.html` | `/search?q=loa+bluetooth` (8 thẻ, nhóm ngoài tầng 1; rút gọn còn lưới thẻ, T10.1) |
+| `search_khong_ket_qua.html` | `/search?q=zzqxnotfound` (0 thẻ, T10.1) |
 
 Trang chủ (2 MB) chỉ dùng để tìm URL danh mục, không lưu. Chưa có fixture cho trang danh sách giữa chừng (có cả `rel=prev` và `rel=next`); T3.2 dựng trường hợp này từ trang 1 và trang cuối khi cần.
 

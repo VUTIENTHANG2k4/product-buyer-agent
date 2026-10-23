@@ -40,6 +40,7 @@ from app.domain.enums import AgentRunStatus
 from app.domain.errors import LlmUnavailable
 from app.services.catalog_service import CatalogService
 from app.services.conversation_service import ConversationService, RunStart
+from app.services.live_search_service import LiveSearchService
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,7 @@ class AgentRunner:
         now: Callable[[], datetime] = utc_now,
         clock: Callable[[], float] = time.perf_counter,
         observer: Callable[[GuardrailOutcome], None] | None = None,
+        live_search: LiveSearchService | None = None,
     ) -> None:
         # `observer` nhận kết quả guardrail của mỗi lượt (eval đo hallucination trước khi lọc).
         self.observer = observer
@@ -91,7 +93,7 @@ class AgentRunner:
         self._clock = clock
         self._planner = Planner(planner_model)
         self._executor_model = executor_model
-        self._tools = build_tools(ToolContext(session_factory, settings, now))
+        self._tools = build_tools(ToolContext(session_factory, settings, now, live_search))
 
     # ---- vòng đời ----
     async def start(self, message: str, conversation_id: int | None = None) -> RunHandle:

@@ -9,7 +9,8 @@ Việc làm theo thứ tự:
    không được chạy trên DB dev.
 2. Tạo DB nếu chưa có, `alembic upgrade head`, `seed --fixture e2e --reset --yes` (kết quả xác
    định, chạy lại lần hai vẫn như lần đầu).
-3. Chạy API với `LLM_PROVIDER=fake` và `SCRAPER_OFFLINE_ONLY=true` (không bao giờ tắt offline).
+3. Chạy mock-shop (cổng 8100, trong cùng tiến trình) cho tìm trực tiếp tầng 2, rồi chạy API với
+   `LLM_PROVIDER=fake` và `SCRAPER_OFFLINE_ONLY=true` (không bao giờ tắt offline).
 """
 
 import argparse
@@ -17,6 +18,8 @@ import logging
 import os
 import subprocess
 import sys
+import threading
+import time
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Final
@@ -32,6 +35,7 @@ logger = logging.getLogger("e2e_server")
 
 E2E_SUFFIX: Final = "_e2e"
 DEFAULT_PORT: Final = 8010
+MOCK_SHOP_PORT: Final = 8100  # cổng mặc định của mock-shop (`make mock-shop`)
 BACKEND_DIR: Final = Path(__file__).resolve().parents[1]
 
 
@@ -87,7 +91,25 @@ def e2e_environment(url: URL, base: Mapping[str, str] | None = None) -> dict[str
     env["DATABASE_URL"] = url.render_as_string(hide_password=False)
     env["LLM_PROVIDER"] = "fake"
     env["SCRAPER_OFFLINE_ONLY"] = "true"
+    # Tầng 2 offline tìm trên mock-shop do chính script này chạy; 127.0.0.1 tránh IPv6 treo
+    # 3 giây mỗi kết nối trên Windows.
+    env["MOCK_SHOP_URL"] = f"http://127.0.0.1:{MOCK_SHOP_PORT}"
+    env["MOCK_SHOP_DELAY_SECONDS"] = "0"
+    env["MOCK_SHOP_CAPTCHA_AFTER"] = "100000"
     return env
+
+
+def start_mock_shop(port: int = MOCK_SHOP_PORT) -> uvicorn.Server:
+    """Chạy mock-shop ở luồng nền (daemon), chờ tới khi nhận kết nối; trả server để dừng."""
+    server = uvicorn.Server(
+        uvicorn.Config("app.mock_shop.main:app", host="127.0.0.1", port=port, log_level="warning")
+    )
+    threading.Thread(target=server.run, name="e2e-mock-shop", daemon=True).start()
+    for _ in range(100):
+        if server.started:
+            return server
+        time.sleep(0.1)
+    raise RuntimeError(f"Mock-shop không khởi động được ở cổng {port} (cổng đang bận?)")
 
 
 def _run(args: Sequence[str], env: Mapping[str, str]) -> None:
@@ -118,6 +140,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # Tiến trình này phục vụ API: đặt môi trường rồi xóa cache cấu hình để `create_app` thấy DB E2E.
     os.environ.update(env)
     get_settings.cache_clear()
+    start_mock_shop()
     uvicorn.run("app.main:app", host="127.0.0.1", port=args.port, log_level="warning")
     return 0
 

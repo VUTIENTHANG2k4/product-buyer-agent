@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
@@ -29,6 +30,9 @@ from app.api.deps import get_agent_runner, get_session, get_session_factory
 from app.config import get_settings
 from app.domain.enums import Category
 from app.main import create_app
+from app.mock_shop.main import create_app as create_mock_shop
+from app.scrapers.http.types import FetchResponse
+from app.services.live_search_service import LiveSearchService
 from scripts.seed import seed_database
 from tests.agent.conftest import collect, names
 from tests.api.test_chat_api import settle
@@ -94,7 +98,28 @@ def test_planner_uses_only_the_current_request_when_history_is_prepended() -> No
     assert plan_from_text(body).category is Category.laptop
 
 
-@pytest.mark.parametrize("text", ["", "xin chào", "loa bluetooth", "   "])
+@pytest.mark.parametrize(
+    ("text", "keyword", "price_max"),
+    [
+        ("loa bluetooth dưới 1 triệu", "loa bluetooth", 1_000_000),
+        ("Tìm loa kéo", "loa", None),
+        ("ổ cứng SSD 1TB", "ssd", None),
+        ("màn hình 27 inch dưới 6 triệu", "màn hình", 6_000_000),
+    ],
+)
+def test_planner_routes_other_categories_to_tier_two(
+    text: str, keyword: str, price_max: int | None
+) -> None:
+    intent = plan_from_text(text)
+    assert (intent.tier, intent.category, intent.keywords) == (2, Category.other, [keyword])
+    assert intent.price_max == price_max and intent.needs_clarification is False
+
+
+def test_tier_one_words_win_over_tier_two_words() -> None:
+    assert plan_from_text("tai nghe có loa").category is Category.headset
+
+
+@pytest.mark.parametrize("text", ["", "xin chào", "   "])
 def test_planner_asks_back_when_no_supported_category_is_named(text: str) -> None:
     intent = plan_from_text(text)
     assert intent.needs_clarification is True
@@ -115,6 +140,63 @@ def test_executor_calls_search_catalog_with_the_analysed_intent() -> None:
     assert call["args"]["category"] == "laptop"
     assert call["args"]["price_max"] == 30_000_000
     assert call["args"]["spec_filters"] == [{"field": "gpu_rank", "op": "gte", "value": 40}]
+
+
+def test_executor_calls_live_search_other_for_a_tier_two_intent() -> None:
+    intent_line = (
+        'Ý định đã phân tích: {"category":"other","tier":2,"keywords":["loa bluetooth"],'
+        '"price_max":1000000}'
+    )
+    turn = f"{intent_line}\nYêu cầu: x"
+    reply = ShoppingFakeChatModel().invoke([HumanMessage(content=turn)])
+    assert isinstance(reply, AIMessage)
+    (call,) = reply.tool_calls
+    assert call["name"] == "live_search_other"
+    assert call["args"] == {
+        "query": "loa bluetooth",
+        "price_min": None,
+        "price_max": 1_000_000,
+        "limit_per_site": 5,
+    }
+
+
+def test_live_answer_copies_items_from_the_tool_result_and_labels_them() -> None:
+    item = {
+        "site": "mockshop",
+        "title": "Loa Bluetooth Sony Mock Boom B3",
+        "price": 890_000,
+        "url": "http://localhost:8100/p/sony-mock-boom-b3-mk-lo002",
+        "scraped_at": "2026-10-20T12:00:00+00:00",
+    }
+    unpriced = {
+        **item,
+        "title": "Loa Xiaomi Mock",
+        "price": None,
+        "url": "http://localhost:8100/p/x",
+    }
+    result = {
+        "ok": True,
+        "items": [item, unpriced],
+        "sites_searched": ["mockshop"],
+        "sites_skipped": [{"site": "gearvn", "reason": "chế độ ngoại tuyến"}],
+        "from_cache": False,
+        "label": "unnormalized",
+    }
+
+    answer = answer_from_results([result])
+
+    assert [live.model_dump() for live in answer.live_items] == [item, unpriced]
+    assert answer.product_ids == []
+    assert "chưa chuẩn hóa thông số" in answer.text
+    assert "890.000 ₫" in answer.text and "gearvn" in answer.text
+
+
+def test_live_answer_without_items_says_nothing_was_found() -> None:
+    result = {"ok": True, "items": [], "sites_skipped": [], "label": "unnormalized"}
+
+    answer = answer_from_results([result])
+
+    assert answer.live_items == [] and "Chưa tìm thấy" in answer.text
 
 
 @pytest.mark.parametrize("turn", ["không có dòng ý định", "Ý định đã phân tích: không phải json"])
@@ -239,3 +321,54 @@ def test_post_chat_with_the_fake_provider_ends_with_a_table(
     assert body["status"] == "succeeded"
     assert body["final"]["table"], body
     assert body["final"]["table"][0]["offers"][0]["site"] in {"gearvn", "fptshop", "anphat"}
+
+
+# ---- tầng 2 trọn vẹn: planner giả → live_search_other → service → mock-shop (ASGI) ----
+class MockShopAsgiFetcher:
+    """PageFetcher gọi mock-shop trong tiến trình; chỉ test dùng, không mạng."""
+
+    def __init__(self) -> None:
+        self._transport = httpx.ASGITransport(app=create_mock_shop(captcha_after=10**6))
+
+    async def get(self, url: str) -> FetchResponse:
+        async with httpx.AsyncClient(transport=self._transport) as client:
+            response = await client.get(url)
+        return FetchResponse(
+            url=url, final_url=str(response.url), status=response.status_code, text=response.text
+        )
+
+
+async def test_speaker_question_returns_live_items_found_in_the_mock_shop(
+    tool_ctx: ToolContext,
+) -> None:
+    settings = make_settings(llm_provider="fake", scraper_offline_only=True)
+    runner = AgentRunner(
+        tool_ctx.session_factory,
+        settings,
+        planner_model=get_chat_model("planner", settings),
+        executor_model=get_chat_model("executor", settings),
+        now=clock,
+        live_search=LiveSearchService(
+            tool_ctx.session_factory, settings, MockShopAsgiFetcher(), clock
+        ),
+    )
+
+    events = await collect(runner, "loa bluetooth dưới 1 triệu")
+
+    assert names(events) == ["plan", "tool_start", "tool_end", "final"]
+    plan, start, end, final = events
+    assert isinstance(plan, PlanEvent) and (plan.intent.tier, plan.intent.category) == (
+        2,
+        Category.other,
+    )
+    assert isinstance(start, ToolStartEvent) and start.tool == "live_search_other"
+    assert isinstance(end, ToolEndEvent) and end.ok
+    assert isinstance(final, FinalEvent)
+    assert [live.title for live in final.live_items] == [
+        "Loa Bluetooth Edifier Mock Mini M1",
+        "Loa Bluetooth Sony Mock Boom B3",
+    ]
+    assert [live.price for live in final.live_items] == [590_000, 890_000]
+    assert all(live.site == "mockshop" for live in final.live_items)
+    assert final.table == []
+    assert "chưa chuẩn hóa thông số" in final.text and "590.000 ₫" in final.text

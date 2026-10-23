@@ -1,0 +1,22 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /checkout
+Disallow: /checkout/
+Disallow: /account
+Disallow: /account/
+Disallow: /cart/
+Disallow: /orders/
+Disallow: /login
+Disallow: /register
+Disallow: /otp
+Disallow: /compare
+Disallow: /search-order
+Disallow: /maintenance
+
+# Host
+Host: https://www.nguyenkim.com
+
+# Sitemaps
+Sitemap: https://www.nguyenkim.com/sitemap-static.xml
+Sitemap: https://www.nguyenkim.com/sitemap.xml

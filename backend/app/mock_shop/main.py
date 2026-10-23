@@ -16,7 +16,14 @@ from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Res
 
 from app.config import get_settings
 from app.mock_shop import pages
-from app.mock_shop.catalog import CATEGORIES, PAGE_SIZE, MockProduct, load_catalog, search
+from app.mock_shop.catalog import (
+    CATEGORIES,
+    PAGE_SIZE,
+    MockProduct,
+    load_catalog,
+    load_search_catalog,
+    search,
+)
 from app.mock_shop.state import PASS_TTL_SECONDS, ShopState
 
 COOKIE_NAME = "mock_pass"
@@ -34,6 +41,7 @@ def create_app(
     after = captcha_after if captcha_after is not None else get_settings().mock_shop_captcha_after
     state = ShopState(captcha_after=after, clock=clock)
     catalog = load_catalog()
+    search_catalog = load_search_catalog()  # thêm nhóm tầng 2: chỉ cho /search và trang chi tiết
     app = FastAPI(
         title="Mock Shop (fictional data)", docs_url=None, redoc_url=None, openapi_url=None
     )
@@ -100,7 +108,7 @@ def create_app(
             return blocked
         if (failed := await failure(fail)) is not None:
             return failed
-        product = next((item for item in catalog if item.slug == slug), None)
+        product = next((item for item in search_catalog if item.slug == slug), None)
         if product is None:
             return html(pages.not_found_page("Không có sản phẩm này"), 404)
         return html(pages.detail_page(base_url(request), product))
@@ -113,7 +121,7 @@ def create_app(
             return blocked
         if (failed := await failure(fail)) is not None:
             return failed
-        hits = [] if fail == "empty" else search(catalog, q)
+        hits = [] if fail == "empty" else search(search_catalog, q)
         heading = f"Kết quả cho: {q}" if q else "Tìm kiếm"
         return html(pages.listing_page(base_url(request), heading, hits))
 

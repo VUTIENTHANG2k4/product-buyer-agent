@@ -7,7 +7,6 @@ from langchain_core.tools import BaseTool
 from sqlmodel import Session
 
 from app.agent.tools import MAX_RESULT_CHARS
-from app.agent.tools.live_search_other import NOT_ENABLED_REASON
 from app.db.models import Offer
 from app.domain.enums import Category
 from tests.agent.conftest import call, size
@@ -127,18 +126,6 @@ async def test_search_catalog_hides_out_of_stock_only_products(
 
 
 # ---- live_search_other ----
-async def test_live_search_other_is_a_documented_placeholder_until_tier_two(
-    tools: dict[str, BaseTool],
-) -> None:
-    result = await call(tools, "live_search_other", query="loa bluetooth", price_max=1_000_000)
-
-    assert result["ok"] is True and result["items"] == []
-    assert result["sites_searched"] == [] and result["from_cache"] is False
-    assert result["label"] == "unnormalized" and result["reason"] == NOT_ENABLED_REASON
-    assert {s["site"] for s in result["sites_skipped"]} == {"viettelstore", "nguyenkim"}
-    assert all(s["reason"] == NOT_ENABLED_REASON for s in result["sites_skipped"])
-
-
 async def test_live_search_other_validates_arguments(tools: dict[str, BaseTool]) -> None:
     for args in ({"query": ""}, {"query": "x" * 201}, {"query": "loa", "limit_per_site": 11}):
         result = await call(tools, "live_search_other", **args)

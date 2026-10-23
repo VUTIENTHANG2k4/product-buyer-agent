@@ -15,7 +15,7 @@ import unicodedata
 from collections.abc import AsyncIterator, Sequence
 from html import unescape
 from typing import Any, ClassVar
-from urllib.parse import SplitResult, urljoin, urlsplit
+from urllib.parse import SplitResult, urlencode, urljoin, urlsplit
 
 from pydantic import HttpUrl, TypeAdapter, ValidationError
 from selectolax.lexbor import LexborHTMLParser, LexborNode
@@ -63,6 +63,8 @@ _ACCESSORY_PREFIX: dict[Category, str] = {
 # `<loc>` không đóng. CDATA dùng `[^\]]*` để không quét quá điểm kết.
 _LOC = re.compile(r"<loc>(?:\s*<!\[CDATA\[([^\]]*)\]\]>\s*|([^<]*))</loc>", re.IGNORECASE)
 _PRICE_TEXT = re.compile(r"^\d{1,3}(?:\.\d{3})+đ$")
+_PRICE_PREFIX = re.compile(r"^(\d{1,3}(?:\.\d{3})+)đ")  # giá gốc gạch ngang có thể kèm "-18%"
+_PRODUCT_HREF = re.compile(r"^/[a-z0-9-]+/[a-z0-9-]+$")  # /<danh-mục>/<slug>, không query
 _HTTP_URL = TypeAdapter(HttpUrl)
 
 
@@ -250,11 +252,75 @@ def _brand_name(product: dict[str, Any]) -> str | None:
     return name.strip() if isinstance(name, str) and name.strip() else None
 
 
+def _is_struck(node: LexborNode) -> bool:
+    """Ô giá gạch ngang (giá gốc): chính nó hoặc phần tử con có lớp `line-through`."""
+    return "line-through" in (node.attributes.get("class") or "") or (
+        node.css_first(".line-through") is not None
+    )
+
+
+def _own_site_path(href: str) -> str:
+    """Link tuyệt đối tới chính FPT Shop (`https://fptshop.com.vn/...`) thành đường dẫn tương đối.
+
+    Chỉ bỏ tiền tố đúng bằng máy chủ gốc: `fptshop.com.vn.evil.example` hay `fptshop.com.vn@evil`
+    còn lại chuỗi không bắt đầu bằng `/` nên không qua được `_PRODUCT_HREF`.
+    """
+    for scheme in ("https://", "http://"):
+        prefix = scheme + urlsplit(_BASE_URL).netloc
+        if href.startswith(prefix):
+            return href[len(prefix) :]
+    return href
+
+
+def _search_card(anchor: LexborNode, page_url: str) -> ListingItem | None:
+    """Thẻ kết quả tìm kiếm (`a` có `h3`) → `ListingItem`; `None` nếu không phải thẻ sản phẩm.
+
+    Giá bán là ô giá đúng dạng `12.990.000đ` đứng cuối; giá gốc gạch ngang là phần tử
+    `.line-through` (có thể kèm `-18%` cùng ô). Không có ô giá nào → `price=None` (không đoán).
+    """
+    href = _own_site_path(anchor.attributes.get("href") or "")
+    heading = anchor.css_first("h3")
+    if heading is None or not _PRODUCT_HREF.match(href):
+        return None
+    title = _clean(node_text(heading))
+    if not title:
+        raise ValueError("search card without title")
+    shown = [
+        parse_price(text)
+        for p in anchor.css("p")
+        if not _is_struck(p) and _PRICE_TEXT.match(text := node_text(p))
+    ]
+    price = next((value for value in reversed(shown) if value is not None), None)
+    list_price: int | None = None
+    if price is not None:
+        for struck in anchor.css(".line-through"):
+            matched = _PRICE_PREFIX.match(node_text(struck))
+            value = parse_price(matched.group(1) + "đ") if matched else None
+            if value is not None and value > price:
+                list_price = value
+                break
+    price_type = PriceType.unknown
+    if price is not None:
+        price_type = PriceType.sale if list_price is not None else PriceType.regular
+    return ListingItem.model_validate(
+        {
+            "site": SiteKey.fptshop,
+            "url": clean_url(urljoin(page_url, href)),
+            "title": title,
+            "price": price,
+            "list_price": list_price,
+            "price_type": price_type,
+            "category_hint": Category.other,
+        }
+    )
+
+
 class FptShopScraper(BaseScraper):
     config: ClassVar[SiteConfig] = SiteConfig(
         key=SiteKey.fptshop,
         base_url=_BASE_URL,
         min_delay_s=5.0,
+        supports_live_search=True,  # tầng 2: /tim-kiem?s= dựng sẵn ở máy chủ (sources/fptshop.md)
         # URL danh mục chỉ để tham chiếu (không phân trang được); sản phẩm lấy từ sitemap.
         categories={
             Category.laptop: f"{_BASE_URL}/may-tinh-xach-tay",
@@ -264,7 +330,30 @@ class FptShopScraper(BaseScraper):
         },
     )
 
+    def search_url(self, query: str) -> str:
+        """`/tim-kiem?s=<từ khóa>`; `urlencode` mã hóa cả `=` nên `Disallow: /*t=` không khớp."""
+        text = " ".join(unicodedata.normalize("NFC", query).split())
+        return f"{_BASE_URL}/tim-kiem?{urlencode({'s': text})}"
+
     # ---- parse (hàm thuần) ----
+    def parse_search(self, html: str, page_url: str) -> list[ListingItem]:
+        """Trang đầu kết quả tìm kiếm (~24 thẻ); thẻ lỗi bị bỏ qua, URL trùng chỉ lấy một lần."""
+        tree = LexborHTMLParser(html)
+        items: list[ListingItem] = []
+        seen: set[str] = set()
+        for anchor in tree.css("a[href]"):
+            try:
+                item = _search_card(anchor, page_url)
+            except (ValueError, ValidationError):
+                logger.warning(
+                    "Bỏ qua thẻ tìm kiếm không đọc được: %s", anchor.attributes.get("href")
+                )
+                continue
+            if item is not None and str(item.url) not in seen:
+                seen.add(str(item.url))
+                items.append(item)
+        return items
+
     def parse_listing(self, html: str, category: Category, page_url: str) -> ListingPage:
         raise NotImplementedError("FPT Shop has no parsable listing page; see crawl_category")
 

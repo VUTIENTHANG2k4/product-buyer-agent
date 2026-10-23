@@ -11,6 +11,7 @@
 | [0007](0007-postgresql.md) | PostgreSQL (Docker) + SQLModel + Alembic, test trên Postgres thật | Chấp nhận |
 | [0008](0008-fptshop-anphat-replace-hoangha-laptop88.md) | FPT Shop + An Phát thay Hoàng Hà + Laptop88 làm trang lõi | Chấp nhận; thay một phần ADR-0005 |
 | [0009](0009-mock-shop-compose-host.md) | Chấp nhận `mock-shop` (tên service Compose) làm địa chỉ cục bộ của mock-shop | Chấp nhận; bổ sung ADR-0006 |
+| [0010](0010-tier2-sites-gearvn-fptshop.md) | Tầng 2 dùng GearVN + FPT Shop; bỏ Viettel Store và Nguyễn Kim (cần JavaScript) | Chấp nhận; thay một phần ADR-0005 |
 
 ## Quy tắc
 - ADR đã chấp nhận **không sửa** (hook `protect_files.py` chặn). Đổi quyết định = tạo ADR mới với số kế tiếp, ghi "Thay thế ADR-XXXX", rồi cập nhật bảng trên.

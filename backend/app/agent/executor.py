@@ -80,7 +80,14 @@ def summarize_result(tool: str, result: Result) -> str:
     if tool == "search_catalog":
         return f"Tìm thấy {result.get('total', 0)} sản phẩm"
     if tool == "live_search_other":
-        return str(result["reason"]).capitalize() if result.get("reason") else "Đã tìm trực tiếp"
+        if result.get("reason"):
+            return str(result["reason"]).capitalize()
+        skipped = len(result.get("sites_skipped", []))
+        note = f", bỏ qua {skipped} trang" if skipped else ""
+        return (
+            f"Tìm trực tiếp: {len(result.get('items', []))} kết quả "
+            f"từ {len(result.get('sites_searched', []))} trang{note}"
+        )
     if tool == "compare_products":
         return f"So sánh {len(result.get('products', []))} sản phẩm"
     if tool == "get_product_detail":

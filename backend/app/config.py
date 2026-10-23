@@ -113,6 +113,8 @@ class Settings(BaseSettings):
     scraper_max_retries: NonNegativeInt = 3
     scraper_max_listing_pages: PositiveInt = 3
     scraper_offline_only: bool = True
+    # Tìm trực tiếp tầng 2: kết quả của mỗi (trang, từ khóa) được giữ bấy nhiêu giờ (1..168)
+    live_search_cache_ttl_hours: Annotated[int, Field(ge=1, le=168)] = 6
 
     # Mock-shop
     mock_shop_url: MockShopUrl = "http://localhost:8100"

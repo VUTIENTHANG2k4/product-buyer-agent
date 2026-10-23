@@ -23,6 +23,7 @@ from datetime import date
 from pathlib import Path
 from typing import Final
 
+import httpx
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
@@ -35,7 +36,10 @@ from app.agent.schemas import ClarificationEvent, ErrorEvent, FinalEvent, PlanEv
 from app.config import Settings, get_settings
 from app.db.models import utc_now
 from app.domain.errors import AppError
+from app.mock_shop.main import create_app
+from app.scrapers.http.types import FetchResponse
 from app.services.catalog_service import CatalogService
+from app.services.live_search_service import LiveSearchService
 from scripts.eval_core import (
     CaseRun,
     EvalCase,
@@ -58,6 +62,23 @@ EXIT_OK, EXIT_BELOW_THRESHOLD, EXIT_SETUP = 0, 1, 2
 DEFAULT_RPM: Final = 12  # dưới hạn mức 15 request/phút của gói miễn phí Gemini
 
 FactsOf = Callable[[list[int]], list[ProductFacts]]
+
+
+class MockShopFetcher:
+    """PageFetcher gọi mock-shop trong tiến trình qua ASGI (không mạng, không cần `make mock-shop`).
+
+    Eval tầng 2 dùng cái này để kết quả tìm trực tiếp không phụ thuộc trang thật.
+    """
+
+    def __init__(self) -> None:
+        self._transport = httpx.ASGITransport(app=create_app(captcha_after=10**6))
+
+    async def get(self, url: str) -> FetchResponse:
+        async with httpx.AsyncClient(transport=self._transport) as client:
+            response = await client.get(url)
+        return FetchResponse(
+            url=url, final_url=str(response.url), status=response.status_code, text=response.text
+        )
 
 
 class SetupError(Exception):
@@ -242,6 +263,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             planner_model=planner_model,
             executor_model=executor_model,
             observer=guard.append,
+            live_search=LiveSearchService(
+                factory,
+                settings.model_copy(update={"scraper_offline_only": True}),
+                MockShopFetcher(),
+            ),
         )
         logger.info("Chạy %d câu với %s", len(cases), settings.llm_provider)
         runs = asyncio.run(
