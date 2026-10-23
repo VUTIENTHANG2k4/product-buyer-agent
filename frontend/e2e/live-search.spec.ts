@@ -20,9 +20,11 @@ test.describe('Luồng tầng 2: tìm trực tiếp nhóm sản phẩm khác', (
     // Mock-shop có 5 loa bluetooth; chỉ 2 chiếc có giá ≤ 1 triệu (một chiếc "Liên hệ" bị bỏ khi lọc giá).
     await expect(table.getByRole('row')).toHaveCount(3) // 1 hàng tiêu đề + 2 kết quả
     await expect(
-      table.getByRole('cell', { name: 'Loa Bluetooth Edifier Mock Mini M1' }),
+      table.getByRole('cell', { name: 'Loa Bluetooth Edifier Mock Mini M1', exact: true }),
     ).toBeVisible()
-    await expect(table.getByRole('cell', { name: 'Loa Bluetooth Sony Mock Boom B3' })).toBeVisible()
+    await expect(
+      table.getByRole('cell', { name: 'Loa Bluetooth Sony Mock Boom B3', exact: true }),
+    ).toBeVisible()
     await expect(table.getByText('590.000 ₫')).toBeVisible()
     await expect(table.getByText('890.000 ₫')).toBeVisible()
     await expect(table.getByText('Loa Bluetooth JBL Mock Flip F2')).toHaveCount(0)
