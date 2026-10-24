@@ -40,16 +40,16 @@ def test_unregistered_site_raises_site_not_available(monkeypatch: pytest.MonkeyP
 
 def test_disabled_site_raises_site_not_available(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(
-        registry.SCRAPERS, SiteKey.hoangha, _scraper_class(SiteKey.hoangha, enabled=False)
+        registry.SCRAPERS, SiteKey.viettelstore, _scraper_class(SiteKey.viettelstore, enabled=False)
     )
     with pytest.raises(SiteNotAvailable, match="disabled"):
-        get_scraper(SiteKey.hoangha, FakeFetcher({}))
+        get_scraper(SiteKey.viettelstore, FakeFetcher({}))
 
 
 def test_scraper_filed_under_another_sites_key_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setitem(registry.SCRAPERS, SiteKey.hoangha, _scraper_class(SiteKey.gearvn))
+    monkeypatch.setitem(registry.SCRAPERS, SiteKey.viettelstore, _scraper_class(SiteKey.gearvn))
     with pytest.raises(SiteNotAvailable, match="another site"):
-        get_scraper(SiteKey.hoangha, FakeFetcher({}))
+        get_scraper(SiteKey.viettelstore, FakeFetcher({}))
 
 
 def test_site_not_available_is_a_lookup_error() -> None:

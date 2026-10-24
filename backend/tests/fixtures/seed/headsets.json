@@ -39,8 +39,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-log-g331",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-g331",
           "title": "Logitech Mock G331 - Chính hãng",
           "price": 1540000,
           "rating": 4.3,
@@ -82,8 +82,8 @@
           "rating_count": 57
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-log-gprox",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-gprox",
           "title": "Logitech Mock G Pro X Gaming - Chính hãng",
           "price": 2840000,
           "price_type": "sale",
@@ -132,8 +132,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-hx-stinger",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-hx-stinger",
           "title": "HyperX Mock Cloud Stinger - Chính hãng",
           "price": 1240000,
           "rating": 4.7,
@@ -166,8 +166,8 @@
           "rating_count": 131
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-hx-cloud2",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-hx-cloud2",
           "title": "HyperX Mock Cloud II - Chính hãng",
           "price": 2140000,
           "price_type": "member",
@@ -220,8 +220,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-rzr-krakenx",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-rzr-krakenx",
           "title": "Razer Mock Kraken X - Chính hãng",
           "price": 1440000,
           "stock_status": "out_of_stock"
@@ -251,8 +251,8 @@
           "price": 1490000
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-rzr-bsv2x",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-rzr-bsv2x",
           "title": "Razer Mock BlackShark V2 X - Chính hãng",
           "price": 1940000,
           "price_type": "sale",
@@ -288,8 +288,8 @@
           "rating_count": 242
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-ss-nova1",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-ss-nova1",
           "title": "SteelSeries Mock Arctis Nova 1 - Chính hãng",
           "price": 2340000,
           "rating": 4.5,
@@ -336,8 +336,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-cor-hs55",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-cor-hs55",
           "title": "Corsair Mock HS55 Stereo - Chính hãng",
           "price": 1740000,
           "rating": 4.2,
@@ -371,8 +371,8 @@
           "rating_count": 316
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-sony-xm5",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-sony-xm5",
           "title": "Sony Mock WH-1000XM5 - Chính hãng",
           "price": 7440000,
           "rating": 4.9,
@@ -420,8 +420,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-sony-ch720n",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-sony-ch720n",
           "title": "Sony Mock WH-CH720N - Chính hãng",
           "price": 3440000,
           "price_type": "sale",
@@ -479,8 +479,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-ank-q30",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-ank-q30",
           "title": "Anker Mock Soundcore Life Q30 - Chính hãng",
           "price": 2040000,
           "price_type": "member",
@@ -516,8 +516,8 @@
           "rating_count": 427
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-jbl-770nc",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-jbl-770nc",
           "title": "JBL Mock Tune 770NC - Chính hãng",
           "price": 2440000,
           "rating": 4.0,
@@ -564,8 +564,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-edi-w820nb",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-edi-w820nb",
           "title": "Edifier Mock W820NB Plus - Chính hãng",
           "price": 2040000,
           "rating": 4.7,

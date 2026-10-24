@@ -179,9 +179,9 @@ def test_query_intent_round_trips_through_json() -> None:
 
 
 def test_query_intent_parses_category_and_site_from_strings() -> None:
-    intent = QueryIntent.model_validate({"category": "mouse", "sites": ["hoangha", "laptop88"]})
+    intent = QueryIntent.model_validate({"category": "mouse", "sites": ["fptshop", "anphat"]})
     assert intent.category is Category.mouse
-    assert intent.sites == [SiteKey.hoangha, SiteKey.laptop88]
+    assert intent.sites == [SiteKey.fptshop, SiteKey.anphat]
 
 
 def test_query_intent_rejects_unknown_category() -> None:

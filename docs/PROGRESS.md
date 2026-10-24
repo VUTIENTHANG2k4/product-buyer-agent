@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (M11 đã đóng). Chờ người dùng merge `milestone/M11-polish` vào `main`; sau đó chỉ còn backlog (không có milestone nào chưa làm) và pha mở rộng X.
+- Đang làm: T4.6 (nhánh `milestone/T4.6-legacy-sites-cleanup`): đổi seed/test từ `hoangha`/`laptop88` sang `fptshop`/`anphat`, cân nhắc gỡ hai giá trị khỏi `SiteKey` bằng migration 0003. Task lẻ ngoài milestone, người dùng yêu cầu ngày 2026-10-24.
 - Backlog chưa làm: T11.4 (lệnh đổi giá demo), T11.5 (latency p50, cần quyết định), T10.4, T9.5–T9.8, T4.6–T4.8, T5.4–T5.7, T6.7, T6.10–T6.13, T7.6, T7.7, T8.12 (T2.8 vẫn chờ), gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-23 — đóng M11 (`/done M11`)
 

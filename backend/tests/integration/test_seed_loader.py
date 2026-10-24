@@ -57,9 +57,9 @@ LAPTOP: dict[str, Any] = {
             ],
         },
         {
-            "site": "laptop88",
-            "url": "https://mock-laptop88.example/p/l1",
-            "title": "ASUS Mock Gaming L1 (Laptop88)",
+            "site": "anphat",
+            "url": "https://mock-anphat.example/p/l1",
+            "title": "ASUS Mock Gaming L1 (An Phát)",
             "price": 27_500_000,
         },
     ],
@@ -244,7 +244,7 @@ class TestSeedDatabase:
         offers = db_session.exec(select(Offer).where(Offer.product_id == product.id)).all()
         assert {(offer.site, offer.price) for offer in offers} == {
             (SiteKey.gearvn, 27_000_000),
-            (SiteKey.laptop88, 27_500_000),
+            (SiteKey.anphat, 27_500_000),
         }
 
     def test_price_history_follows_the_declared_change_points(
@@ -268,7 +268,7 @@ class TestSeedDatabase:
         self, db_session: Session, tmp_path: Path
     ) -> None:
         seed_database(db_session, "dev", now=NOW, fixtures_dir=write_fixtures(tmp_path))
-        offer = db_session.exec(select(Offer).where(Offer.site == SiteKey.laptop88)).one()
+        offer = db_session.exec(select(Offer).where(Offer.site == SiteKey.anphat)).one()
         assert offer.id is not None
 
         points = PriceHistoryRepository(db_session).list_for_offer(offer.id)
@@ -295,7 +295,7 @@ class TestSeedDatabase:
         runs = db_session.exec(select(ScrapeRun)).all()
         assert {(run.site, run.category, run.status, run.items_parsed) for run in runs} == {
             (SiteKey.gearvn, Category.laptop, ScrapeStatus.SUCCEEDED, 1),
-            (SiteKey.laptop88, Category.laptop, ScrapeStatus.SUCCEEDED, 1),
+            (SiteKey.anphat, Category.laptop, ScrapeStatus.SUCCEEDED, 1),
             (SiteKey.gearvn, Category.mouse, ScrapeStatus.SUCCEEDED, 1),
         }
         assert len(runs) == 3
@@ -339,7 +339,7 @@ class TestSeedDatabase:
 
         again = seed_database(db_session, "dev", now=later, fixtures_dir=directory)
 
-        offer = db_session.exec(select(Offer).where(Offer.site == SiteKey.laptop88)).one()
+        offer = db_session.exec(select(Offer).where(Offer.site == SiteKey.anphat)).one()
         assert offer.scraped_at == later
         assert again.history_rows == 3  # mỗi offer thêm một dòng "heartbeat" (>24 giờ)
 

@@ -300,7 +300,7 @@ async def test_live_search_rejects_empty_query_or_bad_limit(query: str, limit: i
 async def test_live_search_unsupported_site_raises_without_requesting() -> None:
     class NoLive(DummyScraper):
         config: ClassVar[SiteConfig] = SiteConfig(
-            key=SiteKey.laptop88, base_url=BASE, min_delay_s=10
+            key=SiteKey.nguyenkim, base_url=BASE, min_delay_s=10
         )
 
     fetcher = FakeFetcher({})

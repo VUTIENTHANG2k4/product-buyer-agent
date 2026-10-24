@@ -106,7 +106,7 @@ def test_latest_picks_newest_for_the_site_and_category(db_session: Session) -> N
 
     assert latest is not None and latest.id == new
     assert old != new
-    assert repo.latest(SiteKey.hoangha, Category.laptop) is None
+    assert repo.latest(SiteKey.viettelstore, Category.laptop) is None
 
 
 def test_latest_succeeded_skips_other_statuses(db_session: Session) -> None:
@@ -137,11 +137,11 @@ def test_latest_blocked_since_respects_site_status_and_window(db_session: Sessio
     _create(repo, site=SiteKey.gearvn, status=ScrapeStatus.BLOCKED, hours=0)
     recent = _create(repo, site=SiteKey.gearvn, status=ScrapeStatus.BLOCKED, hours=30)
     _create(repo, site=SiteKey.gearvn, status=ScrapeStatus.FAILED, hours=40)
-    _create(repo, site=SiteKey.hoangha, status=ScrapeStatus.BLOCKED, hours=41)
+    _create(repo, site=SiteKey.viettelstore, status=ScrapeStatus.BLOCKED, hours=41)
     since = T0 + timedelta(hours=24)
 
     blocked = repo.latest_blocked_since(SiteKey.gearvn, since)
 
     assert blocked is not None and blocked.id == recent
     assert repo.latest_blocked_since(SiteKey.gearvn, T0 + timedelta(hours=31)) is None
-    assert repo.latest_blocked_since(SiteKey.laptop88, since) is None
+    assert repo.latest_blocked_since(SiteKey.nguyenkim, since) is None

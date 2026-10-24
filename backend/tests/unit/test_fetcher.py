@@ -270,7 +270,7 @@ async def test_robots_download_also_counts_towards_the_delay(
     ("crawl_delay", "site_delay", "env_delay", "expected"),
     [
         (12, 0, 5, 12.0),  # Crawl-delay của robots.txt lớn nhất
-        (None, 10, 5, 10.0),  # SiteConfig.min_delay_s (Laptop88)
+        (None, 10, 5, 10.0),  # SiteConfig.min_delay_s (site có độ trễ 10 s)
         (None, 0, 7, 7.0),  # SCRAPER_MIN_DELAY_SECONDS
         (3, 4, 2, 4.0),
     ],
