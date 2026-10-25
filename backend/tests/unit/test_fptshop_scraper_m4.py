@@ -22,6 +22,7 @@ from app.scrapers.http.errors import (
     RedirectError,
     RobotsBlocked,
     RobotsDisallowed,
+    SiteLayoutChanged,
 )
 from app.scrapers.http.types import FetchResponse
 from app.scrapers.sites.fptshop import (
@@ -395,14 +396,15 @@ async def test_robots_block_on_a_product_page_still_stops_the_whole_run() -> Non
         await collect(FptShopScraper(crawl_with(urls, {urls[1]: blocked})), max_pages=1)
 
 
-async def test_index_without_the_category_sitemap_gives_one_empty_page() -> None:
+async def test_index_without_the_category_sitemap_is_a_layout_change_not_a_block() -> None:
+    """T4.7: trước đây ra một trang rỗng rồi `soft_block` (BLOCKED + nghỉ 24 giờ cả trang)."""
     other = f"{BASE}/products/sitemap-dien-thoai.xml"
     index = response(
         SITEMAP_INDEX_URL, f"<sitemapindex><sitemap><loc>{other}</loc></sitemap></sitemapindex>"
     )
     fetcher = ScriptedFetcher({SITEMAP_INDEX_URL: index})
-    pages = await collect(FptShopScraper(fetcher), max_pages=2)
-    assert [(len(p.items), p.has_next) for p in pages] == [(0, False)]
+    with pytest.raises(SiteLayoutChanged, match="laptop"):
+        await collect(FptShopScraper(fetcher), max_pages=2, expect_items=True)
     assert fetcher.requested == [SITEMAP_INDEX_URL]
 
 
@@ -430,16 +432,6 @@ async def test_a_first_batch_that_is_entirely_404_is_not_a_soft_block() -> None:
     assert (len(pages[0].items), pages[0].skipped, pages[0].gone) == (0, 0, 3)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M4 (trung bình, đã ghi ở T4.7): fptshop.py:152-169 `_struck_price` đi lên tối đa 3 "
-        "cấp tổ tiên và nhận bất kỳ `.line-through` nào có giá bán trùng chữ với giá công khai. "
-        "Thẻ 'sản phẩm tương tự' có cùng giá 299.000đ và giá gạch 349.000đ bị gán cho sản phẩm "
-        "chính chưa hề giảm giá -> list_price/price_type=sale sai. Sửa: chỉ xét khối giá chính "
-        "(ví dụ cạnh node có giá bán nằm trước các khối 'tương tự'/flash sale)."
-    ),
-)
 def test_struck_price_of_a_related_product_card_is_not_taken_for_the_main_product(
     scraper: FptShopScraper,
 ) -> None:

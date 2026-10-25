@@ -223,7 +223,7 @@ Xong khi:
 | T4.4 | AnPhatScraper | T4.3, T2.2 | M | ✅ |
 | T4.5 | Chạy thật có kiểm soát 2 nguồn | T4.2, T4.4, T2.6 | S | ✅ |
 | T4.6 | Đổi seed/test từ `hoangha`/`laptop88` sang `fptshop`/`anphat`; cân nhắc gỡ giá trị cũ khỏi `SiteKey` bằng migration (không chặn M5) | T4.0 | S | ✅ |
-| T4.7 | Còn lại từ review/QA M4: ghi hạn chế captcha chèn bằng JS nội tuyến (06 §4); `_struck_price` chỉ xét khối giá chính (QA M4: thẻ "sản phẩm tương tự" cùng giá bị đọc thành `sale`; xfail `test_struck_price_of_a_related_product_card...`); trần số sitemap `-N`; nhóm `soft_block` khi index thiếu sitemap của nhóm | T4.2, T4.4 | S | ⬜ |
+| T4.7 | Còn lại từ review/QA M4: ghi hạn chế captcha chèn bằng JS nội tuyến (06 §4); `_struck_price` chỉ xét khối giá chính (QA M4: thẻ "sản phẩm tương tự" cùng giá bị đọc thành `sale`; xfail `test_struck_price_of_a_related_product_card...`); trần số sitemap `-N`; nhóm `soft_block` khi index thiếu sitemap của nhóm | T4.2, T4.4 | S | ✅ |
 | T4.8 | Quyết định thiết kế: chữ "captcha" trong văn bản hiển thị (mô tả/bình luận sản phẩm) hiện làm cả lượt `BLOCKED` + nghỉ 24 giờ; chỉ xét thuộc tính/thẻ hay chỉ khi trang không có sản phẩm (QA M4; xfail `test_the_word_captcha_in_a_product_review_paragraph...`) | T4.0b | S | ✅ |
 
 **T4.0** — Xong khi: ADR-0008 và mục lục ADR; docs 01–08, 11 và `.claude/rules/scraping.md` không còn coi Hoàng Hà/Laptop88 là nguồn; `docs/sources/hoangha.md`, `laptop88.md` đánh dấu không dùng; migration `0002` thêm hai giá trị vào CHECK `site` của `offer` và `scrape_run` (test nâng cấp từ 0001 giữ dữ liệu cũ, downgrade về 6 giá trị).

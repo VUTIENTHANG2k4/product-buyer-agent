@@ -33,6 +33,7 @@ from app.scrapers.http.errors import (
     ResponseTooLarge,
     RobotsBlocked,
     RobotsDisallowed,
+    SiteLayoutChanged,
 )
 from app.scrapers.parsing import (
     json_ld_objects,
@@ -49,6 +50,8 @@ SITEMAP_INDEX_URL = f"{_BASE_URL}/sitemap.xml"
 BATCH_SIZE = 20  # sản phẩm mỗi "trang" của crawl_category
 MAX_COUNT = 2**31 - 1  # cột `rating_count` là INTEGER (4 byte)
 MAX_CONSECUTIVE_ERRORS = 3  # tải lỗi liên tiếp (5xx, quá lớn...) thì dừng lượt
+# Phụ kiện chia `sitemap-phu-kien(-N).xml`; trần để chỉ mục bất thường không kéo hàng trăm request.
+MAX_ACCESSORY_SITEMAPS = 10
 
 _LAPTOP_SITEMAP_PATH = "/products/sitemap-may-tinh-xach-tay.xml"
 # Phụ kiện chia nhiều sitemap (`sitemap-phu-kien.xml`, `-1`, `-2`...); `-gia-dung` là đồ gia dụng.
@@ -109,6 +112,9 @@ def select_sitemaps(category: Category, index_locs: Sequence[str]) -> list[str]:
         else:
             matches = category in _ACCESSORY_PREFIX and _ACCESSORY_SITEMAP.match(path) is not None
         if matches and loc not in chosen:
+            if len(chosen) >= MAX_ACCESSORY_SITEMAPS:
+                logger.warning("Chỉ mục có hơn %s sitemap phụ kiện, bỏ phần sau", len(chosen))
+                break
             chosen.append(loc)
     return chosen
 
@@ -173,8 +179,16 @@ def _price_fields(tree: LexborHTMLParser, product: dict[str, Any]) -> dict[str, 
 
 
 def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
-    """Giá gốc gạch ngang nằm cạnh giá bán công khai; khối flash sale (giá khác) không tính."""
+    """Giá gốc gạch ngang nằm cạnh giá bán công khai; khối flash sale (giá khác) không tính.
+
+    Chỉ khối của lần xuất hiện **đầu tiên** của giá bán (khối giá chính, đứng trước thẻ "sản phẩm
+    tương tự") được xét: thẻ liên quan cùng giá bán nhưng có giá gạch không làm sản phẩm thành
+    `sale` (T4.7). So danh tính node bằng `mem_id` (`==` của selectolax so nội dung HTML).
+    """
     shown = f"{price:,}".replace(",", ".") + "đ"
+    main = next((leaf for leaf in tree.css("p, span, div") if node_text(leaf) == shown), None)
+    if main is None:
+        return None
     for node in tree.css(".line-through"):
         text = node_text(node)
         if not _PRICE_TEXT.match(text):
@@ -186,7 +200,7 @@ def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
         for _ in range(3):  # giá bán và giá gốc là hai phần tử gần nhau trong cùng khối
             if block is None:
                 break
-            if any(node_text(leaf) == shown for leaf in block.css("p, span, div")):
+            if any(leaf.mem_id == main.mem_id for leaf in block.css("p, span, div")):
                 return struck
             block = block.parent
     return None
@@ -409,7 +423,12 @@ class FptShopScraper(BaseScraper):
         index = await self._fetcher.get(SITEMAP_INDEX_URL)
         self._raise_if_challenge(index)
         urls: list[str] = []
-        for sitemap_url in select_sitemaps(category, parse_sitemap_locs(index.text)):
+        sitemaps = select_sitemaps(category, parse_sitemap_locs(index.text))
+        if not sitemaps:  # trang đổi cấu trúc sitemap, không phải bị chặn (T4.7)
+            raise SiteLayoutChanged(
+                f"Chỉ mục sitemap không có sitemap của nhóm {category.value}", url=index.final_url
+            )
+        for sitemap_url in sitemaps:
             sitemap = await self._fetcher.get(sitemap_url)
             self._raise_if_challenge(sitemap)
             urls.extend(select_product_urls(category, parse_sitemap_locs(sitemap.text)))
