@@ -197,7 +197,7 @@ Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.spe
 | Enum | Giá trị |
 | --- | --- |
 | `Category` | `laptop`, `mouse`, `keyboard`, `headset`, `phone` (mở rộng), `other` |
-| `SiteKey` | `gearvn`, `fptshop`, `anphat`, `viettelstore`, `nguyenkim`, `mockshop` (migration 0003 gỡ `hoangha`, `laptop88` và chuyển dòng cũ sang `fptshop`/`anphat`, T4.6) |
+| `SiteKey` | `gearvn`, `fptshop`, `anphat`, `viettelstore`, `nguyenkim`, `mockshop` |
 | `PriceType` | `regular` (giá bán không giảm), `sale` (giá khuyến mãi công khai), `member` (giá thành viên), `flash` (flash sale đang diễn ra), `unknown` |
 | `StockStatus` | `in_stock`, `out_of_stock`, `preorder`, `unknown` |
 | `ScrapeStatus` | `PENDING`, `RUNNING`, `NEEDS_HUMAN`, `BLOCKED`, `SUCCEEDED`, `PARTIAL`, `FAILED` |
@@ -208,6 +208,8 @@ Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.spe
 | `AgentRunStatus` | `running`, `succeeded`, `needs_clarification`, `failed` |
 | `MessageRole` | `user`, `assistant` (lời gọi tool nằm trong `agent_run.events`, không nằm ở bảng tin nhắn) |
 | `ChallengeKind` | `http_403`, `http_429`, `captcha`, `soft_block` (chỉ nằm trong JSON của cột scrape_run.challenge, không có cột riêng nên không có CHECK) |
+
+`SiteKey` không còn `hoangha` và `laptop88` từ migration 0003 (T4.6): dòng cũ của `offer` và `scrape_run` được chuyển sang `fptshop` và `anphat`.
 
 **Giá dùng để so sánh** (`effective_price`) của một offer: lấy `price` nếu `price_type` ∈ {`regular`, `sale`, `flash`}; nếu `member` thì vẫn hiển thị nhưng mặc định so sánh bằng `list_price` khi có, kèm nhãn "giá thành viên". Giá bị che (ví dụ flash sale sắp diễn ra hiển thị "2*.**0.000") **không lưu**.
 

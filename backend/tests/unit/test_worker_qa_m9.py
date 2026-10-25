@@ -166,8 +166,10 @@ class HangingEvaluator(StubEvaluator):
     def __init__(self) -> None:
         super().__init__()
         self.cancelled = False
+        self.entered = asyncio.Event()
 
     async def evaluate(self, offer_ids: object = None) -> None:
+        self.entered.set()
         try:
             await asyncio.Event().wait()
         except asyncio.CancelledError:
@@ -186,7 +188,7 @@ async def test_cancel_running_also_cancels_a_job_stuck_in_the_final_alert_sweep(
         cast(AlertEvaluator, evaluator),
     )
     task = asyncio.create_task(jobs.refresh_tracked())
-    await asyncio.sleep(0.02)
+    await asyncio.wait_for(evaluator.entered.wait(), timeout=5)  # không phụ thuộc tải máy
     assert not task.done()
 
     await jobs.cancel_running()
