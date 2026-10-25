@@ -61,7 +61,8 @@ def test_uppercase_script_tag_and_attributes_are_handled() -> None:
 
 def test_unclosed_script_keeps_the_marker_visible() -> None:
     """Không đóng được thẻ thì không đoán vùng cần bỏ: giữ hành vi cũ (báo challenge)."""
-    assert detect_challenge(_resp("<body><script>var k = 'g-recaptcha';"), SiteKey.fptshop) is not None
+    page = "<body><script>var k = 'g-recaptcha';"
+    assert detect_challenge(_resp(page), SiteKey.fptshop) is not None
 
 
 def test_marker_in_json_ld_script_is_ignored_too() -> None:

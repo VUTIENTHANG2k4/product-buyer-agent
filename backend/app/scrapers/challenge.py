@@ -80,7 +80,7 @@ _FOLDED_MARKERS = tuple(_fold(marker) for marker in _CAPTCHA_MARKERS)
 
 
 def _generic_marker_in_markup(folded: str) -> bool:
-    """`captcha` nằm trong một thẻ `<...>` hoặc trong `<title>` (quét tuyến tính bằng `str.find`)."""
+    """`captcha` nằm trong một thẻ `<...>` hoặc trong `<title>` (quét tuyến tính, `str.find`)."""
     pos = 0
     while True:
         start = folded.find("<", pos)
@@ -102,6 +102,8 @@ def has_captcha_marker(text: str) -> bool:
     """Thân trang có dấu hiệu captcha (sau khi bỏ thân script/style và chú thích)."""
     folded = _captcha_text(text)
     return any(marker in folded for marker in _FOLDED_MARKERS) or _generic_marker_in_markup(folded)
+
+
 # Trang chờ của Cloudflare (thường kèm 503). Chỉ xét khi máy chủ là Cloudflare và mã là 5xx để
 # không báo nhầm trang bình thường có cụm "just a moment". Không dùng "challenge-platform" trần:
 # Cloudflare chèn `/cdn-cgi/challenge-platform/.../main.js` cả vào trang bình thường và trang lỗi
