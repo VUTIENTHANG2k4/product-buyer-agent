@@ -103,4 +103,3 @@ Ghi chú khi trình diễn:
 - **Gemini lỗi tạm thời (429/503/504):** giao diện hiện "Không gọi được mô hình ngôn ngữ lúc này" kèm nút "Hỏi lại"; bấm lại là được. Nên đặt `LLM_MAX_RPM=12` nếu dùng gói miễn phí.
 - **Console trình duyệt có 7 lỗi `ERR_NAME_NOT_RESOLVED`:** ảnh sản phẩm hư cấu ở `mock-images.example`, không ảnh hưởng chức năng.
 - **Dữ liệu lẫn:** DB dev có dữ liệu thu thập cũ (URL `localhost:8100`), thu thập trong Docker tạo offer mới với URL `mock-shop:8100` nên cùng một mẫu mock xuất hiện thành hai sản phẩm (ví dụ "Laptop MSI Mock Katana 15 X25"). Dùng DB sạch như phần chuẩn bị để tránh.
-- Ô lọc "Trang" ở `/admin` còn liệt kê Hoàng Hà, Laptop88, Viettel Store, Nguyễn Kim (giá trị cũ của enum, T4.6).

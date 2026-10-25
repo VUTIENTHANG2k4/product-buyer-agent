@@ -142,7 +142,7 @@ Chi tiết sau khảo sát ghi trong `docs/sources/<site>.md`. Thứ tự ưu ti
 
 Không gọi các endpoint API nội bộ mà robots.txt chặn (ví dụ `/api/` của GearVN).
 
-Hoàng Hà Mobile và Laptop88 đã bị loại khỏi danh sách nguồn từ 2026-10-19 ([ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)); thay bằng `fptshop` và `anphat`.
+Hoàng Hà Mobile và Laptop88 đã bị loại khỏi danh sách nguồn từ 2026-10-19 ([ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)); thay bằng `fptshop` và `anphat`; hai giá trị cũ đã gỡ khỏi `SiteKey` ở migration 0003 (T4.6).
 
 | Trang | Nhóm (tầng 1) | `min_delay_s` | `requires_js` | Tầng 2 | Ghi chú đã biết |
 | --- | --- | --- | --- | --- | --- |

@@ -197,7 +197,7 @@ Lọc thông số dùng toán tử JSONB của SQLAlchemy (ví dụ `Product.spe
 | Enum | Giá trị |
 | --- | --- |
 | `Category` | `laptop`, `mouse`, `keyboard`, `headset`, `phone` (mở rộng), `other` |
-| `SiteKey` | `gearvn`, `hoangha`, `laptop88`, `fptshop`, `anphat`, `viettelstore`, `nguyenkim`, `mockshop` |
+| `SiteKey` | `gearvn`, `fptshop`, `anphat`, `viettelstore`, `nguyenkim`, `mockshop` (migration 0003 gỡ `hoangha`, `laptop88` và chuyển dòng cũ sang `fptshop`/`anphat`, T4.6) |
 | `PriceType` | `regular` (giá bán không giảm), `sale` (giá khuyến mãi công khai), `member` (giá thành viên), `flash` (flash sale đang diễn ra), `unknown` |
 | `StockStatus` | `in_stock`, `out_of_stock`, `preorder`, `unknown` |
 | `ScrapeStatus` | `PENDING`, `RUNNING`, `NEEDS_HUMAN`, `BLOCKED`, `SUCCEEDED`, `PARTIAL`, `FAILED` |
