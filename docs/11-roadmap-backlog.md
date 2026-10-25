@@ -222,7 +222,7 @@ Xong khi:
 | T4.3 | Khảo sát An Phát + fixtures (`docs/sources/anphat.md`) | T4.0, T2.1 | S | ✅ |
 | T4.4 | AnPhatScraper | T4.3, T2.2 | M | ✅ |
 | T4.5 | Chạy thật có kiểm soát 2 nguồn | T4.2, T4.4, T2.6 | S | ✅ |
-| T4.6 | Đổi seed/test từ `hoangha`/`laptop88` sang `fptshop`/`anphat`; cân nhắc gỡ giá trị cũ khỏi `SiteKey` bằng migration (không chặn M5) | T4.0 | S | ⬜ |
+| T4.6 | Đổi seed/test từ `hoangha`/`laptop88` sang `fptshop`/`anphat`; cân nhắc gỡ giá trị cũ khỏi `SiteKey` bằng migration (không chặn M5) | T4.0 | S | ✅ |
 | T4.7 | Còn lại từ review/QA M4: ghi hạn chế captcha chèn bằng JS nội tuyến (06 §4); `_struck_price` chỉ xét khối giá chính (QA M4: thẻ "sản phẩm tương tự" cùng giá bị đọc thành `sale`; xfail `test_struck_price_of_a_related_product_card...`); trần số sitemap `-N`; nhóm `soft_block` khi index thiếu sitemap của nhóm | T4.2, T4.4 | S | ⬜ |
 | T4.8 | Quyết định thiết kế: chữ "captcha" trong văn bản hiển thị (mô tả/bình luận sản phẩm) hiện làm cả lượt `BLOCKED` + nghỉ 24 giờ; chỉ xét thuộc tính/thẻ hay chỉ khi trang không có sản phẩm (QA M4; xfail `test_the_word_captcha_in_a_product_review_paragraph...`) | T4.0b | S | ⬜ |
 
@@ -396,8 +396,8 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 
 **T11.4** — Phát sinh từ diễn tập T11.3 (docs/10 §7 ghi A, B). Xong khi: một lệnh (script trong `backend/scripts/` + target Makefile) đổi giá một offer `mock-shop` kèm dòng `price_history` rồi tạo cảnh báo mẫu, để bước 5 của demo lặp lại được mà không sửa SQL tay; `docker-compose.yml` đặt `MOCK_SHOP_CAPTCHA_AFTER` đủ thấp để một lượt Laptop luôn gặp captcha (hoặc nêu rõ trong `.env.example`); test script; cập nhật 10 §7. Ghi thêm (không làm ở đây): cùng mẫu mock xuất hiện hai sản phẩm khi dữ liệu dev cũ (URL `localhost:8100`) lẫn dữ liệu Docker (`mock-shop:8100`), và lượt Laptop đầu tiên trong Docker chậm vì LLM điền thông số.
 
-**T11.5** — Phát sinh từ T11.1 và review M11. Eval 2026-10-23 (`gemini-3.5-flash-lite`): latency p50 26–31 s so với G4 ≤ 15 s; không do `LLM_MAX_RPM` (chạy `--rpm 1000` vẫn 21–32 s). Mỗi câu cần ≥ 3 lần gọi Gemini (planner ~4–10 s, vòng tool, câu trả lời cuối), mỗi lần 4–10 s hôm nay (ngày 2026-10-21 đo được 15,7 s). Xong khi: p50 ≤ 15 s trong `make eval` (ví dụ gộp planner với bước chọn tool, bỏ lần tổng hợp cuối khi kết quả tool đủ, chạy planner và tìm danh mục song song, so với model khác), **hoặc** người dùng ghi nhận chấp nhận ngoại lệ vào docs/01 (G4, NFR-01) và docs/05 §7. Hiện chưa có quyết định của người dùng nên các tài liệu đó vẫn ghi ngưỡng ≤ 15 s kèm chú thích "chưa đạt".
-
+**T11.5** — Phát sinh từ T11.1 và review M11. Eval 2026-10-23 (`gemini-3.5-flash-lite`): latency p50 26–31 s so với G4 ≤ 15 s; không do `LLM_MAX_RPM` (chạy `--rpm 1000` vẫn 21–32 s). Mỗi câu cần ≥ 3 lần gọi Gemini (planner ~4–10 s, vòng tool, câu trả lời cuối), mỗi lần 4–10 s hôm nay (ngày 2026-10-21 đo được 15,7 s). Xong khi: p50 ≤ 15 s trong `make eval` (ví dụ gộp planner với bước chọn tool, bỏ lần tổng hợp cuối khi kết quả tool đủ, chạy planner và tìm danh mục song song, so với model khác), **hoặc** người dùng ghi nhận chấp nhận ngoại lệ vào docs/01 (G4, NFR-01) và docs/05 §7. Hiện chưa có quyết định của người dùng nên các tài liệu đó vẫn ghi ngưỡng ≤ 15 s kèm chú thích "chưa đạt".
+
 ### X — Mở rộng (chỉ khi M0–M11 xong)
 
 | ID | Task | Ước lượng | Trạng thái |

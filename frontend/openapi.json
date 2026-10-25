@@ -4077,8 +4077,6 @@
         "type": "string",
         "enum": [
           "gearvn",
-          "hoangha",
-          "laptop88",
           "fptshop",
           "anphat",
           "viettelstore",

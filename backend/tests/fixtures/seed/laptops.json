@@ -30,8 +30,8 @@
           "price": 18990000
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-fx507",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-fx507",
           "title": "ASUS Mock TUF Gaming F15 FX507 - Chính hãng",
           "price": 19440000,
           "rating": 4.3,
@@ -84,8 +84,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-fx507z4",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-fx507z4",
           "title": "ASUS Mock TUF Gaming F15 FX507ZC4 - Chính hãng",
           "price": 24440000,
           "price_type": "sale",
@@ -145,16 +145,16 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-tufa15",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-tufa15",
           "title": "ASUS Mock TUF Gaming A15 FA507NU - Chính hãng",
           "price": 22940000,
           "rating": 4.7,
           "rating_count": 105
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-asus-tufa15",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-asus-tufa15",
           "title": "ASUS Mock TUF Gaming A15 FA507NU - Chính hãng",
           "price": 22690000,
           "rating": 4.0,
@@ -208,8 +208,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-g614jv",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-g614jv",
           "title": "ASUS Mock ROG Strix G16 G614JV - Chính hãng",
           "price": 29840000,
           "price_type": "member",
@@ -250,8 +250,8 @@
           "rating_count": 168
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-ga402",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-ga402",
           "title": "ASUS Mock ROG Zephyrus G14 GA403 - Chính hãng",
           "price": 38440000,
           "stock_status": "out_of_stock"
@@ -287,8 +287,8 @@
           "price": 79990000
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-g834",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-g834",
           "title": "ASUS Mock ROG Strix SCAR 18 G834JYR - Chính hãng",
           "price": 80440000,
           "price_type": "sale",
@@ -343,8 +343,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-a16",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-a16",
           "title": "ASUS Mock TUF Gaming A16 FA608 - Chính hãng",
           "price": 41940000,
           "rating": 4.5,
@@ -384,16 +384,16 @@
           "rating_count": 279
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-x1504",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-x1504",
           "title": "ASUS Mock Vivobook 15 X1504 - Chính hãng",
           "price": 13440000,
           "rating": 4.2,
           "rating_count": 290
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-asus-x1504",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-asus-x1504",
           "title": "ASUS Mock Vivobook 15 X1504 - Chính hãng",
           "price": 13190000,
           "rating": 4.5,
@@ -432,8 +432,8 @@
           "rating_count": 316
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-ux3405",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-ux3405",
           "title": "ASUS Mock Zenbook 14 OLED UX3405 - Chính hãng",
           "price": 26340000,
           "rating": 4.9,
@@ -486,8 +486,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-len-loq15a",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-len-loq15a",
           "title": "Lenovo Mock LOQ 15IAX9 - Chính hãng",
           "price": 18340000,
           "price_type": "sale",
@@ -539,8 +539,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-len-15irx9",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-len-15irx9",
           "title": "Lenovo Mock LOQ 15IRX9 - Chính hãng",
           "price": 27840000,
           "price_type": "member",
@@ -549,8 +549,8 @@
           "rating_count": 401
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-len-15irx9",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-len-15irx9",
           "title": "Lenovo Mock LOQ 15IRX9 - Chính hãng",
           "price": 27690000,
           "rating": 4.6,
@@ -608,8 +608,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-len-legion5",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-len-legion5",
           "title": "Lenovo Mock Legion 5 15ARP9 - Chính hãng",
           "price": 29340000,
           "rating": 4.0,
@@ -663,8 +663,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-len-pro5",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-len-pro5",
           "title": "Lenovo Mock Legion Pro 5 16IRX9 - Chính hãng",
           "price": 43340000,
           "rating": 4.7,
@@ -703,8 +703,8 @@
           "rating_count": 21
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-len-e14",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-len-e14",
           "title": "Lenovo Mock ThinkPad E14 Gen 5 - Chính hãng",
           "price": 16940000,
           "price_type": "sale",
@@ -747,14 +747,14 @@
           "rating_count": 58
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-len-slim5",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-len-slim5",
           "title": "Lenovo Mock IdeaPad Slim 5 14ABR8 - Chính hãng",
           "price": 15340000
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-len-slim5",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-len-slim5",
           "title": "Lenovo Mock IdeaPad Slim 5 14ABR8 - Chính hãng",
           "price": 15090000,
           "rating": 4.4,
@@ -791,8 +791,8 @@
           "price": 21890000
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-acer-anv15",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-acer-anv15",
           "title": "Acer Mock Nitro V 15 ANV15-51 - Chính hãng",
           "price": 22340000,
           "rating": 4.8,
@@ -849,8 +849,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-acer-an515",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-acer-an515",
           "title": "Acer Mock Nitro 5 Tiger AN515-58 - Chính hãng",
           "price": 24940000,
           "rating": 4.5,
@@ -889,8 +889,8 @@
           "rating_count": 169
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-acer-phn16",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-acer-phn16",
           "title": "Acer Mock Predator Helios Neo 16 - Chính hãng",
           "price": 33340000,
           "price_type": "sale",
@@ -931,8 +931,8 @@
           "rating_count": 206
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-acer-a515",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-acer-a515",
           "title": "Acer Mock Aspire 5 A515-58 - Chính hãng",
           "price": 11940000,
           "rating": 4.9,
@@ -971,8 +971,8 @@
           "rating_count": 243
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-msi-gf63",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-msi-gf63",
           "title": "MSI Mock Thin GF63 12UCX - Chính hãng",
           "price": 16340000
         }
@@ -1022,8 +1022,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-msi-b13v",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-msi-b13v",
           "title": "MSI Mock Katana 15 B13VFK - Chính hãng",
           "price": 27340000,
           "rating": 4.3,
@@ -1062,8 +1062,8 @@
           "rating_count": 317
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-msi-cyborg",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-msi-cyborg",
           "title": "MSI Mock Cyborg 15 A12VF - Chính hãng",
           "price": 21340000,
           "price_type": "sale",
@@ -1118,8 +1118,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-msi-vec16",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-msi-vec16",
           "title": "MSI Mock Vector 16 HX A14V - Chính hãng",
           "price": 40340000,
           "stock_status": "out_of_stock",
@@ -1159,8 +1159,8 @@
           "rating_count": 391
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-msi-ge78",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-msi-ge78",
           "title": "MSI Mock Raider GE78 HX - Chính hãng",
           "price": 63340000,
           "rating": 4.4,
@@ -1213,8 +1213,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-hp-victus15",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-hp-victus15",
           "title": "HP Mock Victus 15-fb2 - Chính hãng",
           "price": 20740000,
           "price_type": "member",
@@ -1270,8 +1270,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-hp-victus16",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-hp-victus16",
           "title": "HP Mock Victus 16-s1 - Chính hãng",
           "price": 26840000,
           "price_type": "sale",
@@ -1312,8 +1312,8 @@
           "rating_count": 22
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-hp-omen16",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-hp-omen16",
           "title": "HP Mock Omen 16-xf0 - Chính hãng",
           "price": 32340000,
           "rating": 4.5,
@@ -1352,8 +1352,8 @@
           "rating_count": 59
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-hp-pav15",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-hp-pav15",
           "title": "HP Mock Pavilion 15-eg3 - Chính hãng",
           "price": 15840000,
           "rating": 4.2,
@@ -1392,8 +1392,8 @@
           "rating_count": 96
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-dell-g15",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-dell-g15",
           "title": "Dell Mock G15 5530 - Chính hãng",
           "price": 28640000,
           "rating": 4.9,
@@ -1432,8 +1432,8 @@
           "rating_count": 133
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-dell-ins15",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-dell-ins15",
           "title": "Dell Mock Inspiron 15 3530 - Chính hãng",
           "price": 13940000,
           "price_type": "sale",
@@ -1470,8 +1470,8 @@
           "price": 56890000
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-dell-awm16",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-dell-awm16",
           "title": "Dell Mock Alienware m16 R2 - Chính hãng",
           "price": 57340000,
           "rating": 4.3,
@@ -1524,8 +1524,8 @@
           ]
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-giga-g5kf",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-giga-g5kf",
           "title": "Gigabyte Mock G5 KF5 - Chính hãng",
           "price": 25840000,
           "price_type": "member",
@@ -1567,8 +1567,8 @@
           "rating_count": 244
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-giga-aorus15",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-giga-aorus15",
           "title": "Gigabyte Mock Aorus 15 BKF - Chính hãng",
           "price": 31340000,
           "rating": 4.7,
@@ -1607,8 +1607,8 @@
           "rating_count": 281
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-asus-tuf5060",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-asus-tuf5060",
           "title": "ASUS Mock TUF Gaming F16 FX608 RTX 5060 - Chính hãng",
           "price": 35440000,
           "price_type": "sale",
@@ -1649,8 +1649,8 @@
           "rating_count": 318
         },
         {
-          "site": "hoangha",
-          "url": "https://mock-hoangha.example/p/mock-apl-mba13",
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-apl-mba13",
           "title": "Apple Mock MacBook Air 13 M3 - Chính hãng",
           "price": 28440000
         }

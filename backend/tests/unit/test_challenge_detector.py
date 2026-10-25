@@ -54,7 +54,7 @@ def test_captcha_markers_match_case_insensitively(marker: str, transform: type[s
 @pytest.mark.parametrize("form", ["NFC", "NFD", "NFKD"])
 def test_vietnamese_marker_matches_in_any_unicode_form(form: str) -> None:
     text = unicodedata.normalize(form, "Xác minh bạn không phải ROBOT để tiếp tục")
-    challenge = detect_challenge(_resp(200, text), SiteKey.hoangha)
+    challenge = detect_challenge(_resp(200, text), SiteKey.viettelstore)
     assert challenge is not None
     assert challenge.kind is ChallengeKind.captcha
 
@@ -84,9 +84,9 @@ def test_challenge_uses_final_url_after_redirect() -> None:
 
 
 def test_soft_block_challenge_has_kind_site_and_url() -> None:
-    challenge = soft_block_challenge(SiteKey.laptop88, URL)
+    challenge = soft_block_challenge(SiteKey.nguyenkim, URL)
     assert challenge.kind is ChallengeKind.soft_block
-    assert challenge.site is SiteKey.laptop88
+    assert challenge.site is SiteKey.nguyenkim
     assert str(challenge.url) == URL
 
 

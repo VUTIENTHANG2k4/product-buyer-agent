@@ -13,7 +13,7 @@ from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
 
-from tests.db_support import downgrade_to, upgrade_to, upgrade_to_head
+from tests.db_support import downgrade_to, upgrade_to
 
 OLD_SITES = ("gearvn", "hoangha", "laptop88", "viettelstore", "nguyenkim", "mockshop")
 NEW_SITES = ("fptshop", "anphat")
@@ -132,7 +132,7 @@ def test_offer_table_accepts_the_new_sites_after_0002_and_still_rejects_others(
 def test_downgrade_with_new_site_rows_fails_and_leaves_the_database_untouched(
     empty_engine: Engine, table: str
 ) -> None:
-    upgrade_to_head(empty_engine)
+    upgrade_to(empty_engine, "0002")
     product_id = _product(empty_engine)
     if table == "offer":
         _offer(empty_engine, product_id, "gearvn")
@@ -154,7 +154,7 @@ def test_downgrade_with_new_site_rows_fails_and_leaves_the_database_untouched(
 
 
 def test_downgrade_succeeds_once_the_new_site_rows_are_removed(empty_engine: Engine) -> None:
-    upgrade_to_head(empty_engine)
+    upgrade_to(empty_engine, "0002")
     product_id = _product(empty_engine)
     _offer(empty_engine, product_id, "hoangha")
     _offer(empty_engine, product_id, "fptshop")
@@ -170,11 +170,107 @@ def test_downgrade_succeeds_once_the_new_site_rows_are_removed(empty_engine: Eng
 
 
 def test_upgrade_downgrade_upgrade_keeps_one_site_check_per_table(empty_engine: Engine) -> None:
-    upgrade_to_head(empty_engine)
+    upgrade_to(empty_engine, "0002")
     downgrade_to(empty_engine, "0001")
-    upgrade_to_head(empty_engine)
+    upgrade_to(empty_engine, "0002")
 
     assert _check_names(empty_engine, "offer") == ["ck_offer_site"]
     assert _check_names(empty_engine, "scrape_run") == ["ck_scrape_run_site"]
     _run(empty_engine, "anphat")
     assert _revision(empty_engine) == "0002"
+
+
+# ---- T4.6: migration 0003 (bỏ hoangha/laptop88 khỏi CHECK `site`, chuyển dòng cũ) ----
+def _offer_at(engine: Engine, product_id: int, site: str, url: str) -> int:
+    with engine.begin() as connection:
+        return int(
+            connection.execute(
+                text(
+                    "INSERT INTO offer (product_id, site, url, title, price, price_type,"
+                    " stock_status, match_method, is_active)"
+                    " VALUES (:product_id, :site, :url, 'Mock', 1000000, 'regular', 'in_stock',"
+                    " 'new', true) RETURNING id"
+                ),
+                {"product_id": product_id, "site": site, "url": url},
+            ).scalar_one()
+        )
+
+
+def _rows(engine: Engine, sql: str) -> list[tuple[str, ...]]:
+    with engine.connect() as connection:
+        return [tuple(row) for row in connection.execute(text(sql))]
+
+
+def test_0003_moves_legacy_rows_to_the_replacement_sites_and_keeps_their_history(
+    empty_engine: Engine,
+) -> None:
+    upgrade_to(empty_engine, "0002")
+    product_id = _product(empty_engine)
+    old_id = _offer_at(empty_engine, product_id, "hoangha", "https://mock-hoangha.example/p/a")
+    _offer_at(empty_engine, product_id, "laptop88", "https://mock-laptop88.example/p/b")
+    _offer_at(empty_engine, product_id, "gearvn", "https://mock-gearvn.example/p/c")
+    _run(empty_engine, "hoangha")
+    _run(empty_engine, "laptop88")
+    with empty_engine.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO price_history (offer_id, price, price_type, stock_status)"
+                " VALUES (:offer_id, 900000, 'regular', 'in_stock')"
+            ),
+            {"offer_id": old_id},
+        )
+
+    upgrade_to(empty_engine, "0003")
+
+    assert _rows(empty_engine, "SELECT site, url FROM offer ORDER BY id") == [
+        ("fptshop", "https://mock-fptshop.example/p/a"),
+        ("anphat", "https://mock-anphat.example/p/b"),
+        ("gearvn", "https://mock-gearvn.example/p/c"),
+    ]
+    assert _sites(empty_engine, "scrape_run") == ["fptshop", "anphat"]
+    assert _rows(
+        empty_engine, f"SELECT price::text FROM price_history WHERE offer_id = {old_id}"
+    ) == [("900000",)]
+    assert _revision(empty_engine) == "0003"
+
+
+@pytest.mark.parametrize("table", ["offer", "scrape_run"])
+@pytest.mark.parametrize("site", ["hoangha", "laptop88"])
+def test_0003_check_rejects_the_removed_sites(empty_engine: Engine, table: str, site: str) -> None:
+    upgrade_to(empty_engine, "0003")
+    product_id = _product(empty_engine)
+
+    with pytest.raises(IntegrityError):
+        if table == "offer":
+            _offer(empty_engine, product_id, site)
+        else:
+            _run(empty_engine, site)
+
+
+def test_0003_still_accepts_every_remaining_site(empty_engine: Engine) -> None:
+    upgrade_to(empty_engine, "0003")
+    product_id = _product(empty_engine)
+    sites = ("gearvn", "fptshop", "anphat", "viettelstore", "nguyenkim", "mockshop")
+
+    for site in sites:
+        _offer(empty_engine, product_id, site)
+        _run(empty_engine, site)
+
+    assert _sites(empty_engine, "offer") == list(sites)
+    assert _check_names(empty_engine, "offer") == ["ck_offer_site"]
+    assert _check_names(empty_engine, "scrape_run") == ["ck_scrape_run_site"]
+
+
+def test_0003_downgrade_reallows_the_legacy_sites_and_does_not_restore_moved_rows(
+    empty_engine: Engine,
+) -> None:
+    upgrade_to(empty_engine, "0002")
+    product_id = _product(empty_engine)
+    _offer_at(empty_engine, product_id, "hoangha", "https://mock-hoangha.example/p/a")
+    upgrade_to(empty_engine, "0003")
+
+    downgrade_to(empty_engine, "0002")
+
+    assert _revision(empty_engine) == "0002"
+    assert _sites(empty_engine, "offer") == ["fptshop"]
+    _offer(empty_engine, product_id, "hoangha")  # CHECK của 0002 nhận lại giá trị cũ

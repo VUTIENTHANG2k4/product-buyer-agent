@@ -450,6 +450,22 @@ describe('AdminPage · lọc và phân trang', () => {
     }),
   )
 
+  it('ô lọc Trang chỉ liệt kê các nguồn đang có scraper', async () => {
+    installFakeAdmin({ runs: many })
+    renderPage()
+    await screen.findByRole('cell', { name: '#100' })
+
+    const options = within(screen.getByLabelText('Trang')).getAllByRole('option')
+
+    expect(options.map((option) => option.textContent)).toEqual([
+      'Tất cả',
+      'GearVN',
+      'FPT Shop',
+      'An Phát',
+      'Mock Shop',
+    ])
+  })
+
   it('lọc theo trang, nhóm và trạng thái gọi API với đúng tham số', async () => {
     const fake = installFakeAdmin({ runs: many })
     renderPage()

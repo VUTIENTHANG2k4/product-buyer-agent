@@ -13,7 +13,7 @@ from app.scrapers.registry import SCRAPERS
 
 class Slow(BaseScraper):
     config: ClassVar[SiteConfig] = SiteConfig(
-        key=SiteKey.laptop88, base_url="https://Slow.Example", min_delay_s=10.0
+        key=SiteKey.nguyenkim, base_url="https://Slow.Example", min_delay_s=10.0
     )
 
     def parse_listing(self, html: str, category: Category, page_url: str) -> ListingPage:
@@ -23,7 +23,7 @@ class Slow(BaseScraper):
 def test_site_delays_come_from_the_registered_site_configs(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setitem(SCRAPERS, SiteKey.laptop88, Slow)
+    monkeypatch.setitem(SCRAPERS, SiteKey.nguyenkim, Slow)
     assert site_delays()["slow.example"] == 10.0
 
 

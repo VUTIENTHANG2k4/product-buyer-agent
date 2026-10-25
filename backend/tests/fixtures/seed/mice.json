@@ -25,8 +25,8 @@
           "price": 399000
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-log-g102",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-g102",
           "title": "Logitech Mock G102 Lightsync - Chính hãng",
           "price": 849000,
           "rating": 4.3,
@@ -83,8 +83,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-log-g304",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-g304",
           "title": "Logitech Mock G304 Lightspeed - Chính hãng",
           "price": 1049000,
           "price_type": "sale",
@@ -128,8 +128,8 @@
           "rating_count": 94
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-log-gpxs2",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-gpxs2",
           "title": "Logitech Mock G Pro X Superlight 2 - Chính hãng",
           "price": 3540000,
           "rating": 4.7,
@@ -164,8 +164,8 @@
           "rating_count": 131
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-log-mx3s",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-mx3s",
           "title": "Logitech Mock MX Master 3S - Chính hãng",
           "price": 2540000,
           "price_type": "member",
@@ -220,8 +220,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-log-m650",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-m650",
           "title": "Logitech Mock M650 Signature - Chính hãng",
           "price": 1240000,
           "stock_status": "out_of_stock"
@@ -268,8 +268,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-log-m350",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-m350",
           "title": "Logitech Mock Pebble M350 - Chính hãng",
           "price": 799000,
           "price_type": "sale",
@@ -313,8 +313,8 @@
           "rating_count": 242
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-rzr-dae",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-rzr-dae",
           "title": "Razer Mock DeathAdder Essential - Chính hãng",
           "price": 899000,
           "rating": 4.5,
@@ -348,8 +348,8 @@
           "rating_count": 279
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-rzr-vipermini",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-rzr-vipermini",
           "title": "Razer Mock Viper Mini - Chính hãng",
           "price": 1140000,
           "rating": 4.2,
@@ -398,8 +398,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-rzr-orochiv2",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-rzr-orochiv2",
           "title": "Razer Mock Orochi V2 - Chính hãng",
           "price": 1640000,
           "rating": 4.9,
@@ -433,8 +433,8 @@
           "rating_count": 353
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-rzr-basilisk",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-rzr-basilisk",
           "title": "Razer Mock Basilisk V3 - Chính hãng",
           "price": 1840000,
           "price_type": "sale",
@@ -486,8 +486,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-ss-aerox3",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-ss-aerox3",
           "title": "SteelSeries Mock Aerox 3 Wireless - Chính hãng",
           "price": 2240000,
           "price_type": "member",
@@ -538,8 +538,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-cor-harpoonw",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-cor-harpoonw",
           "title": "Corsair Mock Harpoon RGB Wireless - Chính hãng",
           "price": 1340000,
           "rating": 4.0,
@@ -587,8 +587,8 @@
           ]
         },
         {
-          "site": "laptop88",
-          "url": "https://mock-laptop88.example/p/mock-dareu-em901x",
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-dareu-em901x",
           "title": "DareU Mock EM901X RGB - Chính hãng",
           "price": 949000,
           "rating": 4.7,
