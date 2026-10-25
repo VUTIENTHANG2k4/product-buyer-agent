@@ -14,7 +14,7 @@ FE := cd frontend &&
 # $(call require,<đường dẫn>,<task cung cấp>): dừng nếu đường dẫn chưa tồn tại.
 require = $(if $(wildcard $(1)),,$(error Chưa khả dụng: thiếu $(1) (làm ở $(2))))
 
-.PHONY: help db-up db-down demo-up demo-seed setup dev dev-api dev-web dev-mock worker \
+.PHONY: help db-up db-down demo-up demo-seed demo-price-drop setup dev dev-api dev-web dev-mock worker \
 	mock-shop check test-be test-fe e2e eval test-live scrape seed gen-api migrate
 
 help: ## Liệt kê mọi lệnh
@@ -31,6 +31,9 @@ demo-up: ## Build và chạy cả hệ thống bằng Docker (web :8080, api :80
 
 demo-seed: ## Nạp dữ liệu hư cấu `dev` vào DB của hệ thống Docker (cần demo-up)
 	docker compose run --rm api python -m scripts.seed --fixture dev
+
+demo-price-drop: ## Demo: nâng giá một offer mock-shop + tạo cảnh báo, lượt Mock Shop kế tiếp sẽ báo giảm giá
+	docker compose run --rm api python -m scripts.demo_price_drop
 
 setup: db-up ## Bật DB, cài phụ thuộc, migrate, seed dev
 	$(BE) uv sync --locked

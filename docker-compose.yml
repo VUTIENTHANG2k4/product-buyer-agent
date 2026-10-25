@@ -72,6 +72,10 @@ services:
     <<: *backend
     restart: unless-stopped
     command: ["uvicorn", "app.mock_shop.main:app", "--host", "0.0.0.0", "--port", "8100"]
+    environment:
+      <<: *backend-env
+      # Demo: captcha giả từ trang nội dung thứ 3, nên một lượt Laptop (3 trang) luôn gặp captcha.
+      MOCK_SHOP_CAPTCHA_AFTER: "2"
     ports:
       - "127.0.0.1:8100:8100"
 
