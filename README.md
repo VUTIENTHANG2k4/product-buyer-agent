@@ -34,6 +34,7 @@ Nếu cổng 5432 đã bị chiếm, đặt `POSTGRES_PORT` khác (ví dụ 5435
 ```bash
 make demo-up             # db, api (tự migrate), worker, mock-shop, web
 make demo-seed           # nạp dữ liệu hư cấu (lần đầu)
+make demo-price-drop     # (bước 5 của demo) nâng giá một offer mock-shop + tạo cảnh báo
 # giao diện http://localhost:8080 · API http://localhost:8000/api/docs
 make db-down             # dừng tất cả, giữ dữ liệu
 ```

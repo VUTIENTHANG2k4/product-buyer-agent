@@ -32,6 +32,7 @@ Chạy cả hệ thống trong Docker (demo, không cần cài Python/Node):
 ```bash
 make demo-up      # docker compose up -d --build: db, api (tự migrate), worker, mock-shop, web
 make demo-seed    # nạp dữ liệu hư cấu `dev` (lần đầu)
+make demo-price-drop  # chuẩn bị bước 5 của demo (§7): nâng giá một offer mock-shop + tạo cảnh báo
 # mở http://localhost:8080 (giao diện), http://localhost:8000/api/docs (API)
 docker compose logs -f worker     # xem lịch chạy (cần SCHEDULER_ENABLED=true trong .env rồi `docker compose up -d worker`)
 make db-down      # dừng tất cả (giữ dữ liệu trong volume pgdata)
