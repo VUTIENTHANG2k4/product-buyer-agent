@@ -2,7 +2,7 @@
 
 Đồ án: **Ứng dụng Agentic AI trong Thương mại điện tử.** Một AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt (ví dụ "laptop gaming dưới 30 triệu, RTX 4060 trở lên"), tự lập kế hoạch, lấy dữ liệu đã thu thập từ GearVN, FPT Shop, An Phát, trả bảng so sánh có nguồn, hỗ trợ danh sách mua và cảnh báo giảm giá.
 
-> Trạng thái: M0–M11 hoàn tất; còn một số mục backlog (T11.5: giảm độ trễ trả lời). Tiến độ chi tiết: [docs/PROGRESS.md](docs/PROGRESS.md).
+> Trạng thái: M0–M11 hoàn tất; còn một số mục backlog nhỏ. Tiến độ chi tiết: [docs/PROGRESS.md](docs/PROGRESS.md).
 
 ## Chức năng
 - **Hỏi bằng tiếng Việt**: agent lập kế hoạch, hiện tiến trình (SSE), trả bảng so sánh dựng từ cơ sở dữ liệu (không từ số do LLM viết); hỏi lại khi câu quá mơ hồ.

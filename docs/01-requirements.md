@@ -14,7 +14,7 @@ Mục tiêu đo được:
 | G1 | Hiểu đúng yêu cầu | Tỷ lệ trích đúng ý định (nhóm, khoảng giá, thông số bắt buộc) trên bộ eval | ≥ 90% |
 | G2 | Kết quả đúng ràng buộc | Tỷ lệ sản phẩm trả về thỏa mọi ràng buộc người dùng nêu | ≥ 95% |
 | G3 | Không bịa | Sản phẩm/giá/link không có trong dữ liệu | 0 |
-| G4 | Nhanh | Thời gian trả lời câu hỏi tầng 1 (p50) | ≤ 15 giây (chưa đạt: 26–31 s ngày 2026-10-23, theo dõi ở T11.5) |
+| G4 | Nhanh | Thời gian trả lời câu hỏi tầng 1 (p50) | ≤ 15 giây (người dùng chấp nhận ngoại lệ ngày 2026-10-25: đo được 26–31 s (2026-10-23, `gemini-3.5-flash-lite`, ≥ 3 lần gọi LLM mỗi câu), T11.5) |
 | G5 | Lịch sự với nguồn | Request vi phạm robots.txt hoặc độ trễ tối thiểu | 0 |
 
 ## 2. Phạm vi
@@ -166,7 +166,7 @@ Tiêu chí chấp nhận (mẫu, đầy đủ trong từng task của [11](11-ro
 
 | ID | Nhóm | Yêu cầu |
 | --- | --- | --- |
-| NFR-01 | Hiệu năng | Truy vấn danh mục ≤ 300 ms (p95, ≤ 20.000 offer). Trả lời tầng 1 ≤ 15 s (p50). Tầng 2 ≤ 45 s (do độ trễ lịch sự). |
+| NFR-01 | Hiệu năng | Truy vấn danh mục ≤ 300 ms (p95, ≤ 20.000 offer). Trả lời tầng 1 ≤ 15 s (p50). Tầng 2 ≤ 45 s (do độ trễ lịch sự). Mục tiêu 15 s chưa đạt, người dùng chấp nhận ngoại lệ (xem G4). |
 | NFR-02 | Lịch sự với nguồn | Độ trễ tối thiểu mỗi domain = max(5 s, Crawl-delay, cấu hình trang). Một request đồng thời mỗi domain. |
 | NFR-03 | Tuân thủ | User-Agent trung thực có liên hệ; không đăng nhập; không dùng URL bị robots.txt chặn; không thu thập dữ liệu cá nhân. |
 | NFR-04 | Độ tin cậy | Lỗi một trang không làm hỏng cả lượt; retry tối đa 3 lần với backoff; lưu lỗi vào `ScrapeRun`. |
