@@ -483,8 +483,6 @@ export const strings = {
   /** Tên hiển thị của từng trang bán (khóa `SiteKey` của API). */
   sites: {
     gearvn: 'GearVN',
-    hoangha: 'Hoàng Hà',
-    laptop88: 'Laptop88',
     fptshop: 'FPT Shop',
     anphat: 'An Phát',
     viettelstore: 'Viettel Store',

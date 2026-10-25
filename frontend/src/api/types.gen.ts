@@ -1136,7 +1136,7 @@ export interface components {
          * SiteKey
          * @enum {string}
          */
-        SiteKey: "gearvn" | "hoangha" | "laptop88" | "fptshop" | "anphat" | "viettelstore" | "nguyenkim" | "mockshop";
+        SiteKey: "gearvn" | "fptshop" | "anphat" | "viettelstore" | "nguyenkim" | "mockshop";
         /** SiteSeries */
         SiteSeries: {
             site: components["schemas"]["SiteKey"];
