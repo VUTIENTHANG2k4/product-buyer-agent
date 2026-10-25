@@ -768,7 +768,7 @@ async def test_a_captcha_on_a_real_site_is_blocked_never_waiting_for_a_human(
     db_session: Session, factory: Callable[[], Session], clock: Clock, real_site: None
 ) -> None:
     fetcher = ScriptedFetcher(
-        {REAL_LAPTOP: page("<div>Please solve this captcha</div>", REAL_LAPTOP)}
+        {REAL_LAPTOP: page('<div class="g-recaptcha">Please solve this captcha</div>', REAL_LAPTOP)}
     )
     result = await pipeline(factory, fetcher, clock).run(
         SiteKey.gearvn, Category.laptop, ScrapeTrigger.test

@@ -35,7 +35,7 @@ def test_other_statuses_with_plain_body_are_not_challenges(status: int) -> None:
 @pytest.mark.parametrize(
     "marker",
     [
-        "captcha",
+        "<div id='captcha'>",
         "cf-challenge",
         "g-recaptcha",
         "hcaptcha",

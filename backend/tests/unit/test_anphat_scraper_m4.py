@@ -302,7 +302,7 @@ def test_empty_or_plain_200_pages_are_not_challenges(scraper: AnPhatScraper, tex
 
 
 def test_lookalike_form_names_are_removed_only_as_whole_known_names(scraper: AnPhatScraper) -> None:
-    mixed = REGISTER_FORM + '<input name="Register_Captcha">' + "<p>Nhập mã captcha</p>"
+    mixed = REGISTER_FORM + '<input name="Register_Captcha">' + '<input name="captcha_code">'
     challenge = scraper.detect_challenge(response(mixed))
     assert challenge is not None and challenge.kind is ChallengeKind.captcha
 

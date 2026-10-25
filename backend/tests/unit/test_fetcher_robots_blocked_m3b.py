@@ -40,7 +40,7 @@ BLOCKING_RESPONSES = [
         503,
         id="503-just-a-moment",
     ),
-    pytest.param(httpx.Response(500, text="please solve the captcha"), 500, id="500-captcha-text"),
+    pytest.param(httpx.Response(500, text='<div class="captcha">please solve</div>'), 500, id="500-captcha-text"),
 ]
 
 

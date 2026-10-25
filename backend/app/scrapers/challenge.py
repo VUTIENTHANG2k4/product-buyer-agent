@@ -11,8 +11,11 @@ from app.domain.dto import Challenge
 from app.domain.enums import ChallengeKind, SiteKey
 from app.scrapers.http.types import FetchResponse
 
+# Từ chung "captcha" chỉ tính khi nằm trong phần đánh dấu (tên thẻ, id, class, name, action, src...)
+# hoặc trong `<title>`: mô tả/bình luận sản phẩm ("không cần nhập captcha") không phải challenge
+# (T4.8). Các dấu hiệu đặc trưng dưới đây hiếm khi xuất hiện trong văn bản thường nên xét ở mọi chỗ.
+_GENERIC_MARKER = "captcha"
 _CAPTCHA_MARKERS = (
-    "captcha",
     "cf-challenge",
     "g-recaptcha",
     "hcaptcha",
@@ -74,6 +77,31 @@ def _captcha_text(text: str) -> str:
 
 
 _FOLDED_MARKERS = tuple(_fold(marker) for marker in _CAPTCHA_MARKERS)
+
+
+def _generic_marker_in_markup(folded: str) -> bool:
+    """`captcha` nằm trong một thẻ `<...>` hoặc trong `<title>` (quét tuyến tính bằng `str.find`)."""
+    pos = 0
+    while True:
+        start = folded.find("<", pos)
+        if start < 0:
+            return False
+        end = folded.find(">", start + 1)
+        if end < 0:
+            return False
+        if _GENERIC_MARKER in folded[start:end]:
+            return True
+        if folded.startswith("<title", start):
+            close = folded.find("</title", end)
+            if _GENERIC_MARKER in folded[end : close if close >= 0 else len(folded)]:
+                return True
+        pos = end + 1
+
+
+def has_captcha_marker(text: str) -> bool:
+    """Thân trang có dấu hiệu captcha (sau khi bỏ thân script/style và chú thích)."""
+    folded = _captcha_text(text)
+    return any(marker in folded for marker in _FOLDED_MARKERS) or _generic_marker_in_markup(folded)
 # Trang chờ của Cloudflare (thường kèm 503). Chỉ xét khi máy chủ là Cloudflare và mã là 5xx để
 # không báo nhầm trang bình thường có cụm "just a moment". Không dùng "challenge-platform" trần:
 # Cloudflare chèn `/cdn-cgi/challenge-platform/.../main.js` cả vào trang bình thường và trang lỗi
@@ -97,7 +125,7 @@ def is_blocking_error_response(status: int, headers: Mapping[str, str], text: st
     lowered = {name.lower(): value.lower() for name, value in headers.items()}
     if lowered.get("cf-mitigated") == "challenge":
         return True
-    if any(marker in _captcha_text(text) for marker in _FOLDED_MARKERS):
+    if has_captcha_marker(text):
         return True
     body = _fold(text)
     return "cloudflare" in lowered.get("server", "") and any(
@@ -130,7 +158,7 @@ def detect_challenge(resp: FetchResponse, site: SiteKey) -> Challenge | None:
         return _build(ChallengeKind.http_429, site, resp.final_url)
     if is_blocking_error_response(resp.status, resp.headers, resp.text):
         return _build(ChallengeKind.captcha, site, resp.final_url)
-    if any(marker in _captcha_text(resp.text) for marker in _FOLDED_MARKERS):
+    if has_captcha_marker(resp.text):
         return _build(ChallengeKind.captcha, site, resp.final_url)
     return None
 

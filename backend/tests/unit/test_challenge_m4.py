@@ -50,13 +50,13 @@ def test_nested_script_markup_inside_a_js_string_does_not_expose_the_body() -> N
 
 def test_marker_after_the_script_that_ends_inside_a_js_string_is_visible_text() -> None:
     """Trình duyệt kết thúc script ở `</script` đầu tiên, nên phần sau là văn bản thường."""
-    page = "<script>var s = '</script>'; var c = 'captcha';</script>"
+    page = "<script>var s = '</script>'; var c = 'g-recaptcha';</script>"
     assert _kind(page) is ChallengeKind.captcha
 
 
 @pytest.mark.parametrize("tag", ["<script", "<script ", "<script>", "<script data-a='1'"])
 def test_text_ending_in_a_dangling_script_open_tag_keeps_earlier_markers_visible(tag: str) -> None:
-    assert _kind(f"<p>Nhập captcha</p>{tag}") is ChallengeKind.captcha
+    assert _kind(f"<p>Xác minh bạn không phải robot</p>{tag}") is ChallengeKind.captcha
 
 
 def test_many_closed_inline_scripts_and_lookalike_tags_are_scanned_quickly() -> None:
@@ -156,17 +156,6 @@ def test_marker_only_in_a_comment_or_stylesheet_is_not_a_challenge(markup: str) 
     assert _kind(f"<html><head>{markup}</head><body>{PRODUCTS}</body></html>") is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "QA M4 (trung bình, cần quyết định thiết kế): challenge.py:122 coi bất kỳ chữ 'captcha' "
-        "nào trong văn bản hiển thị là challenge. Trang sản phẩm FPT Shop/An Phát có mô tả và "
-        "bình luận người dùng; một đoạn như 'không cần nhập captcha' làm `crawl_category` ném "
-        "ChallengeDetected và cả lượt ra BLOCKED + nghỉ 24 giờ. Sửa: chỉ xét từ khóa trong "
-        "thuộc tính/thẻ (id, class, name, src, action) thay vì văn bản thường, hoặc cần trang "
-        "không có sản phẩm mới tính."
-    ),
-)
 def test_the_word_captcha_in_a_product_review_paragraph_is_not_a_challenge() -> None:
     page = f"<main>{PRODUCTS}<p>Đăng nhập app không cần nhập captcha, rất tiện.</p></main>"
     assert _kind(page) is None

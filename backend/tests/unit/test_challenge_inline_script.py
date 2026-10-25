@@ -50,7 +50,7 @@ def test_marker_in_markup_or_script_src_is_still_a_challenge(html: str) -> None:
 
 
 def test_visible_marker_next_to_inline_script_is_still_a_challenge() -> None:
-    page = f"<body><script>var a = 1;</script><p>Nhập captcha để tiếp tục</p>{NEXT_ENV}</body>"
+    page = f"<body><script>var a = 1;</script><p>Verify you are human</p>{NEXT_ENV}</body>"
     assert detect_challenge(_resp(page), SiteKey.fptshop) is not None
 
 
@@ -61,7 +61,7 @@ def test_uppercase_script_tag_and_attributes_are_handled() -> None:
 
 def test_unclosed_script_keeps_the_marker_visible() -> None:
     """Không đóng được thẻ thì không đoán vùng cần bỏ: giữ hành vi cũ (báo challenge)."""
-    assert detect_challenge(_resp("<body><script>var k = 'captcha';"), SiteKey.fptshop) is not None
+    assert detect_challenge(_resp("<body><script>var k = 'g-recaptcha';"), SiteKey.fptshop) is not None
 
 
 def test_marker_in_json_ld_script_is_ignored_too() -> None:
@@ -99,6 +99,6 @@ def test_captcha_marker_after_an_unclosed_script_is_not_hidden() -> None:
 
 
 def test_script_lookalike_tags_are_not_treated_as_scripts() -> None:
-    page = "<scripts>hidden captcha</scripts><p>ok</p></script>"
+    page = "<scripts>hidden g-recaptcha</scripts><p>ok</p></script>"
     challenge = detect_challenge(_resp(page), SiteKey.fptshop)
     assert challenge is not None and challenge.kind is ChallengeKind.captcha
