@@ -5,10 +5,16 @@ from collections.abc import Callable
 import pytest
 from sqlmodel import Session
 
-from app.domain.enums import Category, ScrapeStatus, ScrapeTrigger, SiteKey
+from app.domain.enums import Category, ChallengeKind, ScrapeStatus, ScrapeTrigger, SiteKey
+from app.scrapers.challenge import ChallengeDetected
 from app.scrapers.http.types import FetchResponse
 from app.scrapers.pipeline import ScrapePipeline
-from app.scrapers.sites.fptshop import MAX_ACCESSORY_SITEMAPS, SITEMAP_INDEX_URL, select_sitemaps
+from app.scrapers.sites.fptshop import (
+    MAX_ACCESSORY_SITEMAPS,
+    SITEMAP_INDEX_URL,
+    FptShopScraper,
+    select_sitemaps,
+)
 from tests.integration.test_pipeline import Clock, ScriptedFetcher
 
 BASE = "https://fptshop.com.vn"
@@ -67,3 +73,19 @@ def test_the_laptop_sitemap_is_unaffected_by_the_accessory_cap() -> None:
     locs = [f"{BASE}/products/sitemap-phu-kien-{n}.xml" for n in range(20)] + [laptop]
 
     assert select_sitemaps(Category.laptop, locs) == [laptop]
+
+
+async def test_an_index_page_without_any_loc_is_still_treated_as_a_soft_block() -> None:
+    """Trang 200 không phải sitemap (ví dụ trang chặn chỉ có chữ) vẫn là `soft_block` như trước
+    T4.7 khi lượt trước có sản phẩm (`expect_items`), không phải `SiteLayoutChanged`."""
+    page = "<html><body><p>Vui lòng thử lại sau</p></body></html>"
+    response = FetchResponse(
+        url=SITEMAP_INDEX_URL, final_url=SITEMAP_INDEX_URL, status=200, text=page
+    )
+    scraper = FptShopScraper(ScriptedFetcher({SITEMAP_INDEX_URL: response}))
+
+    with pytest.raises(ChallengeDetected) as caught:
+        async for _ in scraper.crawl_category(Category.laptop, 2, expect_items=True):
+            pass
+
+    assert caught.value.challenge.kind is ChallengeKind.soft_block

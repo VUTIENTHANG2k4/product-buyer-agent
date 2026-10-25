@@ -181,9 +181,10 @@ def _price_fields(tree: LexborHTMLParser, product: dict[str, Any]) -> dict[str, 
 def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
     """Giá gốc gạch ngang nằm cạnh giá bán công khai; khối flash sale (giá khác) không tính.
 
-    Chỉ khối của lần xuất hiện **đầu tiên** của giá bán (khối giá chính, đứng trước thẻ "sản phẩm
-    tương tự") được xét: thẻ liên quan cùng giá bán nhưng có giá gạch không làm sản phẩm thành
-    `sale` (T4.7). So danh tính node bằng `mem_id` (`==` của selectolax so nội dung HTML).
+    Chỉ khối của lần xuất hiện **đầu tiên** của giá bán được xét (trên 5 fixture thật đó là thanh
+    giá dính `p.l7-semibold` ở đầu trang, cũng có giá gạch; thẻ "sản phẩm tương tự" luôn đứng sau),
+    nên thẻ liên quan cùng giá bán nhưng có giá gạch không làm sản phẩm thành `sale` (T4.7). So
+    danh tính node bằng `mem_id` (`==` của selectolax so nội dung HTML).
     """
     shown = f"{price:,}".replace(",", ".") + "đ"
     main = next((leaf for leaf in tree.css("p, span, div") if node_text(leaf) == shown), None)
@@ -423,8 +424,13 @@ class FptShopScraper(BaseScraper):
         index = await self._fetcher.get(SITEMAP_INDEX_URL)
         self._raise_if_challenge(index)
         urls: list[str] = []
-        sitemaps = select_sitemaps(category, parse_sitemap_locs(index.text))
-        if not sitemaps:  # trang đổi cấu trúc sitemap, không phải bị chặn (T4.7)
+        locs = parse_sitemap_locs(index.text)
+        if not locs:
+            # Không phải chỉ mục sitemap (có thể là trang chặn chỉ có chữ, T4.8 không nhận ra):
+            # trả rỗng để `crawl_category` báo `soft_block` như trước, không coi là đổi cấu trúc.
+            return []
+        sitemaps = select_sitemaps(category, locs)
+        if not sitemaps:  # còn chỉ mục nhưng mất sitemap của nhóm: đổi cấu trúc (T4.7)
             raise SiteLayoutChanged(
                 f"Chỉ mục sitemap không có sitemap của nhóm {category.value}", url=index.final_url
             )

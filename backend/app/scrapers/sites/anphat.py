@@ -29,8 +29,9 @@ logger = logging.getLogger(__name__)
 
 _BASE_URL = "https://www.anphatpc.com.vn"
 # Mọi trang của An Phát (kể cả trang sản phẩm bình thường và trang danh sách rỗng) chứa sẵn form
-# đăng ký có ô captcha. Chỉ loại đúng các tên của form đó; bất kỳ chữ captcha nào khác vẫn bị coi
-# là challenge (docs/sources/anphat.md mục 7).
+# đăng ký có ô captcha. Chỉ loại đúng các tên của form đó; dấu hiệu captcha khác (trong thẻ hoặc
+# thuộc tính theo luật chung T4.8 ở `challenge.py`) vẫn bị coi là challenge (docs/sources/anphat.md
+# mục 7).
 _REGISTER_FORM_CAPTCHA = re.compile(
     r"register_captcha|check_user_captcha|captchaimg|/includes/captcha/captcha\.php",
     re.IGNORECASE,

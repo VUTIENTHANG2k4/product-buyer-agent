@@ -86,7 +86,7 @@ def test_vietnamese_marker_is_found_whatever_the_unicode_form() -> None:
     "markup",
     [
         '<input type="hidden" name="captcha_token">',
-        '<img alt="Captcha" src="/c.png">',
+        '<img alt="mã xác minh" src="/Captcha.png">',  # T4.8: `alt` không tính, `src` có
         '<div data-hcaptcha="1"></div>',
         '<div class="CF-Challenge"></div>',
         "<p>VERIFY YOU ARE HUMAN</p>",

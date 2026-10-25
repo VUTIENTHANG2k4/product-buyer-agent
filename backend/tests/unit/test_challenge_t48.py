@@ -23,6 +23,13 @@ def _resp(text: str, status: int = 200) -> FetchResponse:
         f"<main>{PRODUCTS}<p>Đăng nhập app không cần nhập captcha, rất tiện.</p></main>",
         f"<main>{PRODUCTS}<h2>Captcha là gì?</h2><p>CAPTCHA giúp chống spam.</p></main>",
         f"<main>{PRODUCTS}<li>Không bị hỏi captcha khi đặt hàng</li></main>",
+        # Mô tả chép vào thuộc tính không thuộc danh sách (review M: meta, alt, href).
+        f'<meta name="description" content="không cần nhập captcha">{PRODUCTS}',
+        f'{PRODUCTS}<img src="/p.jpg" alt="Captcha">',
+        f'{PRODUCTS}<a href="/tin-tuc/captcha-la-gi">Captcha là gì</a>',
+        # `<` trần trong văn bản không mở thẻ.
+        f"<main>{PRODUCTS}<p>Độ trễ <1ms, không cần nhập captcha</p></main>",
+        f"<main>{PRODUCTS}<titles>captcha</titles></main>",
     ],
 )
 def test_the_word_in_visible_text_only_is_not_a_challenge(page: str) -> None:
@@ -70,4 +77,7 @@ def test_many_tags_are_scanned_in_linear_time() -> None:
     started = time.perf_counter()
     assert not has_captcha_marker("<p>captcha</p>" * 100_000)
     assert not has_captcha_marker("<" * 200_000)
+    assert not has_captcha_marker("<title>" * 200_000)  # review: từng mất hàng giây (bậc hai)
+    assert not has_captcha_marker("<title>" * 200_000 + "</title>")
+    assert not has_captcha_marker("<a " * 200_000 + ">")
     assert time.perf_counter() - started < 5.0
