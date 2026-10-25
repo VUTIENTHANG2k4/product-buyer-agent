@@ -495,6 +495,9 @@ def test_second_correct_answer_after_resume_is_409_and_starts_no_second_task(
         right = captcha_answer(client, run_id)
 
         first = client.post(url, json={"answer": right})
+        # Chờ lượt resume xong: db_session và lượt nền dùng chung một kết nối PostgreSQL
+        # (savepoint), hai luồng chạy đồng thời làm hỏng giao dịch (PendingRollbackError).
+        admin_settle(client)
         second = client.post(url, json={"answer": right})
         admin_settle(client)
 
