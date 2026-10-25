@@ -271,11 +271,11 @@ async def test_filter_that_removes_everything_still_reports_the_site_as_searched
     assert result.sites_skipped == []
 
 
-@pytest.mark.parametrize("limit", [1, 9, 10, 11, 50, 10**9])
-async def test_limit_per_site_is_bounded_by_the_ten_cached_results(
+@pytest.mark.parametrize("limit", [1, 9, 10, 11, 24, 25, 50, 10**9])
+async def test_limit_per_site_is_bounded_by_the_cached_results(
     factory: Callable[[], Session], clock: Clock, limit: int
 ) -> None:
-    items = [listing(GEARVN, n, 1_000 * n) for n in range(1, 16)]
+    items = [listing(GEARVN, n, 1_000 * n) for n in range(1, MAX_PER_SITE + 7)]
     svc = service(factory, clock, {GEARVN: fake_scraper(GEARVN, items)})
 
     result = await svc.search("loa", limit_per_site=limit)
@@ -560,7 +560,7 @@ async def test_blocked_marker_of_one_site_does_not_leak_into_other_sites_or_quer
     result = await service(factory, clock, scrapers).search("loa")
 
     assert result.sites_searched == [FPT] and [s.site for s in result.sites_skipped] == [GEARVN]
-    assert log == ["fptshop:loa:10"]
+    assert log == [f"fptshop:loa:{MAX_PER_SITE}"]
 
 
 async def test_a_query_that_looks_like_the_blocked_marker_does_not_read_the_marker_as_results(
@@ -574,7 +574,7 @@ async def test_a_query_that_looks_like_the_blocked_marker_does_not_read_the_mark
 
     result = await svc.search("blocked:gearvn")
 
-    assert log == ["fptshop:blocked:gearvn:10"] and len(result.items) == 1
+    assert log == [f"fptshop:blocked:gearvn:{MAX_PER_SITE}"] and len(result.items) == 1
 
 
 # --- Đồng thời --------------------------------------------------------------------------------

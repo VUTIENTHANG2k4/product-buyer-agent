@@ -319,6 +319,7 @@ class FakeRuntime:
     def __init__(self) -> None:
         self.service = StubService()
         self.alert_evaluator = StubEvaluator()
+        self.live_search = None  # như ScrapeRuntime dựng tay: không có tầng 2
         self.closed = 0
         FakeRuntime.created.append(self)
 

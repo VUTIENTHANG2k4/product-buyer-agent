@@ -32,6 +32,7 @@ from app.domain.errors import AppError, SiteCooldown
 from app.scrapers.pipeline import PipelineResult
 from app.scrapers.registry import SCRAPERS, SiteNotAvailable
 from app.services.alert_evaluation import AlertEvaluator
+from app.services.live_search_service import LiveSearchService
 from app.services.scrape_runtime import ScrapeRuntime
 from app.services.scrape_service import ScrapeService
 
@@ -65,10 +66,12 @@ class ScheduledJobs:
         service: ScrapeService,
         settings: Settings,
         evaluator: AlertEvaluator | None = None,
+        live_search: LiveSearchService | None = None,
     ) -> None:
         self._service = service
         self._settings = settings
         self._evaluator = evaluator
+        self._live_search = live_search  # dọn cache tầng 2 cũ sau mỗi lượt làm mới danh mục
         self._running: set[asyncio.Task[Any]] = set()
 
     def sites(self) -> list[SiteKey]:
@@ -89,6 +92,7 @@ class ScheduledJobs:
             )
             per_site = await asyncio.gather(*(self._catalog_site(site) for site in sites))
             await self._sweep_alerts()
+            await self._purge_live_cache()
             return [result for results in per_site for result in results]
 
     async def refresh_tracked(self) -> list[PipelineResult]:
@@ -131,6 +135,18 @@ class ScheduledJobs:
             await self._evaluator.evaluate(None)
         except Exception:
             logger.exception("lỗi khi quét lại cảnh báo giá sau job")
+
+    async def _purge_live_cache(self) -> None:
+        """Xóa cache tìm kiếm tầng 2 đã hết hạn (bảng chỉ tăng nếu không ai dọn, T10.4a)."""
+        if self._live_search is None:
+            return
+        try:
+            removed = await self._live_search.purge_expired()
+        except Exception:
+            logger.exception("lỗi khi dọn cache tìm kiếm trực tiếp")
+            return
+        if removed:
+            logger.info("đã xóa %s mục cache tìm kiếm trực tiếp hết hạn", removed)
 
     async def _catalog_site(self, site: SiteKey) -> list[PipelineResult]:
         results: list[PipelineResult] = []
@@ -205,7 +221,9 @@ async def run_worker(
         return 0
     runtime = runtime or ScrapeRuntime.build(settings, build_spec_filler(settings))
     try:
-        jobs = ScheduledJobs(runtime.service, settings, runtime.alert_evaluator)
+        jobs = ScheduledJobs(
+            runtime.service, settings, runtime.alert_evaluator, runtime.live_search
+        )
         scheduler = build_scheduler(jobs, settings)
         scheduler.start()
         logger.info(
