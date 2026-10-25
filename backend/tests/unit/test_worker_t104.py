@@ -1,5 +1,6 @@
 """T10.4a: worker dọn cache tìm kiếm trực tiếp hết hạn sau mỗi lượt làm mới danh mục."""
 
+import asyncio
 import logging
 from typing import cast
 
@@ -7,9 +8,10 @@ import pytest
 
 from app import worker
 from app.services.live_search_service import LiveSearchService
+from app.services.scrape_runtime import ScrapeRuntime
 from app.services.scrape_service import ScrapeService
 from tests.service_support import make_settings
-from tests.unit.test_worker import StubService, default_registry
+from tests.unit.test_worker import FakeRuntime, StubService, default_registry
 
 
 class StubLiveSearch:
@@ -75,3 +77,29 @@ async def test_without_a_live_search_service_the_job_just_scrapes(
     )
 
     assert await plain.refresh_catalog()
+
+
+async def test_run_worker_hands_the_runtime_live_search_to_the_jobs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = FakeRuntime()
+    live = StubLiveSearch()
+    runtime.live_search = live
+    seen: list[object] = []
+    original = worker.ScheduledJobs
+
+    def capture(*args: object, **kwargs: object) -> worker.ScheduledJobs:
+        seen.extend(args)
+        seen.extend(kwargs.values())
+        return original(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(worker, "ScheduledJobs", capture)
+    stop = asyncio.Event()
+    task = asyncio.create_task(
+        worker.run_worker(make_settings(scheduler_enabled=True), stop, cast(ScrapeRuntime, runtime))
+    )
+    await asyncio.sleep(0.05)
+    stop.set()
+
+    assert await task == 0
+    assert live in seen

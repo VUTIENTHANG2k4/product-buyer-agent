@@ -32,8 +32,8 @@ demo-up: ## Build và chạy cả hệ thống bằng Docker (web :8080, api :80
 demo-seed: ## Nạp dữ liệu hư cấu `dev` vào DB của hệ thống Docker (cần demo-up)
 	docker compose run --rm api python -m scripts.seed --fixture dev
 
-demo-price-drop: ## Demo: nâng giá một offer mock-shop + tạo cảnh báo, lượt Mock Shop kế tiếp sẽ báo giảm giá
-	docker compose run --rm api python -m scripts.demo_price_drop
+demo-price-drop: ## Demo: nâng giá một offer mock-shop + tạo cảnh báo (ARGS="--offer-id N --bump 20 --email ...")
+	docker compose run --rm api python -m scripts.demo_price_drop $(ARGS)
 
 setup: db-up ## Bật DB, cài phụ thuộc, migrate, seed dev
 	$(BE) uv sync --locked

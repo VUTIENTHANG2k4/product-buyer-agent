@@ -1,13 +1,16 @@
 """Chuẩn bị bước "làm mới giá → cảnh báo" của kịch bản demo (docs/10 §7, T11.4).
 
 Chạy từ `backend/`: `uv run python -m scripts.demo_price_drop [--offer-id N] [--bump 15]
-[--email mock@example.com]` (trong Docker: `make demo-price-drop`).
+[--email mock@example.com]` (trong Docker: `make demo-price-drop [ARGS="--bump 20"]`).
 
 Mock-shop không có điều khiển giá, nên lệnh giả lập "lần trước shop bán đắt hơn": nâng giá của một
-offer mock-shop thêm `--bump` % kèm một dòng `price_history`, rồi tạo cảnh báo với ngưỡng nằm giữa
-giá cũ và giá đã nâng. Lượt "Chạy ngay: Mock Shop – Laptop" kế tiếp đọc lại giá thật của mock-shop,
-pipeline thấy giá giảm và cảnh báo được đánh giá. Chỉ đụng offer `mockshop` (dữ liệu hư cấu).
-Chạy lại khi cảnh báo của lần trước còn chờ thì không đổi gì (chỉ in trạng thái).
+offer mock-shop còn hàng thêm `--bump` % kèm một dòng `price_history`, rồi tạo cảnh báo với ngưỡng
+nằm giữa giá cũ và giá đã nâng. Lượt "Chạy ngay: Mock Shop – Laptop" kế tiếp đọc lại giá thật của
+mock-shop, pipeline thấy giá giảm và cảnh báo đến hạn. Chỉ đụng offer `mockshop` (dữ liệu hư cấu).
+
+Chạy lại khi cảnh báo của lần trước còn chờ (giá vẫn đang nâng) thì không đổi gì. Sau một vòng demo
+(giá đã về), lần chạy mới thay cảnh báo cũ của cùng nơi nhận cho sản phẩm đó bằng cảnh báo mới, nên
+diễn tập rồi trình diễn trên cùng CSDL vẫn lặp lại được.
 """
 
 import argparse
@@ -23,18 +26,18 @@ from sqlmodel import Session, col, select
 from app.config import get_settings
 from app.db.engine import get_engine
 from app.db.models import Offer, PriceAlert, Product, utc_now
-from app.db.repositories.price_alerts import PriceAlertRepository
+from app.db.repositories.price_alerts import PriceAlertRepository, normalize_destination
 from app.db.repositories.price_history import PriceHistoryRepository
 from app.domain.catalog import AlertCreate
-from app.domain.enums import AlertChannel, AlertStatus, Category, SiteKey
+from app.domain.enums import AlertChannel, AlertStatus, Category, SiteKey, StockStatus
 from app.domain.errors import AppError
 from app.services.alert_service import AlertService
+from app.services.notifier.message import format_vnd
 from scripts.scrape import configure_console
-
-logger = logging.getLogger("demo_price_drop")
 
 DEFAULT_BUMP_PERCENT: Final = 15
 DEFAULT_EMAIL: Final = "mock@example.com"
+MIN_BUMP_VND: Final = 1_000  # nâng ít nhất 1.000 ₫ để ngưỡng nằm hẳn giữa hai mức giá
 
 
 class DemoPriceError(Exception):
@@ -46,14 +49,16 @@ class PreparedDrop:
     offer_id: int
     product_id: int
     product_name: str
-    shop_price: int  # VND, giá mock-shop sẽ trả lại ở lượt thu thập kế tiếp
+    shop_price: int | None  # VND, giá mock-shop trả lại ở lượt kế tiếp (None: không suy ra được)
     raised_price: int  # VND, giá đã nâng đang lưu trong CSDL
-    target_price: int  # VND, ngưỡng cảnh báo (shop_price <= target < raised_price)
+    target_price: int  # VND, ngưỡng cảnh báo (shop_price < target < raised_price)
     alert_id: int
     already_prepared: bool
 
 
 def _pick_offer(session: Session, offer_id: int | None) -> Offer:
+    """Offer mock-shop đang bán và còn hàng: offer hết hàng không tính vào giá tốt nhất nên cảnh báo
+    của nó không bao giờ đến hạn (`views.sellable`)."""
     if offer_id is not None:
         offer = session.get(Offer, offer_id)
         if offer is None:
@@ -64,6 +69,8 @@ def _pick_offer(session: Session, offer_id: int | None) -> Offer:
             )
         if not offer.is_active:
             raise DemoPriceError(f"Offer #{offer_id} không còn bán.")
+        if offer.stock_status is StockStatus.out_of_stock:
+            raise DemoPriceError(f"Offer #{offer_id} đang hết hàng nên cảnh báo sẽ không báo.")
         return offer
     statement = (
         select(Offer)
@@ -71,6 +78,7 @@ def _pick_offer(session: Session, offer_id: int | None) -> Offer:
         .where(
             Offer.site == SiteKey.mockshop,
             col(Offer.is_active).is_(True),
+            Offer.stock_status != StockStatus.out_of_stock,
             Product.category == Category.laptop,
         )
         .order_by(col(Offer.price), col(Offer.id))
@@ -78,22 +86,27 @@ def _pick_offer(session: Session, offer_id: int | None) -> Offer:
     offer = session.exec(statement).first()
     if offer is None:
         raise DemoPriceError(
-            "Chưa có offer laptop nào của mock-shop: chạy 'Chạy ngay: Mock Shop – Laptop' trước."
+            "Chưa có offer laptop còn hàng nào của mock-shop: chạy "
+            "'Chạy ngay: Mock Shop – Laptop' trước."
         )
     return offer
 
 
-def _pending_alert(session: Session, product_id: int, email: str, price: int) -> PriceAlert | None:
-    """Cảnh báo email còn chờ của lần chạy trước (ngưỡng thấp hơn giá đang lưu)."""
-    for alert in PriceAlertRepository(session).list_for_products([product_id]):
-        if (
-            alert.status is AlertStatus.active
-            and alert.channel is AlertChannel.email
-            and alert.destination == email.strip().lower()
-            and alert.target_price < price
-        ):
-            return alert
-    return None
+def _demo_alerts(session: Session, product_id: int, destination: str) -> list[PriceAlert]:
+    """Cảnh báo email còn hiệu lực (`active`/`triggered`) của sản phẩm tới `destination`."""
+    return [
+        alert
+        for alert in PriceAlertRepository(session).list_for_products([product_id])
+        if alert.channel is AlertChannel.email and alert.destination == destination
+    ]
+
+
+def _raise_and_target(shop_price: int, bump_percent: int) -> tuple[int, int]:
+    """(giá nâng, ngưỡng) với `shop_price < ngưỡng < giá nâng`; giá nâng làm tròn xuống nghìn."""
+    raised = shop_price + max(MIN_BUMP_VND, shop_price * bump_percent // 100 // 1_000 * 1_000)
+    target = shop_price + (raised - shop_price) // 2
+    assert shop_price < target < raised
+    return raised, target
 
 
 def prepare_price_drop(
@@ -111,36 +124,43 @@ def prepare_price_drop(
     assert offer.id is not None
     product = session.get(Product, offer.product_id)
     assert product is not None and product.id is not None
+    destination = normalize_destination(AlertChannel.email, email)
+    existing = _demo_alerts(session, product.id, destination)
 
-    pending = _pending_alert(session, product.id, email, offer.price)
+    pending = next(
+        (a for a in existing if a.status is AlertStatus.active and a.target_price < offer.price),
+        None,
+    )
     if pending is not None and pending.id is not None:
-        last = PriceHistoryRepository(session).list_for_offer(offer.id)
-        shop_price = last[-2].price if len(last) >= 2 else pending.target_price
+        history = PriceHistoryRepository(session).list_for_offer(offer.id)
         return PreparedDrop(
             offer_id=offer.id,
             product_id=product.id,
             product_name=product.canonical_name,
-            shop_price=shop_price,
+            shop_price=history[-2].price if len(history) >= 2 else None,
             raised_price=offer.price,
             target_price=pending.target_price,
             alert_id=pending.id,
             already_prepared=True,
         )
 
+    moment = now or utc_now()
+    service = AlertService(session, now=lambda: moment)
+    for old in existing:  # cảnh báo của vòng demo trước (đã đến hạn hoặc đã gửi)
+        assert old.id is not None
+        service.delete(old.id)
     shop_price = offer.price
-    raised = shop_price + max(1_000, shop_price * bump_percent // 100 // 1_000 * 1_000)
-    target = (shop_price + raised) // 2 // 1_000 * 1_000
+    raised, target = _raise_and_target(shop_price, bump_percent)
     offer.price = raised
     session.add(offer)
     session.flush()
-    moment = now or utc_now()
     PriceHistoryRepository(session).record_snapshot(offer, now=moment)
-    alert = AlertService(session, now=lambda: moment).create(
+    alert = service.create(
         AlertCreate(
             product_id=product.id,
             target_price=target,
             channel=AlertChannel.email,
-            destination=email,
+            destination=destination,
         )
     )
     return PreparedDrop(
@@ -153,10 +173,6 @@ def prepare_price_drop(
         alert_id=alert.alert_id,
         already_prepared=False,
     )
-
-
-def _vnd(amount: int) -> str:
-    return f"{amount:,}".replace(",", ".") + " ₫"
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -182,11 +198,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         engine.dispose()
 
     status = "Đã chuẩn bị từ trước" if prepared.already_prepared else "Đã chuẩn bị"
+    shop = format_vnd(prepared.shop_price) if prepared.shop_price is not None else "không rõ"
     print(f"{status}: {prepared.product_name} (offer #{prepared.offer_id})")
-    print(
-        f"  Giá đang lưu: {_vnd(prepared.raised_price)} (mock-shop bán {_vnd(prepared.shop_price)})"
-    )
-    print(f"  Cảnh báo #{prepared.alert_id}: báo khi ≤ {_vnd(prepared.target_price)}")
+    print(f"  Giá đang lưu: {format_vnd(prepared.raised_price)} (mock-shop bán {shop})")
+    print(f"  Cảnh báo #{prepared.alert_id}: báo khi ≤ {format_vnd(prepared.target_price)}")
     print("Bước tiếp: /admin → 'Chạy ngay: Mock Shop – Laptop' (nhập captcha nếu được hỏi).")
     return 0
 

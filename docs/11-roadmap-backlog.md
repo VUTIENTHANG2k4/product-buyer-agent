@@ -233,6 +233,8 @@ Xong khi:
 **T4.4** — Xong khi: `min_delay_s` khớp robots.txt (`Crawl-delay`) và khảo sát; không tạo URL robots.txt chặn; test 4 nhóm (hoặc các nhóm trang bán); coverage module ≥ 90%.
 **T4.5** — **Người dùng tự bật** `SCRAPER_OFFLINE_ONLY=false`. Xong khi: `make scrape SITE=<fptshop|anphat> CAT=<nhóm> PAGES=1` cho mọi nhóm đã khảo sát đều `SUCCEEDED` (hoặc `PARTIAL` chỉ vì `PAGES=1` khi còn trang sau); không `FAILED`/`BLOCKED`; tỷ lệ parse ≥ 90%; ghi kết quả vào `docs/sources/<site>.md` mục 7; nhắc người dùng đặt lại `SCRAPER_OFFLINE_ONLY=true`.
 
+**T4.7, T4.8** — Kết quả (2026-10-25, lượt chuẩn bị bảo vệ): T4.7 giá gạch chỉ nhận trong khối của lần xuất hiện đầu tiên của giá bán (gỡ xfail ca "sản phẩm tương tự"), tối đa 10 sitemap phụ kiện, chỉ mục còn `<loc>` mà thiếu sitemap của nhóm → `SiteLayoutChanged` → `FAILED` (chỉ mục không có `<loc>` nào vẫn là `soft_block`); hạn chế captcha chèn bằng JS ghi ở 06 §4. T4.8 theo lựa chọn của người dùng "chỉ xét thẻ/thuộc tính": từ chung `captcha` chỉ tính trong tên thẻ, thuộc tính `id/class/name/action/src` hoặc `<title>`; trang captcha chỉ có chữ không còn bị nhận ra (ghi ở 06 §4).
+
 ### M5 — Chuẩn hóa & ghép mẫu
 
 | ID | Task | Phụ thuộc | Ước lượng | Trạng thái |

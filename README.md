@@ -57,7 +57,7 @@ Kịch bản trình diễn: [docs/10-deployment.md](docs/10-deployment.md#7-kị
 | --- | --- |
 | Backend | 6578 test pass (+ 55 `xfail` đã biết), coverage 99,11% |
 | Frontend | 1067 test Vitest, 10 test E2E Playwright |
-| Eval agent (31 câu, `gemini-3.5-flash-lite`, 2026-10-23) | intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination, hỏi lại 100%; latency p50 26–31 s (chưa đạt mục tiêu 15 s, do thời gian trả lời của Gemini) |
+| Eval agent (31 câu, `gemini-3.5-flash-lite`, 2026-10-23) | intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination, hỏi lại 100%; latency p50 26–31 s (chưa đạt mục tiêu 15 s do thời gian trả lời của Gemini; người dùng chấp nhận ngoại lệ ngày 2026-10-25, T11.5) |
 
 Chi tiết và cách đo: [docs/PROGRESS.md](docs/PROGRESS.md), [docs/05-agent-design.md](docs/05-agent-design.md#7-đánh-giá-agent-eval).
 
