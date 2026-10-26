@@ -38,7 +38,11 @@ from app.services.views import Clock, aware_now
 
 logger = logging.getLogger(__name__)
 
-MAX_PER_SITE: Final = 10  # số kết quả giữ trong cache mỗi (trang, từ khóa)
+# Số kết quả giữ trong cache mỗi (trang, từ khóa): đủ một trang tìm kiếm FPT Shop (24 thẻ) để lọc
+# giá trước khi cắt `limit_per_site`, không bỏ sót thẻ 11–24 khi trần giá chặt (T10.4b).
+MAX_PER_SITE: Final = 24
+# Kết quả rỗng có thể là soft block HTTP 200 khó nhận ra: chỉ tin trong 1 giờ (T10.4c).
+EMPTY_CACHE_TTL: Final = timedelta(hours=1)
 MAX_QUERY_CHARS: Final = 200
 _KEY_PREFIX: Final = "live:v1"
 
@@ -192,6 +196,19 @@ class LiveSearchService:
         await self._write_cache(cache_key(site, normalized), stored, now)
         return [_item(site, entry, now) for entry in stored], False, None
 
+    async def purge_expired(self) -> int:
+        """Xóa mục cache cũ hơn cả TTL lẫn thời gian nghỉ chặn (T10.4a); trả số mục đã xóa."""
+        ttl = timedelta(hours=self._settings.live_search_cache_ttl_hours)
+        cutoff = aware_now(self._clock) - max(ttl, BLOCK_COOLDOWN)
+
+        def work() -> int:
+            with self._session_factory() as session:
+                removed = LiveSearchCacheRepository(session).purge_older_than(cutoff)
+                session.commit()
+                return removed
+
+        return await asyncio.to_thread(work)
+
     # ---- CSDL (repo đồng bộ → chạy trong thread, mỗi lần một session ngắn) ----
     async def _is_cooling_down(self, site: SiteKey, now: datetime) -> bool:
         def work() -> bool:
@@ -215,6 +232,8 @@ class LiveSearchService:
                 entry = LiveSearchCacheRepository(session).get(key, max_age=max_age, now=now)
                 if entry is None:
                     return None
+                if not entry.results and now - entry.created_at > EMPTY_CACHE_TTL:
+                    return None  # rỗng quá 1 giờ: tìm lại
                 try:
                     return [_item(site, dict(raw), entry.created_at) for raw in entry.results]
                 except (KeyError, TypeError, ValueError):  # mục hỏng: coi như chưa có cache

@@ -52,5 +52,10 @@ class FetchFailed(FetchError):
     """Hết lượt retry vì lỗi mạng, timeout hoặc 5xx."""
 
 
+class SiteLayoutChanged(FetchError):
+    """Trang tải được nhưng thiếu cấu trúc mong đợi (ví dụ chỉ mục sitemap không còn sitemap của
+    nhóm). Lượt thất bại kèm thông điệp, không phải bị chặn nên không nghỉ 24 giờ."""
+
+
 class ResponseTooLarge(FetchError):
     """Thân phản hồi (sau giải nén) vượt giới hạn: từ chối, không cắt và không ghi raw cache."""

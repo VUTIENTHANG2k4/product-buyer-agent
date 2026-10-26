@@ -193,7 +193,10 @@ async def test_online_search_uses_real_sites_in_order_and_skips_mock_shop(
     }
     result = await service(factory, clock, scrapers).search("Loa Bluetooth")
 
-    assert log == ["gearvn:Loa Bluetooth:10", "fptshop:Loa Bluetooth:10"]  # tuần tự, từ khóa gốc
+    assert log == [
+        f"gearvn:Loa Bluetooth:{MAX_PER_SITE}",
+        f"fptshop:Loa Bluetooth:{MAX_PER_SITE}",
+    ]  # tuần tự, từ khóa gốc
     assert result.sites_searched == [GEARVN, FPT]
     assert [item.site for item in result.items] == [GEARVN, FPT]
     assert result.sites_skipped == []
@@ -210,7 +213,7 @@ async def test_only_enabled_sites_that_support_live_search_are_searched(
     }
     result = await service(factory, clock, scrapers).search("loa")
 
-    assert log == ["anphat:loa:10"]
+    assert log == [f"anphat:loa:{MAX_PER_SITE}"]
     assert result.sites_searched == [SiteKey.anphat]
     assert result.sites_skipped == []
 
@@ -227,7 +230,7 @@ async def test_offline_mode_never_calls_a_real_site(
     }
     result = await service(factory, clock, scrapers, offline=True).search("loa")
 
-    assert log == ["mockshop:loa:10"]
+    assert log == [f"mockshop:loa:{MAX_PER_SITE}"]
     assert [(s.site, s.reason) for s in result.sites_skipped] == [(GEARVN, REASON_OFFLINE)]
 
 
@@ -402,7 +405,7 @@ async def test_a_failing_site_is_skipped_with_a_reason_and_not_cached(
 
     assert [(s.site, s.reason) for s in first.sites_skipped] == [(GEARVN, reason)]
     assert first.sites_searched == [FPT] and len(first.items) == 1
-    assert log.count("gearvn:loa:10") == 2  # lỗi không vào cache, lần sau thử lại
+    assert log.count(f"gearvn:loa:{MAX_PER_SITE}") == 2  # lỗi không vào cache, lần sau thử lại
 
 
 async def test_an_unexpected_scraper_error_skips_only_that_site(
@@ -420,7 +423,7 @@ async def test_an_unexpected_scraper_error_skips_only_that_site(
 
     assert [(s.site, s.reason) for s in first.sites_skipped] == [(GEARVN, REASON_FAILED)]
     assert first.sites_searched == [FPT] and len(first.items) == 1
-    assert log.count("gearvn:loa:10") == 2  # không cache lỗi
+    assert log.count(f"gearvn:loa:{MAX_PER_SITE}") == 2  # không cache lỗi
 
 
 async def test_robots_txt_that_cannot_be_loaded_is_a_failure_not_a_prohibition(
@@ -476,8 +479,8 @@ async def test_a_blocking_site_rests_for_24_hours_while_other_sites_still_answer
     assert [(s.site, s.reason) for s in first.sites_skipped] == [(GEARVN, REASON_BLOCKED)]
     assert [(s.site, s.reason) for s in other_query.sites_skipped] == [(GEARVN, REASON_BLOCKED)]
     assert first.sites_searched == [FPT]
-    assert log.count("gearvn:loa:10") == 1 and "gearvn:ssd:10" not in log
-    assert "gearvn:tai nghe:10" in log  # hết 24 giờ: thử lại
+    assert log.count(f"gearvn:loa:{MAX_PER_SITE}") == 1 and f"gearvn:ssd:{MAX_PER_SITE}" not in log
+    assert f"gearvn:tai nghe:{MAX_PER_SITE}" in log  # hết 24 giờ: thử lại
     assert after.sites_searched == [FPT]
 
 

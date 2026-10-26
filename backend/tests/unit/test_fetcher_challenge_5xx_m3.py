@@ -83,7 +83,7 @@ def fetched(status: int, text: str = "", headers: dict[str, str] | None = None) 
         pytest.param({"Cf-Mitigated": "Challenge"}, "x", id="title-case-header"),
         pytest.param({"SERVER": "CloudFlare"}, "JUST A MOMENT...", id="mixed-case-server"),
         pytest.param({"server": "cloudflare"}, "Attention Required! | Cloudflare", id="attention"),
-        pytest.param({}, "CAPTCHA", id="upper-case-marker"),
+        pytest.param({}, "<DIV ID='CAPTCHA'></DIV>", id="upper-case-marker"),
         pytest.param(
             {}, unicodedata.normalize("NFD", "Xác minh bạn không phải robot"), id="nfd-vietnamese"
         ),
@@ -278,7 +278,7 @@ def test_real_site_captcha_challenge_carries_no_prompt_image_token_or_answer(sta
     [
         (429, {"cf-mitigated": "challenge"}, "captcha", ChallengeKind.http_429),
         (403, {"cf-mitigated": "challenge"}, "captcha", ChallengeKind.http_403),
-        (503, {}, "captcha", ChallengeKind.captcha),
+        (503, {}, "<div id='captcha'></div>", ChallengeKind.captcha),
         (200, {}, "g-recaptcha", ChallengeKind.captcha),
     ],
 )

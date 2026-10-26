@@ -223,8 +223,8 @@ Xong khi:
 | T4.4 | AnPhatScraper | T4.3, T2.2 | M | ✅ |
 | T4.5 | Chạy thật có kiểm soát 2 nguồn | T4.2, T4.4, T2.6 | S | ✅ |
 | T4.6 | Đổi seed/test từ `hoangha`/`laptop88` sang `fptshop`/`anphat`; cân nhắc gỡ giá trị cũ khỏi `SiteKey` bằng migration (không chặn M5) | T4.0 | S | ✅ |
-| T4.7 | Còn lại từ review/QA M4: ghi hạn chế captcha chèn bằng JS nội tuyến (06 §4); `_struck_price` chỉ xét khối giá chính (QA M4: thẻ "sản phẩm tương tự" cùng giá bị đọc thành `sale`; xfail `test_struck_price_of_a_related_product_card...`); trần số sitemap `-N`; nhóm `soft_block` khi index thiếu sitemap của nhóm | T4.2, T4.4 | S | ⬜ |
-| T4.8 | Quyết định thiết kế: chữ "captcha" trong văn bản hiển thị (mô tả/bình luận sản phẩm) hiện làm cả lượt `BLOCKED` + nghỉ 24 giờ; chỉ xét thuộc tính/thẻ hay chỉ khi trang không có sản phẩm (QA M4; xfail `test_the_word_captcha_in_a_product_review_paragraph...`) | T4.0b | S | ⬜ |
+| T4.7 | Còn lại từ review/QA M4: ghi hạn chế captcha chèn bằng JS nội tuyến (06 §4); `_struck_price` chỉ xét khối giá chính (QA M4: thẻ "sản phẩm tương tự" cùng giá bị đọc thành `sale`; xfail `test_struck_price_of_a_related_product_card...`); trần số sitemap `-N`; nhóm `soft_block` khi index thiếu sitemap của nhóm | T4.2, T4.4 | S | ✅ |
+| T4.8 | Quyết định thiết kế: chữ "captcha" trong văn bản hiển thị (mô tả/bình luận sản phẩm) hiện làm cả lượt `BLOCKED` + nghỉ 24 giờ; chỉ xét thuộc tính/thẻ hay chỉ khi trang không có sản phẩm (QA M4; xfail `test_the_word_captcha_in_a_product_review_paragraph...`) | T4.0b | S | ✅ |
 
 **T4.0** — Xong khi: ADR-0008 và mục lục ADR; docs 01–08, 11 và `.claude/rules/scraping.md` không còn coi Hoàng Hà/Laptop88 là nguồn; `docs/sources/hoangha.md`, `laptop88.md` đánh dấu không dùng; migration `0002` thêm hai giá trị vào CHECK `site` của `offer` và `scrape_run` (test nâng cấp từ 0001 giữ dữ liệu cũ, downgrade về 6 giá trị).
 **T4.1** — Xong khi: `fptshop.md` điền đủ mục 1–7; URL danh mục (nhóm nào FPT Shop bán, ghi vào 02 §1); quyết định `requires_js` (code chưa hỗ trợ JavaScript: HTML tĩnh phải có dữ liệu — JSON-LD, JSON nhúng hoặc thẻ sản phẩm — nếu không dừng và hỏi người dùng); fixtures theo [06 §8](06-scraping-design.md#8-fixtures); người dùng đã duyệt kết luận điều khoản.
@@ -232,6 +232,8 @@ Xong khi:
 **T4.3** — Xong khi: như T4.1 cho An Phát; ghi cách tìm trang điều khoản/chính sách (khảo sát sơ bộ: không có trang điều khoản sử dụng riêng) và `Crawl-delay: 5`.
 **T4.4** — Xong khi: `min_delay_s` khớp robots.txt (`Crawl-delay`) và khảo sát; không tạo URL robots.txt chặn; test 4 nhóm (hoặc các nhóm trang bán); coverage module ≥ 90%.
 **T4.5** — **Người dùng tự bật** `SCRAPER_OFFLINE_ONLY=false`. Xong khi: `make scrape SITE=<fptshop|anphat> CAT=<nhóm> PAGES=1` cho mọi nhóm đã khảo sát đều `SUCCEEDED` (hoặc `PARTIAL` chỉ vì `PAGES=1` khi còn trang sau); không `FAILED`/`BLOCKED`; tỷ lệ parse ≥ 90%; ghi kết quả vào `docs/sources/<site>.md` mục 7; nhắc người dùng đặt lại `SCRAPER_OFFLINE_ONLY=true`.
+
+**T4.7, T4.8** — Kết quả (2026-10-25, lượt chuẩn bị bảo vệ): T4.7 giá gạch chỉ nhận trong khối của lần xuất hiện đầu tiên của giá bán (gỡ xfail ca "sản phẩm tương tự"), tối đa 10 sitemap phụ kiện, chỉ mục còn `<loc>` mà thiếu sitemap của nhóm → `SiteLayoutChanged` → `FAILED` (chỉ mục không có `<loc>` nào vẫn là `soft_block`); hạn chế captcha chèn bằng JS ghi ở 06 §4. T4.8 theo lựa chọn của người dùng "chỉ xét thẻ/thuộc tính": từ chung `captcha` chỉ tính trong tên thẻ, thuộc tính `id/class/name/action/src` hoặc `<title>`; trang captcha chỉ có chữ không còn bị nhận ra (ghi ở 06 §4).
 
 ### M5 — Chuẩn hóa & ghép mẫu
 
@@ -376,11 +378,11 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | T10.1 | Khảo sát + parser tìm kiếm tầng 2: Viettel Store, Nguyễn Kim bị bỏ (cần JS, ADR-0010) → FPT Shop; kiểm GearVN nhóm ngoài tầng 1 | T0.4, T2.2 | M | ✅ |
 | T10.2 | `live_search_service` + cache 6 giờ | T10.1, T2.1 | M | ✅ |
 | T10.3 | Nối agent (planner tier 2, tool) + bảng tầng 2 ở frontend | T10.2, T6.5, T8.3 | M | ✅ |
-| T10.4 | Củng cố tầng 2 sau review M10 (không chặn M11) | T10.3 | S | ⬜ |
+| T10.4 | Củng cố tầng 2 sau review M10 (không chặn M11) | T10.3 | S | ✅ |
 
 **T10.1** — Đã xong 2026-10-23. Khảo sát (qua Fetcher, người dùng đã duyệt điều khoản và cho tải fixture) cho thấy tìm kiếm của Viettel Store và Nguyễn Kim nạp kết quả bằng JavaScript (HTML tĩnh không có sản phẩm), nên theo quyết định của người dùng hai trang này **bỏ khỏi tầng 2** ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)); thay bằng `FptShopScraper.search_url/parse_search` (`/tim-kiem?s=`, 24 thẻ/trang, giá bán + giá gốc) và kiểm GearVN với "loa bluetooth" (8/8 thẻ). Test: `test_fptshop_search.py`, `test_gearvn_search_t10.py`; fixture `search_*.html` trong `tests/fixtures/{fptshop,gearvn}/`; docs/sources, 01, 02, 03, 06 đã cập nhật.
 
-**T10.4** — Phát sinh từ review M10 (mục "Gợi ý"): (a) `LiveSearchCacheRepository.purge_older_than` chưa ai gọi nên bảng `live_search_cache` chỉ tăng: gọi từ job dọn của worker; (b) `live_search` giữ 10 thẻ đầu rồi mới lọc giá (truy vấn có trần giá chặt có thể bỏ sót thẻ 11–24): cân nhắc lấy nhiều hơn hoặc lọc trước khi cắt; (c) kết quả rỗng cũng cache đủ 6 giờ (soft-block HTTP 200 khó thấy): TTL ngắn hơn cho kết quả rỗng; (d) `asyncio.Lock` giữ suốt lượt tìm nên nhiều người dùng đồng thời xếp hàng (đo NFR-01 ≤ 45 s); (e) bộ giới hạn độ trễ vẫn riêng từng tiến trình (T9.8).
+**T10.4** — Phát sinh từ review M10 (mục "Gợi ý"): (a) `LiveSearchCacheRepository.purge_older_than` chưa ai gọi nên bảng `live_search_cache` chỉ tăng: gọi từ job dọn của worker; (b) `live_search` giữ 10 thẻ đầu rồi mới lọc giá (truy vấn có trần giá chặt có thể bỏ sót thẻ 11–24): cân nhắc lấy nhiều hơn hoặc lọc trước khi cắt; (c) kết quả rỗng cũng cache đủ 6 giờ (soft-block HTTP 200 khó thấy): TTL ngắn hơn cho kết quả rỗng; (d) `asyncio.Lock` giữ suốt lượt tìm nên nhiều người dùng đồng thời xếp hàng (đo NFR-01 ≤ 45 s); (e) bộ giới hạn độ trễ vẫn riêng từng tiến trình (T9.8). **Kết quả (2026-10-25):** (a) worker gọi `LiveSearchService.purge_expired` cuối `refresh_catalog`; (b) `MAX_PER_SITE = 24`; (c) `EMPTY_CACHE_TTL = 1 giờ`. **Không làm** (d) khóa toàn cục (tách khóa theo từ khóa cần đo NFR-01 tầng 2 với nhiều người dùng, ngoài phạm vi demo một người) và (e) bộ giới hạn độ trễ theo tiến trình (thuộc T9.8).
 
 Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng độ trễ; mỗi trang ≤ `limit_per_site` kết quả; nhãn "chưa chuẩn hóa"; test kịch bản "loa bluetooth dưới 1 triệu" với fixture.
 
@@ -391,12 +393,12 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 | T11.1 | Eval cuối với LLM thật, chỉnh prompt đến khi đạt ngưỡng | M6–M10 | M | ✅ |
 | T11.2 | Cập nhật tài liệu theo code thực tế + README + sơ đồ | T11.1 | M | ✅ |
 | T11.3 | Diễn tập kịch bản demo ([10 §7](10-deployment.md#7-kịch-bản-demo-bảo-vệ)) | T9.4 | S | ✅ |
-| T11.4 | Lệnh đổi giá cho demo (`make demo-price-drop`) + `MOCK_SHOP_CAPTCHA_AFTER` thấp cho demo (phát sinh từ T11.3; không chặn bảo vệ) | T11.3 | S | ⬜ |
-| T11.5 | Giảm latency p50 của agent xuống ≤ 15 s (G4): hiện 26–31 s do ≥ 3 lần gọi Gemini mỗi câu (phát sinh từ T11.1; cần người dùng quyết định làm hay chấp nhận ngoại lệ) | T11.1 | M | ⬜ |
+| T11.4 | Lệnh đổi giá cho demo (`make demo-price-drop`) + `MOCK_SHOP_CAPTCHA_AFTER` thấp cho demo (phát sinh từ T11.3; không chặn bảo vệ) | T11.3 | S | ✅ |
+| T11.5 | Giảm latency p50 của agent xuống ≤ 15 s (G4): hiện 26–31 s do ≥ 3 lần gọi Gemini mỗi câu (phát sinh từ T11.1; cần người dùng quyết định làm hay chấp nhận ngoại lệ) | T11.1 | M | ✅ |
 
 **T11.4** — Phát sinh từ diễn tập T11.3 (docs/10 §7 ghi A, B). Xong khi: một lệnh (script trong `backend/scripts/` + target Makefile) đổi giá một offer `mock-shop` kèm dòng `price_history` rồi tạo cảnh báo mẫu, để bước 5 của demo lặp lại được mà không sửa SQL tay; `docker-compose.yml` đặt `MOCK_SHOP_CAPTCHA_AFTER` đủ thấp để một lượt Laptop luôn gặp captcha (hoặc nêu rõ trong `.env.example`); test script; cập nhật 10 §7. Ghi thêm (không làm ở đây): cùng mẫu mock xuất hiện hai sản phẩm khi dữ liệu dev cũ (URL `localhost:8100`) lẫn dữ liệu Docker (`mock-shop:8100`), và lượt Laptop đầu tiên trong Docker chậm vì LLM điền thông số.
 
-**T11.5** — Phát sinh từ T11.1 và review M11. Eval 2026-10-23 (`gemini-3.5-flash-lite`): latency p50 26–31 s so với G4 ≤ 15 s; không do `LLM_MAX_RPM` (chạy `--rpm 1000` vẫn 21–32 s). Mỗi câu cần ≥ 3 lần gọi Gemini (planner ~4–10 s, vòng tool, câu trả lời cuối), mỗi lần 4–10 s hôm nay (ngày 2026-10-21 đo được 15,7 s). Xong khi: p50 ≤ 15 s trong `make eval` (ví dụ gộp planner với bước chọn tool, bỏ lần tổng hợp cuối khi kết quả tool đủ, chạy planner và tìm danh mục song song, so với model khác), **hoặc** người dùng ghi nhận chấp nhận ngoại lệ vào docs/01 (G4, NFR-01) và docs/05 §7. Hiện chưa có quyết định của người dùng nên các tài liệu đó vẫn ghi ngưỡng ≤ 15 s kèm chú thích "chưa đạt".
+**T11.5** — Phát sinh từ T11.1 và review M11. Eval 2026-10-23 (`gemini-3.5-flash-lite`): latency p50 26–31 s so với G4 ≤ 15 s; không do `LLM_MAX_RPM` (chạy `--rpm 1000` vẫn 21–32 s). Mỗi câu cần ≥ 3 lần gọi Gemini (planner ~4–10 s, vòng tool, câu trả lời cuối), mỗi lần 4–10 s hôm nay (ngày 2026-10-21 đo được 15,7 s). Xong khi: p50 ≤ 15 s trong `make eval` (ví dụ gộp planner với bước chọn tool, bỏ lần tổng hợp cuối khi kết quả tool đủ, chạy planner và tìm danh mục song song, so với model khác), **hoặc** người dùng ghi nhận chấp nhận ngoại lệ vào docs/01 (G4, NFR-01) và docs/05 §7. Hiện chưa có quyết định của người dùng nên các tài liệu đó vẫn ghi ngưỡng ≤ 15 s kèm chú thích "chưa đạt". **Kết quả (2026-10-25):** người dùng chọn chấp nhận ngoại lệ thay vì đổi thiết kế agent; đã ghi vào docs/01 (G4, NFR-01) và docs/05 §7, không sửa code.
 
 ### X — Mở rộng (chỉ khi M0–M11 xong)
 

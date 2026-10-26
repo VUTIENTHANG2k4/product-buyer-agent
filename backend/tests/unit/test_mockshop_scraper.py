@@ -312,7 +312,9 @@ def test_http_errors_stay_plain_challenges_without_prompt(scraper: MockShopScrap
 
 
 def test_captcha_marker_without_the_box_is_still_a_challenge(scraper: MockShopScraper) -> None:
-    challenge = scraper.detect_challenge(response("<p>Please solve the captcha</p>"))
+    challenge = scraper.detect_challenge(
+        response('<p class="captcha">Please solve the captcha</p>')
+    )
     assert challenge is not None
     assert (challenge.kind, challenge.prompt, challenge.token) == (
         ChallengeKind.captcha,

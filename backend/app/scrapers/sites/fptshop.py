@@ -33,6 +33,7 @@ from app.scrapers.http.errors import (
     ResponseTooLarge,
     RobotsBlocked,
     RobotsDisallowed,
+    SiteLayoutChanged,
 )
 from app.scrapers.parsing import (
     json_ld_objects,
@@ -49,6 +50,8 @@ SITEMAP_INDEX_URL = f"{_BASE_URL}/sitemap.xml"
 BATCH_SIZE = 20  # sản phẩm mỗi "trang" của crawl_category
 MAX_COUNT = 2**31 - 1  # cột `rating_count` là INTEGER (4 byte)
 MAX_CONSECUTIVE_ERRORS = 3  # tải lỗi liên tiếp (5xx, quá lớn...) thì dừng lượt
+# Phụ kiện chia `sitemap-phu-kien(-N).xml`; trần để chỉ mục bất thường không kéo hàng trăm request.
+MAX_ACCESSORY_SITEMAPS = 10
 
 _LAPTOP_SITEMAP_PATH = "/products/sitemap-may-tinh-xach-tay.xml"
 # Phụ kiện chia nhiều sitemap (`sitemap-phu-kien.xml`, `-1`, `-2`...); `-gia-dung` là đồ gia dụng.
@@ -109,6 +112,9 @@ def select_sitemaps(category: Category, index_locs: Sequence[str]) -> list[str]:
         else:
             matches = category in _ACCESSORY_PREFIX and _ACCESSORY_SITEMAP.match(path) is not None
         if matches and loc not in chosen:
+            if len(chosen) >= MAX_ACCESSORY_SITEMAPS:
+                logger.warning("Chỉ mục có hơn %s sitemap phụ kiện, bỏ phần sau", len(chosen))
+                break
             chosen.append(loc)
     return chosen
 
@@ -172,9 +178,34 @@ def _price_fields(tree: LexborHTMLParser, product: dict[str, Any]) -> dict[str, 
     }
 
 
+def _price_displays(nodes: Sequence[LexborNode], shown: str) -> list[LexborNode]:
+    """Phần tử trong cùng có chữ đúng bằng `shown` (bỏ phần tử bao ngoài như `<span><p>…</p></span>`
+    cùng chữ), theo thứ tự tài liệu."""
+    return [
+        node
+        for node in nodes
+        if node_text(node) == shown
+        # `node.css` của selectolax gồm cả chính node: loại bằng `mem_id`.
+        and not any(
+            inner.mem_id != node.mem_id and node_text(inner) == shown
+            for inner in node.css("p, span, div")
+        )
+    ]
+
+
 def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
-    """Giá gốc gạch ngang nằm cạnh giá bán công khai; khối flash sale (giá khác) không tính."""
+    """Giá gốc gạch ngang nằm cạnh giá bán công khai; khối flash sale (giá khác) không tính.
+
+    Chỉ khối của lần xuất hiện **đầu tiên** của giá bán được xét (trên 5 fixture thật đó là thanh
+    giá dính `p.l7-semibold` ở đầu trang, cũng có giá gạch; thẻ "sản phẩm tương tự" luôn đứng sau),
+    nên thẻ liên quan cùng giá bán nhưng có giá gạch không làm sản phẩm thành `sale` (T4.7). So
+    danh tính node bằng `mem_id` (`==` của selectolax so nội dung HTML).
+    """
     shown = f"{price:,}".replace(",", ".") + "đ"
+    first = _price_displays(tree.css("p, span, div"), shown)
+    if not first:
+        return None
+    main = first[0]
     for node in tree.css(".line-through"):
         text = node_text(node)
         if not _PRICE_TEXT.match(text):
@@ -186,7 +217,10 @@ def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
         for _ in range(3):  # giá bán và giá gốc là hai phần tử gần nhau trong cùng khối
             if block is None:
                 break
-            if any(node_text(leaf) == shown for leaf in block.css("p, span, div")):
+            shown_ids = {leaf.mem_id for leaf in _price_displays(block.css("p, span, div"), shown)}
+            # Khối phải chứa giá chính và không chứa nơi hiện giá bán nào khác: tổ tiên chung với
+            # thẻ liên quan (cùng giá bán, có giá gạch riêng) có hai nơi hiện giá nên bị loại.
+            if shown_ids == {main.mem_id}:
                 return struck
             block = block.parent
     return None
@@ -409,7 +443,17 @@ class FptShopScraper(BaseScraper):
         index = await self._fetcher.get(SITEMAP_INDEX_URL)
         self._raise_if_challenge(index)
         urls: list[str] = []
-        for sitemap_url in select_sitemaps(category, parse_sitemap_locs(index.text)):
+        locs = parse_sitemap_locs(index.text)
+        if not locs:
+            # Không phải chỉ mục sitemap (có thể là trang chặn chỉ có chữ, T4.8 không nhận ra):
+            # trả rỗng để `crawl_category` báo `soft_block` như trước, không coi là đổi cấu trúc.
+            return []
+        sitemaps = select_sitemaps(category, locs)
+        if not sitemaps:  # còn chỉ mục nhưng mất sitemap của nhóm: đổi cấu trúc (T4.7)
+            raise SiteLayoutChanged(
+                f"Chỉ mục sitemap không có sitemap của nhóm {category.value}", url=index.final_url
+            )
+        for sitemap_url in sitemaps:
             sitemap = await self._fetcher.get(sitemap_url)
             self._raise_if_challenge(sitemap)
             urls.extend(select_product_urls(category, parse_sitemap_locs(sitemap.text)))

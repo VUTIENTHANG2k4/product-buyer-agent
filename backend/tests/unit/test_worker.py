@@ -319,6 +319,7 @@ class FakeRuntime:
     def __init__(self) -> None:
         self.service = StubService()
         self.alert_evaluator = StubEvaluator()
+        self.live_search: object | None = None  # như ScrapeRuntime dựng tay: không có tầng 2
         self.closed = 0
         FakeRuntime.created.append(self)
 
@@ -443,10 +444,12 @@ class HangingService(StubService):
     def __init__(self) -> None:
         super().__init__()
         self.cancelled = False
+        self.entered = asyncio.Event()  # đã vào `run`: test chờ tín hiệu này thay vì ngủ cố định
 
     async def run(
         self, site: SiteKey, category: Category, *, trigger: ScrapeTrigger
     ) -> PipelineResult:
+        self.entered.set()
         try:
             await asyncio.Event().wait()
         except asyncio.CancelledError:
@@ -461,7 +464,7 @@ async def test_cancel_running_cancels_in_flight_jobs_and_waits_for_them(
     service = HangingService()
     jobs = jobs_with(service, monkeypatch, offline=True)
     task = asyncio.create_task(jobs.refresh_catalog())
-    await asyncio.sleep(0.05)
+    await asyncio.wait_for(service.entered.wait(), timeout=5)
     assert not task.done()
 
     await jobs.cancel_running()
