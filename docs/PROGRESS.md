@@ -29,7 +29,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,11% (6585 pass + 55 xfail đã biết, ngưỡng 80% trong `make test-be`, ~12 phút; hai lần đỏ ở `test_second_correct_answer_after_resume_is_409…` do test gửi đáp án thứ hai khi lượt resume còn ghi DB trên cùng kết nối `db_session`: đã sửa bằng cách chờ lượt nền xong) | 2026-10-25 |
+| Coverage backend | 99,11% (6769 pass + 53 xfail đã biết, ngưỡng 80% trong `make test-be`, ~12 phút; hai lần đỏ ở `test_second_correct_answer_after_resume_is_409…` do test gửi đáp án thứ hai khi lượt resume còn ghi DB trên cùng kết nối `db_session`: đã sửa bằng cách chờ lượt nền xong) | 2026-10-25 |
 | Test frontend (Vitest + E2E) | 1068 Vitest pass (không còn expected-fail), 10 E2E Playwright (`make e2e`); chưa đo coverage | 2026-10-23 |
 | Eval (intent accuracy / constraint satisfaction / hallucination) | Lượt 1: 100% / 100% / 0, 31/31 câu (clarification 100%, tool 100%). Lượt cuối (sau trần gọi lặp `live_search_other`): 96,4% / 98,6% / 0, 29/31 (A03 `LLM_UNAVAILABLE` tạm thời, L10 dao động); chạy lại A03, L10 đều đạt. Tool 96,4%. **Latency p50 26–31 s: chưa đạt ≤ 15 s** (không do `LLM_MAX_RPM`: `--rpm 1000` vẫn 21–32 s; ≥ 3 lần gọi Gemini/câu, mỗi lần 4–10 s hôm nay). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-10-23*.md` (T11.1) | 2026-10-23 |
 
