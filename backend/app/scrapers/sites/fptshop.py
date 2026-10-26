@@ -178,6 +178,21 @@ def _price_fields(tree: LexborHTMLParser, product: dict[str, Any]) -> dict[str, 
     }
 
 
+def _price_displays(nodes: Sequence[LexborNode], shown: str) -> list[LexborNode]:
+    """Phần tử trong cùng có chữ đúng bằng `shown` (bỏ phần tử bao ngoài như `<span><p>…</p></span>`
+    cùng chữ), theo thứ tự tài liệu."""
+    return [
+        node
+        for node in nodes
+        if node_text(node) == shown
+        # `node.css` của selectolax gồm cả chính node: loại bằng `mem_id`.
+        and not any(
+            inner.mem_id != node.mem_id and node_text(inner) == shown
+            for inner in node.css("p, span, div")
+        )
+    ]
+
+
 def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
     """Giá gốc gạch ngang nằm cạnh giá bán công khai; khối flash sale (giá khác) không tính.
 
@@ -187,9 +202,10 @@ def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
     danh tính node bằng `mem_id` (`==` của selectolax so nội dung HTML).
     """
     shown = f"{price:,}".replace(",", ".") + "đ"
-    main = next((leaf for leaf in tree.css("p, span, div") if node_text(leaf) == shown), None)
-    if main is None:
+    first = _price_displays(tree.css("p, span, div"), shown)
+    if not first:
         return None
+    main = first[0]
     for node in tree.css(".line-through"):
         text = node_text(node)
         if not _PRICE_TEXT.match(text):
@@ -201,7 +217,10 @@ def _struck_price(tree: LexborHTMLParser, price: int) -> int | None:
         for _ in range(3):  # giá bán và giá gốc là hai phần tử gần nhau trong cùng khối
             if block is None:
                 break
-            if any(leaf.mem_id == main.mem_id for leaf in block.css("p, span, div")):
+            shown_ids = {leaf.mem_id for leaf in _price_displays(block.css("p, span, div"), shown)}
+            # Khối phải chứa giá chính và không chứa nơi hiện giá bán nào khác: tổ tiên chung với
+            # thẻ liên quan (cùng giá bán, có giá gạch riêng) có hai nơi hiện giá nên bị loại.
+            if shown_ids == {main.mem_id}:
                 return struck
             block = block.parent
     return None

@@ -4,7 +4,7 @@ Chỉ phát hiện và báo; không bao giờ giải captcha. Pipeline quyết �
 `BLOCKED` (trang thật).
 """
 
-import re
+import string
 import unicodedata
 from collections.abc import Mapping
 
@@ -18,9 +18,6 @@ from app.scrapers.http.types import FetchResponse
 # trưng dưới đây hiếm khi xuất hiện trong văn bản thường nên xét ở mọi chỗ.
 _GENERIC_MARKER = "captcha"
 _MARKUP_ATTRIBUTES = frozenset({"id", "class", "name", "action", "src"})
-_TAG_NAME = re.compile(r"</?([a-z][a-z0-9-]*)")
-# Giá trị có nháy hoặc không nháy; các nhánh rời nhau nên không quay lui bậc hai trong một thẻ.
-_ATTRIBUTE = re.compile(r"([a-z_:][-a-z0-9_:.]*)\s*=\s*(\"[^\"]*\"|'[^']*'|[^\s\"'>]+)")
 _CAPTCHA_MARKERS = (
     "cf-challenge",
     "g-recaptcha",
@@ -31,9 +28,12 @@ _CAPTCHA_MARKERS = (
 )
 
 
+_NBSP = chr(0xA0)  # khoảng trắng không ngắt (`&nbsp;` đã giải mã) được coi là dấu cách
+
+
 def _fold(text: str) -> str:
     """Đưa về NFC + chữ thường để khớp không phân biệt hoa/thường và dạng Unicode của tiếng Việt."""
-    return unicodedata.normalize("NFC", text).casefold()
+    return unicodedata.normalize("NFC", text).replace(_NBSP, " ").casefold()
 
 
 # Thân `<script>`/`<style>` nội tuyến và chú thích HTML (biến môi trường Next.js, JSON-LD, mã theo
@@ -85,22 +85,69 @@ def _captcha_text(text: str) -> str:
 _FOLDED_MARKERS = tuple(_fold(marker) for marker in _CAPTCHA_MARKERS)
 
 
-def _tag_has_marker(tag: str) -> bool:
-    """`tag` là đoạn `<...` tới trước `>`: tên thẻ hoặc thuộc tính được liệt kê chứa `captcha`."""
-    name = _TAG_NAME.match(tag)
-    if name is not None and _GENERIC_MARKER in name.group(1):
-        return True
-    return any(
-        attribute.group(1) in _MARKUP_ATTRIBUTES and _GENERIC_MARKER in attribute.group(2)
-        for attribute in _ATTRIBUTE.finditer(tag)
-    )
+_SPACE = frozenset(string.whitespace)
+_TAG_NAME_END = _SPACE | frozenset("/>")
+_ATTR_NAME_END = _SPACE | frozenset("/>=")
+
+
+def _scan_tag(folded: str, start: int) -> tuple[int, bool, str] | None:
+    """Đọc thẻ bắt đầu ở `folded[start] == "<"` bằng một lượt từ trái sang phải.
+
+    Trả `(vị trí sau ">", có dấu hiệu captcha, tên thẻ)` hoặc `None` nếu thẻ không đóng. Dấu hiệu:
+    tên thẻ hoặc giá trị thuộc tính trong `_MARKUP_ATTRIBUTES` chứa `captcha`. `>` trong giá trị có
+    nháy không kết thúc thẻ. Mỗi ký tự được đọc một lần (không regex, không quay lui): thẻ dài cả
+    MB cũng tuyến tính.
+    """
+    size = len(folded)
+    pos = start + 1
+    if pos < size and folded[pos] == "/":
+        pos += 1
+    name_start = pos
+    while pos < size and folded[pos] not in _TAG_NAME_END:
+        pos += 1
+    name = folded[name_start:pos]
+    found = _GENERIC_MARKER in name
+    while pos < size:
+        char = folded[pos]
+        if char == ">":
+            return pos + 1, found, name
+        if char in _SPACE or char == "/":
+            pos += 1
+            continue
+        attr_start = pos
+        while pos < size and folded[pos] not in _ATTR_NAME_END:
+            pos += 1
+        attribute = folded[attr_start:pos]
+        while pos < size and folded[pos] in _SPACE:
+            pos += 1
+        if pos >= size or folded[pos] != "=":
+            continue  # thuộc tính không giá trị (đã đọc ít nhất một ký tự)
+        pos += 1
+        while pos < size and folded[pos] in _SPACE:
+            pos += 1
+        if pos >= size:
+            return None
+        if folded[pos] in "\"'":
+            close = folded.find(folded[pos], pos + 1)
+            if close < 0:
+                return None
+            value = folded[pos + 1 : close]
+            pos = close + 1
+        else:
+            value_start = pos
+            while pos < size and folded[pos] not in _SPACE and folded[pos] != ">":
+                pos += 1
+            value = folded[value_start:pos]
+        if attribute in _MARKUP_ATTRIBUTES and _GENERIC_MARKER in value:
+            found = True
+    return None
 
 
 def _generic_marker_in_markup(folded: str) -> bool:
-    """`captcha` nằm trong thẻ (xem `_tag_has_marker`) hoặc trong `<title>`.
+    """`captcha` nằm trong thẻ (xem `_scan_tag`) hoặc trong nội dung `<title>`.
 
-    Tuyến tính: mỗi ký tự được xét một lần (nội dung `<title>` được nhảy qua sau khi xét). `<` chỉ
-    mở thẻ khi theo sau là chữ cái, `/` hoặc `!` như trình duyệt, nên "độ trễ <1ms" là văn bản.
+    Tuyến tính. `<` chỉ mở thẻ khi theo sau là chữ cái, `/` hoặc `!` như trình duyệt, nên
+    "độ trễ <1ms" là văn bản thường.
     """
     pos = 0
     while True:
@@ -111,14 +158,13 @@ def _generic_marker_in_markup(folded: str) -> bool:
         if not (next_char.isalpha() or next_char in ("/", "!")):
             pos = start + 1
             continue
-        end = folded.find(">", start + 1)
-        if end < 0:
+        scanned = _scan_tag(folded, start)
+        if scanned is None:
             return False
-        if _tag_has_marker(folded[start:end]):
+        pos, found, name = scanned
+        if found:
             return True
-        pos = end + 1
-        name = _TAG_NAME.match(folded, start)
-        if name is not None and name.group(0) == "<title":
+        if name == "title":
             close = folded.find("</title", pos)
             if close < 0:
                 return _GENERIC_MARKER in folded[pos:]

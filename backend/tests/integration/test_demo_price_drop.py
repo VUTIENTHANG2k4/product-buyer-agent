@@ -60,7 +60,7 @@ def test_picks_the_cheapest_active_mock_shop_laptop_and_raises_its_price(
     assert prepared.shop_price is not None
     assert prepared.shop_price < prepared.target_price < prepared.raised_price
     assert cheap.price == 18_000_000
-    assert cheap.id is not None and _history(db_session, cheap.id) == [18_000_000]
+    assert cheap.id is not None and _history(db_session, cheap.id) == [15_000_000, 18_000_000]
     (alert,) = _alerts(db_session, laptop.id or 0)
     assert (alert.target_price, alert.channel, alert.destination, alert.status) == (
         prepared.target_price,

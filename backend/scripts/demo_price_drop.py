@@ -22,6 +22,7 @@ from datetime import datetime
 from typing import Final
 
 from sqlmodel import Session, col, select
+from sqlmodel.sql.expression import SelectOfScalar
 
 from app.config import get_settings
 from app.db.engine import get_engine
@@ -56,6 +57,21 @@ class PreparedDrop:
     already_prepared: bool
 
 
+def _mock_shop_offers() -> SelectOfScalar[Offer]:
+    """Offer laptop mock-shop đang bán và còn hàng, rẻ nhất trước (hòa giá: id nhỏ nhất)."""
+    return (
+        select(Offer)
+        .join(Product, col(Product.id) == col(Offer.product_id))
+        .where(
+            Offer.site == SiteKey.mockshop,
+            col(Offer.is_active).is_(True),
+            Offer.stock_status != StockStatus.out_of_stock,
+            Product.category == Category.laptop,
+        )
+        .order_by(col(Offer.price), col(Offer.id))
+    )
+
+
 def _pick_offer(session: Session, offer_id: int | None) -> Offer:
     """Offer mock-shop đang bán và còn hàng: offer hết hàng không tính vào giá tốt nhất nên cảnh báo
     của nó không bao giờ đến hạn (`views.sellable`)."""
@@ -72,17 +88,7 @@ def _pick_offer(session: Session, offer_id: int | None) -> Offer:
         if offer.stock_status is StockStatus.out_of_stock:
             raise DemoPriceError(f"Offer #{offer_id} đang hết hàng nên cảnh báo sẽ không báo.")
         return offer
-    statement = (
-        select(Offer)
-        .join(Product, col(Product.id) == col(Offer.product_id))
-        .where(
-            Offer.site == SiteKey.mockshop,
-            col(Offer.is_active).is_(True),
-            Offer.stock_status != StockStatus.out_of_stock,
-            Product.category == Category.laptop,
-        )
-        .order_by(col(Offer.price), col(Offer.id))
-    )
+    statement = _mock_shop_offers()
     offer = session.exec(statement).first()
     if offer is None:
         raise DemoPriceError(
@@ -92,13 +98,45 @@ def _pick_offer(session: Session, offer_id: int | None) -> Offer:
     return offer
 
 
-def _demo_alerts(session: Session, product_id: int, destination: str) -> list[PriceAlert]:
-    """Cảnh báo email còn hiệu lực (`active`/`triggered`) của sản phẩm tới `destination`."""
+def _demo_alerts(session: Session, product_id: int, destination: str | None) -> list[PriceAlert]:
+    """Cảnh báo email còn hiệu lực (`active`/`triggered`) của sản phẩm, lọc theo `destination`."""
     return [
         alert
         for alert in PriceAlertRepository(session).list_for_products([product_id])
-        if alert.channel is AlertChannel.email and alert.destination == destination
+        if alert.channel is AlertChannel.email
+        and (destination is None or alert.destination == destination)
     ]
+
+
+@dataclass(frozen=True)
+class _Raised:
+    """Offer đang ở trạng thái "đã nâng giá, chờ lượt thu thập": lần lịch sử cuối đắt hơn lần
+    trước, và một cảnh báo `active` có ngưỡng nằm giữa hai mức giá."""
+
+    shop_price: int
+    alerts: list[PriceAlert]
+
+
+def _raised_state(session: Session, offer: Offer) -> _Raised | None:
+    assert offer.id is not None
+    history = PriceHistoryRepository(session).list_for_offer(offer.id)
+    if len(history) < 2 or history[-1].price != offer.price or history[-2].price >= offer.price:
+        return None
+    shop_price = history[-2].price
+    alerts = [
+        alert
+        for alert in _demo_alerts(session, offer.product_id, None)
+        if alert.status is AlertStatus.active and shop_price < alert.target_price < offer.price
+    ]
+    return _Raised(shop_price, alerts) if alerts else None
+
+
+def _find_raised_offer(session: Session) -> Offer | None:
+    """Offer mock-shop còn hàng đang ở trạng thái đã nâng (để chạy lại không nâng offer khác)."""
+    for offer in session.exec(_mock_shop_offers()).all():
+        if _raised_state(session, offer) is not None:
+            return offer
+    return None
 
 
 def _raise_and_target(shop_price: int, bump_percent: int) -> tuple[int, int]:
@@ -117,45 +155,52 @@ def prepare_price_drop(
     email: str = DEFAULT_EMAIL,
     now: datetime | None = None,
 ) -> PreparedDrop:
-    """Nâng giá một offer mock-shop và tạo cảnh báo; chỉ `flush`, người gọi commit."""
+    """Nâng giá một offer mock-shop và tạo cảnh báo; chỉ `flush`, người gọi commit.
+
+    Offer đã được nâng ở lần chạy trước (còn chờ lượt thu thập) được dùng lại: không nâng thêm,
+    không đổi sang offer rẻ nhất khác; email mới chỉ được thêm cảnh báo với cùng ngưỡng.
+    """
     if not 1 <= bump_percent <= 100:
         raise DemoPriceError("--bump phải trong khoảng 1..100 (%).")
-    offer = _pick_offer(session, offer_id)
+    offer = _find_raised_offer(session) if offer_id is None else None
+    offer = offer or _pick_offer(session, offer_id)
     assert offer.id is not None
     product = session.get(Product, offer.product_id)
     assert product is not None and product.id is not None
     destination = normalize_destination(AlertChannel.email, email)
-    existing = _demo_alerts(session, product.id, destination)
-
-    pending = next(
-        (a for a in existing if a.status is AlertStatus.active and a.target_price < offer.price),
-        None,
-    )
-    if pending is not None and pending.id is not None:
-        history = PriceHistoryRepository(session).list_for_offer(offer.id)
-        return PreparedDrop(
-            offer_id=offer.id,
-            product_id=product.id,
-            product_name=product.canonical_name,
-            shop_price=history[-2].price if len(history) >= 2 else None,
-            raised_price=offer.price,
-            target_price=pending.target_price,
-            alert_id=pending.id,
-            already_prepared=True,
-        )
-
     moment = now or utc_now()
     service = AlertService(session, now=lambda: moment)
-    for old in existing:  # cảnh báo của vòng demo trước (đã đến hạn hoặc đã gửi)
+
+    raised_state = _raised_state(session, offer)
+    if raised_state is not None:
+        mine = next((a for a in raised_state.alerts if a.destination == destination), None)
+        if mine is not None and mine.id is not None:
+            return _prepared(
+                offer, product, raised_state.shop_price, mine.target_price, mine.id, True
+            )
+        target = raised_state.alerts[0].target_price
+        created = service.create(
+            AlertCreate(
+                product_id=product.id,
+                target_price=target,
+                channel=AlertChannel.email,
+                destination=destination,
+            )
+        )
+        return _prepared(offer, product, raised_state.shop_price, target, created.alert_id, False)
+
+    for old in _demo_alerts(session, product.id, destination):  # cảnh báo của vòng demo trước
         assert old.id is not None
         service.delete(old.id)
     shop_price = offer.price
+    history = PriceHistoryRepository(session)
+    history.record_snapshot(offer, now=moment)  # mốc giá gốc, để nhận ra trạng thái "đã nâng"
     raised, target = _raise_and_target(shop_price, bump_percent)
     offer.price = raised
     session.add(offer)
     session.flush()
-    PriceHistoryRepository(session).record_snapshot(offer, now=moment)
-    alert = service.create(
+    history.record_snapshot(offer, now=moment)
+    created = service.create(
         AlertCreate(
             product_id=product.id,
             target_price=target,
@@ -163,15 +208,27 @@ def prepare_price_drop(
             destination=destination,
         )
     )
+    return _prepared(offer, product, shop_price, target, created.alert_id, False)
+
+
+def _prepared(
+    offer: Offer,
+    product: Product,
+    shop_price: int,
+    target: int,
+    alert_id: int,
+    already_prepared: bool,
+) -> PreparedDrop:
+    assert offer.id is not None and product.id is not None
     return PreparedDrop(
         offer_id=offer.id,
         product_id=product.id,
         product_name=product.canonical_name,
         shop_price=shop_price,
-        raised_price=raised,
+        raised_price=offer.price,
         target_price=target,
-        alert_id=alert.alert_id,
-        already_prepared=False,
+        alert_id=alert_id,
+        already_prepared=already_prepared,
     )
 
 
