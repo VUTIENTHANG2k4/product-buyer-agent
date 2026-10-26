@@ -135,6 +135,7 @@ class StubbornService(HangingService):
         self.release = asyncio.Event()
 
     async def run(self, site: SiteKey, category: Category, *, trigger: object) -> PipelineResult:
+        self.entered.set()
         while not self.release.is_set():
             try:
                 await self.release.wait()
@@ -150,7 +151,7 @@ async def test_cancel_running_gives_up_after_the_timeout_on_a_job_that_ignores_c
     service = StubbornService()
     jobs = jobs_with(service, monkeypatch, offline=True)
     task = asyncio.create_task(jobs.refresh_catalog())
-    await asyncio.sleep(0.02)
+    await asyncio.wait_for(service.entered.wait(), timeout=5)
 
     try:
         await asyncio.wait_for(jobs.cancel_running(), timeout=5)  # không treo vô hạn
@@ -209,10 +210,7 @@ async def test_a_job_started_by_the_real_apscheduler_executor_is_cancelled_on_sh
     )
     scheduler.start()
     try:
-        for _ in range(100):
-            if service.cancelled or jobs._running:
-                break
-            await asyncio.sleep(0.02)
+        await asyncio.wait_for(service.entered.wait(), timeout=5)  # job đã chạy tới service
         assert jobs._running, "the executor's task was never registered"
 
         scheduler.shutdown(wait=False)
