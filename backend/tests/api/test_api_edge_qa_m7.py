@@ -437,7 +437,7 @@ def test_adding_same_product_beyond_max_quantity_is_not_a_500(
     client: TestClient, db_session: Session
 ) -> None:
     product = add_product(db_session)
-    add_offer(db_session, product)
+    add_offer(db_session, product, price=100)  # giá thấp: chưa chạm trần số lượng × giá (T6.12)
     list_id = client.post("/api/lists", json={"name": "Mock"}).json()["list_id"]
     body = {"product_id": product.id, "quantity": 2**31 - 1}
     assert client.post(f"/api/lists/{list_id}/items", json=body).status_code == 201
