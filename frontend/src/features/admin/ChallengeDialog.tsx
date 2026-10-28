@@ -144,7 +144,7 @@ function ChallengeForm({
         </Button>
         <Button
           type="button"
-          variant="outline"
+          variant="destructive"
           disabled={answerMutation.isPending || cancelMutation.isPending}
           onClick={() => void cancelRun()}
         >

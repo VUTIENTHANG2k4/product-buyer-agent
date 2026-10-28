@@ -1,5 +1,6 @@
 """T2.8: hủy lượt `NEEDS_HUMAN` để lượt mới chạy ngay."""
 
+import asyncio
 from collections.abc import Callable
 
 import pytest
@@ -79,3 +80,22 @@ async def test_a_stale_paused_run_can_still_be_cancelled_to_clean_up(
     await pipe.cancel_paused(paused.run_id)
 
     assert run_row(db_session, paused).status is ScrapeStatus.FAILED
+
+
+async def test_cancelling_a_run_that_resume_already_claimed_is_refused(
+    db_session: Session, factory: Callable[[], Session], clock: Clock
+) -> None:
+    """`resume` chiếm lượt (RUNNING) trước khi gửi đáp án: hủy lúc đó phải bị từ chối.
+
+    Cuộc đua thật giữa hai tiến trình dựa vào khóa advisory của PostgreSQL; các phiên test dùng
+    chung một kết nối nên không dựng lại được, ta kiểm trạng thái sau khi chiếm.
+    """
+    pipe = pipeline(factory, mock_fetcher(captcha_after=1), clock)
+    paused = await pipe.run(SiteKey.mockshop, Category.laptop, ScrapeTrigger.test)
+    await asyncio.to_thread(pipe._claim_paused, paused.run_id, 5)  # noqa: SLF001
+
+    with pytest.raises(ChallengeNotPending) as error:
+        await pipe.cancel_paused(paused.run_id)
+
+    assert error.value.details["status"] == "RUNNING"
+    assert run_row(db_session, paused).status is ScrapeStatus.RUNNING

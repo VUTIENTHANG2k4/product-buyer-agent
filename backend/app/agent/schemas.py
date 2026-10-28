@@ -41,7 +41,7 @@ class FinalAnswer(BaseModel):
     @classmethod
     def _text_not_blank(cls, value: str) -> str:
         """Câu trả lời rỗng hoặc chỉ có khoảng trắng bị từ chối để LLM viết lại (BUG-M6-14)."""
-        if not value.strip():
+        if not value.replace(chr(0), "").strip():
             raise ValueError("text must not be blank")
         return value
 

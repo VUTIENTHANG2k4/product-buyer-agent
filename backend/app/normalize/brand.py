@@ -84,6 +84,10 @@ _TYPE_STARTS = frozenset(
         "pc",
     ]
 )
+# Từ phụ kiện ở phần mô tả bị bỏ qua: "Bộ sạc laptop Dell 65W" là sạc, không phải laptop Dell.
+_ACCESSORY_WORDS = frozenset(
+    ["sac", "cap", "pin", "tui", "balo", "op", "lot", "de", "dock", "hub", "adapter"]
+)
 _CONNECTORS = frozenset(
     ["cho", "danh", "dung", "cua", "for", "phu", "tuong", "thich", "kem", "voi", "with"]
 )
@@ -116,7 +120,7 @@ def find_brand(keys: list[str], *, typed: bool = False) -> tuple[int, str] | Non
         return None
     reach = MAX_SKIPPED + 1 if typed or keys[0] in _TYPE_STARTS else 1
     for index in range(min(len(keys), reach)):
-        if keys[index] in _CONNECTORS:
+        if keys[index] in _CONNECTORS or keys[index] in _ACCESSORY_WORDS:
             return None
         brand = _brand_at(" ".join(keys[index:]))
         if brand is not None:

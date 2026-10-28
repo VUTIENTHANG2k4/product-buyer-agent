@@ -71,7 +71,9 @@ _CHEAPEST_WORDS = re.compile(r"\b(re nhat|gia thap nhat|cheapest|lowest price)\b
 _AT_LEAST_FIELDS: Final = frozenset({"ram_gb", "storage_gb", "refresh_hz", "gpu_rank"})
 _GPU_FIELDS: Final = frozenset({"gpu", "gpu_model", "gpu_name", "card", "vga"})
 _GPU_NAME = r"(?:rtx|gtx|rx|arc)\s*\d{3,4}(?:\s*(?:ti|super|xt))?"
-_UPPER_WORDS = r"(?:tro xuong|toi da|khong qua|khong vuot|thap hon|nho hon|yeu hon)"
+# "tối đa 30 triệu" nói về giá (theo sau là số): chỉ "trở xuống" hoặc cụm không kèm số mới là cận
+# trên của card.
+_UPPER_WORDS = r"(?:tro xuong|(?:toi da|khong qua|khong vuot|thap hon|nho hon|yeu hon)(?!\s*\d))"
 # Cụm cận trên đứng ngay sau hoặc ngay trước tên card, không vượt dấu ngắt mệnh đề.
 _GPU_UPPER = re.compile(
     rf"{_GPU_NAME}[^,.;]{{0,12}}?{_UPPER_WORDS}|{_UPPER_WORDS}[^,.;\d]{{0,12}}?{_GPU_NAME}"

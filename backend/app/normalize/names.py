@@ -28,7 +28,7 @@ _MIN_PART_CODE_LENGTH: Final = 6
 # Nhóm ngoặc chỉ chứa nhãn bán hàng ("[Hot]", "(Mới 100%)", "(Bảo hành 24 tháng)", "(Fullbox)").
 _BRACKET_GROUP = re.compile(r"\s*[\[(]([^\[\]()]*)[\])]")
 _MARKETING_LABEL = re.compile(
-    r"^(?:moi(?: 100%)?|new(?: 100%| seal)?|hot|sale|gia tot|fullbox|nhap khau|chinh hang|\d+%"
+    r"^(?:moi(?: 100%)?|new(?: 100%| seal)?|hot|sale|gia tot|fullbox|nhap khau|chinh hang"
     r"|bao hanh.*)$"
 )
 # "Mới 100%" (tình trạng máy) khác "100%" (bố cục phím full-size): chỉ bỏ khi đứng sau mới/new.

@@ -603,3 +603,29 @@ def test_mouse_weight_reads_every_gram_value_and_keeps_only_a_plausible_one(
 @pytest.mark.parametrize(("value", "buttons"), [("6", 6), ("99", 99), ("6 nút", 6), ("100", None)])
 def test_button_count_is_kept_only_between_1_and_99(value: str, buttons: int | None) -> None:
     assert extract_specs(MOUSE, "Chuột X", {"Số nút": value}).specs.get("buttons") == buttons
+
+
+def test_keyboard_layout_in_parentheses_is_not_a_marketing_label() -> None:
+    k75 = name_key("Bàn phím Keychron K2 (75%)", "Keychron")
+    k100 = name_key("Bàn phím Keychron K2 (100%)", "Keychron")
+
+    assert "75%" in k75 and "100%" in k100 and k75 != k100
+
+
+@pytest.mark.parametrize(
+    "title",
+    ["Bộ sạc laptop Dell 65W", "Bộ pin laptop Dell Latitude", "Bộ cáp chuyển Dell DA200"],
+)
+def test_accessories_after_a_type_word_do_not_take_the_laptop_brand(title: str) -> None:
+    assert detect_brand(title) == "Unknown"
+
+
+def test_a_name_that_is_only_the_brand_never_merges_without_a_model_code() -> None:
+    from app.normalize.matcher import Candidate, decide_match
+
+    assert name_key("Chuột Gaming Dell", "Dell") == ()
+    candidates = [Candidate(1, "Dell", None, {})]
+
+    decision = decide_match(MOUSE, "Dell", None, "Chuột Gaming Dell", {}, candidates)
+
+    assert decision.product_id is None

@@ -198,3 +198,19 @@ def test_space_grouped_amounts_are_read(message: str, expected: set[int]) -> Non
 )
 def test_space_separated_measures_are_not_money(message: str) -> None:
     assert extract_amounts(message) == set()
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "laptop RTX 4060 giá tối đa 30 triệu",
+        "laptop RTX 4060 trở lên tối đa 30 triệu",
+        "laptop gaming RTX 4060 16GB RAM tối đa 25 triệu",
+        "laptop rtx 4070 không quá 40 triệu",
+        "laptop RTX 4070 thấp hơn 35 triệu",
+    ],
+)
+def test_a_price_cap_near_the_card_name_does_not_flip_the_gpu_bound(message: str) -> None:
+    result = postprocess_intent(intent(category="laptop"), message)
+    gpu = [spec for spec in result.spec_filters if spec.field == "gpu_rank"]
+    assert [spec.op for spec in gpu] == ["gte"]

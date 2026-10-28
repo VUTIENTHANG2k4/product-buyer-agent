@@ -158,10 +158,18 @@ class ShoppingListService:
         item = self._require_item(list_id, item_id)
         if quantity is not None:
             _check_quantity(quantity)
+        if quantity is not None or preferred_offer_id is not None or clear_preferred_offer:
             offers = self._offers.list_for_products([item.product_id])[item.product_id]
-            preferred = None if clear_preferred_offer else preferred_offer_id
-            preferred = preferred or item.preferred_offer_id
-            _check_line_total(quantity, self._current_price(offers, preferred))
+            if clear_preferred_offer:
+                preferred = None  # giá áp dụng sau khi xóa là offer rẻ nhất, không phải offer cũ
+            elif preferred_offer_id is not None:
+                preferred = preferred_offer_id
+            else:
+                preferred = item.preferred_offer_id
+            _check_line_total(
+                item.quantity if quantity is None else quantity,
+                self._current_price(offers, preferred),
+            )
         _check_note(note)
         try:
             updated = self._lists.update_item(

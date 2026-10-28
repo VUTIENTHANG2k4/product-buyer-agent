@@ -137,7 +137,9 @@ def decide_match(
             if _code_match_is_safe(category, strong, key, specs, candidate, brand):
                 return MatchDecision(candidate.product_id, MatchMethod.model_code, 1.0)
             code_taken = True  # cùng mã nhưng tên hoặc cấu hình khác: coi là mẫu riêng
-    if brand == UNKNOWN_BRAND:
+    if brand == UNKNOWN_BRAND or not key:
+        # Tên chỉ có hãng và từ loại ("Chuột Gaming có dây Dell"): không có gì để phân biệt mẫu nên
+        # không ghép mờ (mã model đã được xét ở trên).
         return MatchDecision(None, MatchMethod.new, None, code_taken)
 
     strict = category is Category.laptop
