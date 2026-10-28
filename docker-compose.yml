@@ -61,6 +61,9 @@ services:
     # Thoát mã 0 khi SCHEDULER_ENABLED=false (mặc định): không tự khởi động lại. Cấu hình sai (cron) thoát
     # mã khác 0: thử lại tối đa 5 lần rồi dừng thay vì lặp vô hạn.
     restart: on-failure:5
+    # Job đang gửi thông báo kịp xong (và commit) trước khi bị kill, tránh gửi trùng sau khi khởi động
+    # lại; mặc định 10 giây ngắn hơn `CANCEL_WAIT_SECONDS` (30) của worker.
+    stop_grace_period: 60s
     command: ["python", "-m", "app.worker"]
     depends_on:
       api:

@@ -31,7 +31,10 @@ class TelegramNotifier:
         except (httpx.HTTPError, httpx.InvalidURL) as error:
             # Không đưa thông điệp gốc vào lỗi: `httpx` có thể in cả URL chứa token bot.
             # `InvalidURL` (token có ký tự điều khiển) không thuộc `HTTPError` (BUG-M9-2).
-            raise NotificationFailed(f"Không gửi được Telegram ({type(error).__name__})") from None
+            raise NotificationFailed(
+                f"Không gửi được Telegram ({type(error).__name__})",
+                channel_down=isinstance(error, httpx.TransportError),
+            ) from None
         if response.status_code != httpx.codes.OK:
             raise NotificationFailed(
                 f"Telegram từ chối (HTTP {response.status_code}): {_description(response)}"

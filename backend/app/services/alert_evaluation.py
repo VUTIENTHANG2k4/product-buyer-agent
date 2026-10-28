@@ -61,14 +61,18 @@ class AlertEvaluator:
 
     def evaluate_sync(self, offer_ids: Sequence[int] | None = None) -> EvaluationReport:
         sent = failed = 0
+        down: set[AlertChannel] = set()  # kênh hỏng cả kênh trong lượt này (ngắt mạch, T9.7)
         with self._session_factory() as session:
             service = AlertService(session, self._settings, now=self._now)
             for due in service.find_due(offer_ids):
+                if due.channel in down:
+                    failed += 1  # không khóa dòng, không chờ thêm một lần timeout; lượt sau thử lại
+                    continue
                 try:
                     if not service.claim(due):
                         session.commit()  # không ghi gì; chỉ nhả khóa dòng
                         continue
-                    if not self._send(due):
+                    if not self._send(due, down):
                         failed += 1
                         session.commit()
                         continue
@@ -86,7 +90,7 @@ class AlertEvaluator:
             logger.info("đánh giá cảnh báo giá: %s đã gửi, %s lỗi", sent, failed)
         return EvaluationReport(sent=sent, failed=failed)
 
-    def _send(self, due: DueAlert) -> bool:
+    def _send(self, due: DueAlert, down: set[AlertChannel]) -> bool:
         notifier = self._notifiers.get(due.channel)
         if notifier is None:
             logger.warning(
@@ -105,6 +109,12 @@ class AlertEvaluator:
             notifier.send(due.destination, message.subject, message.body)
         except NotificationFailed as error:
             logger.warning("[alert %s] gửi qua %s thất bại: %s", due.alert_id, due.channel, error)
+            if error.channel_down:
+                down.add(due.channel)
+                logger.warning(
+                    "kênh %s không dùng được: bỏ qua các cảnh báo còn lại của kênh này trong lượt",
+                    due.channel.value,
+                )
             return False
         except Exception:
             logger.exception("[alert %s] lỗi không lường trước khi gửi", due.alert_id)

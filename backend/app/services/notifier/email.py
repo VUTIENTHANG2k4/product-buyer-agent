@@ -49,7 +49,14 @@ class EmailNotifier:
                     self._deliver(smtp, message)
         except (smtplib.SMTPException, OSError, ValueError) as error:
             # Chỉ nêu loại lỗi: thông điệp gốc có thể chứa tên người dùng hoặc địa chỉ nhận.
-            raise NotificationFailed(f"Không gửi được email ({type(error).__name__})") from None
+            # Người nhận bị từ chối hoặc nội dung sai chỉ hỏng riêng cảnh báo đó; còn lại (kết nối,
+            # xác thực, người gửi bị từ chối) là hỏng cả kênh.
+            per_alert = isinstance(
+                error, (smtplib.SMTPRecipientsRefused, smtplib.SMTPDataError, ValueError)
+            )
+            raise NotificationFailed(
+                f"Không gửi được email ({type(error).__name__})", channel_down=not per_alert
+            ) from None
 
     def _deliver(self, smtp: smtplib.SMTP, message: EmailMessage) -> None:
         if self._user:

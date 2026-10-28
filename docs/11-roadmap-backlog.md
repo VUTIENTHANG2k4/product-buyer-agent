@@ -365,7 +365,7 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | T9.4 | Dockerfile + docker compose | T8.8 | M | ✅ |
 | T9.5 | Cron theo tên ngày trong tuần (phát sinh từ QA M9) | T9.3 | S | ✅ |
 | T9.6 | `POST /alerts/{id}/test`: giới hạn tần suất, ghi chú không có xác thực (phát sinh từ QA M9) | T9.2 | S | ✅ |
-| T9.7 | Ngắt mạch theo kênh khi gửi thông báo lỗi liên tiếp + `stop_grace_period` cho worker (phát sinh từ QA M9) | T9.1 | S | ⬜ |
+| T9.7 | Ngắt mạch theo kênh khi gửi thông báo lỗi liên tiếp + `stop_grace_period` cho worker (phát sinh từ QA M9) | T9.1 | S | ✅ |
 | T9.8 | Khóa độ trễ theo domain dùng chung giữa `api` và `worker` (phát sinh từ review M9) | T9.3 | M | ⬜ |
 
 **T9.1** — Xong khi: test đúng tiêu chí US-07 ([01 §5](01-requirements.md#5-user-story-và-tiêu-chí-chấp-nhận)); cảnh báo `triggered` gửi lại chỉ khi giá xuống thấp hơn `last_notified_price` thêm ≥ 1%.
