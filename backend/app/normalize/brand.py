@@ -51,7 +51,8 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
 # Nhãn khuyến mãi ở đầu tên: "[Mới 100%] ...", "(Hàng chính hãng) ..."
 _LEADING_TAGS = re.compile(r"^(?:\s*(?:\[[^\]]*\]|\([^)]*\)))+\s*")
 # Dấu ngắt từ khi tìm hãng: "Laptop: Dell", "Laptop/Dell", "Chuột, Razer".
-_WORD_BREAKS = re.compile(r"[\s/,:;]+")
+# Dấu phẩy giữa hai chữ số ("1,5kg", "16,000") không ngắt từ.
+WORD_BREAKS = re.compile(r"[\s/:;]+|(?<!\d),|,(?!\d)")
 # Ký hiệu trang trí đầu dòng ("★ Laptop …", "🔥 Laptop …"): không phải chữ hay số.
 _LEADING_SYMBOLS = re.compile(r"^[^\w\[(]+")
 # Mô tả loại/tính năng đứng trước hãng ("Chuột có dây Dell", "Hàng chính hãng Chuột Logitech",
@@ -149,7 +150,7 @@ def detect_brand(title: str) -> str:
     # `clean` cắt tiêu đề quá dài (như `canonical_name`) trước khi fold, nên 1 MB chữ có dấu không
     # tốn vài giây CPU (BUG-S1-5). Dấu câu dính từ loại ("Laptop: Dell", "Laptop/Dell") là dấu ngắt.
     text = strip_leading_decoration(_fold(clean(title)))
-    found = find_brand([word for word in _WORD_BREAKS.split(text) if word])
+    found = find_brand([word for word in WORD_BREAKS.split(text) if word])
     return UNKNOWN_BRAND if found is None else found[1]
 
 

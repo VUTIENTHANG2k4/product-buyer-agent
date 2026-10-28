@@ -21,6 +21,10 @@ _CHANNEL_WIDE_STATUSES = frozenset(
 )
 
 
+def _is_channel_wide(status: int) -> bool:
+    return status in _CHANNEL_WIDE_STATUSES or status >= httpx.codes.INTERNAL_SERVER_ERROR
+
+
 class TelegramNotifier:
     def __init__(self, token: SecretStr, *, timeout: float = SEND_TIMEOUT_SECONDS) -> None:
         self._token = token
@@ -43,9 +47,9 @@ class TelegramNotifier:
         if response.status_code != httpx.codes.OK:
             raise NotificationFailed(
                 f"Telegram từ chối (HTTP {response.status_code}): {_description(response)}",
-                # Token sai (401, 404) hoặc bị giới hạn tốc độ (429) là hỏng cả kênh; 400/403
-                # ("chat not found", "bot was blocked") chỉ hỏng riêng người nhận đó.
-                channel_down=response.status_code in _CHANNEL_WIDE_STATUSES,
+                # Token sai (401, 404), bị giới hạn (429) hoặc lỗi máy chủ (5xx): cả kênh hỏng;
+                # 400/403 ("chat not found", "bot was blocked") chỉ hỏng riêng người nhận đó.
+                channel_down=_is_channel_wide(response.status_code),
             )
         # Telegram luôn trả `{"ok": true, ...}` khi gửi được. HTTP 200 với thân khác (proxy hoặc
         # captive portal trả trang đăng nhập, `ok: false`) không phải là đã gửi (BUG-M9-1): coi là

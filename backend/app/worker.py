@@ -47,7 +47,15 @@ MISFIRE_GRACE_SECONDS = 300  # bù lượt lỡ do tiến trình bận hoặc v�
 
 _WEEKDAY_NAMES = ("sun", "mon", "tue", "wed", "thu", "fri", "sat")  # crontab: 0 và 7 = Chủ nhật
 _NUMERIC_WEEKDAYS = re.compile(r"^[\d,\-/*]+$")
+_WEEKDAY_WORD = re.compile(r"\b(" + "|".join(_WEEKDAY_NAMES) + r")\b", re.IGNORECASE)
 _WEEKDAY_ITEM = re.compile(r"^(\*|\d+)(?:-(\d+))?(?:/(\d+))?$")
+
+
+def _weekday_number(match: re.Match[str]) -> str:
+    """Tên ngày → số crontab; "sun" cuối khoảng ("sat-sun", "fri-sun") là 7 chứ không phải 0."""
+    number = _WEEKDAY_NAMES.index(match[1].lower())
+    at_range_end = match.start() > 0 and match.string[match.start() - 1] == "-"
+    return "7" if number == 0 and at_range_end else str(number)
 
 
 def _weekday_names(field: str) -> str:
@@ -79,8 +87,12 @@ def _weekday_names(field: str) -> str:
 
 def _crontab_with_weekday_names(expression: str) -> str:
     fields = expression.split()
-    if len(fields) == 5 and _NUMERIC_WEEKDAYS.match(fields[4]):
-        fields[4] = _weekday_names(fields[4])
+    if len(fields) == 5:
+        # Tên ngày đổi sang số crontab trước ("fri,1" → "5,1", "mon-3" → "1-3"), để trường trộn tên
+        # và số cũng theo một cách đánh số; trường còn chữ lạ để APScheduler báo lỗi.
+        numbered = _WEEKDAY_WORD.sub(_weekday_number, fields[4])
+        if _NUMERIC_WEEKDAYS.match(numbered):
+            fields[4] = _weekday_names(numbered)
     return " ".join(fields)
 
 
