@@ -364,7 +364,7 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | T9.3 | Worker + lịch APScheduler | T2.6, T9.1 | M | ✅ |
 | T9.4 | Dockerfile + docker compose | T8.8 | M | ✅ |
 | T9.5 | Cron theo tên ngày trong tuần (phát sinh từ QA M9) | T9.3 | S | ✅ |
-| T9.6 | `POST /alerts/{id}/test`: giới hạn tần suất, ghi chú không có xác thực (phát sinh từ QA M9) | T9.2 | S | ⬜ |
+| T9.6 | `POST /alerts/{id}/test`: giới hạn tần suất, ghi chú không có xác thực (phát sinh từ QA M9) | T9.2 | S | ✅ |
 | T9.7 | Ngắt mạch theo kênh khi gửi thông báo lỗi liên tiếp + `stop_grace_period` cho worker (phát sinh từ QA M9) | T9.1 | S | ⬜ |
 | T9.8 | Khóa độ trễ theo domain dùng chung giữa `api` và `worker` (phát sinh từ review M9) | T9.3 | M | ⬜ |
 

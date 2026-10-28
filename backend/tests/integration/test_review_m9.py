@@ -425,3 +425,31 @@ async def test_stock_info_from_a_listing_still_wins_over_the_stored_value(
     await pipe.run(SiteKey.mockshop, Category.laptop, ScrapeTrigger.test)
 
     assert offer_by_url(db_session, ASUS).stock_status is StockStatus.in_stock
+
+
+def test_send_test_with_a_limiter_only_counts_sends_that_reach_the_notifier(
+    db_session: Session,
+) -> None:
+    from app.services.send_limiter import SendLimiter
+
+    class Counting:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def send(self, destination: str, subject: str, body: str) -> None:
+            self.calls += 1
+
+    product = add_product(db_session)
+    add_offer(db_session, product)
+    alert_id = add_alert(db_session, product).id or 0
+    notifier = Counting()
+    limiter = SendLimiter(10, clock=lambda: 0.0)
+    service = AlertService(db_session, SETTINGS, now=clock)
+
+    unconfigured = service.send_test(alert_id, {}, limiter)  # kênh chưa cấu hình: không tính
+    first = service.send_test(alert_id, {AlertChannel.email: notifier}, limiter)
+    second = service.send_test(alert_id, {AlertChannel.email: notifier}, limiter)
+
+    assert unconfigured.sent is False and first.sent is True
+    assert second.sent is False and second.reason is not None and "10 giây" in second.reason
+    assert notifier.calls == 1

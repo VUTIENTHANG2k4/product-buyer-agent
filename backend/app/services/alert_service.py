@@ -27,6 +27,7 @@ from app.domain.enums import AlertChannel, AlertStatus, SiteKey
 from app.domain.errors import AlertNotFound, DuplicateAlert, ProductNotFound, ValidationFailed
 from app.services.notifier.base import NotificationFailed, Notifier
 from app.services.notifier.message import format_vnd
+from app.services.send_limiter import SendLimiter
 from app.services.views import Clock, aware_now, best_price, sellable
 
 logger = logging.getLogger(__name__)
@@ -164,11 +165,15 @@ class AlertService:
         self._alerts.delete(self._require(alert_id))
 
     def send_test(
-        self, alert_id: int, notifiers: Mapping[AlertChannel, Notifier]
+        self,
+        alert_id: int,
+        notifiers: Mapping[AlertChannel, Notifier],
+        limiter: SendLimiter | None = None,
     ) -> AlertTestResult:
         """Gửi thông báo thử tới nơi nhận của cảnh báo; không đổi trạng thái cảnh báo.
 
-        Kênh chưa cấu hình hoặc gửi lỗi trả `sent=False` kèm lý do (không ném lỗi).
+        Kênh chưa cấu hình, gửi lỗi hoặc gửi lại quá sớm (`limiter`) trả `sent=False` kèm lý do
+        (không ném lỗi). Chỉ lần gọi thật sự đến notifier mới được tính vào giới hạn.
         """
         alert = self._require(alert_id)
         notifier = notifiers.get(alert.channel)
@@ -176,6 +181,13 @@ class AlertService:
             return AlertTestResult(
                 sent=False, reason=f"Kênh {alert.channel.value} chưa được cấu hình trong .env"
             )
+        if limiter is not None:
+            wait = limiter.wait_seconds(alert_id)
+            if wait > 0:
+                return AlertTestResult(
+                    sent=False, reason=f"Vừa gửi thử cho cảnh báo này, thử lại sau {wait} giây"
+                )
+            limiter.record(alert_id)
         view = self._view(alert)
         try:
             notifier.send(
