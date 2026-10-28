@@ -16,11 +16,12 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 QUERIES_FILE: Final = Path(__file__).resolve().parents[2] / "docs" / "eval" / "queries.yaml"
 
-# Ngưỡng đạt (docs/05 §7). `hallucination` là số ca vi phạm (phải bằng 0).
+# Ngưỡng đạt (docs/05 §7). `hallucination` và `crashed_cases` là số ca vi phạm (phải bằng 0).
 THRESHOLDS: Final[Mapping[str, float]] = {
     "intent_accuracy": 0.90,
     "constraint_satisfaction": 0.95,
     "hallucination": 0,
+    "crashed_cases": 0,
     "clarification": 1.0,
     "tool_correctness": 0.90,
     "latency_p50_s": 15.0,
@@ -269,6 +270,7 @@ def compute_metrics(scores: Sequence[CaseScore]) -> list[Metric]:
         s.run.latency_s for s in scores if s.run.latency_s is not None and s.run.final_text
     ]
     bad = [s.case.id for s in scores if s.hallucinated]
+    crashed = [s.case.id for s in scores if s.run.crashed]
 
     intent = _ratio(fields_ok, fields_total)
     constraint = _ratio(satisfying, checked)
@@ -311,6 +313,15 @@ def compute_metrics(scores: Sequence[CaseScore]) -> list[Metric]:
             f"{sum(bool(s.tools_ok) for s in tools)}/{len(tools)} ca",
             None if tool is None else tool >= THRESHOLDS["tool_correctness"],
         ),
+        # Ca crash không có câu trả lời nên không vào chỉ số nào khác: nếu thiếu dòng này, eval mà
+        # mọi ca crash vẫn "đạt" vì không còn chỉ số nào đo được (BUG-M6-17).
+        Metric(
+            "crashed_cases",
+            "Ca lỗi ngoài dự kiến",
+            float(len(crashed)),
+            ", ".join(crashed) or "không có",
+            len(crashed) == 0,
+        ),
         Metric(
             "latency_p50_s",
             "Latency p50 (giây)",
@@ -333,7 +344,7 @@ def _mark(value: bool | None) -> str:
 def _format_metric(metric: Metric) -> str:
     if metric.value is None:
         return "–"
-    if metric.key == "hallucination":
+    if metric.key in {"hallucination", "crashed_cases"}:
         return str(int(metric.value))
     if metric.key == "latency_p50_s":
         return f"{metric.value:.1f}"
@@ -341,7 +352,7 @@ def _format_metric(metric: Metric) -> str:
 
 
 def _threshold_text(metric: Metric) -> str:
-    if metric.key == "hallucination":
+    if metric.key in {"hallucination", "crashed_cases"}:
         return "= 0"
     if metric.key == "latency_p50_s":
         return "≤ 15"

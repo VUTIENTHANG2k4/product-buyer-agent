@@ -22,12 +22,14 @@ from app.domain.catalog import (
     ShoppingListItemView,
     ShoppingListSummary,
 )
+from app.domain.dto import INT8_MAX
 from app.domain.errors import ListNotFound, ProductNotFound, ValidationFailed
 from app.services.views import Clock, aware_now, sellable, to_offer_view
 
 MAX_NAME_LENGTH = 100
 MAX_NOTE_LENGTH = 500
 DEFAULT_LIST_NAME = "Danh sách mua"
+MAX_LINE_TOTAL_VND = 10**12  # số lượng × đơn giá của một mục (cùng trần với số tiền agent nhận)
 
 
 def _visible(text: str) -> bool:
@@ -46,6 +48,15 @@ def _check_quantity(quantity: int) -> None:
     if not 1 <= quantity <= MAX_QUANTITY:
         raise ValidationFailed(
             f"Số lượng phải trong khoảng 1..{MAX_QUANTITY}", details={"quantity": quantity}
+        )
+
+
+def _check_line_total(quantity: int, price: int | None) -> None:
+    """Từ chối mục có `quantity × price` quá lớn: tổng danh sách sẽ vượt BIGINT (BUG-M6-16)."""
+    if price is not None and quantity * price > MAX_LINE_TOTAL_VND:
+        raise ValidationFailed(
+            f"Số lượng × giá của mục không được vượt {MAX_LINE_TOTAL_VND:,} ₫".replace(",", "."),
+            details={"quantity": quantity, "price": price},
         )
 
 
@@ -113,6 +124,13 @@ class ShoppingListService:
         )
         if existing is not None:
             _check_quantity(existing.quantity + quantity)
+        price = self._current_price(offers, preferred_offer_id)
+        if existing is None:
+            _check_line_total(quantity, price)
+        else:
+            # Offer ưu tiên cũ được giữ khi lần thêm này không chọn offer khác (coalesce ở repo).
+            kept = existing.preferred_offer_id if preferred_offer_id is None else preferred_offer_id
+            _check_line_total(existing.quantity + quantity, self._current_price(offers, kept))
         try:
             item = self._lists.add_item(
                 list_id,
@@ -120,7 +138,7 @@ class ShoppingListService:
                 quantity=quantity,
                 note=note,
                 preferred_offer_id=preferred_offer_id,
-                price_at_add=self._current_price(offers, preferred_offer_id),
+                price_at_add=price,
                 now=aware_now(self._now),
             )
         except ValueError as error:
@@ -145,6 +163,18 @@ class ShoppingListService:
         item = self._require_item(list_id, item_id)
         if quantity is not None:
             _check_quantity(quantity)
+        if quantity is not None or preferred_offer_id is not None or clear_preferred_offer:
+            offers = self._offers.list_for_products([item.product_id])[item.product_id]
+            if clear_preferred_offer:
+                preferred = None  # giá áp dụng sau khi xóa là offer rẻ nhất, không phải offer cũ
+            elif preferred_offer_id is not None:
+                preferred = preferred_offer_id
+            else:
+                preferred = item.preferred_offer_id
+            _check_line_total(
+                item.quantity if quantity is None else quantity,
+                self._current_price(offers, preferred),
+            )
         _check_note(note)
         try:
             updated = self._lists.update_item(
@@ -232,8 +262,9 @@ class ShoppingListService:
             list_id=shopping_list.id,
             name=shopping_list.name,
             item_count=len(views),
-            total_price=sum(
-                v.quantity * v.current_price for v in views if v.current_price is not None
+            total_price=min(
+                INT8_MAX,
+                sum(v.quantity * v.current_price for v in views if v.current_price is not None),
             ),
             updated_at=shopping_list.updated_at,
         )

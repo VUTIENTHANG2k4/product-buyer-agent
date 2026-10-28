@@ -1,9 +1,10 @@
 """Kiểu dữ liệu của agent: câu trả lời cuối và các sự kiện tiến trình (docs/05 §4, §6)."""
 
+import unicodedata
 from datetime import datetime
 from typing import Any, ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.domain.catalog import ProductRow
 from app.domain.dto import QueryIntent
@@ -36,6 +37,16 @@ class FinalAnswer(BaseModel):
     follow_up_suggestions: list[str] = Field(
         default_factory=list, description="At most 3 short follow-up actions."
     )
+
+    @field_validator("text")
+    @classmethod
+    def _text_not_blank(cls, value: str) -> str:
+        """Câu trả lời rỗng hoặc chỉ có khoảng trắng bị từ chối để LLM viết lại (BUG-M6-14)."""
+        if not any(
+            not ch.isspace() and ch != chr(0) and unicodedata.category(ch) != "Cf" for ch in value
+        ):
+            raise ValueError("text must not be blank")
+        return value
 
 
 def _without_nul(value: Any) -> Any:

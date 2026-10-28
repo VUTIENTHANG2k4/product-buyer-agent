@@ -113,6 +113,10 @@ class ScrapeService:
         """
         return await self._pipeline.reopen(run_id, answer, max_pages=max_pages)
 
+    async def cancel_challenge(self, run_id: int) -> None:
+        """Hủy lượt đang chờ đáp án captcha (T2.8); `RunNotFound`/`ChallengeNotPending`."""
+        await self._pipeline.cancel_paused(run_id)
+
     def challenge_of(self, run_id: int) -> ChallengeView:
         """Challenge của lượt đang chờ người nhập đáp án (không có `token`).
 

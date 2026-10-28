@@ -29,6 +29,8 @@ export interface FakeAdmin {
   challenge: Schemas['ChallengeView'] | ApiFailure
   /** Quyết định kết quả của `POST .../challenge` theo đáp án. */
   answer: (answer: string) => ApiFailure | null
+  /** Gán thì `DELETE .../challenge` trả lỗi này; mặc định 204 và lượt chuyển sang FAILED. */
+  cancelFailure: ApiFailure | null
 }
 
 const failure = (f: ApiFailure) =>
@@ -51,6 +53,7 @@ export function installFakeAdmin(initial: Partial<Pick<FakeAdmin, 'sources' | 'r
     startFailure: null,
     challenge: { kind: 'captcha', prompt: 'AB12C', image_url: null },
     answer: () => null,
+    cancelFailure: null,
   }
   let nextRunId = Math.max(0, ...fake.runs.map((run) => run.run_id)) + 1
 
@@ -111,6 +114,13 @@ export function installFakeAdmin(initial: Partial<Pick<FakeAdmin, 'sources' | 'r
       const run = fake.runs.find((candidate) => candidate.run_id === Number(params.id))
       if (run) Object.assign(run, { status: 'RUNNING', challenge_kind: null })
       return HttpResponse.json({ status: 'RUNNING' })
+    }),
+    http.delete(apiUrl('admin/scrape-runs/:id/challenge'), ({ params }) => {
+      fake.writes.push(`DELETE admin/scrape-runs/${String(params.id)}/challenge`)
+      if (fake.cancelFailure) return failure(fake.cancelFailure)
+      const run = fake.runs.find((candidate) => candidate.run_id === Number(params.id))
+      if (run) Object.assign(run, { status: 'FAILED', challenge_kind: null })
+      return new HttpResponse(null, { status: 204 })
     }),
   )
   return fake

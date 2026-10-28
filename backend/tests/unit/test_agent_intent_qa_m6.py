@@ -97,11 +97,7 @@ def test_a_price_next_to_a_measurement_is_still_found() -> None:
     assert extract_amounts("pin 5000 mah giá dưới 10.000.000") == {10_000_000}
 
 
-# ---- thiếu sót ghi nhận (xfail) ----
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M6-11: 'RTX 4060 trở xuống' bị đổi thành gpu_rank >= hạng(RTX 4060) (ngược chiều)",
-)
+# ---- BUG-M6-11, 12 (T6.10) ----
 @pytest.mark.parametrize(
     "message", ["laptop gaming RTX 4060 trở xuống", "laptop card rtx 4070 tối đa"]
 )
@@ -110,10 +106,6 @@ def test_gpu_upper_bound_wording_does_not_become_a_lower_bound(message: str) -> 
     assert not any(spec.op == "gte" and spec.field == "gpu_rank" for spec in result.spec_filters)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M6-12: số tiền viết cách nghìn bằng dấu cách ('27 990 000') không được nhận ra",
-)
 def test_space_grouped_thousands_are_read_as_money() -> None:
     assert extract_amounts("laptop dưới 30 000 000 đồng") == {30_000_000}
 
@@ -146,3 +138,79 @@ def test_bool_spec_filter_values_survive_postprocess() -> None:
     flag = SpecFilter(field="is_gaming", op="eq", value=True)
     result = postprocess_intent(intent(category="laptop", spec_filters=[flag]), "laptop gaming")
     assert result.spec_filters == [flag]
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "laptop gaming RTX 4060 trở lên",
+        "laptop rtx 4060 trở lên dưới 30 triệu",
+        "laptop RTX 4060, tối đa 30 triệu",  # "tối đa" nói về giá, cách card một dấu phẩy
+    ],
+)
+def test_gpu_lower_bound_wording_and_price_caps_keep_gte(message: str) -> None:
+    result = postprocess_intent(intent(category="laptop"), message)
+    gpu = [spec for spec in result.spec_filters if spec.field == "gpu_rank"]
+    assert [(spec.op, spec.value) for spec in gpu] == [("gte", 40)]
+
+
+@pytest.mark.parametrize(
+    "message",
+    ["laptop gaming RTX 4060 trở xuống", "laptop card rtx 4060 tối đa", "tối đa rtx 4060"],
+)
+def test_gpu_upper_bound_becomes_an_lte_filter(message: str) -> None:
+    result = postprocess_intent(intent(category="laptop"), message)
+    gpu = [spec for spec in result.spec_filters if spec.field == "gpu_rank"]
+    assert [(spec.op, spec.value) for spec in gpu] == [("lte", 40)]
+
+
+def test_an_llm_gpu_filter_in_the_wrong_direction_is_flipped_for_upper_bound_wording() -> None:
+    raw = {"field": "gpu_model", "op": "eq", "value": "RTX 4060"}
+    result = postprocess_intent(
+        intent(category="laptop", spec_filters=[raw]), "laptop RTX 4060 trở xuống"
+    )
+    assert [(s.op, s.value) for s in result.spec_filters] == [("lte", 40)]
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("laptop dưới 27 990 000", {27_990_000}),
+        ("laptop dưới 27 990 000 đ", {27_990_000}),
+        ("từ 15 000 000 đến 30 000 000 đồng", {15_000_000, 30_000_000}),
+        ("giá 1 500 000 vnd", {1_500_000}),
+        ("27 990 000", {27_990_000}),
+    ],
+)
+def test_space_grouped_amounts_are_read(message: str, expected: set[int]) -> None:
+    assert extract_amounts(message) == expected
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "laptop RAM 16 GB SSD 512 GB",
+        "laptop 16 512 GB",
+        "chuột 16 000 dpi",  # số đo, có đơn vị
+        "laptop 144 240 Hz",
+        "laptop i7 13 700 H",
+    ],
+)
+def test_space_separated_measures_are_not_money(message: str) -> None:
+    assert extract_amounts(message) == set()
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "laptop RTX 4060 giá tối đa 30 triệu",
+        "laptop RTX 4060 trở lên tối đa 30 triệu",
+        "laptop gaming RTX 4060 16GB RAM tối đa 25 triệu",
+        "laptop rtx 4070 không quá 40 triệu",
+        "laptop RTX 4070 thấp hơn 35 triệu",
+    ],
+)
+def test_a_price_cap_near_the_card_name_does_not_flip_the_gpu_bound(message: str) -> None:
+    result = postprocess_intent(intent(category="laptop"), message)
+    gpu = [spec for spec in result.spec_filters if spec.field == "gpu_rank"]
+    assert [spec.op for spec in gpu] == ["gte"]

@@ -5,7 +5,7 @@ from typing import Any
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel
 
-from app.agent.executor import TOOL_CALL_CAPS
+from app.agent.executor import FINAL_TOOL, TOOL_CALL_CAPS
 from app.agent.testing import tool_call_message
 from tests.agent.test_executor_qa_m6 import Fake, drive, final, several
 
@@ -124,3 +124,14 @@ async def test_two_tool_errors_end_the_loop_as_tool_failures_not_as_a_cap_error(
     assert run.error_codes() == ["X", "X"]
     assert run.outcome.calls_by_tool == {LIVE: 2}
     assert run.outcome.stop_reason == "tool_failures"
+
+
+async def test_a_blank_final_answer_is_sent_back_and_the_next_one_is_used() -> None:
+    """T6.11: `FinalAnswer.text` rỗng bị từ chối, LLM nhận VALIDATION_ERROR rồi viết lại."""
+    blank = tool_call_message(FINAL_TOOL, {"text": "  " + chr(10)}, "f0")
+
+    run = await drive([blank, final("Đã tìm xong.", "f1")], [])
+
+    assert run.error_codes() == ["VALIDATION_ERROR"]
+    assert run.outcome.stop_reason == "final"
+    assert run.outcome.answer is not None and run.outcome.answer.text == "Đã tìm xong."

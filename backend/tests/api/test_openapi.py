@@ -39,6 +39,7 @@ DOCUMENTED = {
     ("post", "/api/admin/scrape-runs"),
     ("get", "/api/admin/scrape-runs/{run_id}/challenge"),
     ("post", "/api/admin/scrape-runs/{run_id}/challenge"),
+    ("delete", "/api/admin/scrape-runs/{run_id}/challenge"),
 }
 
 

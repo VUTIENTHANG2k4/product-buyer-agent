@@ -128,6 +128,19 @@ export function useAnswerChallenge(runId: number) {
   })
 }
 
+/** Hủy lượt đang chờ đáp án (204); 409 `CHALLENGE_NOT_PENDING` nếu lượt không còn chờ. */
+export function useCancelChallenge(runId: number) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiFetch<void>(`admin/scrape-runs/${runId}/challenge`, { method: 'DELETE' }),
+    onSettled: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: queryKeys.admin.sources }),
+        client.invalidateQueries({ queryKey: queryKeys.admin.runsAll }),
+      ]),
+  })
+}
+
 /** Làm mới nguồn và bảng lượt chạy (sau khi một lượt đổi trạng thái ở máy chủ). */
 export function useRefreshAdmin() {
   const client = useQueryClient()

@@ -285,21 +285,10 @@ def test_brand_detection_handles_tags_whitespace_case_and_lookalikes(
         ("🔥 Laptop ASUS Vivobook 15", "ASUS"),
     ],
 )
-@bug(
-    "BUG-M5-1",
-    "detect_brand chỉ bỏ các tiền tố trong danh sách cố định (brand.py:51 `_PREFIX`); mô tả loại "
-    "thường gặp khác ('có dây', 'quang', 'văn phòng', 'chụp tai', 'máy tính xách tay', ký hiệu "
-    "đầu dòng) làm hãng thành Unknown; Unknown không bao giờ ghép mờ và không lọc theo hãng được",
-)
 def test_brand_is_found_after_common_product_descriptors(title: str, brand: str) -> None:
     assert detect_brand(title) == brand
 
 
-@bug(
-    "BUG-M5-1",
-    "cùng gốc với hãng Unknown: names._PREFIX_WORDS thiếu 'chụp tai', 'văn phòng'… nên tên chuẩn "
-    "hiển thị cho người dùng bắt đầu bằng mô tả loại thay vì tên hãng",
-)
 def test_canonical_name_starts_at_the_brand_not_at_a_descriptor() -> None:
     assert canonical_name("Tai nghe chụp tai Sony WH-CH520", HEADSET) == "Sony WH-CH520"
     assert (
@@ -377,20 +366,10 @@ def test_hyphenated_cpu_or_memory_tokens_outside_parentheses_are_not_model_codes
         "[Giảm 10%/ Tặng chuột] Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB)",
     ],
 )
-@bug(
-    "BUG-M5-5",
-    "nhãn khuyến mãi ở đầu tên laptop chứa '(' hoặc '/' cắt `_SPEC_BLOCK` (model_code.py:18) trước "
-    "khi tới mã nên mất model_code (brand.py và names.py đã bỏ nhãn đầu tên, model_code.py chưa)",
-)
 def test_leading_promo_tag_does_not_hide_the_laptop_model_code(title: str) -> None:
     assert extract_model_code(LAPTOP, title) == "AL15-53P-56QH"
 
 
-@bug(
-    "BUG-M5-5",
-    "canonical_name của laptop không bỏ nhãn khuyến mãi đầu tên (names.py:218 dùng "
-    "laptop_code_span trên tiêu đề còn nhãn) nên tên hiển thị thành 'Mới 100% Laptop Acer …'",
-)
 def test_laptop_canonical_name_drops_the_leading_promo_tag_and_the_type_word() -> None:
     title = "[Mới 100%] Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB)"
 
@@ -418,11 +397,6 @@ def test_control_characters_are_removed_from_names_and_codes(title: str) -> None
     "colour",
     ["Đỏ", "Xanh dương", "Xanh lá", "Màu đỏ"],
 )
-@bug(
-    "BUG-M5-4",
-    "names._COLORS thiếu 'đỏ' (fold: 'do') và chỉ có 'xanh' nên 'dương'/'lá' còn sót lại trong "
-    "khóa tên: cùng mẫu khác màu không ghép được, thành nhiều Product trùng",
-)
 def test_vietnamese_colours_are_not_part_of_the_name_key(colour: str) -> None:
     assert name_key(f"Chuột Pulsar X2 {colour}", "Pulsar") == name_key(
         "Chuột Pulsar X2 Đen", "Pulsar"
@@ -447,33 +421,18 @@ def test_known_colours_are_not_part_of_the_name_key(colour: str) -> None:
         (MOUSE, "Chuột không dây Logitech M221 (không Bluetooth)", "connection", ["wireless_2_4"]),
     ],
 )
-@bug(
-    "BUG-M5-9",
-    "phủ định ('không có mic', 'không ANC', 'không có dây', 'không Bluetooth') bị đọc như khẳng "
-    "định (headset.py:37/35, parsing.py:130/131): lọc 'tai nghe có mic/chống ồn' trả sai sản phẩm",
-)
 def test_negated_features_are_not_reported_as_present(
     category: Category, title: str, field: str, expected: Any
 ) -> None:
     assert extract_specs(category, title, {}).specs.get(field) == expected
 
 
-@bug(
-    "BUG-M5-10",
-    "mouse.py:60 chỉ lấy khớp đầu tiên của `parse_grams` trên mỗi chuỗi: '2.4G' (đọc thành 2 g, "
-    "ngoài khoảng 20–300) che mất '99g' đứng sau nên weight_g bị mất",
-)
 def test_weight_after_a_2_4g_marker_in_the_title_is_still_read() -> None:
     specs = extract_specs(MOUSE, "Chuột không dây 2.4G Logitech M185 99g", {}).specs
 
     assert specs.get("weight_g") == 99
 
 
-@bug(
-    "BUG-M5-10",
-    "mouse.py:65 `re.search(r'\\d{1,2}')` cắt số nhiều chữ số ('99999' thành 99): giá trị rác "
-    "được lưu như số nút thật",
-)
 def test_button_count_with_more_than_two_digits_is_not_truncated() -> None:
     assert "buttons" not in extract_specs(MOUSE, "Chuột X", {"Số nút": "99999"}).specs
 
@@ -541,11 +500,132 @@ def test_known_promo_words_after_the_name_do_not_change_the_name_key(suffix: str
         "| GearVN",
     ],
 )
-@bug(
-    "BUG-M5-13",
-    "chỉ nhãn khuyến mãi ĐẦU tên được bỏ (names._LEADING_TAGS) và vài từ trong _NOISE; nhãn cuối "
-    "tên ('Mới 100%' để lại token '100%', '[Hot]', 'Bảo hành 24 tháng', 'Fullbox', '| GearVN') "
-    "nằm lại trong khóa tên nên cùng một mẫu thành hai Product (trùng lặp, không ghép sai)",
-)
 def test_trailing_marketing_text_does_not_change_the_name_key(suffix: str) -> None:
     assert name_key(canonical_name(f"Chuột Pulsar X2 Black {suffix}", MOUSE), "Pulsar") == ("x2",)
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Bàn phím cho MacBook",  # từ nối: hãng đứng sau là sản phẩm khác
+        "Chuột cho laptop Dell",
+        "Ốp lưng iPhone 15",  # không bắt đầu bằng từ loại sản phẩm
+        "Túi chống sốc Laptop Dell 15",
+        "Tai nghe " + "x " * 20 + "Sony",  # hãng quá xa đầu tên
+        "Chuột Fantech tương thích Logitech",
+    ],
+)
+def test_brand_is_not_taken_from_accessories_or_far_away_words(title: str) -> None:
+    assert detect_brand(title) == "Unknown"
+
+
+@pytest.mark.parametrize(
+    ("title", "brand"),
+    [
+        ("Dell Inspiron 15 3520", "Dell"),  # hãng ngay đầu tên vẫn khớp như trước
+        ("[Mới 100%] Chuột không dây Logitech M331", "Logitech"),
+        ("Combo bàn phím và chuột không dây Logitech MK270", "Logitech"),
+        ("Chuột Gaming Razer DeathAdder V3", "Razer"),
+        ("TAI NGHE CHỤP TAI SONY WH-CH520", "Sony"),
+    ],
+)
+def test_brand_after_descriptors_in_other_wordings(title: str, brand: str) -> None:
+    assert detect_brand(title) == brand
+
+
+# ---- T5.6: các biên của luật vệ sinh khóa tên ----
+def test_long_part_codes_in_parentheses_are_still_dropped_but_short_model_names_are_kept() -> None:
+    assert name_key("Chuột Predator Cestus 330 (PMW920)", "Acer") == ("predator", "cestus", "330")
+    assert "g304" in name_key("Chuột Logitech Lightspeed (G304)", "Logitech")
+
+
+def test_full_size_keyboard_layout_is_not_mistaken_for_the_new_condition_label() -> None:
+    layout = name_key("Bàn phím Keychron K2 100%", "Keychron")
+    sold_new = name_key("Bàn phím Keychron K2 Mới 100%", "Keychron")
+
+    assert "100%" in layout and "100%" not in sold_new
+    assert sold_new == ("k2",)
+
+
+def test_other_bracket_groups_and_blue_without_a_following_colour_word_are_kept() -> None:
+    assert name_key("Chuột Pulsar X2 [Wireless Edition]", "Pulsar") == ("x2", "wireless", "edition")
+    assert name_key("Chuột Pulsar X2 La Mã", "Pulsar") == ("x2", "la", "ma")  # "La" không sau xanh
+    assert name_key("Chuột Pulsar X2 Xanh Lá", "Pulsar") == ("x2",)  # "lá" sau xanh là màu
+
+
+def test_marketing_labels_do_not_change_the_display_name_either() -> None:
+    assert canonical_name("Chuột Pulsar X2 (Mới 100%) | GearVN", MOUSE) == "Pulsar X2"
+
+
+# ---- T5.7: phủ định và số đo, các biên ----
+@pytest.mark.parametrize(
+    ("category", "title", "field", "expected"),
+    [
+        (HEADSET, "Tai nghe Sony WH-CH520 có mic", "has_mic", True),
+        (HEADSET, "Tai nghe Sony WH-CH520 kèm mic", "has_mic", True),
+        (HEADSET, "Tai nghe Sony WH-CH520 chống ồn chủ động ANC", "anc", True),
+        (HEADSET, "Tai nghe Sony WH-CH520 ANC, không mic", "anc", True),
+        (HEADSET, "Tai nghe Sony WH-CH520 no ANC", "anc", None),
+        (HEADSET, "Tai nghe Sony WH-CH520 without mic", "has_mic", None),
+        (MOUSE, "Chuột Logitech M331 không dây", "connection", ["wireless_2_4"]),
+        (MOUSE, "Chuột Logitech M331 có dây", "connection", ["wired"]),
+        (
+            MOUSE,
+            "Chuột Logitech M331 Bluetooth + 2.4G",
+            "connection",
+            ["wireless_2_4", "bluetooth"],
+        ),
+        (MOUSE, "Chuột Logitech M331 2.4G (không Bluetooth)", "connection", ["wireless_2_4"]),
+    ],
+)
+def test_negation_only_removes_the_feature_it_precedes(
+    category: Category, title: str, field: str, expected: Any
+) -> None:
+    assert extract_specs(category, title, {}).specs.get(field) == expected
+
+
+@pytest.mark.parametrize(
+    ("title", "weight"),
+    [
+        ("Chuột Logitech M185 99g", 99),
+        ("Chuột Logitech M185 2.4G 99g", 99),
+        ("Chuột 2.4G Logitech M185 0.1kg", 100),
+        ("Chuột Logitech M185 2.4G", None),  # chỉ có "2.4G" (2 g): ngoài 20–300 g
+        ("Chuột Logitech M185 5000g", None),
+    ],
+)
+def test_mouse_weight_reads_every_gram_value_and_keeps_only_a_plausible_one(
+    title: str, weight: int | None
+) -> None:
+    assert extract_specs(MOUSE, title, {}).specs.get("weight_g") == weight
+
+
+@pytest.mark.parametrize(("value", "buttons"), [("6", 6), ("99", 99), ("6 nút", 6), ("100", None)])
+def test_button_count_is_kept_only_between_1_and_99(value: str, buttons: int | None) -> None:
+    assert extract_specs(MOUSE, "Chuột X", {"Số nút": value}).specs.get("buttons") == buttons
+
+
+def test_keyboard_layout_in_parentheses_is_not_a_marketing_label() -> None:
+    k75 = name_key("Bàn phím Keychron K2 (75%)", "Keychron")
+    k100 = name_key("Bàn phím Keychron K2 (100%)", "Keychron")
+
+    assert "75%" in k75 and "100%" in k100 and k75 != k100
+
+
+@pytest.mark.parametrize(
+    "title",
+    ["Bộ sạc laptop Dell 65W", "Bộ pin laptop Dell Latitude", "Bộ cáp chuyển Dell DA200"],
+)
+def test_accessories_after_a_type_word_do_not_take_the_laptop_brand(title: str) -> None:
+    assert detect_brand(title) == "Unknown"
+
+
+def test_a_name_that_is_only_the_brand_never_merges_without_a_model_code() -> None:
+    from app.normalize.matcher import Candidate, decide_match
+
+    assert name_key("Chuột Gaming Dell", "Dell") == ()
+    candidates = [Candidate(1, "Dell", None, {})]
+
+    decision = decide_match(MOUSE, "Dell", None, "Chuột Gaming Dell", {}, candidates)
+
+    assert decision.product_id is None

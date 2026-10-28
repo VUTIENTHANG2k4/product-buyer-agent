@@ -356,10 +356,12 @@ def test_unknown_ids_with_valid_live_items_still_count_as_hallucination() -> Non
     assert len(verdict.answer.live_items) == 1
 
 
-@pytest.mark.xfail(
-    strict=True, reason="BUG-M6-14: FinalAnswer.text rỗng/khoảng trắng được chấp nhận"
-)
 @pytest.mark.parametrize("text", ["", "   \n"])
 def test_final_answer_text_cannot_be_blank(text: str) -> None:
     with pytest.raises(ValidationError):
         FinalAnswer(text=text, product_ids=[1])
+
+
+def test_final_answer_text_made_only_of_nul_characters_is_blank() -> None:
+    with pytest.raises(ValidationError):
+        FinalAnswer(text=chr(0) * 3, product_ids=[1])

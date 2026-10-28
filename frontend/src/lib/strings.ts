@@ -336,6 +336,7 @@ export const strings = {
     next: 'Trang sau',
     notPendingNotice: 'Lượt chạy này không còn chờ đáp án (đã được xử lý hoặc đã hết hạn).',
     answeredNotice: 'Đã gửi đáp án, lượt chạy tiếp tục ở nền.',
+    cancelledNotice: 'Đã hủy lượt đang chờ đáp án; có thể chạy lượt mới ngay.',
     challenge: {
       title: 'Nhập đáp án challenge',
       description: (runId: number) =>
@@ -354,6 +355,9 @@ export const strings = {
       invalidAnswer: 'Hãy nhập đáp án (1–200 ký tự).',
       submit: 'Gửi đáp án',
       submitting: 'Đang gửi…',
+      later: 'Để sau',
+      cancelRun: 'Hủy lượt',
+      cancellingRun: 'Đang hủy…',
     },
   },
   product: {

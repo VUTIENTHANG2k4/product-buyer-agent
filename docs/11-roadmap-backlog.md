@@ -182,7 +182,7 @@ Xong khi:
 | T2.5 | Chuẩn hóa cơ bản: giá, URL, hãng | T1.1 | S | ✅ |
 | T2.6 | Pipeline + `scrape_service` + vòng đời ScrapeRun + HITL + `make scrape` | T1.4, T2.1, T2.4, T2.5 | L | ✅ |
 | T2.7 | Củng cố Fetcher/mock-shop sau review M2 (phát sinh từ T2.6) | T2.6 | S | ✅ |
-| T2.8 | Hủy/lấy lại token cho lượt `NEEDS_HUMAN` (tách từ T2.7g; làm cùng T7.4) | T2.7, T7.4 | S | ⬜ |
+| T2.8 | Hủy/lấy lại token cho lượt `NEEDS_HUMAN` (tách từ T2.7g; làm cùng T7.4) | T2.7, T7.4 | S | ✅ |
 
 **T2.1** — [06 §3](06-scraping-design.md#3-fetcher). Xong khi: test với `respx`: URL bị robots chặn không gửi request; độ trễ thực tế ≥ cấu hình (đồng hồ giả); 2 domain chạy song song không chờ nhau; retry 5xx với backoff; 403 không retry; 429 tôn trọng `Retry-After`; offline mode chặn domain thật; robots.txt không tải được → không cho phép; mock-shop dùng `MOCK_SHOP_DELAY_SECONDS`, không jitter; theo hợp đồng `PageFetcher` ([06 §4](06-scraping-design.md#4-phát-hiện-challenge-và-chặn)): trả response cho 403/429, ném lỗi cho mọi 4xx/5xx khác và cho chuyển hướng ra ngoài domain hoặc tới URL robots chặn. `scripts/fetch_page.py --site --url --out [--allow-online]` lưu một trang qua Fetcher ([06 §8](06-scraping-design.md#8-fixtures)). **Việc dồn từ QA M0 lần hai (lỗi 3–5, Fetcher là nơi chúng có tác động thật):** (a) vá thêm `socket.socket.sendto` và `BaseProactorEventLoop.sock_sendto` trong `backend/tests/conftest.py` cùng `gethostbyaddr`/`getnameinfo`/`getfqdn`, rồi gỡ `xfail` của `test_udp_sendto_to_a_disallowed_address_is_blocked`, `test_asyncio_udp_sock_sendto_to_a_disallowed_address_is_blocked` và `test_hostname_lookup_through_gethostbyaddr_or_getfqdn_is_blocked` trong `test_network_guard_m0b.py`; (b) `SCRAPER_USER_AGENT` từ chối ký tự điều khiển (NUL, BEL, DEL, CR/LF) và chuỗi chỉ gồm ký tự độ rộng 0 (U+200B) ngay lúc khởi động, rồi gỡ `xfail` của `test_user_agent_with_control_or_invisible_only_content_is_rejected_at_startup` trong `test_config_m0b.py` (h11 hiện chỉ báo `LocalProtocolError` ở request đầu tiên).
 **T2.2** — [06 §2, §4](06-scraping-design.md#2-giao-diện-basescraper). Xong khi: lớp trừu tượng và registry; `ChallengeDetector` có test cho từng dấu hiệu (403, 429, từ khóa captcha, soft block).
@@ -243,14 +243,16 @@ Xong khi:
 | T5.2 | Trích `model_code` + matcher + golden pairs | T5.1 | M | ✅ |
 | T5.3 | LLM dự phòng + cache (hoãn sang lượt M6, người dùng đồng ý 2026-10-20) | T5.1, T6.1 | M | ✅ |
 | T5.4 | Ghép lại offer đã có (script rematch) + hạn chế từ review M5 | T5.2 | M | ⬜ |
-| T5.5 | Nhận hãng sau mô tả loại ("Chuột có dây Dell…", "Hàng chính hãng Chuột Logitech…") và tên chuẩn bắt đầu từ hãng (QA M5 BUG-M5-1) | T5.2 | S | ⬜ |
-| T5.6 | Vệ sinh khóa tên: tên mẫu trong ngoặc "(G304)" không bị coi là mã phụ tùng, màu "Đỏ/Xanh dương/Xanh lá", nhãn "(Mới 100%)/[Hot]/(Bảo hành…)", nhãn khuyến mãi đầu tên che mã laptop (BUG-M5-3, 4, 5, 13) | T5.2 | M | ⬜ |
-| T5.7 | Phủ định và số đo: "không có mic/ANC/không có dây", cân nặng sau "2.4G", số nút > 99 (BUG-M5-9, 10) | T5.1 | S | ⬜ |
+| T5.5 | Nhận hãng sau mô tả loại ("Chuột có dây Dell…", "Hàng chính hãng Chuột Logitech…") và tên chuẩn bắt đầu từ hãng (QA M5 BUG-M5-1) | T5.2 | S | ✅ |
+| T5.6 | Vệ sinh khóa tên: tên mẫu trong ngoặc "(G304)" không bị coi là mã phụ tùng, màu "Đỏ/Xanh dương/Xanh lá", nhãn "(Mới 100%)/[Hot]/(Bảo hành…)", nhãn khuyến mãi đầu tên che mã laptop (BUG-M5-3, 4, 5, 13) | T5.2 | M | ✅ |
+| T5.7 | Phủ định và số đo: "không có mic/ANC/không có dây", cân nặng sau "2.4G", số nút > 99 (BUG-M5-9, 10) | T5.1 | S | ✅ |
+| T5.8 | Khóa tên và hãng: token chỉ có dấu câu, "Laptop: Dell", switch + màu vỏ, mã trong ngoặc ≥ 6 ký tự, cắt tiêu đề dài trước `fold`, gia tốc "50G" (BUG-S1-3, 4, 5, 6, 7, 13) | T5.6 | S | ⬜ |
 
 **T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
 **T5.2** — Từ T3.4: matcher cũng phải xử lý cùng sản phẩm có `href` http và https (hai khóa URL khác nhau) và cùng URL ở hai nhóm. Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
 **T5.4** — Từ review M5 (không chặn): script ghép lại/tách offer khi `detect_brand` hoặc luật ghép đổi (offer đã có hiện không bao giờ được xét lại); ưu tiên nguồn khi thông số mâu thuẫn (`raw_specs` thắng tiêu đề thay vì "cũ thắng"); `merge` cập nhật `image_url`; bỏ `model_code_hint` ở phụ kiện nếu nguồn có MPN theo màu; `switch_name` bàn phím đọc sai khi có "Pro/V3/hotswap" trước chữ "switch"; "Dòng CPU: Intel Core i5" chưa nên tính là đủ `cpu_model`; nhãn thông số mâu thuẫn tiêu đề (GPU rời vs tích hợp) nên để trống và vào `missing`; `list_by_brand` + `name_key` tính lại cho từng ứng viên (O(n²) khi nạp lần đầu hàng nghìn offer, nên cache `name_key`); alias Logitech `g pro → pro`; `golden` thêm recall riêng và phủ `dpi_max/form_factor/switch_name/screen_in`.
 **T5.5–T5.7** — Từ QA M5; mỗi lỗi có test `xfail(strict=True)` mã `BUG-M5-n` trong `tests/unit/test_normalize_qa_m5.py` (gỡ dấu xfail khi sửa). BUG-M5-14 (`Product.image_url` không bao giờ được bù từ offer sau) gộp vào T5.4. Đã sửa ngay trong M5: BUG-M5-2, 6, 7, 8, 11, 12.
+**T5.8** — Từ QA lượt "việc nhỏ 1"; mỗi lỗi có test `xfail(strict=True)` mã `BUG-S1-n` trong `tests/unit/test_normalize_names_qa_small1.py` (gỡ dấu khi sửa). Đã sửa ngay: BUG-S1-1, 2, 8, 9, 10, 11, 12, 14, 15, 16, 17.
 **T5.3** — Phụ thuộc T6.1 nằm ở M6 nhưng T6.1 chỉ cần T0.1, nên khi lập lượt M5 cần làm T6.1 trước hoặc hoãn T5.3 sang lượt M6. Bật/tắt bằng `LLM_EXTRACTOR_ENABLED`. Xong khi: chỉ gọi khi thiếu trường bắt buộc; kết quả validate bằng khung specs; cache theo hash; test với model giả; ghi số lần gọi vào log.
 
 ### M6 — Agent
@@ -266,10 +268,10 @@ Xong khi:
 | T6.7 | Chỉnh prompt/seed sau eval cơ sở (phát sinh từ T6.6) | T6.6 | S | ⬜ |
 | T6.8 | Guardrail: chặn câu phủ định mở khóa tool ghi (BUG-M6-13) | T6.5 | S | ✅ |
 | T6.9 | `create_price_alert` kiểm `target_price` sai thang + trần số lần gọi tool ghi mỗi lượt (BUG-M6-15) | T6.5 | S | ✅ |
-| T6.10 | Hậu xử lý: GPU "trở xuống" và số tiền cách nghìn bằng dấu cách (BUG-M6-11, 12) | T6.3 | S | ⬜ |
-| T6.11 | `FinalAnswer.text` không rỗng, chạy lại eval (BUG-M6-14) | T6.5 | S | ⬜ |
-| T6.12 | Trần `quantity` / `total_price` danh sách mua (BUG-M6-16) | T6.2 | S | ⬜ |
-| T6.13 | Mã thoát `run_eval` khi mọi ca crash (BUG-M6-17) | T6.6 | S | ⬜ |
+| T6.10 | Hậu xử lý: GPU "trở xuống" và số tiền cách nghìn bằng dấu cách (BUG-M6-11, 12) | T6.3 | S | ✅ |
+| T6.11 | `FinalAnswer.text` không rỗng, chạy lại eval (BUG-M6-14) | T6.5 | S | ✅ |
+| T6.12 | Trần `quantity` / `total_price` danh sách mua (BUG-M6-16) | T6.2 | S | ✅ |
+| T6.13 | Mã thoát `run_eval` khi mọi ca crash (BUG-M6-17) | T6.6 | S | ✅ |
 
 **T6.1** — [05 §2](05-agent-design.md#2-mô-hình-và-cấu-hình). Xong khi: `get_chat_model(role)` cho gemini/openai/fake; tra Context7 cho API LangChain hiện hành và ghi phiên bản; `ScriptedChatModel` phát chuỗi tool call định sẵn.
 **T6.2** — Xong khi: `catalog_service.search(QueryIntent-like filters)` lọc đúng theo specs JSON và giá hiệu lực (§4 `effective_price` ở 04); `stale` khi dữ liệu > 24 giờ; test với seed. Từ review T1.4: service kiểm `quantity ≥ 1` và đổi lỗi ràng buộc thành lỗi miền; `ProductRepository.search` đã có lọc giá/trang/specs, service chỉ ánh xạ `relevance`/từ khóa và `stale`. **Việc dồn từ QA M1 (cần quyết định thiết kế, xfail ở `*_m1.py`):** (a) chuẩn hóa `strip`+`lower` cho `destination` email khi tạo/tìm cảnh báo (`find_live` đang coi `Mock@Example.com` và `mock@example.com ` là hai người nhận, gửi trùng; test `test_find_live_treats_email_variants_of_one_mailbox_as_the_same_destination`); (b) kiểm `preferred_offer_id` thuộc đúng `product_id` (`test_add_item_rejects_preferred_offer_of_another_product`); (c) chuẩn hóa tên danh sách về NFC (`test_get_by_name_matches_vietnamese_name_in_either_unicode_form`); (d) quyết định xử lý offer hết hàng trong `search` (hiện vẫn tính vào `min_price`/`offers_count`); (e) bọc đầu vào repository: `limit < 0`, `quantity` > int32, `now` naive; `update_item` chưa xóa được `note`.

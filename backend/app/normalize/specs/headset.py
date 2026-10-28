@@ -6,7 +6,14 @@ from typing import Final
 
 from pydantic import BaseModel
 
-from app.normalize.specs.parsing import build_specs, clean, label_values, read_connectivity
+from app.normalize.specs.parsing import (
+    affirmed,
+    build_specs,
+    clean,
+    label_values,
+    negated_label,
+    read_connectivity,
+)
 from app.normalize.specs.types import HeadsetConnection, HeadsetForm, PositiveInt
 from app.normalize.text import fold
 
@@ -76,11 +83,11 @@ def _connection(text: str, form: HeadsetForm | None) -> list[HeadsetConnection] 
 
 
 def _has_mic(folded_title: str, raw_specs: Mapping[str, str]) -> bool | None:
-    if _TITLE_MIC.search(folded_title):
+    if affirmed(_TITLE_MIC, folded_title):
         return True
     for value in label_values(raw_specs, _MIC_LABELS):
         lowered = fold(value)
-        return not lowered.startswith(("khong", "no")) and lowered not in {"none", "n/a"}
+        return not negated_label(lowered) and lowered not in {"none", "n/a"}
     return None
 
 
@@ -110,7 +117,7 @@ def extract_headset(title: str, raw_specs: Mapping[str, str]) -> HeadsetSpecs:
             "form": form,
             "connection": _connection(" ".join([title, *labelled]), form),
             "has_mic": _has_mic(folded, raw_specs),
-            "anc": True if _ANC.search(folded) else None,
+            "anc": True if affirmed(_ANC, folded) else None,
             "surround_7_1": True if _SURROUND.search(folded) else None,
             "driver_mm": _driver_mm(folded, raw_specs),
         },

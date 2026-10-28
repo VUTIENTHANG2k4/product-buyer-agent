@@ -51,7 +51,7 @@ _UNIT_FACTOR: Final = {
     "ngan": 1_000,
 }
 _AMOUNT = re.compile(
-    r"(?<![\w.,])(?P<num>(?>\d{1,3}(?:[.,]\d{3})+|\d+(?:[.,]\d+)?))"
+    r"(?<![\w.,])(?P<num>(?>\d{1,3}(?:[.,]\d{3})+|\d{1,3}(?: \d{3}){2,}|\d+(?:[.,]\d+)?))"
     r"\s*(?P<unit>trieu|tr|m|cu|k|nghin|ngan)?(?:(?<=[a-z])(?P<tail>\d)(?!\d))?"
     r"(?P<cur>\s*(?:vnd|dong|d))?(?![\w])"
 )
@@ -61,6 +61,8 @@ _RANGE = re.compile(r"(?<![a-z\d.])\d+\s*(?:trieu|tr|m|k)?\s*(?:den|toi|->|-|~)\
 # "ID 118687" không phải giá.
 _MIN_PLAIN_DIGITS = 7
 _GROUPED = re.compile(r"\d{1,3}(?:[.,]\d{3})+")
+_SPACE_GROUPED = re.compile(r"\d{1,3}(?: \d{3}){2,}")
+_SEPARATORS = re.compile(r"[.,\s]")  # nhóm nghìn: dấu chấm, phẩy hoặc dấu cách ("27 990 000")
 _MEASURE = re.compile(r"\s*(?:dpi|hz|mah|rpm|gb|tb|mb|ghz|mhz|nits?|inch|mm|cm)\b")
 _APPROX_WORDS = re.compile(r"\b(tam|khoang|xap xi|around|about)\b")
 _EXACT_WORDS = re.compile(r"\b(dung|chinh xac|exactly|exact)\b")
@@ -68,6 +70,26 @@ _CHEAPEST_WORDS = re.compile(r"\b(re nhat|gia thap nhat|cheapest|lowest price)\b
 # Thông số kiểu "từ X trở lên" mặc định: người dùng nói "RAM 16GB" nghĩa là ít nhất 16GB.
 _AT_LEAST_FIELDS: Final = frozenset({"ram_gb", "storage_gb", "refresh_hz", "gpu_rank"})
 _GPU_FIELDS: Final = frozenset({"gpu", "gpu_model", "gpu_name", "card", "vga"})
+_GPU_NAME = r"(?:rtx|gtx|rx|arc)\s*\d{3,4}(?:\s*(?:ti|super|xt))?"
+# "tối đa 30 triệu" nói về giá (theo sau là số): chỉ "trở xuống" hoặc cụm không kèm số mới là cận
+# trên của card.
+# Từ đệm giữa "tối đa" và số tiền ("tối đa là/khoảng/chỉ 30 triệu") cũng là nói về giá.
+_PRICE_FILLER = r"(?:\s*(?:la|khoang|chi|tam|xap xi|~))*"
+_NOT_A_PRICE = rf"(?!{_PRICE_FILLER}\s*\d)"
+_UPPER_WORDS = (
+    rf"(?:tro xuong|(?:toi da|khong qua|khong vuot|thap hon|nho hon|yeu hon){_NOT_A_PRICE})"
+)
+# Sau tên card, "không quá/không vượt" thường là lời nói thường ("RTX 4060 không quá nặng").
+_UPPER_WORDS_AFTER = rf"(?:tro xuong|(?:toi da|thap hon|nho hon|yeu hon){_NOT_A_PRICE})"
+# Cụm cận trên đứng ngay sau hoặc ngay trước tên card, không vượt dấu ngắt mệnh đề.
+_GPU_UPPER = re.compile(
+    rf"{_GPU_NAME}[^,.;]{{0,12}}?{_UPPER_WORDS_AFTER}"
+    rf"|{_UPPER_WORDS}[^,.;\d]{{0,12}}?{_GPU_NAME}"
+)
+# "20 triệu trở xuống" là cận trên của giá, không phải của card đứng cạnh nó.
+_PRICE_TRO_XUONG = re.compile(
+    r"(?<![\d.,])\d{1,9}(?:[.,]\d{1,3}){0,3}\s*(?:trieu|tr|m|k|nghin|ngan|dong|vnd|d)\s*tro xuong"
+)
 
 
 def extract_amounts(message: str) -> set[int]:
@@ -77,19 +99,20 @@ def extract_amounts(message: str) -> set[int]:
     folded = fold(message)
     for match in _AMOUNT.finditer(folded):
         raw, unit = match.group("num"), match.group("unit")
-        if len(re.sub(r"[.,]", "", raw)) > _MAX_AMOUNT_DIGITS:
+        if len(_SEPARATORS.sub("", raw)) > _MAX_AMOUNT_DIGITS:
             continue  # số quá lớn không phải giá (và int()/float() có thể ném lỗi)
         if _MEASURE.match(folded, match.end()):
             continue  # "16.000 dpi", "26k dpi", "5000 mah": đơn vị đo, không phải tiền
         if unit is None:
-            if _GROUPED.fullmatch(raw):
-                value = int(re.sub(r"[.,]", "", raw))
+            if _GROUPED.fullmatch(raw) or _SPACE_GROUPED.fullmatch(raw):
+                value = int(_SEPARATORS.sub("", raw))
             elif raw.isdigit() and (len(raw) >= _MIN_PLAIN_DIGITS or match.group("cur")):
                 value = int(raw)
             else:
                 continue
         else:
-            number = raw if not _GROUPED.fullmatch(raw) else re.sub(r"[.,]", "", raw)
+            grouped = _GROUPED.fullmatch(raw) or _SPACE_GROUPED.fullmatch(raw)
+            number = _SEPARATORS.sub("", raw) if grouped else raw
             tail = match.group("tail")
             text = number.replace(",", ".") + (
                 "" if tail is None else f"{'.' if '.' not in number else ''}{tail}"
@@ -113,18 +136,27 @@ def _fix_money_scale(value: int | None, amounts: set[int]) -> int | None:
     return value
 
 
-def _gpu_filter_from_name(name: str) -> SpecFilter | None:
+def _gpu_filter_from_name(name: str, *, upper: bool = False) -> SpecFilter | None:
     canonical = normalize_gpu_name(name)
     rank = GPU_RANKS.get(canonical) if canonical else None
-    return None if rank is None else SpecFilter(field="gpu_rank", op="gte", value=rank)
+    if rank is None:
+        return None
+    return SpecFilter(field="gpu_rank", op="lte" if upper else "gte", value=rank)
+
+
+def _gpu_is_upper_bound(folded_message: str) -> bool:
+    """Cận trên cho GPU: "RTX 4060 trở xuống", "card RTX 4070 tối đa", "tối đa RTX 4060".
+    Chỉ xét cụm sát tên card (cùng mệnh đề) để "tối đa 30 triệu" không lật điều kiện GPU."""
+    return _GPU_UPPER.search(_PRICE_TRO_XUONG.sub(" ", folded_message)) is not None
 
 
 def _fix_spec_filters(filters: list[SpecFilter], folded_message: str) -> list[SpecFilter]:
     exact = _EXACT_WORDS.search(folded_message) is not None
+    upper = _gpu_is_upper_bound(folded_message)
     fixed: list[SpecFilter] = []
     for spec in filters:
         if spec.field in _GPU_FIELDS or (spec.field == "gpu_rank" and isinstance(spec.value, str)):
-            mapped = _gpu_filter_from_name(str(spec.value))
+            mapped = _gpu_filter_from_name(str(spec.value), upper=upper)
             if mapped is not None:
                 fixed.append(mapped)
             continue  # GPU không có hạng: bỏ điều kiện thay vì lọc sai
@@ -132,6 +164,8 @@ def _fix_spec_filters(filters: list[SpecFilter], folded_message: str) -> list[Sp
         op = spec.op
         if spec.field in _AT_LEAST_FIELDS and op == "eq" and not exact:
             op = "gte"
+        if spec.field == "gpu_rank" and upper and op == "gte":
+            op = "lte"  # LLM đã đổi tên card thành hạng nhưng giữ sai chiều
         if (
             spec.field == "storage_gb"
             and isinstance(value, int)
@@ -146,7 +180,7 @@ def _fix_spec_filters(filters: list[SpecFilter], folded_message: str) -> list[Sp
 
 def _gpu_filter_from_message(message: str) -> SpecFilter | None:
     """ "RTX 4060" trong câu hỏi → `gpu_rank >= hạng(RTX 4060)` khi LLM quên."""
-    return _gpu_filter_from_name(message)
+    return _gpu_filter_from_name(message, upper=_gpu_is_upper_bound(fold(message)))
 
 
 def default_plan_steps(intent: QueryIntent) -> list[str]:

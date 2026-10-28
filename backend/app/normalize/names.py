@@ -13,15 +13,25 @@ from functools import lru_cache
 from typing import Final
 
 from app.domain.enums import Category
-from app.normalize.brand import UNKNOWN_BRAND, brand_words
+from app.normalize.brand import UNKNOWN_BRAND, brand_words, find_brand, strip_leading_decoration
 from app.normalize.model_code import laptop_code_span
 from app.normalize.specs.parsing import clean
 from app.normalize.text import fold
 
-_LEADING_TAGS = re.compile(r"^(?:\s*(?:\[[^\]]*\]|\([^)]*\)))+\s*")
 _PAREN = re.compile(r"\(([^()]*)\)")
 _EDGE: Final = " \t,;:()[]{}\"'-"
 _PART_NUMBER = re.compile(r"^\d{3}-\d{4,6}$")  # mã phụ tùng Logitech: 910-007735
+# Mã phụ tùng/cảm biến đặt trong ngoặc ("(PMW920)") dài từ 6 ký tự; tên mẫu ngắn trong ngoặc như
+# "(G304)", "(M331)", "(Gen2)" phân biệt sản phẩm nên được giữ (BUG-M5-3).
+_MIN_PART_CODE_LENGTH: Final = 6
+# Nhóm ngoặc chỉ chứa nhãn bán hàng ("[Hot]", "(Mới 100%)", "(Bảo hành 24 tháng)", "(Fullbox)").
+_BRACKET_GROUP = re.compile(r"\s*[\[(]([^\[\]()]*)[\])]")
+_MARKETING_LABEL = re.compile(
+    r"^(?:moi(?: 100%)?|new(?: 100%| seal)?|hot|sale|gia tot|fullbox|nhap khau|chinh hang"
+    r"|bao hanh.*)$"
+)
+# "Mới 100%" (tình trạng máy) khác "100%" (bố cục phím full-size): chỉ bỏ khi đứng sau mới/new.
+_NEW_CONDITION: Final = frozenset(["moi", "new"])
 
 _COLORS: Final = frozenset(
     [
@@ -59,6 +69,8 @@ _COLORS: Final = frozenset(
         "xanh",
         "vang",
         "tim",
+        "do",  # đỏ
+        "luc",  # lục
         "bac",
         "nau",
         "cam",
@@ -89,6 +101,7 @@ _SWITCH_BEFORE: Final = frozenset(
     ]
 )
 _SWITCH_AFTER: Final = frozenset(["switch", "sw", "axis"])
+_AFTER_BLUE: Final = frozenset(["duong", "la", "ngoc", "nuoc"])  # xanh dương/lá/ngọc/nước biển
 # Từ chỉ loại sản phẩm hoặc quảng cáo: không phân biệt mẫu.
 _NOISE: Final = frozenset(
     [
@@ -180,21 +193,33 @@ def _is_part_code(word: str) -> bool:
     if _PART_NUMBER.match(word):
         return True
     return (
-        4 <= len(word) <= 14
+        _MIN_PART_CODE_LENGTH <= len(word) <= 14
         and any(c.isdigit() for c in word)
         and any(c.isalpha() for c in word)
         and word.isalnum()
     )
 
 
+def _strip_marketing(text: str) -> str:
+    """Bỏ phần sau " | " (tên cửa hàng: "… | GearVN") và các nhóm ngoặc chỉ chứa nhãn bán hàng."""
+
+    def replace(match: re.Match[str]) -> str:
+        return " " if _MARKETING_LABEL.match(fold(match[1]).strip(_EDGE)) else match[0]
+
+    return _BRACKET_GROUP.sub(replace, text.split(" | ")[0])
+
+
 def _tokens(title: str) -> list[_Token]:
-    text = _unwrap_parentheses(_LEADING_TAGS.sub("", clean(title)))
+    text = _unwrap_parentheses(_strip_marketing(strip_leading_decoration(clean(title))))
     tokens: list[_Token] = []
     for raw in re.split(r"[\s/]+", text):
         stripped = raw.strip(_EDGE)
         key = fold(stripped).strip(_EDGE)
-        if key and not _PART_NUMBER.match(key):
-            tokens.append(_Token(stripped, key))
+        if not key or _PART_NUMBER.match(key):
+            continue
+        if key == "100%" and tokens and tokens[-1].key in _NEW_CONDITION:
+            continue
+        tokens.append(_Token(stripped, key))
     return tokens
 
 
@@ -208,13 +233,17 @@ def _is_switch_colour(tokens: list[_Token], index: int) -> bool:
     return (tokens[index].key == "cream" and after in _COLORS) or before == "cream"
 
 
+def _is_colour_token(tokens: list[_Token], index: int) -> bool:
+    key = tokens[index].key
+    if key in _COLORS:
+        return not _is_switch_colour(tokens, index)
+    # "Xanh dương", "Xanh lá": từ thứ hai chỉ là màu khi đứng sau "xanh".
+    return key in _AFTER_BLUE and index > 0 and tokens[index - 1].key == "xanh"
+
+
 def _drop_colors(tokens: list[_Token]) -> list[_Token]:
     """Bỏ màu (và chữ "màu" đứng trước màu). Màu thuộc tên switch thì giữ vì nó phân biệt mẫu."""
-    return [
-        token
-        for index, token in enumerate(tokens)
-        if token.key not in _COLORS or _is_switch_colour(tokens, index)
-    ]
+    return [token for index, token in enumerate(tokens) if not _is_colour_token(tokens, index)]
 
 
 def _leading_prefix_length(tokens: list[_Token]) -> int:
@@ -223,6 +252,18 @@ def _leading_prefix_length(tokens: list[_Token]) -> int:
     while count < len(tokens) and tokens[count].key in _PREFIX_WORDS:
         count += 1
     return count
+
+
+def _brand_index(tokens: list[_Token], *, typed: bool = False) -> int | None:
+    found = find_brand([token.key for token in tokens], typed=typed)
+    return None if found is None else found[0]
+
+
+def _from_brand(text: str) -> str:
+    """Bỏ mô tả loại đứng trước hãng ("văn phòng Dell Inspiron …" → "Dell Inspiron …")."""
+    tokens = _tokens(text)
+    index = _brand_index(tokens, typed=True)
+    return text if not index else " ".join(token.text for token in tokens[index:])
 
 
 def canonical_name(title: str, category: Category) -> str:
@@ -235,9 +276,10 @@ def canonical_name(title: str, category: Category) -> str:
     if category is Category.laptop:
         span = laptop_code_span(cleaned)
         if span is not None:
-            return span[0]
+            return _from_brand(span[0])
     tokens = _tokens(cleaned)
-    tokens = tokens[_leading_prefix_length(tokens) :]
+    brand_at = _brand_index(tokens)
+    tokens = tokens[brand_at if brand_at is not None else _leading_prefix_length(tokens) :]
     tokens = [t for t in _drop_colors(tokens) if t.key not in {"mau", "chinh", "hang"}]
     name = " ".join(token.text for token in tokens)
     return name or cleaned

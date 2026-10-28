@@ -16,10 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { errorMessage } from '@/lib/errorMessage'
 import { safeUrl } from '@/lib/safeUrl'
 import { strings } from '@/lib/strings'
-import { useAnswerChallenge, useChallenge, useRefreshAdmin } from './api'
+import { useAnswerChallenge, useCancelChallenge, useChallenge, useRefreshAdmin } from './api'
 import { isValidAnswer } from './answer'
 
-export type ChallengeOutcome = 'answered' | 'not-pending'
+export type ChallengeOutcome = 'answered' | 'cancelled' | 'not-pending'
 
 const isNotPending = (error: unknown) =>
   error instanceof ApiError && error.status === 409 && error.code === 'CHALLENGE_NOT_PENDING'
@@ -36,6 +36,7 @@ function ChallengeForm({
   const text = strings.admin.challenge
   const challenge = useChallenge(runId)
   const answerMutation = useAnswerChallenge(runId)
+  const cancelMutation = useCancelChallenge(runId)
   const refresh = useRefreshAdmin()
   const id = useId()
   const [answer, setAnswer] = useState('')
@@ -66,6 +67,20 @@ function ChallengeForm({
         return
       }
       // 400 `CHALLENGE_FAILED`: lượt vẫn chờ, giữ hộp thoại để thử lại.
+      setError(errorMessage(failure))
+    }
+  }
+
+  async function cancelRun() {
+    setError(null)
+    try {
+      await cancelMutation.mutateAsync()
+      onResolved('cancelled')
+    } catch (failure) {
+      if (isNotPending(failure)) {
+        onResolved('not-pending')
+        return
+      }
       setError(errorMessage(failure))
     }
   }
@@ -125,9 +140,17 @@ function ChallengeForm({
       ) : null}
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onClose}>
-          {strings.common.cancel}
+          {text.later}
         </Button>
-        <Button type="submit" disabled={answerMutation.isPending}>
+        <Button
+          type="button"
+          variant="destructive"
+          disabled={answerMutation.isPending || cancelMutation.isPending}
+          onClick={() => void cancelRun()}
+        >
+          {cancelMutation.isPending ? text.cancellingRun : text.cancelRun}
+        </Button>
+        <Button type="submit" disabled={answerMutation.isPending || cancelMutation.isPending}>
           {answerMutation.isPending ? text.submitting : text.submit}
         </Button>
       </DialogFooter>

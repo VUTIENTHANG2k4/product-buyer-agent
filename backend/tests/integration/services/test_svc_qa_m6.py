@@ -402,21 +402,60 @@ def test_items_of_a_deleted_list_or_removed_item_report_not_found(db_session: Se
         service.add_item(created.list_id, product.id or 0)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M6-16: giá lớn x số lượng lớn làm total_price vượt BIGINT → ValidationError (500)",
-)
 def test_extreme_price_times_quantity_never_breaks_the_list_view(db_session: Session) -> None:
     product = add_product(db_session)
     add_offer(db_session, product, price=5_000_000_000)
     service = lists(db_session)
     created = service.create_list("Mock")
 
-    try:
+    with pytest.raises(ValidationFailed, match="vượt"):
         service.add_item(created.list_id, product.id or 0, quantity=2_147_483_647)
-    except ValidationFailed:
-        return  # từ chối ngay khi thêm cũng được
-    assert service.get_list(created.list_id).total_price >= 0
+
+    assert service.get_list(created.list_id).items == []
+
+
+# ---- T6.12: trần số lượng × giá ----
+def test_a_line_exactly_at_the_cap_is_accepted_and_one_dong_more_is_rejected(
+    db_session: Session,
+) -> None:
+    product = add_product(db_session)
+    add_offer(db_session, product, price=1_000_000)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+
+    ok = service.add_item(created.list_id, product.id or 0, quantity=1_000_000)
+
+    assert ok.quantity * (ok.current_price or 0) == 10**12
+    with pytest.raises(ValidationFailed, match="vượt"):
+        service.update_item(created.list_id, ok.item_id, quantity=1_000_001)
+    assert service.get_list(created.list_id).total_price == 10**12
+
+
+def test_adding_the_same_product_again_counts_the_merged_quantity(db_session: Session) -> None:
+    product = add_product(db_session)
+    add_offer(db_session, product, price=1_000_000)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+    service.add_item(created.list_id, product.id or 0, quantity=600_000)
+
+    with pytest.raises(ValidationFailed):
+        service.add_item(created.list_id, product.id or 0, quantity=600_000)
+
+    (item,) = service.get_list(created.list_id).items
+    assert item.quantity == 600_000  # lần thêm bị từ chối không đổi gì
+
+
+def test_an_out_of_stock_product_has_no_price_so_the_cap_does_not_apply(
+    db_session: Session,
+) -> None:
+    product = add_product(db_session)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+
+    item = service.add_item(created.list_id, product.id or 0, quantity=2_147_483_647)
+
+    assert item.current_price is None
+    assert service.get_list(created.list_id).total_price == 0
 
 
 # ---- ConversationService ----
@@ -446,3 +485,61 @@ def test_vietnamese_decomposed_message_is_stored_as_typed(db_session: Session) -
     second = service.start_run("tiếp", first.conversation_id)
 
     assert second.snapshot.messages[0][1] == typed
+
+
+def test_clearing_the_preferred_offer_checks_the_cap_with_the_price_that_will_apply(
+    db_session: Session,
+) -> None:
+    product = add_product(db_session)
+    cheap = add_offer(db_session, product, price=1_000_000)
+    dear = add_offer(db_session, product, price=900_000_000)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+    item = service.add_item(
+        created.list_id, product.id or 0, quantity=1_000, preferred_offer_id=dear.id
+    )
+    assert item.current_price == 900_000_000
+
+    # Xóa offer ưu tiên: giá áp dụng là offer rẻ nhất 1.000.000 nên 1.000 mục vẫn dưới trần.
+    cleared = service.update_item(created.list_id, item.item_id, clear_preferred_offer=True)
+
+    assert cleared.current_price == cheap.price
+    # Chọn lại offer đắt với 2.000 mục: 1,8e12 > 10^12 → từ chối, mục giữ nguyên.
+    with pytest.raises(ValidationFailed):
+        service.update_item(
+            created.list_id, item.item_id, quantity=2_000, preferred_offer_id=dear.id
+        )
+    assert service.get_list(created.list_id).items[0].quantity == 1_000
+
+
+def test_switching_only_the_preferred_offer_to_a_dearer_one_is_checked_against_the_cap(
+    db_session: Session,
+) -> None:
+    product = add_product(db_session)
+    add_offer(db_session, product, price=1_000_000)
+    dear = add_offer(db_session, product, price=900_000_000)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+    item = service.add_item(created.list_id, product.id or 0, quantity=2_000)
+
+    with pytest.raises(ValidationFailed, match="vượt"):
+        service.update_item(created.list_id, item.item_id, preferred_offer_id=dear.id)
+
+
+def test_a_total_beyond_bigint_from_rows_that_skipped_the_cap_is_clamped_not_a_500(
+    db_session: Session,
+) -> None:
+    """Lưới an toàn của `_summary`: dữ liệu cũ/chèn thẳng không qua kiểm trần vẫn xem được."""
+    from app.db.repositories import ShoppingListRepository
+    from app.domain.catalog import MAX_QUANTITY
+    from app.domain.dto import INT8_MAX
+
+    product = add_product(db_session)
+    add_offer(db_session, product, price=5_000_000_000)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+    ShoppingListRepository(db_session).add_item(
+        created.list_id, product.id or 0, quantity=MAX_QUANTITY
+    )
+
+    assert service.get_list(created.list_id).total_price == INT8_MAX

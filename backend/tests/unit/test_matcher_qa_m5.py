@@ -277,12 +277,6 @@ def test_switch_names_that_contain_a_colour_word_are_kept_apart(first: str, seco
         ("Chuột Logitech G102 (Gen2)", "Chuột Logitech G102 (Gen1)"),
     ],
 )
-@bug(
-    "BUG-M5-3",
-    "names._unwrap_parentheses coi mọi nhóm ngoặc một từ chữ+số 4–14 ký tự là 'mã phụ tùng' và "
-    "xóa (names.py:162 `_is_part_code`); tên mẫu đặt trong ngoặc ('(G304)', '(M331)') cũng mất "
-    "nên hai chuột khác mẫu có cùng khóa tên và bị ghép",
-)
 def test_model_names_written_in_parentheses_are_not_discarded_as_part_codes(
     first: str, second: str
 ) -> None:
