@@ -11,6 +11,7 @@ from app.normalize.specs.parsing import (
     build_specs,
     clean,
     label_values,
+    negated_label,
     read_connectivity,
 )
 from app.normalize.specs.types import HeadsetConnection, HeadsetForm, PositiveInt
@@ -86,7 +87,7 @@ def _has_mic(folded_title: str, raw_specs: Mapping[str, str]) -> bool | None:
         return True
     for value in label_values(raw_specs, _MIC_LABELS):
         lowered = fold(value)
-        return not lowered.startswith(("khong", "no")) and lowered not in {"none", "n/a"}
+        return not negated_label(lowered) and lowered not in {"none", "n/a"}
     return None
 
 

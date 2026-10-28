@@ -50,7 +50,7 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
 # Nhãn khuyến mãi ở đầu tên: "[Mới 100%] ...", "(Hàng chính hãng) ..."
 _LEADING_TAGS = re.compile(r"^(?:\s*(?:\[[^\]]*\]|\([^)]*\)))+\s*")
 # Ký hiệu trang trí đầu dòng ("★ Laptop …", "🔥 Laptop …"): không phải chữ hay số.
-_LEADING_SYMBOLS = re.compile(r"^[^\w]+")
+_LEADING_SYMBOLS = re.compile(r"^[^\w\[(]+")
 # Mô tả loại/tính năng đứng trước hãng ("Chuột có dây Dell", "Hàng chính hãng Chuột Logitech",
 # "Máy tính xách tay ASUS") có nhiều dạng nên không liệt kê: nếu tên BẮT ĐẦU bằng một từ loại sản
 # phẩm (`_TYPE_STARTS`) thì được bỏ qua tối đa `MAX_SKIPPED` từ đầu để tìm hãng. Tên bắt đầu bằng
@@ -128,13 +128,22 @@ def find_brand(keys: list[str], *, typed: bool = False) -> tuple[int, str] | Non
     return None
 
 
+def strip_leading_decoration(text: str) -> str:
+    """Bỏ nhãn `[..]`/`(..)` và ký hiệu trang trí ở đầu tên, theo mọi thứ tự ("🔥 [Hot] …")."""
+    while True:
+        stripped = _LEADING_SYMBOLS.sub("", _LEADING_TAGS.sub("", text))
+        if stripped == text:
+            return text
+        text = stripped
+
+
 def detect_brand(title: str) -> str:
     """Tên hãng chuẩn nếu `title` có hãng đã biết ngay sau vài từ mô tả loại sản phẩm đầu tên
     ("Laptop", "Chuột có dây", "Hàng chính hãng Chuột"); không nhận ra thì `UNKNOWN_BRAND`.
 
     Chỉ nhìn phần đầu tên và dừng ở từ nối để "Bàn phím cho MacBook" không bị gán nhầm cho Apple.
     """
-    text = _LEADING_SYMBOLS.sub("", _LEADING_TAGS.sub("", _fold(title)))
+    text = strip_leading_decoration(_fold(title))
     found = find_brand(text.split())
     return UNKNOWN_BRAND if found is None else found[1]
 

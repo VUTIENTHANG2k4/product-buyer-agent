@@ -13,12 +13,11 @@ from functools import lru_cache
 from typing import Final
 
 from app.domain.enums import Category
-from app.normalize.brand import UNKNOWN_BRAND, brand_words, find_brand
+from app.normalize.brand import UNKNOWN_BRAND, brand_words, find_brand, strip_leading_decoration
 from app.normalize.model_code import laptop_code_span
 from app.normalize.specs.parsing import clean
 from app.normalize.text import fold
 
-_LEADING_TAGS = re.compile(r"^(?:\s*(?:\[[^\]]*\]|\([^)]*\)))+\s*")
 _PAREN = re.compile(r"\(([^()]*)\)")
 _EDGE: Final = " \t,;:()[]{}\"'-"
 _PART_NUMBER = re.compile(r"^\d{3}-\d{4,6}$")  # mã phụ tùng Logitech: 910-007735
@@ -211,7 +210,7 @@ def _strip_marketing(text: str) -> str:
 
 
 def _tokens(title: str) -> list[_Token]:
-    text = _unwrap_parentheses(_strip_marketing(_LEADING_TAGS.sub("", clean(title))))
+    text = _unwrap_parentheses(_strip_marketing(strip_leading_decoration(clean(title))))
     tokens: list[_Token] = []
     for raw in re.split(r"[\s/]+", text):
         stripped = raw.strip(_EDGE)

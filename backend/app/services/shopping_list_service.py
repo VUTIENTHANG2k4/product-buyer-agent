@@ -125,7 +125,12 @@ class ShoppingListService:
         if existing is not None:
             _check_quantity(existing.quantity + quantity)
         price = self._current_price(offers, preferred_offer_id)
-        _check_line_total(quantity if existing is None else existing.quantity + quantity, price)
+        if existing is None:
+            _check_line_total(quantity, price)
+        else:
+            # Offer ưu tiên cũ được giữ khi lần thêm này không chọn offer khác (coalesce ở repo).
+            kept = existing.preferred_offer_id if preferred_offer_id is None else preferred_offer_id
+            _check_line_total(existing.quantity + quantity, self._current_price(offers, kept))
         try:
             item = self._lists.add_item(
                 list_id,

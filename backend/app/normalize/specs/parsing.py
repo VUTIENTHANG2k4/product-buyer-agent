@@ -154,20 +154,33 @@ _BLUETOOTH = re.compile(r"bluetooth|\bbt\s?5|\bbt\b")
 _WIRED = re.compile(r"\bco day\b|\bwired\b|\bday usb\b")
 # Phủ định (đã fold): "không có dây" nghĩa là không dây; "không Bluetooth", "no 2.4G" bỏ tính năng.
 _NO_CABLE = re.compile(r"\bkhong co day\b")
-_NEGATED_FEATURE = re.compile(
-    r"\b(?:khong|no|without)\s+(?:co\s+)?"
-    r"(?:bluetooth|bt|usb|jack|aux|2[.,]?4\s?g(?:hz)?|lightspeed|hyperspeed|dongle|receiver|rf)\b"
+# Từ phủ định viết tắt/nối: "không", "ko", "k", "chưa", "no", "non-", "w/o", "without"; theo sau có
+# thể là từ đệm ("không hỗ trợ/tích hợp/có …").
+_NEGATION = (
+    r"\b(?:khong|chua|ko|k|no|non|without|w/o)[\s-]+(?:(?:co|ho tro|tich hop|trang bi|cong)[\s-]+)*"
 )
-_NEGATION_BEFORE = re.compile(r"\b(?:khong|no|without)\s+(?:co\s+)?$")
+_NEGATED_FEATURE = re.compile(
+    _NEGATION + r"(?:bluetooth|bt|usb|jack(?:\s*3[.,]5\s?mm)?|aux|3[.,]5\s?mm"
+    r"|2[.,]?4\s?g(?:hz)?|lightspeed|hyperspeed|dongle|receiver|rf)\b"
+)
+_NEGATION_BEFORE = re.compile(_NEGATION + "$")
+_NEGATED_LABEL = re.compile(r"^(?:khong|chua|ko|k|no)(?:[\s,.;-]|$)")
+_NEGATION_WINDOW = 32
 
 
 def affirmed(pattern: re.Pattern[str], text: str) -> bool:
     """`pattern` khớp trong `text` (đã fold) ở ít nhất một chỗ không bị phủ định ngay trước nó
     ("có mic" khớp, "không có mic"/"không ANC" thì không)."""
     for match in pattern.finditer(text):
-        if _NEGATION_BEFORE.search(text[max(0, match.start() - 14) : match.start()]) is None:
+        start = max(0, match.start() - _NEGATION_WINDOW)
+        if _NEGATION_BEFORE.search(text[start : match.start()]) is None:
             return True
     return False
+
+
+def negated_label(value: str) -> bool:
+    """Giá trị nhãn (đã fold) là một lời phủ định: "không", "no", "ko có" (không phải "noise")."""
+    return _NEGATED_LABEL.match(value) is not None
 
 
 _JACK = re.compile(r"3[.,]5\s?mm|\bjack\b|\baux\b")

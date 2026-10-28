@@ -1,5 +1,6 @@
 """Kiểu dữ liệu của agent: câu trả lời cuối và các sự kiện tiến trình (docs/05 §4, §6)."""
 
+import unicodedata
 from datetime import datetime
 from typing import Any, ClassVar
 
@@ -41,7 +42,9 @@ class FinalAnswer(BaseModel):
     @classmethod
     def _text_not_blank(cls, value: str) -> str:
         """Câu trả lời rỗng hoặc chỉ có khoảng trắng bị từ chối để LLM viết lại (BUG-M6-14)."""
-        if not value.replace(chr(0), "").strip():
+        if not any(
+            not ch.isspace() and ch != chr(0) and unicodedata.category(ch) != "Cf" for ch in value
+        ):
             raise ValueError("text must not be blank")
         return value
 
