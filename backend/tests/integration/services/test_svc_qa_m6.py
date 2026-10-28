@@ -402,10 +402,6 @@ def test_items_of_a_deleted_list_or_removed_item_report_not_found(db_session: Se
         service.add_item(created.list_id, product.id or 0)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M6-16: giá lớn x số lượng lớn làm total_price vượt BIGINT → ValidationError (500)",
-)
 def test_extreme_price_times_quantity_never_breaks_the_list_view(db_session: Session) -> None:
     product = add_product(db_session)
     add_offer(db_session, product, price=5_000_000_000)
@@ -417,6 +413,50 @@ def test_extreme_price_times_quantity_never_breaks_the_list_view(db_session: Ses
     except ValidationFailed:
         return  # từ chối ngay khi thêm cũng được
     assert service.get_list(created.list_id).total_price >= 0
+
+
+# ---- T6.12: trần số lượng × giá ----
+def test_a_line_exactly_at_the_cap_is_accepted_and_one_dong_more_is_rejected(
+    db_session: Session,
+) -> None:
+    product = add_product(db_session)
+    add_offer(db_session, product, price=1_000_000)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+
+    ok = service.add_item(created.list_id, product.id or 0, quantity=1_000_000)
+
+    assert ok.quantity * (ok.current_price or 0) == 10**12
+    with pytest.raises(ValidationFailed, match="vượt"):
+        service.update_item(created.list_id, ok.item_id, quantity=1_000_001)
+    assert service.get_list(created.list_id).total_price == 10**12
+
+
+def test_adding_the_same_product_again_counts_the_merged_quantity(db_session: Session) -> None:
+    product = add_product(db_session)
+    add_offer(db_session, product, price=1_000_000)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+    service.add_item(created.list_id, product.id or 0, quantity=600_000)
+
+    with pytest.raises(ValidationFailed):
+        service.add_item(created.list_id, product.id or 0, quantity=600_000)
+
+    (item,) = service.get_list(created.list_id).items
+    assert item.quantity == 600_000  # lần thêm bị từ chối không đổi gì
+
+
+def test_an_out_of_stock_product_has_no_price_so_the_cap_does_not_apply(
+    db_session: Session,
+) -> None:
+    product = add_product(db_session)
+    service = lists(db_session)
+    created = service.create_list("Mock")
+
+    item = service.add_item(created.list_id, product.id or 0, quantity=2_147_483_647)
+
+    assert item.current_price is None
+    assert service.get_list(created.list_id).total_price == 0
 
 
 # ---- ConversationService ----

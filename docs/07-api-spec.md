@@ -88,7 +88,7 @@ Id trong đường dẫn hoặc thân yêu cầu ngoài miền khóa chính (≤
 | GET | `/lists/{id}` | Chi tiết với các mục (kèm giá hiện tại và chênh lệch so với `price_at_add`) |
 | PATCH | `/lists/{id}` | `{name}` |
 | DELETE | `/lists/{id}` | 204 |
-| POST | `/lists/{id}/items` | `{product_id, quantity?, note?, preferred_offer_id?}` → 201; trùng → tăng `quantity` (giữ `price_at_add` ban đầu) |
+| POST | `/lists/{id}/items` | `{product_id, quantity?, note?, preferred_offer_id?}` → 201; trùng → tăng `quantity` (giữ `price_at_add` ban đầu). `quantity` 1..2.147.483.647 và `quantity × giá hiện tại` của mục ≤ 10^12 ₫ (T6.12), vượt thì 422 `VALIDATION_ERROR`; `PATCH` số lượng cùng luật |
 | PATCH | `/lists/{id}/items/{item_id}` | `{quantity?, note?, preferred_offer_id?}`; trường bỏ vắng giữ nguyên, `null` ở `note`/`preferred_offer_id` xóa giá trị |
 | DELETE | `/lists/{id}/items/{item_id}` | 204 |
 

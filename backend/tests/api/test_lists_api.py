@@ -177,7 +177,8 @@ def test_adding_quantity_beyond_the_limit_by_accumulation_is_rejected(
     client: TestClient, db_session: Session
 ) -> None:
     list_id = new_list(client)
-    product, _ = product_with_offer(db_session)
+    # Giá thấp để số lượng × giá vẫn dưới trần 10^12 ₫ (T6.12): ở đây chỉ kiểm trần số lượng.
+    product, _ = product_with_offer(db_session, price=100)
     add_item(client, list_id, product, quantity=MAX_QUANTITY)
 
     response = client.post(f"/api/lists/{list_id}/items", json={"product_id": product.id})
@@ -349,3 +350,19 @@ def test_quantity_must_be_a_real_integer_on_add_and_patch(
     patched = client.patch(f"/api/lists/{list_id}/items/{item_id}", json={"quantity": value})
 
     assert added.status_code == patched.status_code == 422
+
+
+def test_a_line_above_the_price_cap_is_422_with_a_clear_message(
+    client: TestClient, db_session: Session
+) -> None:
+    list_id = new_list(client)
+    product, _ = product_with_offer(db_session, price=20_000_000)
+
+    response = client.post(
+        f"/api/lists/{list_id}/items", json={"product_id": product.id, "quantity": MAX_QUANTITY}
+    )
+
+    assert response.status_code == 422
+    assert error_code(response) == "VALIDATION_ERROR"
+    assert "vượt" in response.json()["error"]["message"]
+    assert client.get(f"/api/lists/{list_id}").json()["items"] == []
