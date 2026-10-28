@@ -76,7 +76,7 @@ def test_upgrade_head_on_empty_database_creates_every_table(empty_engine: Engine
 
 def test_upgrade_head_twice_is_a_no_op(migrated_engine: Engine) -> None:
     upgrade_to_head(migrated_engine)
-    assert _scalars(migrated_engine, "SELECT version_num FROM alembic_version") == ["0004"]
+    assert _scalars(migrated_engine, "SELECT version_num FROM alembic_version") == ["0005"]
 
 
 def test_downgrade_base_removes_every_table_and_upgrade_restores_them(

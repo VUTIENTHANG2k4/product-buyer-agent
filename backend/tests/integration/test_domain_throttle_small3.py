@@ -43,11 +43,12 @@ async def test_reservations_from_two_processes_are_spaced_by_the_delay(
 async def test_the_slot_is_kept_after_the_caller_returns(db_engine: Engine, domain: str) -> None:
     throttle = DbDomainThrottle(lambda: Session(db_engine))
     await throttle.reserve(domain, DELAY)
+    await throttle.reserve(domain, DELAY)  # khe thứ hai cách khe đầu DELAY giây
 
     with db_engine.connect() as connection:
         remaining = connection.execute(
             text(
-                "SELECT extract(epoch FROM next_allowed_at - clock_timestamp())"
+                "SELECT extract(epoch FROM last_slot_at - clock_timestamp())"
                 " FROM domain_throttle WHERE domain = :d"
             ),
             {"d": domain},

@@ -20,6 +20,8 @@ from app.domain.enums import SiteKey
 from app.scrapers.http.errors import FetchError
 from app.scrapers.http.factory import build_fetcher
 from app.scrapers.registry import SCRAPERS
+from app.services.database import session_factory
+from app.services.domain_throttle import DbDomainThrottle
 
 logger = logging.getLogger("fetch_page")
 
@@ -50,7 +52,9 @@ async def fetch_to_file(site: SiteKey, url: str, out: Path, *, allow_online: boo
     if allow_online and settings.scraper_offline_only:
         # Chỉ cho tiến trình này; không ghi vào .env.
         settings = settings.model_copy(update={"scraper_offline_only": False})
-    async with build_fetcher(settings, raw_cache_dir=None) as fetcher:
+    # Dùng chung khe thời gian với api/worker để không vượt 5 s/domain khi chạy song song.
+    throttle = DbDomainThrottle(session_factory(settings.database_url.get_secret_value()))
+    async with build_fetcher(settings, raw_cache_dir=None, shared_delay=throttle) as fetcher:
         try:
             response = await fetcher.get(url)
         except FetchError as error:
