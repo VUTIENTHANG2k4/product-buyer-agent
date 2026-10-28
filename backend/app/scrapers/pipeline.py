@@ -142,6 +142,13 @@ class _RunContext:
     partial_scope: bool = False
 
 
+@dataclass
+class _Lifecycle:
+    """Lượt đã được `execute` (hoặc `abandon`) chưa: mỗi lượt chỉ chạy một lần (T7.6)."""
+
+    claimed: bool = False
+
+
 @dataclass(frozen=True)
 class StartedRun:
     """Lượt đã tạo (RUNNING) và chờ `ScrapePipeline.execute`. Chỉ `run_id`, `site`, `category` là
@@ -152,6 +159,7 @@ class StartedRun:
     progress: _Progress = field(repr=False)
     start_page: int
     max_pages: int
+    lifecycle: _Lifecycle = field(default_factory=_Lifecycle, repr=False)
 
     @property
     def run_id(self) -> int:
@@ -417,13 +425,39 @@ class ScrapePipeline:
         return StartedRun(scraper, context, _Progress(), start_page=1, max_pages=limit)
 
     async def execute(self, started: StartedRun) -> PipelineResult:
-        """Chạy vòng thu thập của lượt đã `start`/`reopen` tới khi xong, bị chặn hoặc cần người."""
+        """Chạy vòng thu thập của lượt đã `start`/`reopen` tới khi xong, bị chặn hoặc cần người.
+
+        Mỗi `StartedRun` chỉ chạy một lần: lần hai ném `RuntimeError` (lượt đã được chạy hoặc đã
+        bị `abandon`).
+        """
+        if started.lifecycle.claimed:
+            raise RuntimeError(f"lượt {started.run_id} đã được chạy hoặc đã bị huỷ")
+        started.lifecycle.claimed = True
         return await self._crawl(
             started.scraper,
             started.context,
             started.progress,
             start_page=started.start_page,
             max_pages=started.max_pages,
+        )
+
+    async def abandon(self, started: StartedRun) -> None:
+        """Chốt `FAILED` cho lượt đã `start`/`reopen` mà `execute` không bao giờ chạy (task bị hủy
+        trước khi bắt đầu, ví dụ tắt app ngay sau 202); nếu không lượt kẹt `RUNNING` tới 2 giờ và
+        chặn lượt mới. Không làm gì nếu `execute` đã nhận lượt (nó tự chốt khi bị hủy)."""
+        if started.lifecycle.claimed:
+            return
+        started.lifecycle.claimed = True
+        await asyncio.shield(
+            asyncio.to_thread(
+                self._finish,
+                started.scraper,
+                started.context,
+                started.progress,
+                None,
+                "Lượt thu thập bị huỷ.",
+                True,
+            )
         )
 
     async def resume(

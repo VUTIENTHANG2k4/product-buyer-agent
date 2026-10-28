@@ -11,6 +11,7 @@ from app.scrapers.http.factory import build_fetcher
 from app.scrapers.http.fetcher import Fetcher
 from app.services.alert_evaluation import AlertEvaluator
 from app.services.database import session_factory
+from app.services.domain_throttle import DbDomainThrottle
 from app.services.live_search_service import LiveSearchService
 from app.services.notifier import build_notifiers
 from app.services.scrape_service import ScrapeService
@@ -34,8 +35,8 @@ class ScrapeRuntime:
         cls, settings: Settings, spec_filler: LlmSpecsFiller | None = None
     ) -> "ScrapeRuntime":
         """Dựng Fetcher thật và `ScrapeService` từ cấu hình; `spec_filler`: LLM dự phòng."""
-        fetcher = build_fetcher(settings)
         factory = session_factory(settings.database_url.get_secret_value())
+        fetcher = build_fetcher(settings, shared_delay=DbDomainThrottle(factory))
         evaluator = AlertEvaluator(factory, build_notifiers(settings), settings)
         service = ScrapeService(
             factory, fetcher, settings, on_price_changes=evaluator, spec_filler=spec_filler

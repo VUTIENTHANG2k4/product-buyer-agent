@@ -106,11 +106,18 @@ class ScrapeService:
         await self._evaluate(result)
         return result
 
+    async def abandon(self, started: StartedRun) -> None:
+        """Chốt lượt đã `start`/`reopen` mà `execute()` không kịp chạy (task bị hủy trước khi bắt
+        đầu); không làm gì nếu `execute()` đã nhận lượt."""
+        await self._pipeline.abandon(started)
+
     async def reopen(self, run_id: int, answer: str, *, max_pages: int | None = None) -> StartedRun:
         """Gửi đáp án captcha cho lượt `NEEDS_HUMAN` rồi trả lượt đã chiếm để `execute()`.
 
-        Ném `RunNotFound`, `ChallengeNotPending`, `ChallengeFailed` (đáp án sai: lượt vẫn chờ).
+        Ném `RunNotFound`, `ChallengeNotPending`, `ChallengeFailed` (đáp án sai: lượt vẫn chờ),
+        `OfflineMode` (lượt của trang thật khi `SCRAPER_OFFLINE_ONLY=true`).
         """
+        self._ensure_run_allowed(run_id)
         return await self._pipeline.reopen(run_id, answer, max_pages=max_pages)
 
     async def cancel_challenge(self, run_id: int) -> None:
@@ -139,6 +146,22 @@ class ScrapeService:
             prompt=challenge.prompt,
             image_url=None if challenge.image_url is None else str(challenge.image_url),
         )
+
+    def _ensure_run_allowed(self, run_id: int) -> None:
+        """Như `_ensure_allowed` theo trang của lượt `run_id` (lượt không tồn tại: `RunNotFound`).
+
+        Hiện chỉ mock-shop vào `NEEDS_HUMAN` nên luôn qua; kiểm ở đây để lượt trang thật không bao
+        giờ được chạy tiếp khi đang ngoại tuyến, kể cả nếu dữ liệu bị sửa tay.
+        """
+        with self._session_factory() as session:
+            run = ScrapeRunRepository(session).get(run_id)
+            if run is None:
+                raise RunNotFound(details={"run_id": run_id})
+            site = run.site
+        try:
+            self._ensure_allowed(site)
+        except SiteNotAvailable as error:
+            raise InvalidScrapeRequest(f"Trang {site.value} chưa có scraper hoặc đã tắt") from error
 
     def _ensure_allowed(self, site: SiteKey) -> None:
         config = get_scraper(site, self._fetcher).config
@@ -183,6 +206,7 @@ class ScrapeService:
         self, run_id: int, answer: str, *, max_pages: int | None = None
     ) -> PipelineResult:
         """Nhập đáp án captcha cho lượt `NEEDS_HUMAN` (mock-shop) và chạy tiếp."""
+        self._ensure_run_allowed(run_id)
         result = await self._pipeline.resume(run_id, answer, max_pages=max_pages)
         await self._evaluate(result)
         return result

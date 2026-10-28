@@ -11,6 +11,7 @@ from app.api.schemas import CompareRequest, ProductListResponse
 from app.domain.catalog import CatalogFilters, Comparison, PriceHistoryResult, ProductFull
 from app.domain.dto import INT8_MAX
 from app.domain.enums import Category, SiteKey
+from app.domain.errors import ValidationFailed
 from app.services.catalog_service import MAX_HISTORY_DAYS
 from app.services.spec_filters import parse_spec_filters
 
@@ -47,6 +48,11 @@ def list_products(
     page: Annotated[int, Query(ge=1, le=MAX_PAGE)] = 1,
     page_size: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = 20,
 ) -> ProductListResponse:
+    if price_min is not None and price_max is not None and price_min > price_max:
+        raise ValidationFailed(
+            "price_min không được lớn hơn price_max",
+            details={"price_min": price_min, "price_max": price_max},
+        )
     filters = CatalogFilters(
         category=category,
         q=q,

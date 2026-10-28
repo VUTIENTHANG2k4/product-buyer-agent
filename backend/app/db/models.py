@@ -375,3 +375,16 @@ class LiveSearchCache(SQLModel, table=True):
     cache_key: str = Field(primary_key=True)
     results: list[dict[str, Any]] = _jsonb_array()
     created_at: datetime = _timestamp()
+
+
+class DomainThrottle(SQLModel, table=True):
+    """Khe gần nhất đã cấp cho một domain, dùng chung mọi tiến trình (T9.8).
+
+    Khe kế tiếp = max(khe này + độ trễ của request MỚI, bây giờ), nên `Crawl-delay` lớn hơn của
+    request sau vẫn được giữ dù request trước dùng độ trễ nhỏ hơn (ví dụ tải robots.txt).
+    """
+
+    __tablename__ = "domain_throttle"
+
+    domain: str = Field(primary_key=True, max_length=255)
+    last_slot_at: datetime = _timestamp()

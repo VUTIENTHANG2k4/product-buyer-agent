@@ -5,11 +5,14 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import update
+from sqlalchemy import cast, func, update
+from sqlalchemy.dialects.postgresql import JSONPATH
 from sqlmodel import Session, col, select
 
 from app.db.models import AgentRun, utc_now
 from app.domain.enums import AgentRunStatus
+
+_MAX_POSITION = 2**31 - 1  # giới hạn số nguyên của jsonpath
 
 
 class AgentRunRepository:
@@ -34,6 +37,33 @@ class AgentRunRepository:
 
     def get(self, run_id: uuid.UUID) -> AgentRun | None:
         return self._session.get(AgentRun, run_id)
+
+    def exists(self, run_id: uuid.UUID) -> bool:
+        """Có lượt `run_id` không; chỉ đọc khóa chính (không tải cột `events` lớn)."""
+        found = self._session.execute(select(col(AgentRun.id)).where(col(AgentRun.id) == run_id))
+        return found.first() is not None
+
+    def events_after(
+        self, run_id: uuid.UUID, after: int
+    ) -> tuple[AgentRunStatus, datetime, list[Any]] | None:
+        """(trạng thái, `created_at`, sự kiện từ vị trí `after`) của lượt, hoặc `None` nếu không có.
+
+        Cắt mảng JSONB ngay trong SQL (`jsonb_path_query_array`) nên mỗi nhịp theo dõi SSE chỉ tải
+        phần đuôi chưa gửi, không tải cả cột `events`. `after` âm coi như 0.
+        """
+        start = min(max(0, int(after)), _MAX_POSITION)  # vị trí quá lớn: jsonpath tràn số nguyên
+        tail = func.jsonb_path_query_array(
+            col(AgentRun.events), cast(f"$[{start} to last]", JSONPATH)
+        )
+        row = self._session.execute(
+            select(col(AgentRun.status), col(AgentRun.created_at), tail).where(
+                col(AgentRun.id) == run_id
+            )
+        ).first()
+        if row is None:
+            return None
+        status, created_at, events = row
+        return status, created_at, list(events or [])
 
     def append_event(self, run: AgentRun, event: Mapping[str, Any]) -> AgentRun:
         """Thêm một sự kiện vào cuối `events` (gán lại cả list, JSONB không theo dõi)."""

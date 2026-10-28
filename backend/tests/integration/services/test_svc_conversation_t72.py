@@ -64,7 +64,7 @@ def test_read_helpers_use_a_fresh_short_lived_session(db_session: Session) -> No
         return Session(bind=db_session.get_bind(), join_transaction_mode="create_savepoint")
 
     assert len(read_run_events(factory, run.id, 0).events) == 2
-    assert require_run(factory, run.id).run_id == run.id
+    require_run(factory, run.id)  # chỉ kiểm tra tồn tại (T7.6): không ném, không tải sự kiện
 
 
 def test_fail_stale_runs_only_touches_old_running_runs(db_session: Session) -> None:

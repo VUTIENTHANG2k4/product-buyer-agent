@@ -27,6 +27,7 @@ from app.scrapers.http.factory import build_fetcher
 from app.scrapers.pipeline import PipelineResult
 from app.scrapers.registry import SiteNotAvailable
 from app.services.alert_evaluation import AlertEvaluator
+from app.services.domain_throttle import DbDomainThrottle
 from app.services.notifier import build_notifiers
 from app.services.scrape_service import ScrapeService
 
@@ -128,7 +129,7 @@ async def _main(args: argparse.Namespace) -> int:
     def factory() -> Session:
         return Session(engine)
 
-    async with build_fetcher(settings) as fetcher:
+    async with build_fetcher(settings, shared_delay=DbDomainThrottle(factory)) as fetcher:
         service = ScrapeService(
             factory,
             fetcher,

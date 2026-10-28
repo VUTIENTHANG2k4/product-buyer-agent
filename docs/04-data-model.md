@@ -160,6 +160,7 @@ erDiagram
 | `shopping_list_item` | UNIQUE(`list_id`, `product_id`) | Thêm trùng → tăng `quantity` |
 | `price_alert` | INDEX(`product_id`, `status`) | `destination` = email hoặc Telegram chat id |
 | `agent_run` | PK uuid | `events` lưu toàn bộ sự kiện SSE để xem lại và debug |
+| `domain_throttle` | PK `domain` (T9.8, migration `0004`, `0005`) | `last_slot_at`: khe gần nhất đã cấp cho domain (migration `0005` đổi tên từ `next_allowed_at`), dùng chung `api`, `worker`, `make scrape` và `fetch_page`; `DomainThrottleRepository.reserve` cấp khe mới = max(khe cũ + độ trễ của request mới, bây giờ) nguyên tử bằng `INSERT … ON CONFLICT DO UPDATE` và đồng hồ của CSDL |
 
 **Quy ước lưu trữ đã cài đặt** (`app/db/models.py`, migration `backend/alembic/versions/0001_initial_schema.py`):
 

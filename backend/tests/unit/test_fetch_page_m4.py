@@ -11,6 +11,19 @@ from app.scrapers.http.fetcher import Fetcher
 from scripts.fetch_page import EXIT_BLOCKED, EXIT_FAILED, EXIT_OK, main
 from tests.unit.test_anphat_scraper import REGISTER_FORM
 
+
+class _NoThrottle:
+    """Thay khe dùng chung trong CSDL (T9.8): các test này không chạm CSDL."""
+
+    async def reserve(self, domain: str, delay: float) -> float:
+        return 0.0
+
+
+@pytest.fixture(autouse=True)
+def no_shared_throttle(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("scripts.fetch_page.DbDomainThrottle", lambda factory: _NoThrottle())
+
+
 FPT = "https://fptshop.com.vn"
 ANPHAT = "https://www.anphatpc.com.vn"
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
@@ -20,7 +33,7 @@ NEXT_ENV = (
 
 
 def _fetcher_without_site_delays(
-    settings: Settings, *, raw_cache_dir: Path | None = None
+    settings: Settings, *, raw_cache_dir: Path | None = None, shared_delay: object = None
 ) -> Fetcher:
     """Fetcher thật nhưng không có độ trễ 5 giây riêng của trang (test không được sleep thật)."""
     return Fetcher(settings, site_delays={}, raw_cache_dir=None)

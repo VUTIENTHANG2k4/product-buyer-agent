@@ -1,11 +1,13 @@
 """Chat với agent: tạo lượt, theo dõi tiến trình bằng SSE, xem lại hội thoại (docs/07 §3.2)."""
 
+import logging
 import uuid
 from collections.abc import AsyncIterable
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, Path, Query, status
 from fastapi.sse import EventSourceResponse, ServerSentEvent
+from pydantic import ValidationError
 
 from app.agent.schemas import ErrorEvent, FinalEvent
 from app.api.deps import AgentRunnerDep, SessionDep, SessionFactoryDep, TaskRegistryDep
@@ -21,6 +23,7 @@ from app.api.sse import drain, follow_events
 from app.domain.dto import QueryIntent
 from app.services.conversation_service import ConversationService, read_run_events, require_run
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
 
 RunId = Annotated[uuid.UUID, Path(description="Id lượt chạy do `POST /chat` trả về")]
@@ -71,6 +74,8 @@ async def stream_events(
     async for position, record in follow_events(
         lambda start: read_run_events(factory, run_id, start), after
     ):
+        if not isinstance(record.get("event"), str) or "data" not in record:
+            continue  # mục lưu hỏng: bỏ qua nhưng vị trí (id) của các sự kiện sau vẫn đúng
         yield ServerSentEvent(data=record["data"], event=record["event"], id=str(position))
 
 
@@ -84,22 +89,43 @@ def get_run(run_id: RunId, session: SessionDep) -> RunStatusResponse:
     run = ConversationService(session).get_run(run_id)
     final = clarification = error = None
     for record in run.events:
-        match record.get("event"):
-            case "final":
-                final = FinalEvent.model_validate(record["data"])
-            case "clarification":
-                clarification = str(record["data"].get("question", ""))
-            case "error":
-                error = ErrorEvent.model_validate(record["data"])
+        # Sự kiện lưu hỏng (không phải object, thiếu `data`, sai kiểu) bị bỏ qua thay vì làm cả
+        # endpoint trả 500: các sự kiện còn lại vẫn cho biết trạng thái lượt.
+        try:
+            match _event_name(record):
+                case "final":
+                    final = FinalEvent.model_validate(record["data"])
+                case "clarification":
+                    clarification = str(record["data"].get("question", ""))
+                case "error":
+                    error = ErrorEvent.model_validate(record["data"])
+        except (ValidationError, KeyError, AttributeError, TypeError):
+            logger.warning("Bỏ qua sự kiện hỏng của lượt %s", run_id)
     return RunStatusResponse(
         run_id=run.run_id,
         conversation_id=run.conversation_id,
         status=run.status,
-        intent=None if run.intent is None else QueryIntent.model_validate(run.intent),
+        intent=_valid_intent(run_id, run.intent),
         final=final,
         clarification=clarification,
         error=error,
     )
+
+
+def _event_name(record: object) -> str | None:
+    if isinstance(record, dict) and isinstance(record.get("event"), str):
+        return str(record["event"])
+    return None
+
+
+def _valid_intent(run_id: uuid.UUID, intent: dict[str, object] | None) -> QueryIntent | None:
+    if intent is None:
+        return None
+    try:
+        return QueryIntent.model_validate(intent)
+    except ValidationError:
+        logger.warning("Bỏ qua ý định hỏng của lượt %s", run_id)
+        return None
 
 
 @router.get(
