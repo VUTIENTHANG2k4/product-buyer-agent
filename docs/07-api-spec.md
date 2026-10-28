@@ -20,7 +20,7 @@
 
 | Code | HTTP | Khi nào |
 | --- | --- | --- |
-| `VALIDATION_ERROR` | 422 | Tham số sai |
+| `VALIDATION_ERROR` | 422 | Tham số sai; thân không đọc được (UTF-8 hỏng, số nguyên quá dài) cũng là 422 với `type: body_unreadable` |
 | `NOT_FOUND` | 404 | Đường dẫn không tồn tại |
 | `METHOD_NOT_ALLOWED` | 405 | Sai phương thức HTTP (kèm header `Allow`) |
 | `PRODUCT_NOT_FOUND`, `LIST_NOT_FOUND`, `ALERT_NOT_FOUND`, `RUN_NOT_FOUND` | 404 | |
