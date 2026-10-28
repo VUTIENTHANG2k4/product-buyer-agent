@@ -280,6 +280,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         connection.close()
         engine.dispose()
 
+    if runs and all(run.crashed for run in runs):  # môi trường hỏng, không phải agent kém
+        logger.error("Mọi %d ca đều lỗi ngoài dự kiến (ca đầu: %s)", len(runs), runs[0].crashed)
+        return EXIT_SETUP
     scores = [score_case(case, run) for case, run in zip(cases, runs, strict=True)]
     metrics = compute_metrics(scores)
     partial = bool(args.cases)

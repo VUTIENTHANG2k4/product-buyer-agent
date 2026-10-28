@@ -73,10 +73,6 @@ def test_case_that_crashed_is_never_counted_as_passed() -> None:
     assert score.passed is False and score.products_checked == 0
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M6-17: mọi ca crash nhưng chỉ số không đo được nên all_thresholds_met báo đạt",
-)
 def test_eval_where_every_case_crashed_does_not_meet_the_thresholds() -> None:
     c = case(expected={"constraints": [{"field": "min_price", "op": "lte", "value": 1}]})
     scores = [score_case(c, CaseRun(crashed="RuntimeError: x"))]
@@ -140,3 +136,19 @@ def test_hallucination_names_every_affected_case_once() -> None:
     metric = next(m for m in compute_metrics(scores) if m.key == "hallucination")
 
     assert (metric.value, metric.detail, metric.ok) == (2.0, "A, C", False)
+
+
+def test_one_crashed_case_among_good_ones_still_fails_the_gate() -> None:
+    good = case(expected={"constraints": [{"field": "min_price", "op": "lte", "value": 10**9}]})
+    scores = [score_case(good, CaseRun(final_text="x")), score_case(good, CaseRun(crashed="boom"))]
+
+    metrics = {m.key: m for m in compute_metrics(scores)}
+
+    assert metrics["crashed_cases"].ok is False and metrics["crashed_cases"].detail != "không có"
+    assert all_thresholds_met(metrics.values()) is False
+
+
+def test_no_crash_means_the_crashed_metric_is_green_and_does_not_hide_other_failures() -> None:
+    metrics = {m.key: m for m in compute_metrics([score_case(case(), CaseRun(final_text="x"))])}
+
+    assert metrics["crashed_cases"].ok is True and metrics["crashed_cases"].value == 0.0
