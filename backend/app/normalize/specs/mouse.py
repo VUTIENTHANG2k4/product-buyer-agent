@@ -12,7 +12,7 @@ from app.normalize.specs.parsing import (
     clean,
     has_word,
     label_values,
-    parse_grams,
+    parse_grams_all,
     peripheral_connection,
 )
 from app.normalize.specs.types import MouseShape, PeripheralConnection, PositiveInt
@@ -37,6 +37,7 @@ _CONNECTION_LABELS: Final = ("ket noi", "chuan chuot", "chuan giao tiep", "giao 
 _DPI_LABELS: Final = ("do phan giai", "dpi", "cpi")
 _SENSOR_LABELS: Final = ("cam bien", "sensor")
 _BUTTON_LABELS: Final = ("so nut", "nut bam", "button")
+_MAX_BUTTONS: Final = 99
 _WEIGHT_LABELS: Final = ("trong luong", "can nang", "weight")
 _LIGHT_LABELS: Final = ("den", "led", "rgb")
 
@@ -57,13 +58,16 @@ def _max_dpi(*texts: str) -> int | None:
 
 def _weight_g(title: str, raw_specs: Mapping[str, str]) -> int | None:
     candidates = [*label_values(raw_specs, _WEIGHT_LABELS), title]
-    return next((g for g in map(parse_grams, candidates) if g in _WEIGHT_RANGE_G), None)
+    # Mọi khớp của từng chuỗi, không chỉ khớp đầu: "2.4G" (đọc thành 2 g) không che "99g" đứng sau.
+    return next(
+        (g for text in candidates for g in parse_grams_all(text) if g in _WEIGHT_RANGE_G), None
+    )
 
 
 def _buttons(raw_specs: Mapping[str, str]) -> int | None:
     for value in label_values(raw_specs, _BUTTON_LABELS):
-        if match := re.search(r"\d{1,2}", value):
-            return int(match[0])
+        if match := re.search(r"\d+", value):
+            return int(match[0]) if 1 <= int(match[0]) <= _MAX_BUTTONS else None  # 99999 là rác
     return None
 
 

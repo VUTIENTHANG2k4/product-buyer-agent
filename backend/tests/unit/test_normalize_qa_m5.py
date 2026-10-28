@@ -421,33 +421,18 @@ def test_known_colours_are_not_part_of_the_name_key(colour: str) -> None:
         (MOUSE, "Chuột không dây Logitech M221 (không Bluetooth)", "connection", ["wireless_2_4"]),
     ],
 )
-@bug(
-    "BUG-M5-9",
-    "phủ định ('không có mic', 'không ANC', 'không có dây', 'không Bluetooth') bị đọc như khẳng "
-    "định (headset.py:37/35, parsing.py:130/131): lọc 'tai nghe có mic/chống ồn' trả sai sản phẩm",
-)
 def test_negated_features_are_not_reported_as_present(
     category: Category, title: str, field: str, expected: Any
 ) -> None:
     assert extract_specs(category, title, {}).specs.get(field) == expected
 
 
-@bug(
-    "BUG-M5-10",
-    "mouse.py:60 chỉ lấy khớp đầu tiên của `parse_grams` trên mỗi chuỗi: '2.4G' (đọc thành 2 g, "
-    "ngoài khoảng 20–300) che mất '99g' đứng sau nên weight_g bị mất",
-)
 def test_weight_after_a_2_4g_marker_in_the_title_is_still_read() -> None:
     specs = extract_specs(MOUSE, "Chuột không dây 2.4G Logitech M185 99g", {}).specs
 
     assert specs.get("weight_g") == 99
 
 
-@bug(
-    "BUG-M5-10",
-    "mouse.py:65 `re.search(r'\\d{1,2}')` cắt số nhiều chữ số ('99999' thành 99): giá trị rác "
-    "được lưu như số nút thật",
-)
 def test_button_count_with_more_than_two_digits_is_not_truncated() -> None:
     assert "buttons" not in extract_specs(MOUSE, "Chuột X", {"Số nút": "99999"}).specs
 
@@ -570,3 +555,51 @@ def test_other_bracket_groups_and_blue_without_a_following_colour_word_are_kept(
 
 def test_marketing_labels_do_not_change_the_display_name_either() -> None:
     assert canonical_name("Chuột Pulsar X2 (Mới 100%) | GearVN", MOUSE) == "Pulsar X2"
+
+
+# ---- T5.7: phủ định và số đo, các biên ----
+@pytest.mark.parametrize(
+    ("category", "title", "field", "expected"),
+    [
+        (HEADSET, "Tai nghe Sony WH-CH520 có mic", "has_mic", True),
+        (HEADSET, "Tai nghe Sony WH-CH520 kèm mic", "has_mic", True),
+        (HEADSET, "Tai nghe Sony WH-CH520 chống ồn chủ động ANC", "anc", True),
+        (HEADSET, "Tai nghe Sony WH-CH520 ANC, không mic", "anc", True),
+        (HEADSET, "Tai nghe Sony WH-CH520 no ANC", "anc", None),
+        (HEADSET, "Tai nghe Sony WH-CH520 without mic", "has_mic", None),
+        (MOUSE, "Chuột Logitech M331 không dây", "connection", ["wireless_2_4"]),
+        (MOUSE, "Chuột Logitech M331 có dây", "connection", ["wired"]),
+        (
+            MOUSE,
+            "Chuột Logitech M331 Bluetooth + 2.4G",
+            "connection",
+            ["wireless_2_4", "bluetooth"],
+        ),
+        (MOUSE, "Chuột Logitech M331 2.4G (không Bluetooth)", "connection", ["wireless_2_4"]),
+    ],
+)
+def test_negation_only_removes_the_feature_it_precedes(
+    category: Category, title: str, field: str, expected: Any
+) -> None:
+    assert extract_specs(category, title, {}).specs.get(field) == expected
+
+
+@pytest.mark.parametrize(
+    ("title", "weight"),
+    [
+        ("Chuột Logitech M185 99g", 99),
+        ("Chuột Logitech M185 2.4G 99g", 99),
+        ("Chuột 2.4G Logitech M185 0.1kg", 100),
+        ("Chuột Logitech M185 2.4G", None),  # chỉ có "2.4G" (2 g): ngoài 20–300 g
+        ("Chuột Logitech M185 5000g", None),
+    ],
+)
+def test_mouse_weight_reads_every_gram_value_and_keeps_only_a_plausible_one(
+    title: str, weight: int | None
+) -> None:
+    assert extract_specs(MOUSE, title, {}).specs.get("weight_g") == weight
+
+
+@pytest.mark.parametrize(("value", "buttons"), [("6", 6), ("99", 99), ("6 nút", 6), ("100", None)])
+def test_button_count_is_kept_only_between_1_and_99(value: str, buttons: int | None) -> None:
+    assert extract_specs(MOUSE, "Chuột X", {"Số nút": value}).specs.get("buttons") == buttons

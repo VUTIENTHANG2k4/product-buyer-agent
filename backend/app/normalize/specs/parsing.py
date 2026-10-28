@@ -104,6 +104,18 @@ def parse_grams(text: str) -> int | None:
     return round(grams) if grams > 0 else None
 
 
+def parse_grams_all(text: str) -> list[int]:
+    """Mọi khối lượng gam trong `text` theo thứ tự xuất hiện ("2.4G" đứng trước "99g" cũng đọc
+    được cả hai, nơi gọi chọn giá trị hợp lý)."""
+    grams: list[int] = []
+    for match in _MASS.finditer(text):
+        value = _to_float(match[1])
+        mass = value * 1000 if match[2].lower() == "kg" else value
+        if mass > 0:
+            grams.append(round(mass))
+    return grams
+
+
 def parse_kilograms(text: str) -> float | None:
     """Khối lượng `2.29 kg` / `975 g` đổi ra kg (3 chữ số thập phân)."""
     match = _MASS.search(text)
@@ -140,6 +152,24 @@ _GENERIC_WIRELESS = re.compile(r"\bkhong day\b|\bwireless\b")
 _WIRELESS_PAIRED_BT = re.compile(r"wireless\s*[/&,+-]\s*bluetooth|bluetooth\s*[/&,+-]\s*wireless")
 _BLUETOOTH = re.compile(r"bluetooth|\bbt\s?5|\bbt\b")
 _WIRED = re.compile(r"\bco day\b|\bwired\b|\bday usb\b")
+# Phủ định (đã fold): "không có dây" nghĩa là không dây; "không Bluetooth", "no 2.4G" bỏ tính năng.
+_NO_CABLE = re.compile(r"\bkhong co day\b")
+_NEGATED_FEATURE = re.compile(
+    r"\b(?:khong|no|without)\s+(?:co\s+)?"
+    r"(?:bluetooth|bt|usb|jack|aux|2[.,]?4\s?g(?:hz)?|lightspeed|hyperspeed|dongle|receiver|rf)\b"
+)
+_NEGATION_BEFORE = re.compile(r"\b(?:khong|no|without)\s+(?:co\s+)?$")
+
+
+def affirmed(pattern: re.Pattern[str], text: str) -> bool:
+    """`pattern` khớp trong `text` (đã fold) ở ít nhất một chỗ không bị phủ định ngay trước nó
+    ("có mic" khớp, "không có mic"/"không ANC" thì không)."""
+    for match in pattern.finditer(text):
+        if _NEGATION_BEFORE.search(text[max(0, match.start() - 14) : match.start()]) is None:
+            return True
+    return False
+
+
 _JACK = re.compile(r"3[.,]5\s?mm|\bjack\b|\baux\b")
 _USB_RECEIVER = re.compile(r"usb[\s-]*(?:c\s*)?(?:receiver|dongle)")
 _USB = re.compile(r"\busb\b")
@@ -151,6 +181,7 @@ def read_connectivity(text: str) -> Connectivity:
     "Không dây"/"wireless" chung chung tính là 2.4 GHz, trừ khi chuỗi chỉ nhắc Bluetooth (lúc đó
     "không dây" chính là Bluetooth). "3 mode" là có dây + 2.4 GHz + Bluetooth.
     """
+    text = _NEGATED_FEATURE.sub(" ", _NO_CABLE.sub("khong day", text))
     if _MULTI_MODE.search(text):
         return Connectivity(wired=True, radio=True, explicit_radio=True, bluetooth=True, usb=True)
     bluetooth = _BLUETOOTH.search(text) is not None
