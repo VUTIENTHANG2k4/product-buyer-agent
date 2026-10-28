@@ -70,7 +70,7 @@ Lỗi HTTP khác do framework sinh ra (ví dụ 418) dùng mã `HTTP_<status>`; 
 ### 3.3 Danh mục
 | Method | Path | Mô tả |
 | --- | --- | --- |
-| GET | `/products` | Lọc: `category`, `q`, `price_min`, `price_max`, `brand` (lặp), `site` (lặp), `spec.<field>__<op>=<value>` (ví dụ `spec.gpu_rank__gte=40`), `sort` (`price_asc` mặc định, `price_desc`, `rating_desc`, `updated_desc`), phân trang. Phản hồi thêm `stale` (dữ liệu cũ hơn 24 giờ) và `data_as_of` (mốc thu thập cũ nhất trong kết quả) ngoài `{items, total, page, page_size}` |
+| GET | `/products` | Lọc: `category`, `q`, `price_min`, `price_max`, `brand` (lặp), `site` (lặp), `spec.<field>__<op>=<value>` (ví dụ `spec.gpu_rank__gte=40`), `sort` (`price_asc` mặc định, `price_desc`, `rating_desc`, `updated_desc`), phân trang; `price_min > price_max` và tham số `spec.*` lặp lại → 422 (T7.6). Phản hồi thêm `stale` (dữ liệu cũ hơn 24 giờ) và `data_as_of` (mốc thu thập cũ nhất trong kết quả) ngoài `{items, total, page, page_size}` |
 | GET | `/products/{id}` | Sản phẩm + toàn bộ offer |
 | GET | `/products/{id}/price-history?days=30` | `{series: [{site, points: [{t, price, price_type}]}], min_price, max_price}`; `days` 1..180 |
 | POST | `/compare` | Body `{product_ids: [int] (2..5, khác nhau)}` → `{products, differing_fields, cheapest_product_id}`; id không tồn tại → 404 `PRODUCT_NOT_FOUND` (`details.product_ids`) |

@@ -311,7 +311,7 @@ Xong khi:
 
 Ghi chú từ T6.2: `PATCH /lists/{id}/items/{item_id}` cần `preferred_offer_id`, nhưng `ShoppingListService.update_item`/repo chưa hỗ trợ (chỉ `quantity`, `note`, `clear_note`): thêm kèm kiểm offer thuộc sản phẩm. `GET /products` còn thiếu `sort=updated_desc` và `GET /categories` chưa có service.
 
-**T7.6** — Phát sinh từ review M7 (không chặn; làm trước khi chạy API với người dùng thật). Xong khi:
+**T7.6** — ✅ xong (lượt việc nhỏ 3): chốt lượt bị hủy trước khi chạy (`ScrapePipeline.abandon` + `TaskRegistry.spawn(on_cancel=…)`), `StartedRun` chỉ chạy một lần, `reopen`/`resume` kiểm offline theo trang của lượt, `events_since` cắt ở SQL, `require_run` không tải sự kiện, `GET /chat/{id}` và SSE chịu sự kiện lưu hỏng, `price_min > price_max` → 422 (tham số `spec.*` lặp đã bị từ chối từ trước). **Không làm:** từ chối `target_price` bất thường so với số người dùng nêu (đụng hành vi agent T6.9, cần đo eval). Phát sinh từ review M7 (không chặn; làm trước khi chạy API với người dùng thật). Xong khi:
 - `ScrapeService.execute` chốt lượt (`FAILED`) khi task bị hủy trước khi vào `_crawl` (hiện lượt đã `start`/`reopen` mà task bị hủy giữa chừng, ví dụ tắt app ngay sau 202, kẹt `RUNNING` tới 2 giờ và chặn lượt mới); `StartedRun` chỉ `execute` được một lần.
 - `ScrapeService.reopen` kiểm `SCRAPER_OFFLINE_ONLY` theo site của lượt (hiện an toàn vì chỉ mock-shop vào `NEEDS_HUMAN`); thêm test khẳng định lượt trang thật không bao giờ vào `NEEDS_HUMAN`.
 - Test cho `lifespan` (tắt app hủy task nền và đóng Fetcher) và hai `reopen` đồng thời (một thành công, một `ChallengeNotPending`).
@@ -366,7 +366,7 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | T9.5 | Cron theo tên ngày trong tuần (phát sinh từ QA M9) | T9.3 | S | ✅ |
 | T9.6 | `POST /alerts/{id}/test`: giới hạn tần suất, ghi chú không có xác thực (phát sinh từ QA M9) | T9.2 | S | ✅ |
 | T9.7 | Ngắt mạch theo kênh khi gửi thông báo lỗi liên tiếp + `stop_grace_period` cho worker (phát sinh từ QA M9) | T9.1 | S | ✅ |
-| T9.8 | Khóa độ trễ theo domain dùng chung giữa `api` và `worker` (phát sinh từ review M9) | T9.3 | M | ⬜ |
+| T9.8 | Khóa độ trễ theo domain dùng chung giữa `api` và `worker` (phát sinh từ review M9) | T9.3 | M | ✅ |
 
 **T9.1** — Xong khi: test đúng tiêu chí US-07 ([01 §5](01-requirements.md#5-user-story-và-tiêu-chí-chấp-nhận)); cảnh báo `triggered` gửi lại chỉ khi giá xuống thấp hơn `last_notified_price` thêm ≥ 1%.
 **T9.1–T9.4** — ✅ xong (M9 qua `code-reviewer`: 4 Phải sửa + 10/11 Nên sửa đã sửa; `qa-tester`: 8 bug BUG-M9-1…8 đã sửa kèm 227 test `*_qa_m9`). Thiết kế đã chốt: giá theo dõi lấy từ trang chi tiết (`ProductDetail` có giá), cảnh báo `triggered` chỉ gửi lại khi giảm thêm ≥ 1% và không tái kích hoạt khi giá tăng rồi giảm, đổi ngưỡng = cảnh báo mới. [ADR-0009](adr/0009-mock-shop-compose-host.md) cho host `mock-shop` trong Compose.
