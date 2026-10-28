@@ -246,7 +246,7 @@ Xong khi:
 | T5.5 | Nhận hãng sau mô tả loại ("Chuột có dây Dell…", "Hàng chính hãng Chuột Logitech…") và tên chuẩn bắt đầu từ hãng (QA M5 BUG-M5-1) | T5.2 | S | ✅ |
 | T5.6 | Vệ sinh khóa tên: tên mẫu trong ngoặc "(G304)" không bị coi là mã phụ tùng, màu "Đỏ/Xanh dương/Xanh lá", nhãn "(Mới 100%)/[Hot]/(Bảo hành…)", nhãn khuyến mãi đầu tên che mã laptop (BUG-M5-3, 4, 5, 13) | T5.2 | M | ✅ |
 | T5.7 | Phủ định và số đo: "không có mic/ANC/không có dây", cân nặng sau "2.4G", số nút > 99 (BUG-M5-9, 10) | T5.1 | S | ✅ |
-| T5.8 | Khóa tên và hãng: token chỉ có dấu câu, "Laptop: Dell", switch + màu vỏ, mã trong ngoặc ≥ 6 ký tự, cắt tiêu đề dài trước `fold`, gia tốc "50G" (BUG-S1-3, 4, 5, 6, 7, 13) | T5.6 | S | ⬜ |
+| T5.8 | Khóa tên và hãng: token chỉ có dấu câu, "Laptop: Dell", switch + màu vỏ, mã trong ngoặc ≥ 6 ký tự, cắt tiêu đề dài trước `fold`, gia tốc "50G" (BUG-S1-3, 4, 5, 6, 7, 13) | T5.6 | S | ✅ |
 
 **T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
 **T5.2** — Từ T3.4: matcher cũng phải xử lý cùng sản phẩm có `href` http và https (hai khóa URL khác nhau) và cùng URL ở hai nhóm. Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).

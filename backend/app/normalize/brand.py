@@ -2,6 +2,7 @@
 
 import re
 
+from app.normalize.specs.parsing import clean
 from app.normalize.text import fold as _fold
 
 UNKNOWN_BRAND = "Unknown"  # `product.brand` NOT NULL nên cần giá trị dự phòng
@@ -50,6 +51,7 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
 # Nhãn khuyến mãi ở đầu tên: "[Mới 100%] ...", "(Hàng chính hãng) ..."
 _LEADING_TAGS = re.compile(r"^(?:\s*(?:\[[^\]]*\]|\([^)]*\)))+\s*")
 # Ký hiệu trang trí đầu dòng ("★ Laptop …", "🔥 Laptop …"): không phải chữ hay số.
+_WORD_BREAKS = re.compile(r"[\s/,:;]+")
 _LEADING_SYMBOLS = re.compile(r"^[^\w\[(]+")
 # Mô tả loại/tính năng đứng trước hãng ("Chuột có dây Dell", "Hàng chính hãng Chuột Logitech",
 # "Máy tính xách tay ASUS") có nhiều dạng nên không liệt kê: nếu tên BẮT ĐẦU bằng một từ loại sản
@@ -143,8 +145,10 @@ def detect_brand(title: str) -> str:
 
     Chỉ nhìn phần đầu tên và dừng ở từ nối để "Bàn phím cho MacBook" không bị gán nhầm cho Apple.
     """
-    text = strip_leading_decoration(_fold(title))
-    found = find_brand(text.split())
+    # `clean` cắt tiêu đề quá dài (như `canonical_name`) trước khi fold, nên 1 MB chữ có dấu không
+    # tốn vài giây CPU (BUG-S1-5). Dấu câu dính từ loại ("Laptop: Dell", "Laptop/Dell") là dấu ngắt.
+    text = strip_leading_decoration(_fold(clean(title)))
+    found = find_brand([word for word in _WORD_BREAKS.split(text) if word])
     return UNKNOWN_BRAND if found is None else found[1]
 
 

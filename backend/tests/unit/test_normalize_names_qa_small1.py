@@ -345,11 +345,6 @@ def test_a_decoration_symbol_before_a_promo_tag_does_not_hide_the_brand(title: s
     assert detect_brand(title) != UNKNOWN_BRAND
 
 
-@bug(
-    "BUG-S1-3",
-    "_tokens giữ token chỉ gồm dấu câu ('–', '—', '•', '+', '&', '|' cuối tên) trong khóa tên, nên "
-    "'Viper V2 Pro – Đen' khác 'Viper V2 Pro' và không ghép được",
-)
 @pytest.mark.parametrize(
     "suffix", [" – Đen", " — Đen", " • Đen", " + Đen", " Black & White", " |", " - – Đen"]
 )
@@ -359,11 +354,6 @@ def test_standalone_punctuation_tokens_are_not_part_of_the_name_key(suffix: str)
     assert key_of(base + suffix, MOUSE) == key_of(base, MOUSE)
 
 
-@bug(
-    "BUG-S1-4",
-    "detect_brand tách từ bằng split() mà không bỏ dấu câu dính từ loại: 'Laptop: Dell …' và "
-    "'Chuột, Razer …' ra Unknown (names.py thì bỏ dấu cạnh từ)",
-)
 @pytest.mark.parametrize(
     ("title", "brand"),
     [
@@ -376,11 +366,6 @@ def test_punctuation_glued_to_the_type_word_does_not_hide_the_brand(title: str, 
     assert detect_brand(title) == brand
 
 
-@bug(
-    "BUG-S1-5",
-    "detect_brand chạy fold() trên toàn bộ tiêu đề (không cắt như clean() của canonical_name): "
-    "tiêu đề 1 MB có dấu tốn vài giây CPU mỗi mục",
-)
 def test_detect_brand_only_looks_at_a_bounded_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
     seen: list[int] = []
     real_fold = fold
@@ -395,11 +380,6 @@ def test_detect_brand_only_looks_at_a_bounded_prefix(monkeypatch: pytest.MonkeyP
     assert max(seen) <= 10_000
 
 
-@bug(
-    "BUG-S1-6",
-    "_is_part_code coi mã model viết liền trong ngoặc từ 6 ký tự có chữ và số là mã phụ tùng, nên "
-    "'(WH1000XM5)' và '(WH1000XM4)' đều bị xóa và hai mẫu khác nhau cùng khóa rỗng",
-)
 def test_unhyphenated_model_names_in_brackets_keep_different_models_apart() -> None:
     first = key_of("Tai nghe Sony (WH1000XM5)", HEADSET)
     second = key_of("Tai nghe Sony (WH1000XM4)", HEADSET)
@@ -407,11 +387,6 @@ def test_unhyphenated_model_names_in_brackets_keep_different_models_apart() -> N
     assert first != second
 
 
-@bug(
-    "BUG-S1-7",
-    "_SWITCH_BEFORE chứa 'switch' nên màu vỏ đứng sau 'Red Switch' ('… Gateron Red Switch Đen') bị "
-    "coi là màu switch và nằm trong khóa tên: cùng bàn phím khác màu vỏ không ghép được",
-)
 @pytest.mark.parametrize("colour", ["Đen", "Trắng", "Black", "White", "Hồng"])
 def test_shell_colour_after_a_named_switch_is_not_part_of_the_name_key(colour: str) -> None:
     base = "Bàn phím cơ Keychron K2 V2 Gateron Red Switch"

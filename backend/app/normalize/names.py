@@ -24,6 +24,7 @@ _PART_NUMBER = re.compile(r"^\d{3}-\d{4,6}$")  # mã phụ tùng Logitech: 910-0
 # Mã phụ tùng/cảm biến đặt trong ngoặc ("(PMW920)") dài từ 6 ký tự; tên mẫu ngắn trong ngoặc như
 # "(G304)", "(M331)", "(Gen2)" phân biệt sản phẩm nên được giữ (BUG-M5-3).
 _MIN_PART_CODE_LENGTH: Final = 6
+_MAX_PART_CODE_GROUPS: Final = 3  # PMW920 (2 cụm), HERO25K (3); WH1000XM5 (4) là tên mẫu
 # Nhóm ngoặc chỉ chứa nhãn bán hàng ("[Hot]", "(Mới 100%)", "(Bảo hành 24 tháng)", "(Fullbox)").
 _BRACKET_GROUP = re.compile(r"\s*[\[(]([^\[\]()]*)[\])]")
 _MARKETING_LABEL = re.compile(
@@ -100,6 +101,8 @@ _SWITCH_BEFORE: Final = frozenset(
         "silent",
     ]
 )
+# Tên/màu switch đứng ngay trước chữ "switch": sau đó là màu vỏ chứ không còn là tên switch.
+_SWITCH_NAME_WORDS: Final = (_SWITCH_BEFORE - {"switch", "sw"}) | _COLORS
 _SWITCH_AFTER: Final = frozenset(["switch", "sw", "axis"])
 _AFTER_BLUE: Final = frozenset(["duong", "la", "ngoc", "nuoc"])  # xanh dương/lá/ngọc/nước biển
 # Từ chỉ loại sản phẩm hoặc quảng cáo: không phân biệt mẫu.
@@ -192,11 +195,14 @@ def _unwrap_parentheses(title: str) -> str:
 def _is_part_code(word: str) -> bool:
     if _PART_NUMBER.match(word):
         return True
+    # Mã phụ tùng/cảm biến có tối đa 3 cụm chữ/số ("PMW920", "HERO25K"); tên mẫu viết liền
+    # xen kẽ nhiều cụm ("WH1000XM5") phân biệt sản phẩm nên được giữ (BUG-S1-6).
     return (
         _MIN_PART_CODE_LENGTH <= len(word) <= 14
+        and word.isalnum()
         and any(c.isdigit() for c in word)
         and any(c.isalpha() for c in word)
-        and word.isalnum()
+        and len(re.findall(r"[^\W\d_]+|\d+", word)) <= _MAX_PART_CODE_GROUPS
     )
 
 
@@ -215,7 +221,8 @@ def _tokens(title: str) -> list[_Token]:
     for raw in re.split(r"[\s/]+", text):
         stripped = raw.strip(_EDGE)
         key = fold(stripped).strip(_EDGE)
-        if not key or _PART_NUMBER.match(key):
+        # Token chỉ có dấu câu ("–", "•", "+", "&", "|") không phân biệt mẫu.
+        if not any(c.isalnum() for c in key) or _PART_NUMBER.match(key):
             continue
         if key == "100%" and tokens and tokens[-1].key in _NEW_CONDITION:
             continue
@@ -227,6 +234,8 @@ def _is_switch_colour(tokens: list[_Token], index: int) -> bool:
     """Màu là một phần tên switch (`MX Red`, `Gateron Brown`, `Red Axis`, `Cream Blue`)."""
     before = tokens[index - 1].key if index > 0 else ""
     after = tokens[index + 1].key if index + 1 < len(tokens) else ""
+    if before in {"switch", "sw"} and index >= 2 and tokens[index - 2].key in _SWITCH_NAME_WORDS:
+        return False  # "Gateron Red Switch Đen": màu sau tên switch đầy đủ là màu vỏ (BUG-S1-7)
     if before in _SWITCH_BEFORE or after in _SWITCH_AFTER:
         return True
     # "Cream Blue" / "Cream Yellow" là tên switch của Akko, không phải hai màu vỏ.
