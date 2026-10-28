@@ -231,7 +231,7 @@ export interface paths {
         put?: never;
         /**
          * Gửi thông báo thử tới kênh đã cấu hình
-         * @description Gửi thật một tin nhắn thử tới kênh và nơi nhận của cảnh báo, không đổi trạng thái cảnh báo. Kênh chưa cấu hình trong `.env` hoặc gửi lỗi thì trả `sent: false` kèm `reason`.
+         * @description Gửi thật một tin nhắn thử tới kênh và nơi nhận của cảnh báo, không đổi trạng thái cảnh báo. Kênh chưa cấu hình trong `.env` hoặc gửi lỗi thì trả `sent: false` kèm `reason`. Mỗi cảnh báo chỉ gửi thử lại sau 10 giây (gọi sớm hơn cũng trả `sent: false`, không gửi).
          */
         post: operations["test_alert_api_alerts__alert_id__test_post"];
         delete?: never;

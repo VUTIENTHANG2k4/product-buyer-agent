@@ -101,3 +101,20 @@ def test_default_dependency_builds_notifiers_from_settings() -> None:
     settings = make_settings(smtp_host="smtp.mock.example", alert_email_from="a@mock.example")
 
     assert set(get_notifiers(settings)) == {AlertChannel.email}
+
+
+def test_test_endpoint_refuses_a_second_send_within_the_interval(
+    client: TestClient, db_session: Session
+) -> None:
+    email = RecordingNotifier()
+    use_notifiers(client, {AlertChannel.email: email})
+    alert_id = create_alert(client, priced_product(db_session)).json()["alert_id"]
+
+    first = client.post(f"/api/alerts/{alert_id}/test")
+    second = client.post(f"/api/alerts/{alert_id}/test")
+
+    assert first.json() == {"sent": True, "reason": None}
+    assert second.status_code == 200
+    assert second.json()["sent"] is False
+    assert "thử lại sau" in second.json()["reason"]
+    assert len(email.sent) == 1  # lần hai không gọi notifier

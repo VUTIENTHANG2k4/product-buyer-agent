@@ -22,6 +22,10 @@ _FRAMEWORK_ERRORS: dict[int, type[AppError]] = {
     MethodNotAllowed.status_code: MethodNotAllowed,
 }
 _GENERIC_HTTP_MESSAGE = "Yêu cầu không hợp lệ."
+# FastAPI ném HTTP 400 với câu này khi không đọc nổi thân (UTF-8 hỏng, số nguyên quá dài): với
+# client đó là một thân sai như mọi JSON hỏng khác, nên trả 422 `VALIDATION_ERROR` (BUG-M7-4).
+_UNREADABLE_BODY_DETAIL = "There was an error parsing the body"
+_UNREADABLE_BODY_MESSAGE = "Thân yêu cầu không đọc được (không phải JSON hợp lệ)."
 # RFC 9110: hai mã này không được có thân phản hồi.
 _NO_BODY_STATUSES = {204, 304}
 
@@ -111,6 +115,22 @@ def register_error_handlers(app: FastAPI) -> None:
     async def handle_http_exception(request: Request, exc: StarletteHTTPException) -> Response:
         if exc.status_code in _NO_BODY_STATUSES:
             return Response(status_code=exc.status_code, headers=exc.headers)
+        if exc.status_code == HTTPStatus.BAD_REQUEST and exc.detail == _UNREADABLE_BODY_DETAIL:
+            return _error_response(
+                ValidationFailed.status_code,
+                ValidationFailed.code,
+                ValidationFailed.default_message,
+                {
+                    "errors": [
+                        {
+                            "in": "body",
+                            "field": "",
+                            "message": _UNREADABLE_BODY_MESSAGE,
+                            "type": "body_unreadable",
+                        }
+                    ]
+                },
+            )
         detail = exc.detail
         # Starlette đặt `detail` = cụm chuẩn ("Not Found"); chỉ khi code ném câu riêng mới giữ lại.
         custom = (

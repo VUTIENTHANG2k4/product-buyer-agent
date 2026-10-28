@@ -232,13 +232,6 @@ def test_parse_grams_all_returns_values_in_order_and_skips_non_positive() -> Non
     assert parse_grams_all("") == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG-S1-13: gia tốc cảm biến '50G' (đơn vị G) đứng trước khối lượng được đọc thành 50 gam; "
-        "weight_g lấy giá trị hợp lý đầu tiên mà không phân biệt 'G' lực với gam"
-    ),
-)
 def test_sensor_acceleration_in_g_force_is_not_the_weight() -> None:
     assert extract_mouse("Chuột Razer Viper V3 Pro 8K 35K DPI 50G 54g", {}).weight_g == 54
 

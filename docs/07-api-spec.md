@@ -20,7 +20,7 @@
 
 | Code | HTTP | Khi nào |
 | --- | --- | --- |
-| `VALIDATION_ERROR` | 422 | Tham số sai |
+| `VALIDATION_ERROR` | 422 | Tham số sai; thân không đọc được (UTF-8 hỏng, số nguyên quá dài) cũng là 422 với `type: body_unreadable` |
 | `NOT_FOUND` | 404 | Đường dẫn không tồn tại |
 | `METHOD_NOT_ALLOWED` | 405 | Sai phương thức HTTP (kèm header `Allow`) |
 | `PRODUCT_NOT_FOUND`, `LIST_NOT_FOUND`, `ALERT_NOT_FOUND`, `RUN_NOT_FOUND` | 404 | |
@@ -101,7 +101,7 @@ Id trong đường dẫn hoặc thân yêu cầu ngoài miền khóa chính (≤
 | POST | `/alerts` | `{product_id, target_price, channel?, destination?}` → 201; thiếu channel/destination → lấy mặc định từ cấu hình; nơi nhận chưa cấu hình hoặc sai định dạng → 422 |
 | PATCH | `/alerts/{id}` | `{target_price?, status? (active/paused)}`; ngưỡng trùng cảnh báo khác đang hiệu lực → 409 `DUPLICATE_ALERT` |
 | DELETE | `/alerts/{id}` | 204 |
-| POST | `/alerts/{id}/test` | `{sent, reason?}`. Gửi thật một tin nhắn thử tới kênh/nơi nhận của cảnh báo (không đổi trạng thái cảnh báo). Kênh chưa cấu hình trong `.env` (email cần `SMTP_HOST` + `ALERT_EMAIL_FROM`, Telegram cần `TELEGRAM_BOT_TOKEN`) hoặc gửi lỗi → 200 với `sent: false` kèm lý do tiếng Việt, không lộ bí mật |
+| POST | `/alerts/{id}/test` | `{sent, reason?}`. Gửi thật một tin nhắn thử tới kênh/nơi nhận của cảnh báo (không đổi trạng thái cảnh báo). Kênh chưa cấu hình trong `.env` (email cần `SMTP_HOST` + `ALERT_EMAIL_FROM`, Telegram cần `TELEGRAM_BOT_TOKEN`) hoặc gửi lỗi → 200 với `sent: false` kèm lý do tiếng Việt, không lộ bí mật. Endpoint không xác thực (ứng dụng chạy cho một người dùng) nên mỗi cảnh báo chỉ gửi thử lại sau 10 giây (`SendLimiter` trong bộ nhớ tiến trình `api`); gọi sớm hơn → 200 `sent: false`, "thử lại sau N giây", không gửi |
 
 ### 3.6 Quản trị thu thập
 | Method | Path | Mô tả |

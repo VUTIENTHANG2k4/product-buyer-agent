@@ -441,13 +441,14 @@ def test_wrong_content_type_or_non_object_body_is_a_422_at_the_body_root(
 @pytest.mark.parametrize(
     "content", [b'{"a": "\xff"}', b"[" * 100_000], ids=["invalid-utf8", "absurdly-deep-json"]
 )
-def test_undecodable_body_is_a_400_envelope_not_a_server_error(
+def test_undecodable_body_is_a_422_envelope_not_a_server_error(
     client: TestClient, content: bytes
 ) -> None:
+    """Trước T7.7a đây là 400 `HTTP_400` (BUG-M7-4); giờ là 422 `VALIDATION_ERROR` như JSON hỏng."""
     response = client.post(
         "/api/_t/strict", content=content, headers={"Content-Type": "application/json"}
     )
-    _envelope(response, 400, "HTTP_400")
+    _envelope(response, 422, "VALIDATION_ERROR")
 
 
 def test_repeated_scalar_query_parameter_uses_the_last_value(client: TestClient) -> None:

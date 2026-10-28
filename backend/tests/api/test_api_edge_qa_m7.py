@@ -148,11 +148,6 @@ def test_wrong_content_type_is_rejected_not_500(client: TestClient, url: str) ->
     assert_clean_error(response)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M7-4: thân không phải UTF-8 hợp lệ / số nguyên 5000 chữ số trả 400 `HTTP_400` "
-    "với thông điệp tiếng Anh thay vì 422 `VALIDATION_ERROR` như mọi JSON hỏng khác",
-)
 @pytest.mark.parametrize("body", BAD_BODIES)
 def test_undecodable_body_uses_the_standard_validation_error(
     client: TestClient, body: bytes
@@ -782,3 +777,29 @@ def test_trailing_slash_redirect_or_not_found_is_never_an_html_or_500(
     assert response.status_code in (200, 307, 308, 404)
     if response.status_code == 404:
         assert_clean_error(response, 404)
+
+
+def test_an_unreadable_body_has_a_machine_readable_error_type(client: TestClient) -> None:
+    response = raw(client, "POST", "/api/lists", b"\xff\xfe{")
+
+    assert response.status_code == 422
+    (error,) = response.json()["error"]["details"]["errors"]
+    assert (error["in"], error["type"]) == ("body", "body_unreadable")
+
+
+def test_other_bad_requests_keep_their_http_400_code(client: TestClient) -> None:
+    from fastapi import HTTPException
+
+    from app.main import create_app
+
+    app = create_app()
+
+    @app.get("/boom-400")
+    def boom() -> None:
+        raise HTTPException(status_code=400, detail="Tự đặt")
+
+    response = TestClient(app).get("/boom-400")
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "HTTP_400"
+    assert response.json()["error"]["message"] == "Tự đặt"

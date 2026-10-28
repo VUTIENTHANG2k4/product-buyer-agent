@@ -49,7 +49,18 @@ class EmailNotifier:
                     self._deliver(smtp, message)
         except (smtplib.SMTPException, OSError, ValueError) as error:
             # Chỉ nêu loại lỗi: thông điệp gốc có thể chứa tên người dùng hoặc địa chỉ nhận.
-            raise NotificationFailed(f"Không gửi được email ({type(error).__name__})") from None
+            # Người nhận bị từ chối hoặc nội dung sai (`ValueError` trơn khi dựng thư) chỉ hỏng
+            # riêng cảnh báo đó; còn lại (kết nối, xác thực, chứng chỉ, tên máy chủ sai: các lớp con
+            # của ValueError như `SSLCertVerificationError`, `UnicodeError`) là hỏng cả kênh. Lỗi
+            # mã hóa nội dung là riêng cảnh báo, trừ mã hóa IDNA của tên máy chủ SMTP_HOST.
+            per_alert = (
+                isinstance(error, (smtplib.SMTPRecipientsRefused, smtplib.SMTPDataError))
+                or type(error) is ValueError
+                or (isinstance(error, UnicodeEncodeError) and error.encoding != "idna")
+            )
+            raise NotificationFailed(
+                f"Không gửi được email ({type(error).__name__})", channel_down=not per_alert
+            ) from None
 
     def _deliver(self, smtp: smtplib.SMTP, message: EmailMessage) -> None:
         if self._user:

@@ -16,6 +16,15 @@ SEND_TIMEOUT_SECONDS = 15
 MAX_TEXT_LENGTH = 4096  # giới hạn của sendMessage
 
 
+_CHANNEL_WIDE_STATUSES = frozenset(
+    [httpx.codes.UNAUTHORIZED, httpx.codes.NOT_FOUND, httpx.codes.TOO_MANY_REQUESTS]
+)
+
+
+def _is_channel_wide(status: int) -> bool:
+    return status in _CHANNEL_WIDE_STATUSES or status >= httpx.codes.INTERNAL_SERVER_ERROR
+
+
 class TelegramNotifier:
     def __init__(self, token: SecretStr, *, timeout: float = SEND_TIMEOUT_SECONDS) -> None:
         self._token = token
@@ -31,10 +40,16 @@ class TelegramNotifier:
         except (httpx.HTTPError, httpx.InvalidURL) as error:
             # Không đưa thông điệp gốc vào lỗi: `httpx` có thể in cả URL chứa token bot.
             # `InvalidURL` (token có ký tự điều khiển) không thuộc `HTTPError` (BUG-M9-2).
-            raise NotificationFailed(f"Không gửi được Telegram ({type(error).__name__})") from None
+            raise NotificationFailed(
+                f"Không gửi được Telegram ({type(error).__name__})",
+                channel_down=isinstance(error, httpx.TransportError),
+            ) from None
         if response.status_code != httpx.codes.OK:
             raise NotificationFailed(
-                f"Telegram từ chối (HTTP {response.status_code}): {_description(response)}"
+                f"Telegram từ chối (HTTP {response.status_code}): {_description(response)}",
+                # Token sai (401, 404), bị giới hạn (429) hoặc lỗi máy chủ (5xx): cả kênh hỏng;
+                # 400/403 ("chat not found", "bot was blocked") chỉ hỏng riêng người nhận đó.
+                channel_down=_is_channel_wide(response.status_code),
             )
         # Telegram luôn trả `{"ok": true, ...}` khi gửi được. HTTP 200 với thân khác (proxy hoặc
         # captive portal trả trang đăng nhập, `ok: false`) không phải là đã gửi (BUG-M9-1): coi là

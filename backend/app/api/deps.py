@@ -22,6 +22,7 @@ from app.services.health_service import DbStatus
 from app.services.notifier import Notifier, build_notifiers
 from app.services.scrape_runtime import ScrapeRuntime
 from app.services.scrape_service import ScrapeService
+from app.services.send_limiter import SendLimiter
 from app.services.shopping_list_service import ShoppingListService
 
 SettingsDep = Annotated[Settings, Depends(get_settings)]
@@ -71,9 +72,18 @@ def get_notifiers(settings: SettingsDep) -> Mapping[AlertChannel, Notifier]:
     return build_notifiers(settings)
 
 
+_TEST_SEND_LIMITER = SendLimiter()
+
+
+def get_test_send_limiter() -> SendLimiter:
+    """Bộ giới hạn gửi thử dùng chung cả tiến trình; test ghi đè bằng bộ giới hạn riêng."""
+    return _TEST_SEND_LIMITER
+
+
 ShoppingListServiceDep = Annotated[ShoppingListService, Depends(get_shopping_list_service)]
 AlertServiceDep = Annotated[AlertService, Depends(get_alert_service)]
 NotifiersDep = Annotated[Mapping[AlertChannel, Notifier], Depends(get_notifiers)]
+TestSendLimiterDep = Annotated[SendLimiter, Depends(get_test_send_limiter)]
 
 
 def get_task_registry(request: Request) -> TaskRegistry:

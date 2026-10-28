@@ -81,6 +81,8 @@ flowchart LR
 | Xóa sạch DB dev | `docker compose down -v` (xóa cả volume `pgdata` và `appdata`) rồi `make db-up && make setup` |
 | Chi phí LLM | Xem số lần gọi trong `agent_run.tool_calls` và log; cache trích xuất giảm số gọi |
 | Đổi model LLM | Sửa `GEMINI_MODEL` trong `.env`, chạy `make eval` so sánh trước/sau |
+| Gửi thử cảnh báo | `POST /api/alerts/{id}/test` không xác thực (ứng dụng chạy cho một người dùng, chỉ nên mở trong mạng tin cậy) và gửi thư thật; mỗi cảnh báo chỉ gửi thử lại sau 10 giây, đếm trong bộ nhớ từng tiến trình `api` (khởi động lại hoặc chạy nhiều tiến trình thì đếm riêng) |
+| Kênh thông báo hỏng | SMTP/Telegram không kết nối được: lượt đánh giá ngắt kênh sau 2 lỗi liên tiếp (log `kênh … không dùng được`), cảnh báo chưa gửi được thử lại ở lần đánh giá sau; kiểm tra `SMTP_*`, `TELEGRAM_BOT_TOKEN` |
 
 ## 7. Kịch bản demo bảo vệ
 

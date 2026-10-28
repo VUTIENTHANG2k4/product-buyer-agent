@@ -56,8 +56,13 @@ def _max_dpi(*texts: str) -> int | None:
     return max(values) if values else None
 
 
+# "50G" viết hoa dính số là gia tốc cảm biến (hoặc "2.4G"), không phải gam: chỉ dùng làm phương án
+# cuối khi tiêu đề không có khối lượng nào khác ("Chuột X 63G").
+_G_FORCE = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)?G\b")
+
+
 def _weight_g(title: str, raw_specs: Mapping[str, str]) -> int | None:
-    candidates = [*label_values(raw_specs, _WEIGHT_LABELS), title]
+    candidates = [*label_values(raw_specs, _WEIGHT_LABELS), _G_FORCE.sub(" ", title), title]
     # Mọi khớp của từng chuỗi, không chỉ khớp đầu: "2.4G" (đọc thành 2 g) không che "99g" đứng sau.
     return next(
         (g for text in candidates for g in parse_grams_all(text) if g in _WEIGHT_RANGE_G), None

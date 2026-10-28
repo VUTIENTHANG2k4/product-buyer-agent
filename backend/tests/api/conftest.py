@@ -6,11 +6,17 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.api.deps import get_catalog_service, get_compare_service, get_session
+from app.api.deps import (
+    get_catalog_service,
+    get_compare_service,
+    get_session,
+    get_test_send_limiter,
+)
 from app.config import Settings, get_settings
 from app.main import create_app
 from app.services.catalog_service import CatalogService
 from app.services.compare_service import CompareService
+from app.services.send_limiter import SendLimiter
 from tests.service_support import clock, make_settings
 
 
@@ -31,5 +37,7 @@ def client(db_session: Session, settings: Settings) -> Iterator[TestClient]:
     app.dependency_overrides[get_session] = lambda: db_session
     app.dependency_overrides[get_catalog_service] = lambda: CatalogService(db_session, now=clock)
     app.dependency_overrides[get_compare_service] = lambda: CompareService(db_session, now=clock)
+    limiter = SendLimiter()  # mỗi test một bộ giới hạn gửi thử riêng
+    app.dependency_overrides[get_test_send_limiter] = lambda: limiter
     with TestClient(app) as test_client:
         yield test_client

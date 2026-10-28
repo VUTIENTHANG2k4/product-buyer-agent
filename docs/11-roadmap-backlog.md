@@ -246,13 +246,13 @@ Xong khi:
 | T5.5 | Nhận hãng sau mô tả loại ("Chuột có dây Dell…", "Hàng chính hãng Chuột Logitech…") và tên chuẩn bắt đầu từ hãng (QA M5 BUG-M5-1) | T5.2 | S | ✅ |
 | T5.6 | Vệ sinh khóa tên: tên mẫu trong ngoặc "(G304)" không bị coi là mã phụ tùng, màu "Đỏ/Xanh dương/Xanh lá", nhãn "(Mới 100%)/[Hot]/(Bảo hành…)", nhãn khuyến mãi đầu tên che mã laptop (BUG-M5-3, 4, 5, 13) | T5.2 | M | ✅ |
 | T5.7 | Phủ định và số đo: "không có mic/ANC/không có dây", cân nặng sau "2.4G", số nút > 99 (BUG-M5-9, 10) | T5.1 | S | ✅ |
-| T5.8 | Khóa tên và hãng: token chỉ có dấu câu, "Laptop: Dell", switch + màu vỏ, mã trong ngoặc ≥ 6 ký tự, cắt tiêu đề dài trước `fold`, gia tốc "50G" (BUG-S1-3, 4, 5, 6, 7, 13) | T5.6 | S | ⬜ |
+| T5.8 | Khóa tên và hãng: token chỉ có dấu câu, "Laptop: Dell", switch + màu vỏ, mã trong ngoặc ≥ 6 ký tự, cắt tiêu đề dài trước `fold`, gia tốc "50G" (BUG-S1-3, 4, 5, 6, 7, 13) | T5.6 | S | ✅ |
 
 **T5.1** — Xong khi: golden ≥ 40 laptop, ≥ 15 mỗi phụ kiện, lấy từ tiêu đề thật trong fixture; độ chính xác trường bắt buộc ≥ 95% trên golden.
 **T5.2** — Từ T3.4: matcher cũng phải xử lý cùng sản phẩm có `href` http và https (hai khóa URL khác nhau) và cùng URL ở hai nhóm. Xong khi: ≥ 30 cặp golden (nên ghép / không nên ghép); 0 ghép sai trên golden; test idempotent (chạy lại pipeline không tạo product trùng).
 **T5.4** — Từ review M5 (không chặn): script ghép lại/tách offer khi `detect_brand` hoặc luật ghép đổi (offer đã có hiện không bao giờ được xét lại); ưu tiên nguồn khi thông số mâu thuẫn (`raw_specs` thắng tiêu đề thay vì "cũ thắng"); `merge` cập nhật `image_url`; bỏ `model_code_hint` ở phụ kiện nếu nguồn có MPN theo màu; `switch_name` bàn phím đọc sai khi có "Pro/V3/hotswap" trước chữ "switch"; "Dòng CPU: Intel Core i5" chưa nên tính là đủ `cpu_model`; nhãn thông số mâu thuẫn tiêu đề (GPU rời vs tích hợp) nên để trống và vào `missing`; `list_by_brand` + `name_key` tính lại cho từng ứng viên (O(n²) khi nạp lần đầu hàng nghìn offer, nên cache `name_key`); alias Logitech `g pro → pro`; `golden` thêm recall riêng và phủ `dpi_max/form_factor/switch_name/screen_in`.
 **T5.5–T5.7** — Từ QA M5; mỗi lỗi có test `xfail(strict=True)` mã `BUG-M5-n` trong `tests/unit/test_normalize_qa_m5.py` (gỡ dấu xfail khi sửa). BUG-M5-14 (`Product.image_url` không bao giờ được bù từ offer sau) gộp vào T5.4. Đã sửa ngay trong M5: BUG-M5-2, 6, 7, 8, 11, 12.
-**T5.8** — Từ QA lượt "việc nhỏ 1"; mỗi lỗi có test `xfail(strict=True)` mã `BUG-S1-n` trong `tests/unit/test_normalize_names_qa_small1.py` (gỡ dấu khi sửa). Đã sửa ngay: BUG-S1-1, 2, 8, 9, 10, 11, 12, 14, 15, 16, 17.
+**T5.8** — Từ QA lượt "việc nhỏ 1"; mỗi lỗi có test `xfail(strict=True)` mã `BUG-S1-n` trong `tests/unit/test_normalize_names_qa_small1.py` (gỡ dấu khi sửa). Đã sửa ngay: BUG-S1-1, 2, 8, 9, 10, 11, 12, 14, 15, 16, 17. Từ QA lượt "việc nhỏ 2" (`BUG-S2-n` trong `tests/unit/*_qa_small2.py`): đã sửa BUG-S2-1, 2, 2b, 3, 4, 6; còn **BUG-S2-5** (cần quyết định: "Black Switch Red" và "Black Switch Blue" cùng khóa vì màu thứ hai sau "<màu> Switch" luôn là màu vỏ; chỉ đúng với tên tiếng Việt), giữ `xfail(strict)`.
 **T5.3** — Phụ thuộc T6.1 nằm ở M6 nhưng T6.1 chỉ cần T0.1, nên khi lập lượt M5 cần làm T6.1 trước hoặc hoãn T5.3 sang lượt M6. Bật/tắt bằng `LLM_EXTRACTOR_ENABLED`. Xong khi: chỉ gọi khi thiếu trường bắt buộc; kết quả validate bằng khung specs; cache theo hash; test với model giả; ghi số lần gọi vào log.
 
 ### M6 — Agent
@@ -320,7 +320,7 @@ Ghi chú từ T6.2: `PATCH /lists/{id}/items/{item_id}` cần `preferred_offer_i
 
 **T7.7** — Phát sinh từ QA M7 (13 ca `xfail(strict=True)` mã `BUG-M7-n` trong `tests/api/*_qa_m7.py`; BUG-M7-1, 2, 5, 7 và nửa đầu của BUG-M7-6 đã sửa ngay; XPASS báo đỏ → gỡ dấu khi sửa). Còn lại, không chặn M8:
 - **BUG-M7-3** (trung-thấp): `q` không bỏ dấu, nên "chuot khong day" không tìm thấy "Chuột không dây" dù planner prompt nói hỗ trợ không dấu. Cần so khớp trên văn bản đã `fold` (cột tên đã chuẩn hóa hoặc extension `unaccent`; quyết định thiết kế vì đụng schema/chỉ mục).
-- **BUG-M7-4** (thấp): thân không giải mã được (UTF-8 hỏng, số nguyên 5000 chữ số) trả 400 `HTTP_400` thông điệp tiếng Anh thay vì 422 `VALIDATION_ERROR`; ánh xạ lỗi parse thân sang `ValidationFailed` ở `api/errors.py`.
+- ~~**BUG-M7-4**~~ ✅ (T7.7a, lượt việc nhỏ 2: `api/errors.py` trả 422 `VALIDATION_ERROR`, `type: body_unreadable`). Mô tả cũ: thân không giải mã được (UTF-8 hỏng, số nguyên 5000 chữ số) trả 400 `HTTP_400` thông điệp tiếng Anh thay vì 422 `VALIDATION_ERROR`; ánh xạ lỗi parse thân sang `ValidationFailed` ở `api/errors.py`.
 - **BUG-M7-6b** (thấp-trung): phủ định cách động từ quá 2 từ qua dấu phẩy ("Không muốn đâu, tôi thêm vào danh sách làm gì") vẫn mở khóa tool ghi; cần quyết định có coi mệnh đề trước là lời từ chối của mệnh đề sau không (dễ chặn nhầm).
 
 Xong khi (chung): đúng [07](07-api-spec.md); mã lỗi đúng bảng §2; test integration cho mọi endpoint (thành công + ít nhất một lỗi); SSE test bằng client đọc luồng, gồm phát lại khi kết nối sau khi run xong.
@@ -363,9 +363,9 @@ Xong khi (chung): dùng skill `ui-screen`; đúng wireframe và trạng thái �
 | T9.2 | Notifier email + Telegram | T9.1 | S | ✅ |
 | T9.3 | Worker + lịch APScheduler | T2.6, T9.1 | M | ✅ |
 | T9.4 | Dockerfile + docker compose | T8.8 | M | ✅ |
-| T9.5 | Cron theo tên ngày trong tuần (phát sinh từ QA M9) | T9.3 | S | ⬜ |
-| T9.6 | `POST /alerts/{id}/test`: giới hạn tần suất, ghi chú không có xác thực (phát sinh từ QA M9) | T9.2 | S | ⬜ |
-| T9.7 | Ngắt mạch theo kênh khi gửi thông báo lỗi liên tiếp + `stop_grace_period` cho worker (phát sinh từ QA M9) | T9.1 | S | ⬜ |
+| T9.5 | Cron theo tên ngày trong tuần (phát sinh từ QA M9) | T9.3 | S | ✅ |
+| T9.6 | `POST /alerts/{id}/test`: giới hạn tần suất, ghi chú không có xác thực (phát sinh từ QA M9) | T9.2 | S | ✅ |
+| T9.7 | Ngắt mạch theo kênh khi gửi thông báo lỗi liên tiếp + `stop_grace_period` cho worker (phát sinh từ QA M9) | T9.1 | S | ✅ |
 | T9.8 | Khóa độ trễ theo domain dùng chung giữa `api` và `worker` (phát sinh từ review M9) | T9.3 | M | ⬜ |
 
 **T9.1** — Xong khi: test đúng tiêu chí US-07 ([01 §5](01-requirements.md#5-user-story-và-tiêu-chí-chấp-nhận)); cảnh báo `triggered` gửi lại chỉ khi giá xuống thấp hơn `last_notified_price` thêm ≥ 1%.

@@ -13,7 +13,13 @@ from functools import lru_cache
 from typing import Final
 
 from app.domain.enums import Category
-from app.normalize.brand import UNKNOWN_BRAND, brand_words, find_brand, strip_leading_decoration
+from app.normalize.brand import (
+    UNKNOWN_BRAND,
+    WORD_BREAKS,
+    brand_words,
+    find_brand,
+    strip_leading_decoration,
+)
 from app.normalize.model_code import laptop_code_span
 from app.normalize.specs.parsing import clean
 from app.normalize.text import fold
@@ -24,6 +30,10 @@ _PART_NUMBER = re.compile(r"^\d{3}-\d{4,6}$")  # mã phụ tùng Logitech: 910-0
 # Mã phụ tùng/cảm biến đặt trong ngoặc ("(PMW920)") dài từ 6 ký tự; tên mẫu ngắn trong ngoặc như
 # "(G304)", "(M331)", "(Gen2)" phân biệt sản phẩm nên được giữ (BUG-M5-3).
 _MIN_PART_CODE_LENGTH: Final = 6
+# Mã cảm biến nhiều cụm ("HERO25K") nhận theo tiền tố đã biết; mã hai cụm ngắn ("PMW920", "PHR235")
+# nhận theo hình dạng. Tên mẫu như "WHCH720N", "MXMASTER3S", "WH1000XM5" phải được giữ.
+_SENSOR_CODE = re.compile(r"^(?:hero|focus|trueshot|pmw|paw|adns)\d+[a-z]*$")
+_SHORT_CODE_LETTERS: Final = 5
 # Nhóm ngoặc chỉ chứa nhãn bán hàng ("[Hot]", "(Mới 100%)", "(Bảo hành 24 tháng)", "(Fullbox)").
 _BRACKET_GROUP = re.compile(r"\s*[\[(]([^\[\]()]*)[\])]")
 _MARKETING_LABEL = re.compile(
@@ -192,11 +202,18 @@ def _unwrap_parentheses(title: str) -> str:
 def _is_part_code(word: str) -> bool:
     if _PART_NUMBER.match(word):
         return True
+    if not (_MIN_PART_CODE_LENGTH <= len(word) <= 14 and word.isalnum()):
+        return False
+    groups = re.findall(r"[^\W\d_]+|\d+", word)
+    if _SENSOR_CODE.match(word.lower()):
+        return True
+    # Hình dạng "chữ + số" ngắn ("PMW920", "PHR235") hoặc nhiều chữ số; một chữ số sau chuỗi chữ dài
+    # ("MXMASTER3") và mẫu xen kẽ nhiều cụm ("WHCH720N", "WH1000XM5") là tên mẫu, được giữ.
     return (
-        _MIN_PART_CODE_LENGTH <= len(word) <= 14
-        and any(c.isdigit() for c in word)
-        and any(c.isalpha() for c in word)
-        and word.isalnum()
+        len(groups) == 2  # noqa: PLR2004
+        and groups[0].isalpha()
+        and groups[1].isdigit()
+        and (len(groups[0]) <= _SHORT_CODE_LETTERS or len(groups[1]) >= 2)  # noqa: PLR2004
     )
 
 
@@ -212,10 +229,11 @@ def _strip_marketing(text: str) -> str:
 def _tokens(title: str) -> list[_Token]:
     text = _unwrap_parentheses(_strip_marketing(strip_leading_decoration(clean(title))))
     tokens: list[_Token] = []
-    for raw in re.split(r"[\s/]+", text):
+    for raw in WORD_BREAKS.split(text):
         stripped = raw.strip(_EDGE)
         key = fold(stripped).strip(_EDGE)
-        if not key or _PART_NUMBER.match(key):
+        # Token chỉ có dấu câu ("–", "•", "+", "&", "|") không phân biệt mẫu.
+        if not any(c.isalnum() for c in key) or _PART_NUMBER.match(key):
             continue
         if key == "100%" and tokens and tokens[-1].key in _NEW_CONDITION:
             continue
@@ -227,6 +245,10 @@ def _is_switch_colour(tokens: list[_Token], index: int) -> bool:
     """Màu là một phần tên switch (`MX Red`, `Gateron Brown`, `Red Axis`, `Cream Blue`)."""
     before = tokens[index - 1].key if index > 0 else ""
     after = tokens[index + 1].key if index + 1 < len(tokens) else ""
+    if before in {"switch", "sw"} and index >= 2 and tokens[index - 2].key in _COLORS:
+        # "<Hãng> <màu> Switch <màu>" ("Gateron Red Switch Đen"): màu thứ hai là màu vỏ (BUG-S1-7).
+        # "Optical Switch Red/Blue" hay "MX Switch Red" thì màu sau chữ Switch là tên switch.
+        return False
     if before in _SWITCH_BEFORE or after in _SWITCH_AFTER:
         return True
     # "Cream Blue" / "Cream Yellow" là tên switch của Akko, không phải hai màu vỏ.
