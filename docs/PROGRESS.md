@@ -3,9 +3,9 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (lượt "việc nhỏ 1": T6.10–T6.13, T5.5–T5.7, T2.8 xong trên nhánh `milestone/small-fixes-1`, đã qua review + QA, chờ người dùng merge).
-- Backlog chưa làm: T9.5–T9.8, T5.4, T5.8 (6 bug QA `BUG-S1-3, 4, 5, 6, 7, 13`), T6.7, T7.6, T7.7, T8.12, gồm 3 bug QA M7 giữ `xfail(strict)` BUG-M7-3, 4, 6b. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-28 — lượt việc nhỏ 1 (review + QA: 11 bug `BUG-S1-n` sửa ngay)
+- Đang làm: – (lượt "việc nhỏ 2": T9.5, T9.6, T9.7, T7.7a (BUG-M7-4), T5.8 xong trên nhánh `milestone/small-fixes-2`, đã qua review + QA, chờ người dùng merge). Lượt "việc nhỏ 1" đã merge vào `main` (3e32ff9).
+- Backlog chưa làm: T9.8, T5.4, T6.7, T7.6, T7.7 (BUG-M7-3, 6b), T8.12; bug QA giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-10-28 — lượt việc nhỏ 2 (review + QA: bug `BUG-S2-1, 2, 2b, 3, 4, 6` sửa ngay)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -29,7 +29,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,12% (7507 pass + 23 xfail đã biết, ngưỡng 80% trong `make test-be`, ~12 phút; hai lần đỏ ở `test_second_correct_answer_after_resume_is_409…` do test gửi đáp án thứ hai khi lượt resume còn ghi DB trên cùng kết nối `db_session`: đã sửa bằng cách chờ lượt nền xong) | 2026-10-28 |
+| Coverage backend | 99,13% (8034 pass + 4 xfail đã biết, ngưỡng 80% trong `make test-be`, ~12 phút; hai lần đỏ ở `test_second_correct_answer_after_resume_is_409…` do test gửi đáp án thứ hai khi lượt resume còn ghi DB trên cùng kết nối `db_session`: đã sửa bằng cách chờ lượt nền xong) | 2026-10-28 |
 | Test frontend (Vitest + E2E) | 1072 Vitest pass (không còn expected-fail), 10 E2E Playwright (`make e2e`); chưa đo coverage | 2026-10-28 |
 | Eval (intent accuracy / constraint satisfaction / hallucination) | Lượt 1: 100% / 100% / 0, 31/31 câu (clarification 100%, tool 100%). Lượt cuối (sau trần gọi lặp `live_search_other`): 96,4% / 98,6% / 0, 29/31 (A03 `LLM_UNAVAILABLE` tạm thời, L10 dao động); chạy lại A03, L10 đều đạt. Tool 96,4%. **Latency p50 26–31 s: chưa đạt ≤ 15 s** (không do `LLM_MAX_RPM`: `--rpm 1000` vẫn 21–32 s; ≥ 3 lần gọi Gemini/câu, mỗi lần 4–10 s hôm nay). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-10-23*.md` (T11.1) | 2026-10-23 |
 
