@@ -13,7 +13,7 @@ from functools import lru_cache
 from typing import Final
 
 from app.domain.enums import Category
-from app.normalize.brand import UNKNOWN_BRAND, brand_words
+from app.normalize.brand import UNKNOWN_BRAND, brand_words, find_brand
 from app.normalize.model_code import laptop_code_span
 from app.normalize.specs.parsing import clean
 from app.normalize.text import fold
@@ -225,6 +225,18 @@ def _leading_prefix_length(tokens: list[_Token]) -> int:
     return count
 
 
+def _brand_index(tokens: list[_Token], *, typed: bool = False) -> int | None:
+    found = find_brand([token.key for token in tokens], typed=typed)
+    return None if found is None else found[0]
+
+
+def _from_brand(text: str) -> str:
+    """Bỏ mô tả loại đứng trước hãng ("văn phòng Dell Inspiron …" → "Dell Inspiron …")."""
+    tokens = _tokens(text)
+    index = _brand_index(tokens, typed=True)
+    return text if not index else " ".join(token.text for token in tokens[index:])
+
+
 def canonical_name(title: str, category: Category) -> str:
     """Tên hiển thị sạch của sản phẩm.
 
@@ -235,9 +247,10 @@ def canonical_name(title: str, category: Category) -> str:
     if category is Category.laptop:
         span = laptop_code_span(cleaned)
         if span is not None:
-            return span[0]
+            return _from_brand(span[0])
     tokens = _tokens(cleaned)
-    tokens = tokens[_leading_prefix_length(tokens) :]
+    brand_at = _brand_index(tokens)
+    tokens = tokens[brand_at if brand_at is not None else _leading_prefix_length(tokens) :]
     tokens = [t for t in _drop_colors(tokens) if t.key not in {"mau", "chinh", "hang"}]
     name = " ".join(token.text for token in tokens)
     return name or cleaned

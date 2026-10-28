@@ -285,21 +285,10 @@ def test_brand_detection_handles_tags_whitespace_case_and_lookalikes(
         ("🔥 Laptop ASUS Vivobook 15", "ASUS"),
     ],
 )
-@bug(
-    "BUG-M5-1",
-    "detect_brand chỉ bỏ các tiền tố trong danh sách cố định (brand.py:51 `_PREFIX`); mô tả loại "
-    "thường gặp khác ('có dây', 'quang', 'văn phòng', 'chụp tai', 'máy tính xách tay', ký hiệu "
-    "đầu dòng) làm hãng thành Unknown; Unknown không bao giờ ghép mờ và không lọc theo hãng được",
-)
 def test_brand_is_found_after_common_product_descriptors(title: str, brand: str) -> None:
     assert detect_brand(title) == brand
 
 
-@bug(
-    "BUG-M5-1",
-    "cùng gốc với hãng Unknown: names._PREFIX_WORDS thiếu 'chụp tai', 'văn phòng'… nên tên chuẩn "
-    "hiển thị cho người dùng bắt đầu bằng mô tả loại thay vì tên hãng",
-)
 def test_canonical_name_starts_at_the_brand_not_at_a_descriptor() -> None:
     assert canonical_name("Tai nghe chụp tai Sony WH-CH520", HEADSET) == "Sony WH-CH520"
     assert (
@@ -386,11 +375,6 @@ def test_leading_promo_tag_does_not_hide_the_laptop_model_code(title: str) -> No
     assert extract_model_code(LAPTOP, title) == "AL15-53P-56QH"
 
 
-@bug(
-    "BUG-M5-5",
-    "canonical_name của laptop không bỏ nhãn khuyến mãi đầu tên (names.py:218 dùng "
-    "laptop_code_span trên tiêu đề còn nhãn) nên tên hiển thị thành 'Mới 100% Laptop Acer …'",
-)
 def test_laptop_canonical_name_drops_the_leading_promo_tag_and_the_type_word() -> None:
     title = "[Mới 100%] Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB)"
 
@@ -549,3 +533,32 @@ def test_known_promo_words_after_the_name_do_not_change_the_name_key(suffix: str
 )
 def test_trailing_marketing_text_does_not_change_the_name_key(suffix: str) -> None:
     assert name_key(canonical_name(f"Chuột Pulsar X2 Black {suffix}", MOUSE), "Pulsar") == ("x2",)
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Bàn phím cho MacBook",  # từ nối: hãng đứng sau là sản phẩm khác
+        "Chuột cho laptop Dell",
+        "Ốp lưng iPhone 15",  # không bắt đầu bằng từ loại sản phẩm
+        "Túi chống sốc Laptop Dell 15",
+        "Tai nghe " + "x " * 20 + "Sony",  # hãng quá xa đầu tên
+        "Chuột Fantech tương thích Logitech",
+    ],
+)
+def test_brand_is_not_taken_from_accessories_or_far_away_words(title: str) -> None:
+    assert detect_brand(title) == "Unknown"
+
+
+@pytest.mark.parametrize(
+    ("title", "brand"),
+    [
+        ("Dell Inspiron 15 3520", "Dell"),  # hãng ngay đầu tên vẫn khớp như trước
+        ("[Mới 100%] Chuột không dây Logitech M331", "Logitech"),
+        ("Combo bàn phím và chuột không dây Logitech MK270", "Logitech"),
+        ("Chuột Gaming Razer DeathAdder V3", "Razer"),
+        ("TAI NGHE CHỤP TAI SONY WH-CH520", "Sony"),
+    ],
+)
+def test_brand_after_descriptors_in_other_wordings(title: str, brand: str) -> None:
+    assert detect_brand(title) == brand
