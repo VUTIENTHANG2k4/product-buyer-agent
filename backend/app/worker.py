@@ -16,6 +16,7 @@ import asyncio
 import contextlib
 import io
 import logging
+import re
 import signal
 import sys
 from collections.abc import Awaitable, Callable, Iterator
@@ -44,11 +45,52 @@ CANCEL_WAIT_SECONDS = 30  # chờ job đóng lượt khi tắt worker
 MISFIRE_GRACE_SECONDS = 300  # bù lượt lỡ do tiến trình bận hoặc vừa khởi động lại trong 5 phút
 
 
+_WEEKDAY_NAMES = ("sun", "mon", "tue", "wed", "thu", "fri", "sat")  # crontab: 0 và 7 = Chủ nhật
+_NUMERIC_WEEKDAYS = re.compile(r"^[\d,\-/*]+$")
+_WEEKDAY_ITEM = re.compile(r"^(\*|\d+)(?:-(\d+))?(?:/(\d+))?$")
+
+
+def _weekday_names(field: str) -> str:
+    """Trường thứ trong tuần của crontab dạng số → tên ngày ("1-5" → "mon,tue,wed,thu,fri").
+
+    APScheduler đánh số 0 = thứ Hai, lệch với crontab (0/7 = Chủ nhật, 1 = thứ Hai), nên số được
+    đổi sang tên ngày để `0 3 * * 1` chạy đúng thứ Hai. Trường chỉ có `*` giữ nguyên.
+    """
+    if field == "*":
+        return field
+    days: set[int] = set()
+    for item in field.split(","):
+        match = _WEEKDAY_ITEM.match(item)
+        if match is None:
+            raise ValueError(f"thứ trong tuần {item!r} không hợp lệ")
+        first, last, step = match.groups()
+        if first == "*":
+            if last is not None:
+                raise ValueError(f"thứ trong tuần {item!r} không hợp lệ")
+            low, high = 0, 6
+        else:
+            low = int(first)
+            high = int(last) if last is not None else (6 if step is not None else low)
+        if not (0 <= low <= 7 and 0 <= high <= 7 and low <= high) or step == "0":
+            raise ValueError(f"thứ trong tuần {item!r} nằm ngoài 0..7 hoặc khoảng bị ngược")
+        days.update(day % 7 for day in range(low, high + 1, int(step or 1)))
+    return ",".join(_WEEKDAY_NAMES[day] for day in sorted(days))
+
+
+def _crontab_with_weekday_names(expression: str) -> str:
+    fields = expression.split()
+    if len(fields) == 5 and _NUMERIC_WEEKDAYS.match(fields[4]):
+        fields[4] = _weekday_names(fields[4])
+    return " ".join(fields)
+
+
 def parse_cron(name: str, expression: str) -> CronTrigger:
     """Crontab 5 trường (UTC) → trigger; sai (hoặc không bao giờ chạy) thì ném `ValueError` nêu tên
-    biến cấu hình."""
+    biến cấu hình. Thứ trong tuần theo chuẩn crontab (0/7 = Chủ nhật, 1 = thứ Hai)."""
     try:
-        trigger = CronTrigger.from_crontab(expression.strip(), timezone=UTC)
+        trigger = CronTrigger.from_crontab(
+            _crontab_with_weekday_names(expression.strip()), timezone=UTC
+        )
     except ValueError as error:
         raise ValueError(f"{name} không hợp lệ ({expression!r}): {error}") from None
     if trigger.get_next_fire_time(None, datetime.now(UTC)) is None:
