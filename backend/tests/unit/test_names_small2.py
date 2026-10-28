@@ -82,3 +82,18 @@ def test_uppercase_g_attached_to_a_number_is_only_a_last_resort_weight(
 
 def test_a_huge_title_does_not_slow_brand_detection() -> None:
     assert detect_brand("Chuột Razer Basilisk " + "ộ" * 3_000_000) == "Razer"
+
+
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        ("Bàn phím Akko 3068 Optical Switch Red", "Bàn phím Akko 3068 Optical Switch Blue"),
+        ("Bàn phím Akko 3068 Silent Switch Red", "Bàn phím Akko 3068 Silent Switch Black"),
+        ("Bàn phím Akko 3068 Jelly Switch Pink", "Bàn phím Akko 3068 Jelly Switch Purple"),
+        ("Bàn phím Akko 3068 Cherry MX Switch Red", "Bàn phím Akko 3068 Cherry MX Switch Blue"),
+    ],
+)
+def test_a_colour_after_a_generic_switch_name_still_tells_variants_apart(
+    first: str, second: str
+) -> None:
+    assert key_of(first, Category.keyboard) != key_of(second, Category.keyboard)

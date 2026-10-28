@@ -50,8 +50,9 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
 
 # Nhãn khuyến mãi ở đầu tên: "[Mới 100%] ...", "(Hàng chính hãng) ..."
 _LEADING_TAGS = re.compile(r"^(?:\s*(?:\[[^\]]*\]|\([^)]*\)))+\s*")
-# Ký hiệu trang trí đầu dòng ("★ Laptop …", "🔥 Laptop …"): không phải chữ hay số.
+# Dấu ngắt từ khi tìm hãng: "Laptop: Dell", "Laptop/Dell", "Chuột, Razer".
 _WORD_BREAKS = re.compile(r"[\s/,:;]+")
+# Ký hiệu trang trí đầu dòng ("★ Laptop …", "🔥 Laptop …"): không phải chữ hay số.
 _LEADING_SYMBOLS = re.compile(r"^[^\w\[(]+")
 # Mô tả loại/tính năng đứng trước hãng ("Chuột có dây Dell", "Hàng chính hãng Chuột Logitech",
 # "Máy tính xách tay ASUS") có nhiều dạng nên không liệt kê: nếu tên BẮT ĐẦU bằng một từ loại sản

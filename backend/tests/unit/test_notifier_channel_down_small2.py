@@ -64,3 +64,20 @@ def test_telegram_transport_errors_are_channel_down_but_http_rejections_are_not(
 
     assert down.value.channel_down is True
     assert per_chat.value.channel_down is False
+
+
+@pytest.mark.parametrize(
+    ("status", "channel_down"),
+    [(401, True), (404, True), (429, True), (400, False), (403, False)],
+)
+def test_telegram_http_rejections_split_channel_wide_from_per_chat(
+    monkeypatch: pytest.MonkeyPatch, status: int, channel_down: bool
+) -> None:
+    def reply(*args: Any, **kwargs: Any) -> httpx.Response:
+        return httpx.Response(status, json={"ok": False, "description": "x"})
+
+    monkeypatch.setattr(httpx, "post", reply)
+    with pytest.raises(NotificationFailed) as raised:
+        TelegramNotifier(SecretStr("123:abc")).send("42", "s", "b")
+
+    assert raised.value.channel_down is channel_down

@@ -182,12 +182,11 @@ class AlertService:
                 sent=False, reason=f"Kênh {alert.channel.value} chưa được cấu hình trong .env"
             )
         if limiter is not None:
-            wait = limiter.wait_seconds(alert_id)
+            wait = limiter.try_acquire(alert_id)
             if wait > 0:
                 return AlertTestResult(
                     sent=False, reason=f"Vừa gửi thử cho cảnh báo này, thử lại sau {wait} giây"
                 )
-            limiter.record(alert_id)
         view = self._view(alert)
         try:
             notifier.send(

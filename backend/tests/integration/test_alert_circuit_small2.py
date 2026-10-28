@@ -51,7 +51,7 @@ def statuses(session: Session, ids: list[int]) -> list[AlertStatus]:
     return [session.get_one(PriceAlert, alert_id).status for alert_id in ids]
 
 
-async def test_a_dead_channel_is_tried_once_and_the_rest_are_skipped_for_the_run(
+async def test_a_dead_channel_is_tried_twice_and_the_rest_are_skipped_for_the_run(
     db_session: Session, factory: Callable[[], Session]
 ) -> None:
     ids = three_due_alerts(db_session)
@@ -61,14 +61,14 @@ async def test_a_dead_channel_is_tried_once_and_the_rest_are_skipped_for_the_run
     report = await ev.evaluate(None)
 
     assert report == EvaluationReport(sent=0, failed=3)
-    assert email.calls == 1  # không tốn thêm hai lần timeout
+    assert email.calls == 2  # hai lỗi liên tiếp thì ngắt, cảnh báo thứ ba không tốn thêm timeout
     assert statuses(db_session, ids) == [AlertStatus.active] * 3
 
     email.error = None  # kênh sống lại: lượt sau gửi cả ba
     again = await ev.evaluate(None)
 
     assert again == EvaluationReport(sent=3, failed=0)
-    assert email.calls == 4
+    assert email.calls == 5
     assert statuses(db_session, ids) == [AlertStatus.triggered] * 3
 
 
@@ -122,5 +122,32 @@ async def test_a_dead_channel_does_not_stop_another_channel(
     report = await ev.evaluate(None)
 
     assert report == EvaluationReport(sent=1, failed=3)
-    assert (email.calls, telegram.calls) == (1, 1)
+    assert (email.calls, telegram.calls) == (2, 1)
     assert statuses(db_session, email_ids) == [AlertStatus.active] * 3
+
+
+async def test_a_transient_failure_followed_by_a_success_does_not_trip_the_channel(
+    db_session: Session, factory: Callable[[], Session]
+) -> None:
+    ids = three_due_alerts(db_session)
+
+    class FlakyOnce:
+        calls = 0
+
+        def send(self, destination: str, subject: str, body: str) -> None:
+            self.calls += 1
+            if self.calls == 1:
+                raise NotificationFailed("hết thời gian chờ thoáng qua", channel_down=True)
+
+    email = FlakyOnce()
+    ev = AlertEvaluator(factory, {AlertChannel.email: email}, SETTINGS, now=clock)
+
+    report = await ev.evaluate(None)
+
+    assert report == EvaluationReport(sent=2, failed=1)
+    assert email.calls == 3  # cảnh báo thứ hai thành công nên kênh không bị ngắt
+    assert sorted(s.value for s in statuses(db_session, ids)) == [
+        "active",
+        "triggered",
+        "triggered",
+    ]

@@ -37,6 +37,33 @@ class EvaluationReport:
     failed: int = 0
 
 
+CHANNEL_DOWN_STRIKES = 2  # số lỗi hỏng-cả-kênh liên tiếp thì ngắt kênh trong phần còn lại của lượt
+
+
+class _ChannelBreaker:
+    """Ngắt mạch theo kênh trong MỘT lượt đánh giá (T9.7): SMTP chết thì mỗi cảnh báo tốn một
+    timeout; sau `CHANNEL_DOWN_STRIKES` lỗi cả-kênh liên tiếp, các cảnh báo còn lại của kênh bị bỏ
+    qua (lượt sau thử lại). Một lần gửi thành công xóa bộ đếm nên lỗi thoáng qua không ngắt."""
+
+    def __init__(self) -> None:
+        self._strikes: dict[AlertChannel, int] = {}
+
+    def is_open(self, channel: AlertChannel) -> bool:
+        return self._strikes.get(channel, 0) >= CHANNEL_DOWN_STRIKES
+
+    def record_failure(self, channel: AlertChannel, *, channel_down: bool) -> bool:
+        """Ghi một lỗi gửi; trả `True` đúng lúc kênh vừa bị ngắt."""
+        if not channel_down:
+            self._strikes.pop(channel, None)  # lỗi riêng người nhận: kênh vẫn sống
+            return False
+        strikes = self._strikes.get(channel, 0) + 1
+        self._strikes[channel] = strikes
+        return strikes == CHANNEL_DOWN_STRIKES
+
+    def record_success(self, channel: AlertChannel) -> None:
+        self._strikes.pop(channel, None)
+
+
 class AlertEvaluator:
     def __init__(
         self,
@@ -61,18 +88,18 @@ class AlertEvaluator:
 
     def evaluate_sync(self, offer_ids: Sequence[int] | None = None) -> EvaluationReport:
         sent = failed = 0
-        down: set[AlertChannel] = set()  # kênh hỏng cả kênh trong lượt này (ngắt mạch, T9.7)
+        breaker = _ChannelBreaker()
         with self._session_factory() as session:
             service = AlertService(session, self._settings, now=self._now)
             for due in service.find_due(offer_ids):
-                if due.channel in down:
+                if breaker.is_open(due.channel):
                     failed += 1  # không khóa dòng, không chờ thêm một lần timeout; lượt sau thử lại
                     continue
                 try:
                     if not service.claim(due):
                         session.commit()  # không ghi gì; chỉ nhả khóa dòng
                         continue
-                    if not self._send(due, down):
+                    if not self._send(due, breaker):
                         failed += 1
                         session.commit()
                         continue
@@ -90,7 +117,7 @@ class AlertEvaluator:
             logger.info("đánh giá cảnh báo giá: %s đã gửi, %s lỗi", sent, failed)
         return EvaluationReport(sent=sent, failed=failed)
 
-    def _send(self, due: DueAlert, down: set[AlertChannel]) -> bool:
+    def _send(self, due: DueAlert, breaker: "_ChannelBreaker") -> bool:
         notifier = self._notifiers.get(due.channel)
         if notifier is None:
             logger.warning(
@@ -109,8 +136,7 @@ class AlertEvaluator:
             notifier.send(due.destination, message.subject, message.body)
         except NotificationFailed as error:
             logger.warning("[alert %s] gửi qua %s thất bại: %s", due.alert_id, due.channel, error)
-            if error.channel_down:
-                down.add(due.channel)
+            if breaker.record_failure(due.channel, channel_down=error.channel_down):
                 logger.warning(
                     "kênh %s không dùng được: bỏ qua các cảnh báo còn lại của kênh này trong lượt",
                     due.channel.value,
@@ -119,4 +145,5 @@ class AlertEvaluator:
         except Exception:
             logger.exception("[alert %s] lỗi không lường trước khi gửi", due.alert_id)
             return False
+        breaker.record_success(due.channel)
         return True
