@@ -125,8 +125,12 @@ class ConversationService:
             conversation_id=run.conversation_id,
             status=run.status,
             intent=run.intent,
-            events=list(run.events),
+            events=_object_events(run.events),
         )
+
+    def require_run_exists(self, run_id: uuid.UUID) -> None:
+        if not self._runs.exists(run_id):
+            raise RunNotFound(details={"run_id": str(run_id)})
 
     def events_since(self, run_id: uuid.UUID, after: int) -> EventBatch:
         """Sự kiện từ vị trí `after` (0 = từ đầu) và trạng thái lượt, đọc cùng một lần.
@@ -134,11 +138,13 @@ class ConversationService:
         Lượt còn `running` quá `STALE_RUN_AFTER` được báo là `failed` (tiến trình đã chết), để
         luồng SSE đóng thay vì chờ mãi.
         """
-        run = self._require_run(run_id)
-        status = run.status
-        if status is AgentRunStatus.running and run.created_at < self._now() - STALE_RUN_AFTER:
+        found = self._runs.events_after(run_id, after)
+        if found is None:
+            raise RunNotFound(details={"run_id": str(run_id)})
+        status, created_at, events = found
+        if status is AgentRunStatus.running and created_at < self._now() - STALE_RUN_AFTER:
             status = AgentRunStatus.failed
-        return EventBatch(status=status, events=list(run.events[max(0, after) :]))
+        return EventBatch(status=status, events=_object_events(events))
 
     def list_conversations(self, limit: int = 20) -> list[ConversationView]:
         """Hội thoại gần nhất trước."""
@@ -190,13 +196,19 @@ class ConversationService:
         )
 
 
+def _object_events(events: list[Any]) -> list[dict[str, Any]]:
+    """Mục lưu hỏng (không phải object) thành `{}`: giữ nguyên vị trí của các sự kiện còn lại (id
+    của SSE) và không làm cả lượt đọc hỏng; nơi dùng bỏ qua mục không có `event`."""
+    return [item if isinstance(item, dict) else {} for item in events]
+
+
 def read_run_events(factory: Callable[[], Session], run_id: uuid.UUID, after: int) -> EventBatch:
     """Đọc sự kiện của một lượt bằng session ngắn hạn (để theo dõi lượt đang chạy qua SSE)."""
     with factory() as session:
         return ConversationService(session).events_since(run_id, after)
 
 
-def require_run(factory: Callable[[], Session], run_id: uuid.UUID) -> RunSnapshot:
-    """Lượt chạy `run_id` (`RunNotFound` nếu không có), đọc bằng session ngắn hạn."""
+def require_run(factory: Callable[[], Session], run_id: uuid.UUID) -> None:
+    """`RunNotFound` nếu không có lượt `run_id`; chỉ kiểm tra tồn tại, không tải sự kiện."""
     with factory() as session:
-        return ConversationService(session).get_run(run_id)
+        ConversationService(session).require_run_exists(run_id)
