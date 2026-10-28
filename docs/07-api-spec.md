@@ -111,6 +111,7 @@ Id trong đường dẫn hoặc thân yêu cầu ngoài miền khóa chính (≤
 | GET | `/admin/scrape-runs/{id}` | Chi tiết: trạng thái, bộ đếm (`pages_fetched`, `items_parsed`, `items_failed`, `offers_upserted`, `price_changes`), `started_at`, `finished_at`, `error_message`, `challenge_kind` |
 | POST | `/admin/scrape-runs` | `{site, category, max_pages? (1..100)}` → 202 `{run_id}`; chạy nền (theo dõi bằng `GET .../{id}`) |
 | GET | `/admin/scrape-runs/{id}/challenge` | Khi `NEEDS_HUMAN`: `{kind, prompt, image_url?}` (không có `token`); lượt không chờ đáp án hoặc đã chờ quá 1 giờ → 409 `CHALLENGE_NOT_PENDING` |
+| DELETE | `/admin/scrape-runs/{id}/challenge` | Hủy lượt `NEEDS_HUMAN` (T2.8) → 204: lượt đóng thành `FAILED` ("Đã hủy bởi người dùng.") nên lượt mới chạy ngay; lượt không chờ đáp án (kể cả đã hủy) → 409 `CHALLENGE_NOT_PENDING`, không có lượt → 404 `RUN_NOT_FOUND`. Lượt quá hạn chờ 1 giờ vẫn hủy được |
 | POST | `/admin/scrape-runs/{id}/challenge` | `{answer}` → 200 `{status: "RUNNING"}` (lượt chạy tiếp ở nền) hoặc 400 `CHALLENGE_FAILED` (lượt vẫn chờ, thử lại được) |
 
 Lỗi đồng bộ của `POST /admin/scrape-runs`: 409 `OFFLINE_MODE` (trang thật khi `SCRAPER_OFFLINE_ONLY=true`), 409 `SCRAPE_ALREADY_RUNNING` (kèm `details.run_id`), 409 `SITE_COOLDOWN` (kèm `details.retry_after`), 422 `VALIDATION_ERROR` (trang chưa có scraper hoặc đã tắt, nhóm không thuộc trang, `max_pages` sai). Lượt chạy nền kết thúc `SUCCEEDED`/`PARTIAL`/`FAILED`/`BLOCKED`/`NEEDS_HUMAN` ghi trong `ScrapeRun`.

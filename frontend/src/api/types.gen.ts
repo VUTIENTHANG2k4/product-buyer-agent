@@ -310,7 +310,11 @@ export interface paths {
          * @description Đáp án đúng: lượt chạy tiếp ở nền. Sai: 400 `CHALLENGE_FAILED`, lượt vẫn chờ.
          */
         post: operations["answer_challenge_api_admin_scrape_runs__run_id__challenge_post"];
-        delete?: never;
+        /**
+         * Hủy lượt đang chờ đáp án captcha
+         * @description Đóng lượt `NEEDS_HUMAN` thành `FAILED` để lượt mới chạy ngay (hữu ích khi mock-shop đã reset nên đáp án không còn đúng). Lượt không chờ đáp án → 409 `CHALLENGE_NOT_PENDING`.
+         */
+        delete: operations["cancel_challenge_api_admin_scrape_runs__run_id__challenge_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2432,6 +2436,63 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+            /** @description Không tìm thấy */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Xung đột trạng thái */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Dữ liệu gửi lên không hợp lệ */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Lỗi máy chủ */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel_challenge_api_admin_scrape_runs__run_id__challenge_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Id lượt thu thập; không tồn tại hoặc ngoài miền → 404 */
+                run_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Không tìm thấy */
             404: {

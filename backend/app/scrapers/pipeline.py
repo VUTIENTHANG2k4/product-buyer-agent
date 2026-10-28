@@ -73,6 +73,7 @@ RUNNING_STALE_AFTER = timedelta(
     hours=2
 )  # RUNNING quá lâu = tiến trình đã chết, không chặn lượt mới
 NEEDS_HUMAN_STALE_AFTER = timedelta(hours=1)  # bỏ cuộc nếu không ai nhập đáp án
+CANCELLED_BY_USER = "Đã hủy bởi người dùng."
 FAILED_RATIO_LIMIT = 0.2  # items_failed / items_parsed > 20% → PARTIAL
 DROP_RATIO_LIMIT = 0.5  # số sản phẩm giảm > 50% so với lượt trước → cảnh báo
 DEFAULT_MAX_DETAIL_REQUESTS = 20  # giới hạn số trang chi tiết tải thêm mỗi lượt
@@ -460,6 +461,32 @@ class ScrapePipeline:
         return StartedRun(
             scraper, context, progress, start_page=progress.pages + 1, max_pages=limit
         )
+
+    async def cancel_paused(self, run_id: int) -> None:
+        """Hủy lượt `NEEDS_HUMAN`: đóng thành `FAILED` ("Đã hủy bởi người dùng") để lượt mới chạy
+        ngay thay vì chờ `NEEDS_HUMAN_STALE_AFTER`, hoặc khi mock-shop đã reset nên đáp án không
+        bao giờ đúng (T2.8). Ném `RunNotFound` hoặc `ChallengeNotPending` (lượt không chờ đáp án,
+        kể cả đã bị hủy/chiếm bởi `resume`)."""
+        await asyncio.to_thread(self._cancel_paused, run_id)
+
+    def _cancel_paused(self, run_id: int) -> None:
+        with self._session_factory() as session:
+            runs = ScrapeRunRepository(session)
+            peek = runs.get(run_id)
+            if peek is None:
+                raise RunNotFound(details={"run_id": run_id})
+            session.execute(
+                text("SELECT pg_advisory_xact_lock(:key)"),
+                {"key": _lock_key(peek.site, peek.category)},
+            )
+            session.refresh(peek)  # đọc lại trạng thái sau khi có khóa (tranh với `resume`)
+            if peek.status is not ScrapeStatus.NEEDS_HUMAN:
+                raise ChallengeNotPending(details={"run_id": run_id, "status": peek.status.value})
+            runs.set_status(
+                peek, ScrapeStatus.FAILED, error_message=CANCELLED_BY_USER, now=self._now()
+            )
+            session.commit()
+        logger.info("[run %s] đã hủy lượt đang chờ đáp án captcha", run_id)
 
     async def refresh_offers(
         self,

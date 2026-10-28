@@ -508,3 +508,38 @@ async def test_the_runtime_is_built_once_even_for_concurrent_first_requests(
 
     assert len(built) == 1
     assert all(result is built[0] for result in results)
+
+
+# ---- T2.8: hủy lượt đang chờ đáp án ----
+def test_cancelling_a_waiting_run_returns_204_closes_it_and_lets_a_new_run_start(
+    db_session: Session,
+) -> None:
+    with admin_client(db_session, captcha_after=1) as (client, _):
+        run_id = start_run(client).json()["run_id"]
+        settle(client)
+
+        cancelled = client.delete(f"/api/admin/scrape-runs/{run_id}/challenge")
+
+        assert cancelled.status_code == 204 and cancelled.content == b""
+        run = client.get(f"/api/admin/scrape-runs/{run_id}").json()
+        assert run["status"] == "FAILED" and run["challenge_kind"] is None
+        assert "hủy" in run["error_message"]
+        assert client.get(f"/api/admin/scrape-runs/{run_id}/challenge").status_code == 409
+        assert start_run(client).status_code == 202  # không còn chờ 1 giờ / SCRAPE_ALREADY_RUNNING
+
+
+def test_cancelling_twice_or_a_finished_or_unknown_run_uses_the_standard_errors(
+    db_session: Session,
+) -> None:
+    with admin_client(db_session) as (client, _):
+        run_id = start_run(client).json()["run_id"]
+        settle(client)
+
+        finished = client.delete(f"/api/admin/scrape-runs/{run_id}/challenge")
+        unknown = client.delete("/api/admin/scrape-runs/999999/challenge")
+        invalid = client.delete("/api/admin/scrape-runs/0/challenge")
+
+        assert finished.status_code == 409 and error_code(finished) == "CHALLENGE_NOT_PENDING"
+        assert unknown.status_code == 404 and error_code(unknown) == "RUN_NOT_FOUND"
+        assert invalid.status_code in {404, 422}
+        assert set(finished.json()) == {"error"}

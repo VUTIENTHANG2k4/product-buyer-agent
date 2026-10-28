@@ -1676,6 +1676,72 @@
           }
         }
       },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Hủy lượt đang chờ đáp án captcha",
+        "description": "Đóng lượt `NEEDS_HUMAN` thành `FAILED` để lượt mới chạy ngay (hữu ích khi mock-shop đã reset nên đáp án không còn đúng). Lượt không chờ đáp án → 409 `CHALLENGE_NOT_PENDING`.",
+        "operationId": "cancel_challenge_api_admin_scrape_runs__run_id__challenge_delete",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id lượt thu thập; không tồn tại hoặc ngoài miền → 404",
+              "title": "Run Id"
+            },
+            "description": "Id lượt thu thập; không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Xung đột trạng thái",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "admin"

@@ -18,7 +18,12 @@ export function AdminPage() {
 
   function resolved(outcome: ChallengeOutcome) {
     setChallengeRun(null)
-    setNotice(outcome === 'answered' ? text.answeredNotice : text.notPendingNotice)
+    const notices = {
+      answered: text.answeredNotice,
+      cancelled: text.cancelledNotice,
+      'not-pending': text.notPendingNotice,
+    }
+    setNotice(notices[outcome])
   }
 
   return (

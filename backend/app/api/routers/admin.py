@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Query, status
+from fastapi import APIRouter, Path, Query, Response, status
 
 from app.api.deps import AdminServiceDep, ScrapeServiceDep, TaskRegistryDep
 from app.api.errors import error_responses
@@ -81,6 +81,21 @@ async def start_scrape_run(
 )
 def get_challenge(run_id: RunId, service: ScrapeServiceDep) -> ChallengeView:
     return service.challenge_of(run_id)
+
+
+@router.delete(
+    "/scrape-runs/{run_id}/challenge",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Hủy lượt đang chờ đáp án captcha",
+    description=(
+        "Đóng lượt `NEEDS_HUMAN` thành `FAILED` để lượt mới chạy ngay (hữu ích khi mock-shop đã "
+        "reset nên đáp án không còn đúng). Lượt không chờ đáp án → 409 `CHALLENGE_NOT_PENDING`."
+    ),
+    responses=error_responses(404, 409, 422),
+)
+async def cancel_challenge(run_id: RunId, service: ScrapeServiceDep) -> Response:
+    await service.cancel_challenge(run_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(

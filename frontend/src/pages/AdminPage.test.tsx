@@ -705,11 +705,11 @@ describe('AdminPage · xử lý challenge (người nhập đáp án)', () => {
     expect(fake.writes).toEqual([])
   })
 
-  it('Hủy đóng hộp thoại mà không gửi gì', async () => {
+  it('Để sau đóng hộp thoại mà không gửi gì', async () => {
     const fake = installFakeAdmin({ runs: [needsHuman] })
     renderPage()
     const dialog = within(await openDialog())
-    await userEvent.click(await dialog.findByRole('button', { name: 'Hủy' }))
+    await userEvent.click(await dialog.findByRole('button', { name: 'Để sau' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(fake.writes).toEqual([])
     expect(screen.queryByText(/không còn chờ đáp án/)).toBeNull()
@@ -814,5 +814,75 @@ describe('AdminPage · xử lý challenge (người nhập đáp án)', () => {
     expect(
       within(await screen.findByRole('dialog')).getByText('Nhập đáp án challenge'),
     ).toBeInTheDocument()
+  })
+})
+
+describe('AdminPage · hủy lượt đang chờ đáp án (T2.8)', () => {
+  const needsHuman = scrapeRunView({ run_id: 9, status: 'NEEDS_HUMAN', challenge_kind: 'captcha' })
+
+  async function openDialog() {
+    await screen.findByRole('cell', { name: '#9' })
+    await userEvent.click(
+      within(runRow(9)).getByRole('button', { name: 'Xử lý challenge của lượt #9' }),
+    )
+    return within(await screen.findByRole('dialog'))
+  }
+
+  it('Hủy lượt gọi DELETE, đóng hộp thoại, báo và làm mới bảng', async () => {
+    const fake = installFakeAdmin({ runs: [needsHuman] })
+    renderPage()
+    const dialog = await openDialog()
+    await dialog.findByText('AB12C')
+    const before = runReads(fake.reads).length
+
+    await userEvent.click(dialog.getByRole('button', { name: 'Hủy lượt' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(fake.writes).toEqual(['DELETE admin/scrape-runs/9/challenge'])
+    expect(screen.getByRole('status')).toHaveTextContent('Đã hủy lượt đang chờ đáp án')
+    await waitFor(() => expect(runReads(fake.reads).length).toBeGreaterThan(before))
+    expect(within(runRow(9)).getByText('Thất bại')).toBeInTheDocument()
+  })
+
+  it('409 CHALLENGE_NOT_PENDING khi hủy: đóng, báo lượt không còn chờ', async () => {
+    const fake = installFakeAdmin({ runs: [needsHuman] })
+    fake.cancelFailure = {
+      status: 409,
+      code: 'CHALLENGE_NOT_PENDING',
+      message: 'Lượt chạy này không đang chờ đáp án captcha.',
+    }
+    renderPage()
+    const dialog = await openDialog()
+    await dialog.findByText('AB12C')
+
+    await userEvent.click(dialog.getByRole('button', { name: 'Hủy lượt' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(screen.getByRole('status')).toHaveTextContent('không còn chờ đáp án')
+  })
+
+  it('lỗi khác khi hủy: giữ hộp thoại và hiện thông điệp để thử lại', async () => {
+    const fake = installFakeAdmin({ runs: [needsHuman] })
+    fake.cancelFailure = { status: 500, code: 'INTERNAL_ERROR', message: 'Lỗi máy chủ.' }
+    renderPage()
+    const dialog = await openDialog()
+    await dialog.findByText('AB12C')
+
+    await userEvent.click(dialog.getByRole('button', { name: 'Hủy lượt' }))
+
+    expect(await dialog.findByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(dialog.getByRole('button', { name: 'Hủy lượt' })).toBeEnabled()
+  })
+
+  it('nút Để sau chỉ đóng hộp thoại, không gửi gì', async () => {
+    const fake = installFakeAdmin({ runs: [needsHuman] })
+    renderPage()
+    const dialog = await openDialog()
+
+    await userEvent.click(await dialog.findByRole('button', { name: 'Để sau' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(fake.writes).toEqual([])
   })
 })
