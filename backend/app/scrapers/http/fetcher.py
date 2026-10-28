@@ -36,7 +36,7 @@ from app.scrapers.http.errors import (
     RobotsDisallowed,
     RobotsUnavailable,
 )
-from app.scrapers.http.rate_limiter import DomainRateLimiter
+from app.scrapers.http.rate_limiter import DomainRateLimiter, SharedDelay
 from app.scrapers.http.raw_cache import RawCache
 from app.scrapers.http.robots import RobotsCache, RobotsSnapshot
 from app.scrapers.http.types import FetchResponse
@@ -123,6 +123,7 @@ class Fetcher:
         wall_now: Callable[[], datetime] = lambda: datetime.now(UTC),
         jitter: Callable[[], float] = lambda: random.uniform(0.0, 1.0),
         backoff_base_s: float = BACKOFF_BASE_S,
+        shared_delay: SharedDelay | None = None,
     ) -> None:
         self._settings = settings
         self._user_agent = settings.scraper_user_agent
@@ -133,7 +134,7 @@ class Fetcher:
         self._wall_now = wall_now
         self._jitter = jitter
         self._backoff_base_s = backoff_base_s
-        self._limiter = DomainRateLimiter(clock=clock, sleep=sleep)
+        self._limiter = DomainRateLimiter(clock=clock, sleep=sleep, shared=shared_delay)
         self._robots = RobotsCache(self._load_robots, self._user_agent, clock=clock)
         self._raw_cache = RawCache(raw_cache_dir) if raw_cache_dir is not None else None
         headers = {"User-Agent": self._user_agent, "Accept-Language": "vi-VN,vi;q=0.9"}
@@ -278,7 +279,14 @@ class Fetcher:
         return base + self._jitter()
 
     async def _pace(self, url: str, crawl_delay: float | None) -> None:
-        await self._limiter.wait(_netloc(url), self._delay(url, crawl_delay))
+        try:
+            await self._limiter.wait(_netloc(url), self._delay(url, crawl_delay))
+        except Exception as error:
+            # Không đặt được khe dùng chung (CSDL lỗi): không gửi request để không vi phạm độ trễ.
+            raise FetchFailed(
+                f"không đặt được khe dùng chung cho {_netloc(url)} ({type(error).__name__})",
+                url=url,
+            ) from error
 
     # ---- gửi + retry ----
     def _client(self, url: str) -> httpx.AsyncClient:

@@ -375,3 +375,12 @@ class LiveSearchCache(SQLModel, table=True):
     cache_key: str = Field(primary_key=True)
     results: list[dict[str, Any]] = _jsonb_array()
     created_at: datetime = _timestamp()
+
+
+class DomainThrottle(SQLModel, table=True):
+    """Mốc sớm nhất được gửi request kế tiếp tới một domain, dùng chung mọi tiến trình (T9.8)."""
+
+    __tablename__ = "domain_throttle"
+
+    domain: str = Field(primary_key=True, max_length=255)
+    next_allowed_at: datetime = _timestamp()

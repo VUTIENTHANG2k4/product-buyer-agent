@@ -5,6 +5,7 @@ from urllib.parse import urlsplit
 
 from app.config import Settings, get_settings
 from app.scrapers.http.fetcher import Fetcher
+from app.scrapers.http.rate_limiter import SharedDelay
 from app.scrapers.registry import SCRAPERS
 
 RAW_CACHE_DIR = Path(__file__).resolve().parents[3] / "data" / "raw"  # backend/data/raw (gitignore)
@@ -19,11 +20,19 @@ def site_delays() -> dict[str, float]:
 
 
 def build_fetcher(
-    settings: Settings | None = None, *, raw_cache_dir: Path | None = RAW_CACHE_DIR
+    settings: Settings | None = None,
+    *,
+    raw_cache_dir: Path | None = RAW_CACHE_DIR,
+    shared_delay: SharedDelay | None = None,
 ) -> Fetcher:
-    """Fetcher dùng `SCRAPER_*`/`MOCK_SHOP_*` và độ trễ riêng của từng trang đã đăng ký."""
+    """Fetcher dùng `SCRAPER_*`/`MOCK_SHOP_*` và độ trễ riêng của từng trang đã đăng ký.
+
+    `shared_delay`: khe thời gian dùng chung giữa các tiến trình (T9.8); không truyền thì chỉ giới
+    hạn trong tiến trình này.
+    """
     return Fetcher(
         settings or get_settings(),
         site_delays=site_delays(),
         raw_cache_dir=raw_cache_dir,
+        shared_delay=shared_delay,
     )

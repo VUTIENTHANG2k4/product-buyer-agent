@@ -7,6 +7,7 @@ transaction); thời gian truyền vào qua `now` (UTC) để test dùng đồng
 from app.db.repositories.agent_runs import AgentRunRepository
 from app.db.repositories.caches import LiveSearchCacheRepository, LlmExtractionCacheRepository
 from app.db.repositories.conversations import ConversationRepository, MessageRepository
+from app.db.repositories.domain_throttle import DomainThrottleRepository
 from app.db.repositories.offers import (
     OfferRepository,
     OfferUpsert,
@@ -33,6 +34,7 @@ from app.db.repositories.shopping_lists import ShoppingListRepository, normalize
 __all__ = [
     "AgentRunRepository",
     "ConversationRepository",
+    "DomainThrottleRepository",
     "LiveSearchCacheRepository",
     "LlmExtractionCacheRepository",
     "MessageRepository",

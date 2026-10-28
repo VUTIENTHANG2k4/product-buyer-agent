@@ -160,6 +160,7 @@ erDiagram
 | `shopping_list_item` | UNIQUE(`list_id`, `product_id`) | Thêm trùng → tăng `quantity` |
 | `price_alert` | INDEX(`product_id`, `status`) | `destination` = email hoặc Telegram chat id |
 | `agent_run` | PK uuid | `events` lưu toàn bộ sự kiện SSE để xem lại và debug |
+| `domain_throttle` | PK `domain` (T9.8, migration `0004`) | `next_allowed_at`: mốc sớm nhất được gửi request kế tiếp tới domain, dùng chung `api`, `worker` và `make scrape`; `DomainThrottleRepository.reserve` đặt chỗ nguyên tử bằng `INSERT … ON CONFLICT DO UPDATE` và đồng hồ của CSDL |
 
 **Quy ước lưu trữ đã cài đặt** (`app/db/models.py`, migration `backend/alembic/versions/0001_initial_schema.py`):
 

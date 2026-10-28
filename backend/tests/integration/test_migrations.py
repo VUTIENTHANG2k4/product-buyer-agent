@@ -28,6 +28,7 @@ TABLES = {
     "agent_run",
     "llm_extraction_cache",
     "live_search_cache",
+    "domain_throttle",
 }
 
 CONNECT_ARGS = {"connect_timeout": 3}
@@ -67,7 +68,7 @@ def _scalars(engine: Engine, sql: str) -> list[str]:
         return [row[0] for row in connection.execute(text(sql))]
 
 
-def test_upgrade_head_on_empty_database_creates_the_twelve_tables(empty_engine: Engine) -> None:
+def test_upgrade_head_on_empty_database_creates_every_table(empty_engine: Engine) -> None:
     assert inspect(empty_engine).get_table_names() == []
     upgrade_to_head(empty_engine)
     assert set(inspect(empty_engine).get_table_names()) == TABLES | {"alembic_version"}
@@ -75,7 +76,7 @@ def test_upgrade_head_on_empty_database_creates_the_twelve_tables(empty_engine: 
 
 def test_upgrade_head_twice_is_a_no_op(migrated_engine: Engine) -> None:
     upgrade_to_head(migrated_engine)
-    assert _scalars(migrated_engine, "SELECT version_num FROM alembic_version") == ["0003"]
+    assert _scalars(migrated_engine, "SELECT version_num FROM alembic_version") == ["0004"]
 
 
 def test_downgrade_base_removes_every_table_and_upgrade_restores_them(

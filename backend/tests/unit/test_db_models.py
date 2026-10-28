@@ -23,6 +23,7 @@ TABLES = {
     "agent_run",
     "llm_extraction_cache",
     "live_search_cache",
+    "domain_throttle",
 }
 
 # (bảng, cột) → enum miền: cột lưu VARCHAR(32) và có CHECK tên ck_<bảng>_<cột>.
@@ -77,7 +78,7 @@ def _table(name: str) -> Table:
     return SQLModel.metadata.tables[name]
 
 
-def test_metadata_has_exactly_the_twelve_documented_tables() -> None:
+def test_metadata_has_exactly_the_documented_tables() -> None:
     assert set(SQLModel.metadata.tables) == TABLES
 
 
@@ -126,7 +127,7 @@ def test_every_timestamp_column_has_timezone(table: str, column: str) -> None:
 
 
 def test_all_timestamp_columns_were_found() -> None:
-    assert len(TIMESTAMP_COLUMNS) == 17
+    assert len(TIMESTAMP_COLUMNS) == 18
 
 
 def test_every_constraint_and_index_has_an_explicit_or_conventional_name() -> None:
