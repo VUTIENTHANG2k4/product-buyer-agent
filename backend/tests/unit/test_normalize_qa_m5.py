@@ -366,11 +366,6 @@ def test_hyphenated_cpu_or_memory_tokens_outside_parentheses_are_not_model_codes
         "[Giảm 10%/ Tặng chuột] Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB)",
     ],
 )
-@bug(
-    "BUG-M5-5",
-    "nhãn khuyến mãi ở đầu tên laptop chứa '(' hoặc '/' cắt `_SPEC_BLOCK` (model_code.py:18) trước "
-    "khi tới mã nên mất model_code (brand.py và names.py đã bỏ nhãn đầu tên, model_code.py chưa)",
-)
 def test_leading_promo_tag_does_not_hide_the_laptop_model_code(title: str) -> None:
     assert extract_model_code(LAPTOP, title) == "AL15-53P-56QH"
 
@@ -401,11 +396,6 @@ def test_control_characters_are_removed_from_names_and_codes(title: str) -> None
 @pytest.mark.parametrize(
     "colour",
     ["Đỏ", "Xanh dương", "Xanh lá", "Màu đỏ"],
-)
-@bug(
-    "BUG-M5-4",
-    "names._COLORS thiếu 'đỏ' (fold: 'do') và chỉ có 'xanh' nên 'dương'/'lá' còn sót lại trong "
-    "khóa tên: cùng mẫu khác màu không ghép được, thành nhiều Product trùng",
 )
 def test_vietnamese_colours_are_not_part_of_the_name_key(colour: str) -> None:
     assert name_key(f"Chuột Pulsar X2 {colour}", "Pulsar") == name_key(
@@ -525,12 +515,6 @@ def test_known_promo_words_after_the_name_do_not_change_the_name_key(suffix: str
         "| GearVN",
     ],
 )
-@bug(
-    "BUG-M5-13",
-    "chỉ nhãn khuyến mãi ĐẦU tên được bỏ (names._LEADING_TAGS) và vài từ trong _NOISE; nhãn cuối "
-    "tên ('Mới 100%' để lại token '100%', '[Hot]', 'Bảo hành 24 tháng', 'Fullbox', '| GearVN') "
-    "nằm lại trong khóa tên nên cùng một mẫu thành hai Product (trùng lặp, không ghép sai)",
-)
 def test_trailing_marketing_text_does_not_change_the_name_key(suffix: str) -> None:
     assert name_key(canonical_name(f"Chuột Pulsar X2 Black {suffix}", MOUSE), "Pulsar") == ("x2",)
 
@@ -562,3 +546,27 @@ def test_brand_is_not_taken_from_accessories_or_far_away_words(title: str) -> No
 )
 def test_brand_after_descriptors_in_other_wordings(title: str, brand: str) -> None:
     assert detect_brand(title) == brand
+
+
+# ---- T5.6: các biên của luật vệ sinh khóa tên ----
+def test_long_part_codes_in_parentheses_are_still_dropped_but_short_model_names_are_kept() -> None:
+    assert name_key("Chuột Predator Cestus 330 (PMW920)", "Acer") == ("predator", "cestus", "330")
+    assert "g304" in name_key("Chuột Logitech Lightspeed (G304)", "Logitech")
+
+
+def test_full_size_keyboard_layout_is_not_mistaken_for_the_new_condition_label() -> None:
+    layout = name_key("Bàn phím Keychron K2 100%", "Keychron")
+    sold_new = name_key("Bàn phím Keychron K2 Mới 100%", "Keychron")
+
+    assert "100%" in layout and "100%" not in sold_new
+    assert sold_new == ("k2",)
+
+
+def test_other_bracket_groups_and_blue_without_a_following_colour_word_are_kept() -> None:
+    assert name_key("Chuột Pulsar X2 [Wireless Edition]", "Pulsar") == ("x2", "wireless", "edition")
+    assert name_key("Chuột Pulsar X2 La Mã", "Pulsar") == ("x2", "la", "ma")  # "La" không sau xanh
+    assert name_key("Chuột Pulsar X2 Xanh Lá", "Pulsar") == ("x2",)  # "lá" sau xanh là màu
+
+
+def test_marketing_labels_do_not_change_the_display_name_either() -> None:
+    assert canonical_name("Chuột Pulsar X2 (Mới 100%) | GearVN", MOUSE) == "Pulsar X2"

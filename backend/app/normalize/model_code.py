@@ -19,6 +19,9 @@ _MIN_NUMERIC_CODE_LENGTH: Final = 7  # Dell `71100521`: mã chỉ gồm số ph�
 _SPEC_BLOCK = re.compile(r"\(|\s\|\s|/")
 _EDGE_PUNCT = " \t,;:()[]{}\"'"
 _LAPTOP_PREFIX = re.compile(r"^\s*laptop(?:\s+gaming)?\s+", re.IGNORECASE)
+# Nhãn khuyến mãi ở đầu tên ("[Giảm 10%/ Tặng chuột] ...", "(Mới) ..."): chứa "(" hoặc "/" nên phải
+# bỏ trước khi cắt khối thông số, nếu không phần đầu tên rỗng và mất mã model (BUG-M5-5).
+_LEADING_TAGS = re.compile(r"^(?:\s*(?:\[[^\]]*\]|\([^)]*\)))+\s*")
 
 # Token thông số (không phải mã model) dễ lẫn vì có cả chữ lẫn số.
 _NOT_A_CODE = re.compile(
@@ -75,7 +78,8 @@ def is_strong_code(code: str) -> bool:
 
 def laptop_head(title: str) -> list[str]:
     """Các token của phần tên laptop trước khối thông số (đã bỏ chữ "Laptop [gaming]")."""
-    head = _SPEC_BLOCK.split(_LAPTOP_PREFIX.sub("", clean(title)), maxsplit=1)[0]
+    untagged = _LEADING_TAGS.sub("", clean(title))
+    head = _SPEC_BLOCK.split(_LAPTOP_PREFIX.sub("", untagged), maxsplit=1)[0]
     return [token for token in (_trim(raw) for raw in head.split()) if token]
 
 
