@@ -69,7 +69,11 @@ async def start_scrape_run(
     body: ScrapeRunCreate, service: ScrapeServiceDep, tasks: TaskRegistryDep
 ) -> ScrapeRunStarted:
     started = await service.start(body.site, body.category, max_pages=body.max_pages)
-    tasks.spawn(service.execute(started), name=f"scrape-run-{started.run_id}")
+    tasks.spawn(
+        service.execute(started),
+        name=f"scrape-run-{started.run_id}",
+        on_cancel=lambda: service.abandon(started),
+    )
     return ScrapeRunStarted(run_id=started.run_id)
 
 
@@ -109,5 +113,9 @@ async def answer_challenge(
     run_id: RunId, body: ChallengeAnswer, service: ScrapeServiceDep, tasks: TaskRegistryDep
 ) -> ChallengeAnswered:
     started = await service.reopen(run_id, body.answer)
-    tasks.spawn(service.execute(started), name=f"scrape-run-{started.run_id}")
+    tasks.spawn(
+        service.execute(started),
+        name=f"scrape-run-{started.run_id}",
+        on_cancel=lambda: service.abandon(started),
+    )
     return ChallengeAnswered(status="RUNNING")
