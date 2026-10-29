@@ -118,17 +118,7 @@ class ScrapePipeline:
         if started.lifecycle.claimed:
             return
         started.lifecycle.claimed = True
-        await asyncio.shield(
-            asyncio.to_thread(
-                self._runs.finish,
-                started.scraper,
-                started.context,
-                started.progress,
-                None,
-                "Lượt thu thập bị huỷ.",
-                True,
-            )
-        )
+        await self._finish_cancelled(started.scraper, started.context, started.progress)
 
     async def resume(
         self, run_id: int, answer: str, *, max_pages: int | None = None
@@ -225,17 +215,7 @@ class ScrapePipeline:
             challenge = robots_block_challenge(context.site, blocked.url, blocked.status)
             logger.warning("[run %s] robots.txt bị chặn (HTTP %s)", context.run_id, blocked.status)
         except asyncio.CancelledError:
-            await asyncio.shield(
-                asyncio.to_thread(
-                    self._runs.finish,
-                    scraper,
-                    context,
-                    progress,
-                    None,
-                    "Lượt thu thập bị huỷ.",
-                    True,
-                )
-            )
+            await self._finish_cancelled(scraper, context, progress)
             raise
         except Exception as exc:
             crashed = True
@@ -297,6 +277,16 @@ class ScrapePipeline:
                 progress.changed_ids.append(offer_id)
         return None
 
+    async def _finish_cancelled(
+        self, scraper: BaseScraper, context: RunContext, progress: Progress
+    ) -> None:
+        """Chốt `FAILED` cho lượt bị hủy; `shield` để chính lệnh hủy không cắt ngang việc chốt."""
+        await asyncio.shield(
+            asyncio.to_thread(
+                self._runs.finish, scraper, context, progress, None, "Lượt thu thập bị huỷ.", True
+            )
+        )
+
     def _limit(self, max_pages: int | None) -> int:
         limit = max_pages if max_pages is not None else self._default_max_pages
         if limit < 1:
@@ -355,17 +345,7 @@ class ScrapePipeline:
             logger.warning("[run %s] %s", context.run_id, error)
         except asyncio.CancelledError:
             # Task bị huỷ giữa lượt: đóng lượt lại thay vì để RUNNING tới khi quá hạn.
-            await asyncio.shield(
-                asyncio.to_thread(
-                    self._runs.finish,
-                    scraper,
-                    context,
-                    progress,
-                    None,
-                    "Lượt thu thập bị huỷ.",
-                    True,
-                )
-            )
+            await self._finish_cancelled(scraper, context, progress)
             raise
         except Exception as exc:
             crashed = True

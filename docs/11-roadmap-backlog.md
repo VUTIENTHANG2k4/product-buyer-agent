@@ -402,7 +402,7 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 | T11.6 | Chuyển `utc_now` từ `app/db/models.py` sang `app/domain` để `agent` không import `db` (phát sinh từ rà soát kiến trúc 2026-10-28) | – | S | ✅ |
 | T11.7 | Test ranh giới import cho mọi lớp theo 03 §4 (mở rộng `test_scraper_boundaries.py` hoặc dùng `import-linter`) | T11.6 | S | ✅ |
 | T11.8 | Tách `scrapers/pipeline.py` (1159 dòng, lớp `ScrapePipeline` ~775 dòng) thành module nhỏ, không đổi hành vi | T11.7 | M | ✅ |
-| T11.9 | Gom khối chốt lượt bị hủy (`asyncio.shield(to_thread(finish, …, "Lượt thu thập bị huỷ.", True))`, lặp 3 lần ở `scrapers/pipeline/core.py`: `abandon`, `refresh_offers`, `_crawl`) thành một hàm (gợi ý từ review M11; không đổi hành vi) | T11.8 | S | ⬜ |
+| T11.9 | Gom khối chốt lượt bị hủy (`asyncio.shield(to_thread(finish, …, "Lượt thu thập bị huỷ.", True))`, lặp 3 lần ở `scrapers/pipeline/core.py`: `abandon`, `refresh_offers`, `_crawl`) thành một hàm (gợi ý từ review M11; không đổi hành vi) | T11.8 | S | ✅ |
 
 **T11.4** — Phát sinh từ diễn tập T11.3 (docs/10 §7 ghi A, B). Xong khi: một lệnh (script trong `backend/scripts/` + target Makefile) đổi giá một offer `mock-shop` kèm dòng `price_history` rồi tạo cảnh báo mẫu, để bước 5 của demo lặp lại được mà không sửa SQL tay; `docker-compose.yml` đặt `MOCK_SHOP_CAPTCHA_AFTER` đủ thấp để một lượt Laptop luôn gặp captcha (hoặc nêu rõ trong `.env.example`); test script; cập nhật 10 §7. Ghi thêm (không làm ở đây): cùng mẫu mock xuất hiện hai sản phẩm khi dữ liệu dev cũ (URL `localhost:8100`) lẫn dữ liệu Docker (`mock-shop:8100`), và lượt Laptop đầu tiên trong Docker chậm vì LLM điền thông số.
 
