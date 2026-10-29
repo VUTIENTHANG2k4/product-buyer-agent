@@ -10,9 +10,10 @@ from datetime import datetime
 from sqlmodel import Session
 
 from app.config import Settings
-from app.db.models import ScrapeRun, utc_now
+from app.db.models import ScrapeRun
 from app.db.repositories import ScrapeRunRepository
 from app.domain.admin import ScrapeRunView, SourceView
+from app.domain.clock import utc_now
 from app.domain.enums import Category, ChallengeKind, ScrapeStatus, SiteKey
 from app.domain.errors import RunNotFound
 from app.scrapers.http.robots import RobotsSnapshot

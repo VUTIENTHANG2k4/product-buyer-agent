@@ -4,8 +4,9 @@ from datetime import datetime
 
 from sqlmodel import Session, col, select
 
-from app.db.models import PriceAlert, utc_now
+from app.db.models import PriceAlert
 from app.db.repositories.ids import fits_int4, keep_valid
+from app.domain.clock import utc_now
 from app.domain.enums import AlertChannel, AlertStatus
 
 # Cảnh báo còn hiệu lực: `triggered` vẫn có thể gửi lại khi giá xuống thấp hơn (docs/11 T9.1).

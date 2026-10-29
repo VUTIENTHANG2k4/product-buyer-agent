@@ -12,7 +12,7 @@ Module này chỉ import `app.domain` (db không import gì khác ngoài domain,
 """
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
@@ -31,6 +31,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
 
+from app.domain.clock import utc_now
 from app.domain.enums import (
     AgentRunStatus,
     AlertChannel,
@@ -53,11 +54,6 @@ SQLModel.metadata.naming_convention = {
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
 }
-
-
-def utc_now() -> datetime:
-    """Thời điểm hiện tại theo UTC (có timezone); test thay bằng đồng hồ giả (time-machine)."""
-    return datetime.now(UTC)
 
 
 def _enum_column(enum_cls: type[StrEnum], name: str) -> Column[Any]:

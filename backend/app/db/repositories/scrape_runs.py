@@ -7,8 +7,9 @@ from typing import Any
 from sqlalchemy import ColumnElement, func
 from sqlmodel import Session, col, select
 
-from app.db.models import ScrapeRun, utc_now
+from app.db.models import ScrapeRun
 from app.db.repositories.ids import fits_int4
+from app.domain.clock import utc_now
 from app.domain.enums import Category, ScrapeStatus, ScrapeTrigger, SiteKey
 
 # Trạng thái kết thúc: có `finished_at`. `NEEDS_HUMAN` chưa kết thúc (chờ `resume`).

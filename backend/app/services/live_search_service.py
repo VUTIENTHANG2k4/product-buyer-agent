@@ -15,8 +15,8 @@ from datetime import datetime, timedelta
 from typing import Any, Final
 
 from app.config import Settings
-from app.db.models import utc_now
 from app.db.repositories import LiveSearchCacheRepository, ScrapeRunRepository
+from app.domain.clock import utc_now
 from app.domain.enums import SiteKey
 from app.domain.errors import ValidationFailed
 from app.domain.live_search import LiveSearchItem, LiveSearchResult, SkippedSite

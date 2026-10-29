@@ -240,7 +240,7 @@ product-buyer-agent/
 │   │   │                         #   text.py, extract.py, llm_extract.py, specs/ (khung thông số theo nhóm, gpu_rank)
 │   │   ├── db/                   # engine.py, models.py, repositories/
 │   │   ├── domain/               # enums.py, dto.py, catalog.py, chat.py, admin.py, live_search.py,
-│   │   │                         #   errors.py (AppError theo 07 §2)
+│   │   │                         #   errors.py (AppError theo 07 §2), clock.py (utc_now)
 │   │   └── mock_shop/            # main.py, pages.py, state.py, catalog.py, data.json
 │   ├── scripts/                  # seed, scrape, fetch_page, run_eval + eval_core, dump_openapi,
 │   │                             #   e2e_server, save_mockshop_fixtures (chạy `python -m scripts.<tên>`)

@@ -5,8 +5,8 @@ from typing import Any
 
 from sqlmodel import Session
 
-from app.db.models import utc_now
 from app.domain.catalog import Comparison
+from app.domain.clock import utc_now
 from app.domain.errors import ProductNotFound, ValidationFailed
 from app.services.catalog_service import CatalogService
 from app.services.views import Clock

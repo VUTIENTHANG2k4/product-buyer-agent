@@ -399,7 +399,7 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 | T11.3 | Diễn tập kịch bản demo ([10 §7](10-deployment.md#7-kịch-bản-demo-bảo-vệ)) | T9.4 | S | ✅ |
 | T11.4 | Lệnh đổi giá cho demo (`make demo-price-drop`) + `MOCK_SHOP_CAPTCHA_AFTER` thấp cho demo (phát sinh từ T11.3; không chặn bảo vệ) | T11.3 | S | ✅ |
 | T11.5 | Giảm latency p50 của agent xuống ≤ 15 s (G4): hiện 26–31 s do ≥ 3 lần gọi Gemini mỗi câu (phát sinh từ T11.1; cần người dùng quyết định làm hay chấp nhận ngoại lệ) | T11.1 | M | ✅ |
-| T11.6 | Chuyển `utc_now` từ `app/db/models.py` sang `app/domain` để `agent` không import `db` (phát sinh từ rà soát kiến trúc 2026-10-28) | – | S | ⬜ |
+| T11.6 | Chuyển `utc_now` từ `app/db/models.py` sang `app/domain` để `agent` không import `db` (phát sinh từ rà soát kiến trúc 2026-10-28) | – | S | ✅ |
 | T11.7 | Test ranh giới import cho mọi lớp theo 03 §4 (mở rộng `test_scraper_boundaries.py` hoặc dùng `import-linter`) | T11.6 | S | ⬜ |
 | T11.8 | Tách `scrapers/pipeline.py` (1159 dòng, lớp `ScrapePipeline` ~775 dòng) thành module nhỏ, không đổi hành vi | T11.7 | M | ⬜ |
 

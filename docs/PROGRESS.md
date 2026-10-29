@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: M11 dọn kiến trúc trên nhánh `milestone/M11-arch-cleanup`: T11.6 → T11.7 → T11.8 (chưa bắt đầu task nào). Lượt "việc nhỏ 1, 2, 3" đã merge vào `main`.
+- Đang làm: M11 dọn kiến trúc trên nhánh `milestone/M11-arch-cleanup`: T11.6 ✅ → T11.7 → T11.8. Lượt "việc nhỏ 1, 2, 3" đã merge vào `main`.
 - Backlog chưa làm: T5.4, T6.7, T7.7 (BUG-M7-3, 6b), T8.12, T11.6–T11.8 (rà soát kiến trúc 2026-10-28); bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-28 — lượt việc nhỏ 3 (T9.8, T7.6)
 

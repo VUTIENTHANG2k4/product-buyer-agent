@@ -9,7 +9,8 @@ from sqlalchemy import cast, func, update
 from sqlalchemy.dialects.postgresql import JSONPATH
 from sqlmodel import Session, col, select
 
-from app.db.models import AgentRun, utc_now
+from app.db.models import AgentRun
+from app.domain.clock import utc_now
 from app.domain.enums import AgentRunStatus
 
 _MAX_POSITION = 2**31 - 1  # giới hạn số nguyên của jsonpath

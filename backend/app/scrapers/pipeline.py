@@ -24,7 +24,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
-from app.db.models import Offer, Product, ScrapeRun, utc_now
+from app.db.models import Offer, Product, ScrapeRun
 from app.db.repositories import (
     LlmExtractionCacheRepository,
     OfferRepository,
@@ -33,6 +33,7 @@ from app.db.repositories import (
     ProductRepository,
     ScrapeRunRepository,
 )
+from app.domain.clock import utc_now
 from app.domain.dto import Challenge, ListingItem, ProductDetail
 from app.domain.enums import (
     Category,

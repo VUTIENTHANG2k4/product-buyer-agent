@@ -12,7 +12,7 @@ from typing import Any, Final
 
 from sqlmodel import Session
 
-from app.db.models import AgentRun, utc_now
+from app.db.models import AgentRun
 from app.db.repositories import (
     AgentRunRepository,
     ConversationRepository,
@@ -20,6 +20,7 @@ from app.db.repositories import (
     ProductRepository,
 )
 from app.domain.chat import ConversationView, EventBatch, MessageView, RunSnapshot
+from app.domain.clock import utc_now
 from app.domain.enums import AgentRunStatus, MessageRole
 from app.domain.errors import NotFound, RunNotFound, ValidationFailed
 from app.services.views import Clock
