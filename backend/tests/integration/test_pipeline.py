@@ -1,4 +1,4 @@
-"""ScrapePipeline (app/scrapers/pipeline.py): PostgreSQL thật + mock-shop qua ASGI, không mạng.
+"""ScrapePipeline (app/scrapers/pipeline/): PostgreSQL thật + mock-shop qua ASGI, không mạng.
 
 Mỗi test dùng `db_session` (rollback cuối test); pipeline mở session riêng trên cùng connection
 nên `commit()` của nó chỉ giải phóng savepoint.

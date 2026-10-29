@@ -89,7 +89,7 @@ flowchart TB
     base[base.py BaseScraper]
     fetcher[http/fetcher.py<br/>robots, rate limit, retry]
     sites[sites/gearvn.py, fptshop.py,<br/>anphat.py, mockshop.py]
-    pipeline[pipeline.py]
+    pipeline[pipeline/<br/>core, run_store, writer, resolve, state]
   end
   subgraph normalize[app/normalize]
     price[price.py]
@@ -141,7 +141,7 @@ Chi tiết:
 - `api` không gọi `db` hay `scrapers` trực tiếp. Phiên CSDL của request đến từ `services/database.py` (`session_scope`: commit khi xong, rollback khi lỗi) qua dependency `get_session` ở `api/deps.py` (`scope="function"`, nên commit chạy trước khi gửi response).
 - `agent` không đụng CSDL hay web: mọi truy cập đi qua tool (`agent/tools` → `services`) hoặc `services` (lưu hội thoại, lượt chạy).
 - `services` → `db/repositories`, `normalize`, `scrapers` (chỉ `live_search_service` dùng scraper/fetcher; chỉ `scrape_service` gọi `pipeline`; `admin_service` chỉ đọc `SiteConfig` từ registry, tóm tắt robots.txt đã tải và hằng số thời gian nghỉ của pipeline, không gọi pipeline hay mạng; `scrape_runtime` dựng Fetcher + `scrape_service` dùng chung cho API).
-- `scrapers` không import `db` và `services`, **ngoại lệ duy nhất** là `scrapers/pipeline.py` được import `db/repositories` (nơi nối scraper → normalize → repository). Pipeline không gọi `services` (tránh vòng phụ thuộc).
+- `scrapers` không import `db` và `services`, **ngoại lệ duy nhất** là gói `scrapers/pipeline/` được import `db/repositories` (nơi nối scraper → normalize → repository). Pipeline không gọi `services` (tránh vòng phụ thuộc).
 - Worker (`app/worker.py`) và router quản trị chạy thu thập qua `scrape_service`, không gọi pipeline trực tiếp.
 
 ## 5. Luồng chính
@@ -245,7 +245,7 @@ product-buyer-agent/
 │   │   ├── services/             # catalog, compare, shopping_list, alert, alert_evaluation, live_search,
 │   │   │                         #   scrape_service, scrape_runtime, admin, conversation, health, database, spec_filters, views,
 │   │   │                         #   notifier/ (email, telegram)
-│   │   ├── scrapers/             # base.py, challenge.py, registry.py, pipeline.py, parsing.py,
+│   │   ├── scrapers/             # base.py, challenge.py, registry.py, pipeline/, parsing.py,
 │   │   │                         #   http/ (fetcher, robots, rate_limiter, raw_cache, factory, types, errors), sites/ (gearvn,
 │   │   │                         #   fptshop, anphat, mockshop)
 │   │   ├── normalize/            # price.py, url.py, brand.py, model_code.py, names.py, matcher.py,

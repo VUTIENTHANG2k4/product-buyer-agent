@@ -153,7 +153,9 @@ Hoàng Hà Mobile và Laptop88 đã bị loại khỏi danh sách nguồn từ 2
 | `nguyenkim` | (mở rộng) | 5 | **Có** (Next.js, kết quả tìm kiếm nạp phía trình duyệt, T10.1) | **Không** (ADR-0010) | Chưa có scraper |
 | `mockshop` | cả 4 | `MOCK_SHOP_DELAY_SECONDS` | Không | Có (dev/test/demo) | Dùng cho test và demo |
 
-## 7. Pipeline (`app/scrapers/pipeline.py`)
+## 7. Pipeline (`app/scrapers/pipeline/`)
+
+Gói tách theo trách nhiệm (T11.8), nơi khác chỉ import từ `app.scrapers.pipeline`: `core.py` (`ScrapePipeline`: điều phối lượt, vòng tải trang, làm mới giá), `run_store.py` (`RunStore`: tạo lượt dưới khóa, thời gian nghỉ, chiếm/trả/hủy lượt `NEEDS_HUMAN`, chốt trạng thái cuối), `writer.py` (`OfferWriter`: lưu trang/mục/giá làm mới, lịch sử giá, bộ đếm), `resolve.py` (gắn offer vào `Product`, kiểm URL mục), `state.py` (hằng số, `PipelineResult`, `StartedRun`, trạng thái nội bộ).
 
 ```
 run(site, category, trigger, max_pages) -> ScrapeRun
@@ -198,7 +200,7 @@ ngay lúc khởi động. Thứ trong tuần theo crontab chuẩn (0/7 = Chủ n
 
 Cảnh báo chất lượng: tỷ lệ parse thành công < 80% hoặc số sản phẩm giảm > 50% so với lượt trước → log `WARNING` và hiển thị trên trang quản trị (dấu hiệu trang đổi giao diện).
 
-Chi tiết đã cài đặt (T2.6; `app/scrapers/pipeline.py`, `app/services/scrape_service.py`, `scripts/scrape.py`):
+Chi tiết đã cài đặt (T2.6; `app/scrapers/pipeline/`, `app/services/scrape_service.py`, `scripts/scrape.py`):
 
 - **Giao diện:** `ScrapePipeline(session_factory, fetcher, ...)` có `run(site, category, trigger, max_pages=None) -> PipelineResult` và `resume(run_id, answer, max_pages=None)`. `PipelineResult` (run_id, status, bộ đếm, `changed_offer_ids`, `challenge`, `error_message`) là kết quả trả về thay cho đối tượng `ScrapeRun`. Chỉ ném `SiteNotAvailable`, `SiteCooldown`, `ScrapeAlreadyRunning` (trước khi tạo lượt) và, ở `resume`, `RunNotFound`/`ChallengeNotPending`/`ChallengeFailed`; mọi kết cục khác được ghi vào `ScrapeRun` và trả về. `run`/`resume` là phép ghép của hai nửa để API trả `run_id` ngay: `start(...)` kiểm tra điều kiện và tạo lượt `RUNNING` (chưa tải trang nào), `execute(started)` chạy vòng thu thập; `reopen(run_id, answer)` chiếm lượt `NEEDS_HUMAN` và gửi đáp án (ném `ChallengeFailed` đồng bộ), rồi `execute` chạy tiếp. Lượt đã `start` mà không ai `execute` sẽ quá hạn sau 2 giờ như lượt bị bỏ dở. `ScrapeService.run/resume` (và `start/execute/reopen`) bọc thêm kiểm tra `OFFLINE_MODE` (trang thật khi `SCRAPER_OFFLINE_ONLY=true`) và chuyển `changed_offer_ids` cho hook `on_price_changes` sau **mỗi** lần gọi (kể cả `resume`, nên offer đổi giá trước khi lượt bị gián đoạn không mất); `alert_service` nối vào hook ở M9.
 - **Giao dịch:** mỗi trang danh sách lưu trong một transaction, từng mục trong một savepoint; lỗi lưu một mục chỉ tăng `items_failed`. Mọi thao tác CSDL chạy qua `asyncio.to_thread`. Bộ đếm trên `ScrapeRun` được cập nhật sau mỗi trang.

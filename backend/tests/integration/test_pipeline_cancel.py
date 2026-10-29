@@ -92,7 +92,7 @@ async def test_cancelling_a_run_that_resume_already_claimed_is_refused(
     """
     pipe = pipeline(factory, mock_fetcher(captcha_after=1), clock)
     paused = await pipe.run(SiteKey.mockshop, Category.laptop, ScrapeTrigger.test)
-    await asyncio.to_thread(pipe._claim_paused, paused.run_id, 5)  # noqa: SLF001
+    await asyncio.to_thread(pipe._runs.claim_paused, paused.run_id, 5)  # noqa: SLF001
 
     with pytest.raises(ChallengeNotPending) as error:
         await pipe.cancel_paused(paused.run_id)

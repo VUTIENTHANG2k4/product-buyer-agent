@@ -24,6 +24,7 @@ from app.domain.enums import (
 from app.domain.errors import ScrapeAlreadyRunning
 from app.scrapers.http.types import FetchResponse
 from app.scrapers.pipeline import ScrapePipeline
+from app.scrapers.pipeline.writer import OfferWriter
 from app.services.scrape_service import ScrapeService
 from tests.factories import make_offer, make_price_alert, make_product, make_shopping_list
 from tests.integration.test_pipeline import BASE, NOW, Clock, ScriptedFetcher, page
@@ -283,14 +284,14 @@ async def test_a_saving_error_on_one_offer_does_not_prevent_the_next_one(
         }
     )
     pipe = ScrapePipeline(factory, fetcher, now=clock)
-    real = ScrapePipeline._save_refresh
+    real = OfferWriter.save_refresh
 
-    def flaky(self: ScrapePipeline, offer_id: int, detail: Any) -> bool:
+    def flaky(self: OfferWriter, offer_id: int, detail: Any) -> bool:
         if offer_id == first.id:
             raise ValueError("cannot save")
         return real(self, offer_id, detail)
 
-    monkeypatch.setattr(ScrapePipeline, "_save_refresh", flaky)
+    monkeypatch.setattr(OfferWriter, "save_refresh", flaky)
 
     result = await pipe.refresh_offers(
         SiteKey.mockshop, Category.laptop, [first.id or 0, second.id or 0]

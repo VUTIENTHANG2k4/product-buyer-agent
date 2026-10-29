@@ -75,7 +75,7 @@ Một lượt chỉ làm một milestone. Phiên dài quá thì `/clear` giữa 
 - Không push, merge, rebase khi người dùng chưa yêu cầu.
 
 ## Kiến trúc tóm tắt
-`api` → `agent` → `agent/tools` → `services` → `db/repositories`; `services/scrape_service` → `scrapers/pipeline` → `scrapers/sites` + `normalize` → `db/repositories`. Mọi module được import `domain`, `config`; `db` không import gì khác. Trong `scrapers/` chỉ `pipeline.py` được import `db`. Chi tiết và sơ đồ: `docs/03-architecture.md`.
+`api` → `agent` → `agent/tools` → `services` → `db/repositories`; `services/scrape_service` → `scrapers/pipeline` → `scrapers/sites` + `normalize` → `db/repositories`. Mọi module được import `domain`, `config`; `db` không import gì khác. Trong `scrapers/` chỉ gói `pipeline/` được import `db`. Chi tiết và sơ đồ: `docs/03-architecture.md`.
 
 ## Skills của dự án
 - Quy trình (gọi bằng `/tên`): `next`, `plan-task`, `check`, `review`, `done`, `eval` (tham số là ID milestone; `done` nhận cả ID task).
