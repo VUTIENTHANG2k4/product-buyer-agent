@@ -3,8 +3,8 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (lượt M11 dọn kiến trúc T11.6–T11.8 xong trên nhánh `milestone/M11-arch-cleanup`, qua `make check` + `make e2e` + `code-reviewer`, **bỏ qua `qa-tester`** theo quyết định của người dùng (chỉ refactor); chờ người dùng merge). Lượt "việc nhỏ 1, 2, 3" đã merge vào `main`.
-- Backlog chưa làm: T5.4, T6.7, T7.7 (BUG-M7-3, 6b), T8.12; bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Đang làm: – (lượt M11 dọn kiến trúc T11.6–T11.8 xong trên nhánh `milestone/M11-arch-cleanup`, qua `make check` + `make e2e` + `code-reviewer` (soát lại sau sửa: đạt), **bỏ qua `qa-tester`** theo quyết định của người dùng (chỉ refactor); chờ người dùng merge). Lượt "việc nhỏ 1, 2, 3" đã merge vào `main`.
+- Backlog chưa làm: T5.4, T6.7, T7.7 (BUG-M7-3, 6b), T8.12, T11.9; kế tiếp đề xuất: T7.7 hoặc T5.4 (lượt việc nhỏ), T8.12/T5.8 cần người dùng chọn hành vi trước; bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-29 — M11 dọn kiến trúc (T11.6 `utc_now` → `domain`, T11.7 test ranh giới mọi lớp, T11.8 tách gói `scrapers/pipeline/`)
 
 ## Milestone
