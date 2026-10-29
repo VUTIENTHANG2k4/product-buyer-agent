@@ -11,7 +11,8 @@ nhân đôi); offer mới được trích thông số theo luật rồi ghép b�
 
 Gói: `state` (hằng số, kết quả, trạng thái lượt), `resolve` (gắn offer vào product), `writer`
 (`OfferWriter`: lưu offer/lịch sử giá), `run_store` (`RunStore`: vòng đời `ScrapeRun`), `core`
-(`ScrapePipeline`: điều phối). Nơi khác chỉ import từ `app.scrapers.pipeline`.
+(`ScrapePipeline`: điều phối). Nơi khác chỉ import từ `app.scrapers.pipeline`
+(test được vào module con).
 """
 
 from app.scrapers.pipeline.core import ScrapePipeline

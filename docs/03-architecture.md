@@ -127,21 +127,29 @@ Quy tắc phụ thuộc: kiểm tự động bằng [`tests/unit/test_layer_boun
 | Lớp | Được import thêm |
 | --- | --- |
 | `domain`, `config`, `db`, `normalize`, `mock_shop` | – |
-| `scrapers` | `normalize` (`clean_url`, `parse_price`) |
-| `scrapers/pipeline` | `normalize`, `db` |
-| `services` | `db`, `normalize`, `scrapers` |
-| `agent` | `agent/tools`, `services` (bộ nhớ hội thoại), `normalize` (hàm thuần: `text.fold`, hạng GPU, giao diện `LlmSpecsFiller`) |
+| `scrapers` | `normalize` (`clean_url`, `parse_price`); **không** được import gói `scrapers/pipeline/` (đường vòng tới `db`) |
+| `scrapers/pipeline/` | `scrapers`, `normalize`, `db` (repositories và models) |
+| `services` | `db`, `normalize`, `scrapers`, `scrapers/pipeline/` |
+| `agent` | `agent/tools`; thêm theo file ở bảng dưới |
 | `agent/tools` | `services` |
 | `api` | `agent`, `services` |
 | `main.py` | `api` |
-| `worker.py` | `agent` (bộ điền thông số), `services`, `scrapers` (registry, kiểu kết quả) |
+| `worker.py` | `agent` (bộ điền thông số), `services`, `scrapers` (registry), `scrapers/pipeline/` (kiểu `PipelineResult`) |
+
+Ngoại lệ theo file (`FILE_EXCEPTIONS` trong test; test đỏ nếu một ngoại lệ không còn dùng):
+
+| File | Được import thêm | Lý do |
+| --- | --- | --- |
+| `agent/runner.py` | `services` | Dựng bảng kết quả từ DB cho guardrail (`CatalogService.rows`), lưu hội thoại và lượt (`ConversationService`), kiểu `LiveSearchService` tiêm cho tool tầng 2 |
+| `agent/memory.py` | `services` | Đổi `ConversationSnapshot` (đọc qua service) thành ngữ cảnh cho LLM |
+| `agent/fake_llm.py`, `guardrail.py`, `intent.py`, `planner.py`, `spec_filler.py` | `normalize` | Hàm thuần, không I/O: bỏ dấu (`text.fold`), bảng hạng GPU, giao diện `LlmSpecsFiller` |
 
 Chi tiết:
 
 - `api` không gọi `db` hay `scrapers` trực tiếp. Phiên CSDL của request đến từ `services/database.py` (`session_scope`: commit khi xong, rollback khi lỗi) qua dependency `get_session` ở `api/deps.py` (`scope="function"`, nên commit chạy trước khi gửi response).
-- `agent` không đụng CSDL hay web: mọi truy cập đi qua tool (`agent/tools` → `services`) hoặc `services` (lưu hội thoại, lượt chạy).
+- `agent` không đụng CSDL hay web: mọi truy cập đi qua tool (`agent/tools` → `services`) hoặc `services` trong hai file ở bảng ngoại lệ (`runner.py`, `memory.py`); các file khác của `agent` không được import `services`.
 - `services` → `db/repositories`, `normalize`, `scrapers` (chỉ `live_search_service` dùng scraper/fetcher; chỉ `scrape_service` gọi `pipeline`; `admin_service` chỉ đọc `SiteConfig` từ registry, tóm tắt robots.txt đã tải và hằng số thời gian nghỉ của pipeline, không gọi pipeline hay mạng; `scrape_runtime` dựng Fetcher + `scrape_service` dùng chung cho API).
-- `scrapers` không import `db` và `services`, **ngoại lệ duy nhất** là gói `scrapers/pipeline/` được import `db/repositories` (nơi nối scraper → normalize → repository). Pipeline không gọi `services` (tránh vòng phụ thuộc).
+- `scrapers` không import `db` và `services`, **ngoại lệ duy nhất** là gói `scrapers/pipeline/` được import `db` (repositories và models; nơi nối scraper → normalize → repository). Pipeline không gọi `services` (tránh vòng phụ thuộc).
 - Worker (`app/worker.py`) và router quản trị chạy thu thập qua `scrape_service`, không gọi pipeline trực tiếp.
 
 ## 5. Luồng chính

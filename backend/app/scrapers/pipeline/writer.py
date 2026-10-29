@@ -61,6 +61,8 @@ class OfferWriter:
         prepared: list[tuple[ListingItem, ProductDetail | None]],
         skipped: int,
     ) -> None:
+        """Lưu một trang danh sách trong một transaction (mỗi mục một savepoint, URL trùng trong
+        lượt bỏ qua), cập nhật bộ đếm của lượt rồi cộng vào `progress`."""
         moment = self._now()
         parsed = failed = upserted = changes = unsafe = 0
         changed: list[int] = []
@@ -132,9 +134,8 @@ class OfferWriter:
         offers = OfferRepository(session)
         existing = find_existing_offer(offers, url)
         if existing is not None:
-            url = (
-                existing.url
-            )  # giữ URL đã lưu (có thể là bản http/https còn lại của cùng sản phẩm)
+            # giữ URL đã lưu (có thể là bản http/https còn lại của cùng sản phẩm)
+            url = existing.url
 
         # `upsert` ghi đè cả None/{}: gộp với dữ liệu đã có để lượt không tải chi tiết không xóa nó.
         raw_specs: dict[str, Any] = {}

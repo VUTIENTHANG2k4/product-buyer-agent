@@ -62,6 +62,8 @@ class RunStore:
         *,
         partial_scope: bool = False,
     ) -> RunContext:
+        """Tạo lượt RUNNING dưới khóa (site, nhóm); ném `ScrapeAlreadyRunning` hoặc `SiteCooldown`
+        (trang thật bị chặn trong `BLOCK_COOLDOWN`). Một transaction."""
         moment = self._now()
         with self._session_factory() as session:
             # Khóa theo (site, category): hai lượt đồng thời không cùng vượt qua kiểm tra bên dưới.
@@ -97,6 +99,8 @@ class RunStore:
 
     @staticmethod
     def is_active(run: ScrapeRun, moment: datetime) -> bool:
+        """Lượt còn chặn lượt mới: đang chạy/chờ người và chưa quá `RUNNING_STALE_AFTER` /
+        `NEEDS_HUMAN_STALE_AFTER`."""
         if run.status not in ACTIVE_STATUSES:
             return False
         stale_after = (
@@ -173,6 +177,8 @@ class RunStore:
             session.commit()
 
     def cancel_paused(self, run_id: int) -> None:
+        """Đóng lượt `NEEDS_HUMAN` thành `FAILED` (`CANCELLED_BY_USER`) dưới khóa (site, nhóm);
+        ném `RunNotFound` hoặc `ChallengeNotPending`."""
         with self._session_factory() as session:
             runs = ScrapeRunRepository(session)
             peek = runs.get(run_id)
@@ -200,6 +206,8 @@ class RunStore:
         error: str | None,
         crashed: bool,
     ) -> PipelineResult:
+        """Chốt lượt: tính trạng thái cuối (`decide`), lưu bộ đếm, tắt offer không còn thấy nếu an
+        toàn (chỉ lượt đầy đủ), trong một transaction; trả `PipelineResult`."""
         moment = self._now()
         verdict = self.decide(scraper, context, progress, challenge, error, crashed)
         status, message = verdict.status, verdict.message
@@ -259,6 +267,7 @@ class RunStore:
         error: str | None,
         crashed: bool,
     ) -> Verdict:
+        """Trạng thái cuối và thông điệp từ challenge, lỗi và bộ đếm (docs/06 §7); không I/O."""
         if challenge is not None:
             # Chỉ mock-shop có luồng nhập đáp án, và chỉ cho captcha; mọi trường hợp khác là chặn.
             # Lượt làm mới giá không có trang để tiếp tục: gặp captcha là dừng (BLOCKED), không chờ.

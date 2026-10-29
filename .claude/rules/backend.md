@@ -11,8 +11,8 @@ paths:
 - Ranh giới module (kiểm tra trước khi import; bảng đầy đủ ở `docs/03-architecture.md` §4, kiểm tự động bằng `tests/unit/test_layer_boundaries.py`, đổi quy tắc thì sửa cả hai):
   - Mọi module được import `app/domain` và `app/config`.
   - `app/api` chỉ import `app/agent`, `app/services`.
-  - `app/agent` chỉ import `app/agent/tools`, `app/services`, `app/normalize` (hàm thuần); `app/agent/tools` chỉ import `app/services`.
-  - `app/scrapers` chỉ import `app/normalize`. **Ngoại lệ duy nhất:** gói `app/scrapers/pipeline/` được import thêm `app/db/repositories` (nối scraper → normalize → repository). Pipeline không gọi `services`.
+  - `app/agent` chỉ import `app/agent/tools`; ngoại lệ theo file (`runner.py`, `memory.py` → `services`; vài file → hàm thuần của `normalize`) liệt kê trong 03 §4. `app/agent/tools` chỉ import `app/services`.
+  - `app/scrapers` chỉ import `app/normalize`. **Ngoại lệ duy nhất:** gói `app/scrapers/pipeline/` được import thêm `app/db` (repositories, models; nối scraper → normalize → repository). Pipeline không gọi `services`.
   - Chạy thu thập (worker, router quản trị) luôn qua `app/services/scrape_service.py`, nơi gọi pipeline rồi `alert_service.evaluate`.
   - `app/db` chỉ import `app/domain`, `app/config`.
 - Hàm I/O dùng `async`; không gọi blocking I/O trong coroutine (dùng `httpx.AsyncClient`, `asyncio.to_thread` khi bắt buộc).

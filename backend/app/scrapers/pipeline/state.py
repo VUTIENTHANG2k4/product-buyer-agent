@@ -14,9 +14,8 @@ from app.domain.errors import RunNotFound
 from app.scrapers.base import BaseScraper
 
 BLOCK_COOLDOWN = timedelta(hours=24)  # nghỉ sau khi trang thật chặn (docs/02 §3)
-RUNNING_STALE_AFTER = timedelta(
-    hours=2
-)  # RUNNING quá lâu = tiến trình đã chết, không chặn lượt mới
+# RUNNING quá lâu = tiến trình đã chết, không chặn lượt mới
+RUNNING_STALE_AFTER = timedelta(hours=2)
 NEEDS_HUMAN_STALE_AFTER = timedelta(hours=1)  # bỏ cuộc nếu không ai nhập đáp án
 CANCELLED_BY_USER = "Đã hủy bởi người dùng."
 FAILED_RATIO_LIMIT = 0.2  # items_failed / items_parsed > 20% → PARTIAL
