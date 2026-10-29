@@ -3,8 +3,8 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (lượt "việc nhỏ 3": T9.8 (khe độ trễ domain dùng chung qua PostgreSQL, migration `0004`, `0005`) và T7.6 (độ bền API/thu thập) xong trên nhánh `milestone/small-fixes-3`, qua `make check` + `make e2e`; `code-reviewer` đã soát, **bỏ qua `qa-tester`** theo yêu cầu merge của người dùng). Lượt "việc nhỏ 1, 2" đã merge vào `main` (3e32ff9, 1cc61e5).
-- Backlog chưa làm: T5.4, T6.7, T7.7 (BUG-M7-3, 6b), T8.12; bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Đang làm: M11 dọn kiến trúc trên nhánh `milestone/M11-arch-cleanup`: T11.6 → T11.7 → T11.8 (chưa bắt đầu task nào). Lượt "việc nhỏ 1, 2, 3" đã merge vào `main`.
+- Backlog chưa làm: T5.4, T6.7, T7.7 (BUG-M7-3, 6b), T8.12, T11.6–T11.8 (rà soát kiến trúc 2026-10-28); bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-28 — lượt việc nhỏ 3 (T9.8, T7.6)
 
 ## Milestone
@@ -21,7 +21,7 @@
 | M8 Frontend | ✅ | Gộp T8.9–T8.11; qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (9 bug sửa ngay, 278 test `*.qa-m8`); 30 ảnh `docs/ui/screens/` đã trình người dùng một lần (cho tiếp tục); E2E 8/8. Còn T8.12 (4 điểm nhỏ cần quyết định) |
 | M9 Theo dõi giá | ✅ | Qua `code-reviewer` (4 Phải sửa + 10/11 Nên sửa đã sửa) + `qa-tester` (8 bug sửa ngay, 227 test `*_qa_m9`); T9.1–T9.4 xong, `make demo-up` chạy cả hệ thống bằng Docker ([ADR-0009](adr/0009-mock-shop-compose-host.md)). T9.5–T9.8 xong |
 | M10 Tầng 2 | ✅ | Qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (5 bug sửa ngay, 346 test `*_qa_m10`); tầng 2 thật = GearVN + FPT Shop, Viettel Store/Nguyễn Kim bỏ vì tìm kiếm cần JS ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)). T10.4 xong (dọn cache, 24 mục, TTL rỗng 1 giờ) |
-| M11 Hoàn thiện | ✅ | Qua `code-reviewer` (2 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (1 bug sửa ngay, 27 test `*_qa_m11`); T11.1–T11.3 xong: eval cuối (intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; **latency p50 26–31 s chưa đạt**), README/docs theo code, diễn tập demo 7 bước. T11.5: người dùng chấp nhận ngoại lệ latency (2026-10-25). T11.4 (`make demo-price-drop`) xong |
+| M11 Hoàn thiện | 🔄 | Qua `code-reviewer` (2 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (1 bug sửa ngay, 27 test `*_qa_m11`); T11.1–T11.3 xong: eval cuối (intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; **latency p50 26–31 s chưa đạt**), README/docs theo code, diễn tập demo 7 bước. T11.5: người dùng chấp nhận ngoại lệ latency (2026-10-25). T11.4 (`make demo-price-drop`) xong |
 
 ## Bị chặn / cần người dùng quyết định
 - Không có (nguồn đã đổi sang FPT Shop + An Phát, người dùng đã duyệt T0.4 ngày 2026-10-19; [ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)).
