@@ -3,9 +3,9 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: M11 dọn kiến trúc trên nhánh `milestone/M11-arch-cleanup`: T11.6 ✅ → T11.7 ✅ → T11.8 ✅ (còn `/check`, review, QA). Lượt "việc nhỏ 1, 2, 3" đã merge vào `main`.
+- Đang làm: – (lượt M11 dọn kiến trúc T11.6–T11.8 xong trên nhánh `milestone/M11-arch-cleanup`, qua `make check` + `make e2e` + `code-reviewer`, **bỏ qua `qa-tester`** theo quyết định của người dùng (chỉ refactor); chờ người dùng merge). Lượt "việc nhỏ 1, 2, 3" đã merge vào `main`.
 - Backlog chưa làm: T5.4, T6.7, T7.7 (BUG-M7-3, 6b), T8.12; bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-28 — lượt việc nhỏ 3 (T9.8, T7.6)
+- Cập nhật lần cuối: 2026-10-29 — M11 dọn kiến trúc (T11.6 `utc_now` → `domain`, T11.7 test ranh giới mọi lớp, T11.8 tách gói `scrapers/pipeline/`)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -21,7 +21,7 @@
 | M8 Frontend | ✅ | Gộp T8.9–T8.11; qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (9 bug sửa ngay, 278 test `*.qa-m8`); 30 ảnh `docs/ui/screens/` đã trình người dùng một lần (cho tiếp tục); E2E 8/8. Còn T8.12 (4 điểm nhỏ cần quyết định) |
 | M9 Theo dõi giá | ✅ | Qua `code-reviewer` (4 Phải sửa + 10/11 Nên sửa đã sửa) + `qa-tester` (8 bug sửa ngay, 227 test `*_qa_m9`); T9.1–T9.4 xong, `make demo-up` chạy cả hệ thống bằng Docker ([ADR-0009](adr/0009-mock-shop-compose-host.md)). T9.5–T9.8 xong |
 | M10 Tầng 2 | ✅ | Qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (5 bug sửa ngay, 346 test `*_qa_m10`); tầng 2 thật = GearVN + FPT Shop, Viettel Store/Nguyễn Kim bỏ vì tìm kiếm cần JS ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)). T10.4 xong (dọn cache, 24 mục, TTL rỗng 1 giờ) |
-| M11 Hoàn thiện | 🔄 | Qua `code-reviewer` (2 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (1 bug sửa ngay, 27 test `*_qa_m11`); T11.1–T11.3 xong: eval cuối (intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; **latency p50 26–31 s chưa đạt**), README/docs theo code, diễn tập demo 7 bước. T11.5: người dùng chấp nhận ngoại lệ latency (2026-10-25). T11.4 (`make demo-price-drop`) xong |
+| M11 Hoàn thiện | ✅ | Qua `code-reviewer` (2 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (1 bug sửa ngay, 27 test `*_qa_m11`); T11.1–T11.3 xong: eval cuối (intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; **latency p50 26–31 s chưa đạt**), README/docs theo code, diễn tập demo 7 bước. T11.5: người dùng chấp nhận ngoại lệ latency (2026-10-25). T11.4 (`make demo-price-drop`) xong. Lượt dọn kiến trúc T11.6–T11.8 (2026-10-29): qua `code-reviewer` (1 Phải sửa + Nên sửa đã sửa), bỏ qua `qa-tester`; ranh giới lớp kiểm bằng `test_layer_boundaries.py` (ngoại lệ theo file), `pipeline.py` thành gói 6 module (lớn nhất 402 dòng) |
 
 ## Bị chặn / cần người dùng quyết định
 - Không có (nguồn đã đổi sang FPT Shop + An Phát, người dùng đã duyệt T0.4 ngày 2026-10-19; [ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)).
@@ -29,8 +29,8 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,15% (8094 pass + 4 xfail đã biết, ngưỡng 80% trong `make test-be`, ~13 phút; một lần chạy đỏ vì máy hết bộ đệm socket/bộ nhớ (`WinError 10055`, `MemoryError`), chạy lại riêng và chạy lại cả bộ đều xanh) | 2026-10-28 |
-| Test frontend (Vitest + E2E) | 1072 Vitest pass (không còn expected-fail), 10 E2E Playwright (`make e2e`); chưa đo coverage | 2026-10-28 |
+| Coverage backend | 99,16% (8375 pass + 4 xfail đã biết, ngưỡng 80% trong `make test-be`, ~10–15 phút) | 2026-10-29 |
+| Test frontend (Vitest + E2E) | 1072 Vitest pass (không còn expected-fail), 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100); chưa đo coverage | 2026-10-29 |
 | Eval (intent accuracy / constraint satisfaction / hallucination) | Lượt 1: 100% / 100% / 0, 31/31 câu (clarification 100%, tool 100%). Lượt cuối (sau trần gọi lặp `live_search_other`): 96,4% / 98,6% / 0, 29/31 (A03 `LLM_UNAVAILABLE` tạm thời, L10 dao động); chạy lại A03, L10 đều đạt. Tool 96,4%. **Latency p50 26–31 s: chưa đạt ≤ 15 s** (không do `LLM_MAX_RPM`: `--rpm 1000` vẫn 21–32 s; ≥ 3 lần gọi Gemini/câu, mỗi lần 4–10 s hôm nay). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-10-23*.md` (T11.1) | 2026-10-23 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
