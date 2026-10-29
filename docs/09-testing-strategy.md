@@ -25,7 +25,7 @@ flowchart TB
 | Lớp | Công cụ | Vị trí | Ví dụ |
 | --- | --- | --- | --- |
 | Unit backend | pytest | `backend/tests/unit/` | `parse_listing` GearVN trả 24 item; `parse_price("2*.**0.000") is None`; `gpu_rank("RTX 4060") == 40` |
-| Golden | pytest + YAML | `backend/tests/unit/golden/` | 40+ tiêu đề laptop → specs mong đợi; cặp offer nên/không nên ghép |
+| Golden | pytest + YAML | `backend/tests/unit/golden/` | 40+ tiêu đề laptop → specs mong đợi (độ chính xác trường bắt buộc, recall từng trường kể cả trường tùy chọn); cặp offer nên/không nên ghép |
 | Integration backend | pytest + httpx `AsyncClient` (ASGI) + PostgreSQL test (rollback mỗi test) | `backend/tests/integration/` | `GET /products?spec.gpu_rank__gte=40`; pipeline chạy mock-shop qua ASGI transport, gặp captcha → `NEEDS_HUMAN` → gửi đáp án → `SUCCEEDED` |
 | Agent | pytest + `ScriptedChatModel` | `backend/tests/agent/` | Kịch bản tool call; guardrail loại id bịa; vượt `AGENT_MAX_STEPS`; không gọi tool ghi khi không được yêu cầu |
 | Eval | `scripts/run_eval.py` + Gemini thật | `docs/eval/queries.yaml` → `reports/` | Xem [05 §7](05-agent-design.md#7-đánh-giá-agent-eval) |

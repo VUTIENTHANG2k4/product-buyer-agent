@@ -468,13 +468,7 @@ def test_explicit_port_urls_keep_the_port_and_http_never_pairs_with_https(
     assert default_port is None  # :80 bị bỏ nên là máy chủ khác :8100
 
 
-@bug(
-    "BUG-M5-14",
-    "resolve_product chỉ đặt Product.image_url lúc tạo (pipeline/resolve.py) và _enrich không "
-    "bù ảnh; "
-    "Offer không có cột ảnh nên nếu offer đầu tiên thiếu ảnh thì sản phẩm không bao giờ có ảnh dù "
-    "các offer ghép sau có",
-)
+# BUG-M5-14 (đã sửa ở T5.4): `_enrich` bù ảnh khi sản phẩm chưa có.
 def test_a_later_offer_with_an_image_fills_the_missing_product_image(db_session: Session) -> None:
     first = mouse_item("red", "Chuột Pulsar X2 Red")
     second = mouse_item("black", "Chuột Pulsar X2 Black").model_copy(
@@ -487,3 +481,19 @@ def test_a_later_offer_with_an_image_fills_the_missing_product_image(db_session:
     assert res_second.product_id == res_first.product_id
     product = ProductRepository(db_session).get(res_first.product_id)
     assert product is not None and product.image_url == "https://img.example/x2.jpg"
+
+
+def test_a_later_offer_never_replaces_an_existing_product_image(db_session: Session) -> None:
+    first = mouse_item("red", "Chuột Pulsar X2 Red").model_copy(
+        update={"image_url": "https://img.example/red.jpg"}
+    )
+    second = mouse_item("black", "Chuột Pulsar X2 Black").model_copy(
+        update={"image_url": "https://img.example/black.jpg"}
+    )
+
+    res_first = resolve_product(db_session, Category.mouse, first, None)
+    res_second = resolve_product(db_session, Category.mouse, second, None)
+
+    assert res_second.product_id == res_first.product_id
+    product = ProductRepository(db_session).get(res_first.product_id)
+    assert product is not None and product.image_url == "https://img.example/red.jpg"

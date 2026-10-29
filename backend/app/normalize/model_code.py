@@ -111,12 +111,14 @@ def hint_code(hint: str | None) -> str | None:
 def extract_model_code(category: Category, title: str, hint: str | None = None) -> str | None:
     """Mã model chuẩn hóa (viết hoa, bỏ khoảng trắng) hoặc `None`.
 
-    Ưu tiên `hint` (MPN của trang, hiện chỉ mock-shop có). Chỉ laptop đọc mã từ tên.
+    Chỉ laptop có mã model: ưu tiên `hint` (MPN của trang: GearVN, mock-shop), rồi đọc từ tên.
+    Phụ kiện bỏ cả `hint` vì MPN gắn với từng màu (`910-005880` đen, `910-005881` trắng) nên
+    dùng nó sẽ tách các biến thể màu thành nhiều sản phẩm.
     """
+    if category is not Category.laptop:
+        return None
     from_hint = hint_code(hint)
     if from_hint is not None:
         return from_hint
-    if category is not Category.laptop:
-        return None
     span = laptop_code_span(title)
     return span[1] if span else None

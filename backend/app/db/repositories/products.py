@@ -152,6 +152,12 @@ class ProductRepository:
         self._session.flush()
         return product
 
+    def set_image_url(self, product: Product, image_url: str) -> Product:
+        """Gán ảnh đại diện (người gọi quyết định có ghi đè ảnh cũ hay không)."""
+        product.image_url = image_url
+        self._session.flush()
+        return product
+
     def update_specs(
         self, product: Product, specs: Mapping[str, Any], specs_confidence: float | None = None
     ) -> Product:

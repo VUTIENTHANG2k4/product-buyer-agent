@@ -81,6 +81,16 @@ def test_update_specs_replaces_dict_and_confidence(db_session: Session) -> None:
     assert product.specs_confidence == 0.4
 
 
+def test_set_image_url_persists_the_new_image(db_session: Session) -> None:
+    repo = ProductRepository(db_session)
+    product = _add(db_session, image_url=None)
+
+    repo.set_image_url(product, "https://img.example/a.jpg")
+    db_session.expire(product)
+
+    assert product.image_url == "https://img.example/a.jpg"
+
+
 def test_search_excludes_products_without_active_offers(db_session: Session) -> None:
     sold = _add(db_session, canonical_name="Mock Sold")
     _add(db_session, canonical_name="Mock No Offer")

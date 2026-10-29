@@ -46,7 +46,13 @@ _MEMBRANE = re.compile(r"membrane|gia co\b")
 _MECHANICAL = re.compile(r"\bban phim co\b|mechanical|\bswitch\b|\b(?:tactile|linear|clicky)\b")
 # "HE" (Hall Effect) chỉ nhận khi viết hoa nguyên từ trong tiêu đề gốc: "he" chữ thường quá chung.
 _HE_WORD = re.compile(r"\bHE\b")
-_SWITCH_NAME = re.compile(r"((?:[A-Za-z0-9]+\s+)?[A-Za-z0-9]+)\s+switch\b", re.IGNORECASE)
+_SWITCH_NAME = re.compile(r"((?:[\w-]+\s+)?[\w-]+)\s+switch\b", re.IGNORECASE)
+# Từ chỉ dòng máy/tính năng đứng trước "switch" ("K8 Pro Hotswap Switch", "Plus V3 Switch").
+# "Tactile/Linear" vẫn là tên: Logitech đặt tên switch như vậy (GX Tactile).
+_SWITCH_NOISE: Final = frozenset(
+    ["pro", "plus", "max", "hotswap", "hot-swap", "swap", "hot", "ban", "phim", "co"]
+)
+_VERSION_TOKEN = re.compile(r"^v\d+$", re.IGNORECASE)
 _NOT_SWITCH_NAME = frozenset(
     [
         "black",
@@ -109,14 +115,20 @@ def _switch_type(title: str, folded: str) -> SwitchType | None:
 
 
 def _switch_name(text: str) -> str | None:
-    """Tên switch ("Milk White", "Pegasus") là tối đa hai từ đứng trước chữ "switch"."""
+    """Tên switch ("Milk White", "Pegasus", "HFX V2") là tối đa hai từ đứng trước chữ "switch".
+
+    Bỏ màu/từ chung và từ chỉ dòng máy ở đầu; chỉ còn số phiên bản ("Plus V3 Switch") thì không
+    có tên.
+    """
     match = _SWITCH_NAME.search(text)
     if match is None:
         return None
     words = match[1].split()
-    while words and fold(words[0]) in _NOT_SWITCH_NAME:
+    while words and fold(words[0]) in _NOT_SWITCH_NAME | _SWITCH_NOISE:
         words.pop(0)
-    return " ".join(words) or None
+    if all(_VERSION_TOKEN.match(word) for word in words):
+        return None
+    return " ".join(words)
 
 
 def _form_factor(folded: str) -> FormFactor | None:

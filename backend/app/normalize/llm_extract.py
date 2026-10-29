@@ -129,6 +129,7 @@ class LlmSpecsFiller:
             specs=specs,
             missing=missing_required(category, specs),
             confidence=specs_confidence(category, specs),
+            label_fields=extraction.label_fields,
         )
 
     def _call_llm(

@@ -114,6 +114,25 @@ def test_gpu_label_wins_over_title() -> None:
 
 
 @pytest.mark.parametrize(
+    ("title", "label"),
+    [
+        ("Laptop Acer Aspire 7 (Core 5-210H/ RTX 3050 6GB/ 16GB/ 512GB)", "Intel UHD Graphics"),
+        ("Laptop ASUS Vivobook 15 (i5-1235U/ Intel Iris Xe/ 16GB)", "NVIDIA GeForce RTX 4050 6GB"),
+    ],
+)
+def test_gpu_label_contradicting_the_title_leaves_the_gpu_empty(title: str, label: str) -> None:
+    # T5.4: một bên GPU rời, một bên tích hợp: không biết bên nào đúng nên để trống (vào `missing`).
+    specs = dump(title, {"Card đồ hoạ": label})
+    assert "gpu_model" not in specs
+    assert "gpu_vram_gb" not in specs
+
+
+def test_gpu_label_naming_another_discrete_gpu_still_wins_over_the_title() -> None:
+    specs = dump("Laptop MSI (i7/ RTX 4050/ 16GB)", {"Card đồ hoạ": "NVIDIA GeForce RTX 4060 8GB"})
+    assert (specs["gpu_model"], specs["gpu_vram_gb"]) == ("RTX 4060", 8)
+
+
+@pytest.mark.parametrize(
     ("title", "ram", "storage"),
     [
         ('Laptop X (Core 5/ 12GB/ 512GB/ 14" FHD+)', 12, 512),
