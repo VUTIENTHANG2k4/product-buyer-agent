@@ -8,7 +8,7 @@ import unicodedata
 
 from sqlmodel import Session
 
-from app.db.models import Offer, ShoppingList, ShoppingListItem, utc_now
+from app.db.models import Offer, ShoppingList, ShoppingListItem
 from app.db.repositories import (
     OfferRepository,
     ProductRepository,
@@ -22,6 +22,7 @@ from app.domain.catalog import (
     ShoppingListItemView,
     ShoppingListSummary,
 )
+from app.domain.clock import utc_now
 from app.domain.dto import INT8_MAX
 from app.domain.errors import ListNotFound, ProductNotFound, ValidationFailed
 from app.services.views import Clock, aware_now, sellable, to_offer_view

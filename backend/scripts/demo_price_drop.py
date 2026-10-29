@@ -26,10 +26,11 @@ from sqlmodel.sql.expression import SelectOfScalar
 
 from app.config import get_settings
 from app.db.engine import get_engine
-from app.db.models import Offer, PriceAlert, Product, utc_now
+from app.db.models import Offer, PriceAlert, Product
 from app.db.repositories.price_alerts import PriceAlertRepository, normalize_destination
 from app.db.repositories.price_history import PriceHistoryRepository
 from app.domain.catalog import AlertCreate
+from app.domain.clock import utc_now
 from app.domain.enums import AlertChannel, AlertStatus, Category, SiteKey, StockStatus
 from app.domain.errors import AppError
 from app.services.alert_service import AlertService

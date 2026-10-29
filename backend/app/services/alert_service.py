@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from sqlmodel import Session
 
 from app.config import Settings, get_settings
-from app.db.models import PriceAlert, utc_now
+from app.db.models import PriceAlert
 from app.db.repositories import (
     OfferRepository,
     PriceAlertRepository,
@@ -23,6 +23,7 @@ from app.db.repositories import (
 )
 from app.db.repositories.price_alerts import LIVE_STATUSES
 from app.domain.catalog import AlertCreate, AlertView
+from app.domain.clock import utc_now
 from app.domain.enums import AlertChannel, AlertStatus, SiteKey
 from app.domain.errors import AlertNotFound, DuplicateAlert, ProductNotFound, ValidationFailed
 from app.services.notifier.base import NotificationFailed, Notifier

@@ -34,7 +34,7 @@ from app.agent.schemas import (
 )
 from app.agent.tools import ToolContext, build_tools
 from app.config import Settings
-from app.db.models import utc_now
+from app.domain.clock import utc_now
 from app.domain.dto import QueryIntent
 from app.domain.enums import AgentRunStatus
 from app.domain.errors import LlmUnavailable

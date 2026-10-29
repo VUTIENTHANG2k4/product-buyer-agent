@@ -43,7 +43,7 @@ from sqlmodel import Session, SQLModel
 
 from app.config import get_settings
 from app.db.engine import get_engine
-from app.db.models import Product, utc_now
+from app.db.models import Product
 from app.db.repositories import (
     OfferRepository,
     OfferUpsert,
@@ -53,6 +53,7 @@ from app.db.repositories import (
     ScrapeRunRepository,
     ShoppingListRepository,
 )
+from app.domain.clock import utc_now
 from app.domain.dto import NonEmptyStr, Vnd
 from app.domain.enums import (
     AlertChannel,

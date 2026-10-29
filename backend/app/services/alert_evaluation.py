@@ -17,7 +17,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
 from app.config import Settings
-from app.db.models import utc_now
+from app.domain.clock import utc_now
 from app.domain.enums import AlertChannel
 from app.services.alert_service import AlertService, DueAlert
 from app.services.notifier.base import NotificationFailed, Notifier

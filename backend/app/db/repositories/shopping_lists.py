@@ -7,8 +7,9 @@ from sqlalchemy import func, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, col, select
 
-from app.db.models import Offer, ShoppingList, ShoppingListItem, utc_now
+from app.db.models import Offer, ShoppingList, ShoppingListItem
 from app.db.repositories.ids import fits_int4
+from app.domain.clock import utc_now
 
 
 def normalize_list_name(name: str) -> str:

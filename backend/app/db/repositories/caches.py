@@ -8,7 +8,8 @@ from sqlalchemy import delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, col
 
-from app.db.models import LiveSearchCache, LlmExtractionCache, utc_now
+from app.db.models import LiveSearchCache, LlmExtractionCache
+from app.domain.clock import utc_now
 from app.domain.enums import Category
 
 

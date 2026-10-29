@@ -5,7 +5,8 @@ from typing import Literal, NamedTuple
 
 from sqlmodel import Session, col, select
 
-from app.db.models import Offer, PriceHistory, utc_now
+from app.db.models import Offer, PriceHistory
+from app.domain.clock import utc_now
 from app.domain.enums import PriceType, SiteKey, StockStatus
 
 # Dòng cuối cũ hơn mức này thì thêm một dòng dù không đổi gì (docs/04 §3).

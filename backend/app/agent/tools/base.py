@@ -17,7 +17,7 @@ from pydantic import BaseModel, ValidationError
 from sqlmodel import Session
 
 from app.config import Settings
-from app.db.models import utc_now
+from app.domain.clock import utc_now
 from app.domain.errors import AppError
 from app.services.live_search_service import LiveSearchService
 from app.services.views import Clock

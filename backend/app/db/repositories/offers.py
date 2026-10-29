@@ -13,9 +13,10 @@ from sqlalchemy import ColumnElement, case, column, func, literal_column, or_, u
 from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, col, select
 
-from app.db.models import Offer, PriceAlert, Product, ShoppingListItem, utc_now
+from app.db.models import Offer, PriceAlert, Product, ShoppingListItem
 from app.db.repositories.ids import fits_int4, keep_valid
 from app.db.repositories.price_alerts import LIVE_STATUSES
+from app.domain.clock import utc_now
 from app.domain.dto import FiniteFloat, NonEmptyStr, Vnd
 from app.domain.enums import Category, MatchMethod, PriceType, SiteKey, StockStatus
 

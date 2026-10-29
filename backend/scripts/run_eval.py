@@ -34,7 +34,7 @@ from app.agent.llm import get_chat_model
 from app.agent.runner import AgentRunner
 from app.agent.schemas import ClarificationEvent, ErrorEvent, FinalEvent, PlanEvent, ToolStartEvent
 from app.config import Settings, get_settings
-from app.db.models import utc_now
+from app.domain.clock import utc_now
 from app.domain.errors import AppError
 from app.mock_shop.main import create_app
 from app.scrapers.http.types import FetchResponse

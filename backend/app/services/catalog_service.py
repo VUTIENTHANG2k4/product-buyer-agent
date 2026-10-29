@@ -10,7 +10,7 @@ from typing import Any
 
 from sqlmodel import Session
 
-from app.db.models import Offer, utc_now
+from app.db.models import Offer
 from app.db.repositories import (
     OfferRepository,
     PriceHistoryRepository,
@@ -30,6 +30,7 @@ from app.domain.catalog import (
     RowOffer,
     SiteSeries,
 )
+from app.domain.clock import utc_now
 from app.domain.enums import Category, StockStatus
 from app.domain.errors import ProductNotFound, ValidationFailed
 from app.normalize.specs import SPEC_MODELS

@@ -89,7 +89,7 @@ flowchart TB
     base[base.py BaseScraper]
     fetcher[http/fetcher.py<br/>robots, rate limit, retry]
     sites[sites/gearvn.py, fptshop.py,<br/>anphat.py, mockshop.py]
-    pipeline[pipeline.py]
+    pipeline[pipeline/<br/>core, run_store, writer, resolve, state]
   end
   subgraph normalize[app/normalize]
     price[price.py]
@@ -122,14 +122,34 @@ flowchart TB
   scrapesvc --> evaluator
 ```
 
-Quy tắc phụ thuộc (kiểm tra trong review):
+Quy tắc phụ thuộc: kiểm tự động bằng [`tests/unit/test_layer_boundaries.py`](../backend/tests/unit/test_layer_boundaries.py) (quét import của mọi file trong `app/`, kể cả import trong hàm; file thuộc thư mục chưa khai báo lớp cũng làm test đỏ). Mỗi lớp được import chính nó, `domain`, `config` và:
 
-- Mọi module được import `app/domain` và `app/config`.
-- `api` → `agent`, `services`. Không gọi `db` hay `scrapers` trực tiếp. Phiên CSDL của request đến từ `services/database.py` (`session_scope`: commit khi xong, rollback khi lỗi) qua dependency `get_session` ở `api/deps.py` (`scope="function"`, nên commit chạy trước khi gửi response).
-- `agent/tools` → `services` duy nhất.
+| Lớp | Được import thêm |
+| --- | --- |
+| `domain`, `config`, `db`, `normalize`, `mock_shop` | – |
+| `scrapers` | `normalize` (`clean_url`, `parse_price`); **không** được import gói `scrapers/pipeline/` (đường vòng tới `db`) |
+| `scrapers/pipeline/` | `scrapers`, `normalize`, `db` (repositories và models) |
+| `services` | `db`, `normalize`, `scrapers`, `scrapers/pipeline/` |
+| `agent` | `agent/tools`; thêm theo file ở bảng dưới |
+| `agent/tools` | `services` |
+| `api` | `agent`, `services` |
+| `main.py` | `api` |
+| `worker.py` | `agent` (bộ điền thông số), `services`, `scrapers` (registry), `scrapers/pipeline/` (kiểu `PipelineResult`) |
+
+Ngoại lệ theo file (`FILE_EXCEPTIONS` trong test; test đỏ nếu một ngoại lệ không còn dùng):
+
+| File | Được import thêm | Lý do |
+| --- | --- | --- |
+| `agent/runner.py` | `services` | Dựng bảng kết quả từ DB cho guardrail (`CatalogService.rows`), lưu hội thoại và lượt (`ConversationService`), kiểu `LiveSearchService` tiêm cho tool tầng 2 |
+| `agent/memory.py` | `services` | Đổi `ConversationSnapshot` (đọc qua service) thành ngữ cảnh cho LLM |
+| `agent/fake_llm.py`, `guardrail.py`, `intent.py`, `planner.py`, `spec_filler.py` | `normalize` | Hàm thuần, không I/O: bỏ dấu (`text.fold`), bảng hạng GPU, giao diện `LlmSpecsFiller` |
+
+Chi tiết:
+
+- `api` không gọi `db` hay `scrapers` trực tiếp. Phiên CSDL của request đến từ `services/database.py` (`session_scope`: commit khi xong, rollback khi lỗi) qua dependency `get_session` ở `api/deps.py` (`scope="function"`, nên commit chạy trước khi gửi response).
+- `agent` không đụng CSDL hay web: mọi truy cập đi qua tool (`agent/tools` → `services`) hoặc `services` trong hai file ở bảng ngoại lệ (`runner.py`, `memory.py`); các file khác của `agent` không được import `services`.
 - `services` → `db/repositories`, `normalize`, `scrapers` (chỉ `live_search_service` dùng scraper/fetcher; chỉ `scrape_service` gọi `pipeline`; `admin_service` chỉ đọc `SiteConfig` từ registry, tóm tắt robots.txt đã tải và hằng số thời gian nghỉ của pipeline, không gọi pipeline hay mạng; `scrape_runtime` dựng Fetcher + `scrape_service` dùng chung cho API).
-- `scrapers` không import `db` và `services`, **ngoại lệ duy nhất** là `scrapers/pipeline.py` được import `db/repositories` và `normalize` (nơi nối scraper → normalize → repository). Pipeline không gọi `services` (tránh vòng phụ thuộc).
-- `db` chỉ import `domain`, `config`.
+- `scrapers` không import `db` và `services`, **ngoại lệ duy nhất** là gói `scrapers/pipeline/` được import `db` (repositories và models; nơi nối scraper → normalize → repository). Pipeline không gọi `services` (tránh vòng phụ thuộc).
 - Worker (`app/worker.py`) và router quản trị chạy thu thập qua `scrape_service`, không gọi pipeline trực tiếp.
 
 ## 5. Luồng chính
@@ -233,14 +253,14 @@ product-buyer-agent/
 │   │   ├── services/             # catalog, compare, shopping_list, alert, alert_evaluation, live_search,
 │   │   │                         #   scrape_service, scrape_runtime, admin, conversation, health, database, spec_filters, views,
 │   │   │                         #   notifier/ (email, telegram)
-│   │   ├── scrapers/             # base.py, challenge.py, registry.py, pipeline.py, parsing.py,
+│   │   ├── scrapers/             # base.py, challenge.py, registry.py, pipeline/, parsing.py,
 │   │   │                         #   http/ (fetcher, robots, rate_limiter, raw_cache, factory, types, errors), sites/ (gearvn,
 │   │   │                         #   fptshop, anphat, mockshop)
 │   │   ├── normalize/            # price.py, url.py, brand.py, model_code.py, names.py, matcher.py,
 │   │   │                         #   text.py, extract.py, llm_extract.py, specs/ (khung thông số theo nhóm, gpu_rank)
 │   │   ├── db/                   # engine.py, models.py, repositories/
 │   │   ├── domain/               # enums.py, dto.py, catalog.py, chat.py, admin.py, live_search.py,
-│   │   │                         #   errors.py (AppError theo 07 §2)
+│   │   │                         #   errors.py (AppError theo 07 §2), clock.py (utc_now)
 │   │   └── mock_shop/            # main.py, pages.py, state.py, catalog.py, data.json
 │   ├── scripts/                  # seed, scrape, fetch_page, run_eval + eval_core, dump_openapi,
 │   │                             #   e2e_server, save_mockshop_fixtures (chạy `python -m scripts.<tên>`)

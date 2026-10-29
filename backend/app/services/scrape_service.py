@@ -8,9 +8,9 @@ import logging
 from collections.abc import Awaitable, Callable, Sequence
 
 from app.config import Settings
-from app.db.models import utc_now
 from app.db.repositories import OfferRepository, ScrapeRunRepository
 from app.domain.admin import ChallengeView
+from app.domain.clock import utc_now
 from app.domain.dto import Challenge
 from app.domain.enums import Category, ScrapeStatus, ScrapeTrigger, SiteKey
 from app.domain.errors import (

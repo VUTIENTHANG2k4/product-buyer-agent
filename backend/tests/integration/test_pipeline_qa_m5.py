@@ -470,7 +470,8 @@ def test_explicit_port_urls_keep_the_port_and_http_never_pairs_with_https(
 
 @bug(
     "BUG-M5-14",
-    "resolve_product chỉ đặt Product.image_url lúc tạo (pipeline.py:221) và _enrich không bù ảnh; "
+    "resolve_product chỉ đặt Product.image_url lúc tạo (pipeline/resolve.py) và _enrich không "
+    "bù ảnh; "
     "Offer không có cột ảnh nên nếu offer đầu tiên thiếu ảnh thì sản phẩm không bao giờ có ảnh dù "
     "các offer ghép sau có",
 )

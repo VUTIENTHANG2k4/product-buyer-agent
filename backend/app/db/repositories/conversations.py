@@ -6,8 +6,9 @@ from typing import Any
 
 from sqlmodel import Session, col, select
 
-from app.db.models import Conversation, Message, utc_now
+from app.db.models import Conversation, Message
 from app.db.repositories.ids import fits_int4
+from app.domain.clock import utc_now
 from app.domain.enums import MessageRole
 
 
