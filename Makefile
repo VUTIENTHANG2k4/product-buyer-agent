@@ -15,7 +15,7 @@ FE := cd frontend &&
 require = $(if $(wildcard $(1)),,$(error Chưa khả dụng: thiếu $(1) (làm ở $(2))))
 
 .PHONY: help db-up db-down demo-up demo-seed demo-price-drop setup dev dev-api dev-web dev-mock worker \
-	mock-shop check test-be test-fe e2e eval test-live scrape seed gen-api migrate
+	mock-shop check test-be test-fe e2e eval test-live scrape seed rematch gen-api migrate
 
 help: ## Liệt kê mọi lệnh
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "  %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -98,6 +98,9 @@ seed: ## Nạp dữ liệu hư cấu: make seed FIXTURE=dev|eval|e2e [RESET=1: x
 	$(if $(filter dev eval e2e,$(FIXTURE)),,$(error FIXTURE phải là dev, eval hoặc e2e (nhận '$(FIXTURE)')))
 	$(call require,backend/scripts/seed.py,T1.5)
 	$(BE) uv run python -m scripts.seed --fixture $(FIXTURE) $(if $(RESET),--reset --yes)
+
+rematch: ## Ghép lại offer theo luật hiện tại: make rematch [CAT=laptop] [SITE=gearvn] [APPLY=1: ghi]
+	$(BE) uv run python -m scripts.rematch $(if $(CAT),--category $(CAT)) $(if $(SITE),--site $(SITE)) $(if $(APPLY),--apply)
 
 gen-api: ## Sinh kiểu TypeScript từ OpenAPI (frontend/openapi.json -> src/api/types.gen.ts)
 	$(BE) uv run python -m scripts.dump_openapi

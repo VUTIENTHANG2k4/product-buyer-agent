@@ -27,6 +27,7 @@ AI agent nhận yêu cầu mua sắm đồ công nghệ bằng tiếng Việt, l
 | `make gen-api` | Sinh kiểu TS từ OpenAPI |
 | `make migrate` | `alembic upgrade head` |
 | `make seed FIXTURE=dev\|eval\|e2e` | Nạp dữ liệu hư cấu |
+| `make rematch [CAT=…] [SITE=…] [APPLY=1]` | Ghép lại offer theo luật chuẩn hóa hiện tại (mặc định chạy thử) |
 | `make mock-shop` / `make worker` | Chạy riêng mock-shop / bộ lập lịch |
 | `make test-live` | Test với trang thật (thủ công, cần người dùng cho phép) |
 | `make help` | Liệt kê mọi lệnh |

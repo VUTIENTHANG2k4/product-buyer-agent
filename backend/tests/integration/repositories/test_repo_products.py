@@ -10,7 +10,12 @@ from app.db.repositories.offers import OfferRepository, OfferUpsert
 from app.db.repositories.products import ProductQuery, ProductRepository
 from app.domain.dto import SpecFilter
 from app.domain.enums import Category, PriceType, SiteKey
-from tests.factories import make_product
+from tests.factories import (
+    make_price_alert,
+    make_product,
+    make_shopping_list,
+    make_shopping_list_item,
+)
 
 
 def _add(session: Session, **overrides: Any) -> Product:
@@ -318,3 +323,52 @@ def test_search_in_with_empty_list_matches_nothing_and_price_bounds_combine(
     assert [(h.min_price, h.max_price, h.offers_count) for h in page.items] == [
         (20_000_000, 20_000_000, 1)
     ]
+
+
+def test_set_identity_replaces_brand_name_and_code(db_session: Session) -> None:
+    repo = ProductRepository(db_session)
+    product = _add(db_session, brand="Unknown", canonical_name="Chuột X", model_code="OLD-1")
+
+    repo.set_identity(product, brand="Pulsar", canonical_name="Pulsar X2", model_code=None)
+    db_session.expire(product)
+
+    assert (product.brand, product.canonical_name, product.model_code) == (
+        "Pulsar",
+        "Pulsar X2",
+        None,
+    )
+
+
+@pytest.mark.parametrize("reference", [None, "offer", "shopping_list", "price_alert"])
+def test_is_referenced_counts_offers_lists_and_alerts(
+    db_session: Session, reference: str | None
+) -> None:
+    repo = ProductRepository(db_session)
+    product = _add(db_session)
+    assert product.id is not None
+    if reference == "offer":
+        _offer(db_session, product)
+    elif reference == "shopping_list":
+        shopping_list = make_shopping_list()
+        db_session.add(shopping_list)
+        db_session.flush()
+        assert shopping_list.id is not None
+        db_session.add(make_shopping_list_item(shopping_list.id, product.id))
+    elif reference == "price_alert":
+        db_session.add(make_price_alert(product.id))
+    db_session.flush()
+
+    assert repo.is_referenced(product.id) is (reference is not None)
+    assert repo.is_referenced(product.id, count_offers=False) is (
+        reference in ("shopping_list", "price_alert")
+    )
+
+
+def test_delete_removes_an_unreferenced_product(db_session: Session) -> None:
+    repo = ProductRepository(db_session)
+    product = _add(db_session)
+    assert product.id is not None
+
+    repo.delete(product)
+
+    assert repo.get(product.id) is None
