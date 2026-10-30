@@ -23,7 +23,10 @@ MAX_LISTED_MOVES: Final = 30
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Ghép lại offer đã có (mặc định chạy thử).")
+    # Không nhận cờ viết tắt: `--ap` không được âm thầm bật chế độ ghi (BUG-S4-8).
+    parser = argparse.ArgumentParser(
+        description="Ghép lại offer đã có (mặc định chạy thử).", allow_abbrev=False
+    )
     parser.add_argument(
         "--category",
         choices=[c.value for c in REMATCH_CATEGORIES],

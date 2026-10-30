@@ -154,7 +154,13 @@ class RematchService:
                 # tên nói rõ đây là cấu hình khác nên được tách.
                 code = own.model_code
             # Sản phẩm hiện tại (thông số seed, LLM đã điền, trang chi tiết) chỉ bù trường trống.
-            specs = merge_specs(category, extraction.specs, own.specs)
+            # Chỉ trộn specs cũ khi hãng không đổi: offer sắp rời sản phẩm khác hãng sẽ không mang
+            # theo specs của sản phẩm đó (BUG-S4-6: để lại sản phẩm trùng, lượt hai mới gộp).
+            specs = (
+                merge_specs(category, extraction.specs, own.specs)
+                if same_brand
+                else dict(extraction.specs)
+            )
             name = canonical_name(offer.title, category)
             pool = [t.candidate() for t in targets.values() if t.brand == brand]
             decision = decide_match(category, brand, code, name, specs, pool)
@@ -174,16 +180,21 @@ class RematchService:
                 key = offer.product_id if kept else next_new
                 if not kept:
                     next_new -= 1
+                final_code = None if decision.code_taken else code
+                # Tên cũ giữ nguyên khi hãng không đổi (chỉ là chữ hiển thị; khóa tên luôn tính lại
+                # theo luật hiện tại khi ghép). Laptop đổi mã thì đổi tên: tên chuẩn laptop kết thúc
+                # bằng mã model (BUG-S4-2).
+                keep_name = kept and same_brand
+                if category is Category.laptop and final_code != own.model_code:
+                    keep_name = False
                 target = _Target(
                     key=key,
                     product=own if kept else None,
                     category=category,
                     brand=brand,
-                    # Tên cũ giữ nguyên khi hãng không đổi (chỉ là chữ hiển thị; khóa tên luôn
-                    # tính lại theo luật hiện tại khi ghép).
-                    name=own.canonical_name if kept and same_brand else name,
+                    name=own.canonical_name if keep_name else name,
                     match_name=name,
-                    model_code=None if decision.code_taken else code,
+                    model_code=final_code,
                     specs=specs,
                     fixed=False,
                 )

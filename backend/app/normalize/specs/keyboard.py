@@ -47,8 +47,11 @@ _MECHANICAL = re.compile(r"\bban phim co\b|mechanical|\bswitch\b|\b(?:tactile|li
 # "HE" (Hall Effect) chỉ nhận khi viết hoa nguyên từ trong tiêu đề gốc: "he" chữ thường quá chung.
 _HE_WORD = re.compile(r"\bHE\b")
 # Mỗi từ bắt đầu bằng chữ/số (kể cả có dấu): dấu gạch ngang đứng riêng ("Tên - Reaper switch")
-# không phải một từ.
-_SWITCH_NAME = re.compile(r"((?:[^\W_][\w-]*\s+)?[^\W_][\w-]*)\s+switch\b", re.IGNORECASE)
+# không phải một từ. Từ dài tối đa 40 ký tự và bắt đầu ở đầu từ (lookbehind) để regex chạy tuyến
+# tính trên chuỗi nhãn dài không khoảng trắng (BUG-S4-5).
+_SWITCH_NAME = re.compile(
+    r"(?<![\w-])((?:[^\W_][\w-]{0,39}\s+)?[^\W_][\w-]{0,39})\s+switch\b", re.IGNORECASE
+)
 # Từ chỉ dòng máy/tính năng đứng trước "switch" ("K8 Pro Hotswap Switch", "Plus V3 Switch").
 # "Tactile/Linear" vẫn là tên: Logitech đặt tên switch như vậy (GX Tactile).
 _SWITCH_NOISE: Final = frozenset(

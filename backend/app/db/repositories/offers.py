@@ -186,11 +186,23 @@ class OfferRepository:
     def reassign(
         self, offer: Offer, product_id: int, method: MatchMethod, score: float | None
     ) -> Offer:
-        """Chuyển offer sang sản phẩm khác kèm cách ghép mới (script ghép lại, T5.4)."""
+        """Chuyển offer sang sản phẩm khác kèm cách ghép mới (script ghép lại, T5.4).
+
+        Mục danh sách mua của sản phẩm cũ đang ưu tiên offer này thì bỏ ưu tiên (về `NULL`):
+        `preferred_offer_id` luôn phải là offer của chính sản phẩm của mục.
+        """
         offer.product_id = product_id
         offer.match_method = method
         offer.match_score = score
         self._session.flush()
+        self._session.execute(
+            update(ShoppingListItem)
+            .where(
+                col(ShoppingListItem.preferred_offer_id) == offer.id,
+                col(ShoppingListItem.product_id) != product_id,
+            )
+            .values(preferred_offer_id=None)
+        )
         return offer
 
     def upsert(self, data: OfferUpsert, *, now: datetime | None = None) -> UpsertResult:
