@@ -3,9 +3,9 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: 🔄 lượt "việc nhỏ 4" trên nhánh `milestone/small-fixes-4`: T11.9 ✅ (`ScrapePipeline._finish_cancelled`), T5.4 ✅ (chuẩn hóa: e444a0a; `make rematch`). Qua `/check` + `code-reviewer` (1 Phải sửa + Nên sửa đã sửa) + `qa-tester` (5 bug sửa ngay, 3 bug giữ `xfail(strict)` BUG-S4-3, 4, 7 → T5.9). Kế tiếp: `/check` lại rồi `/done small-fixes-4`.
+- Đang làm: – (lượt "việc nhỏ 4" xong: T11.9, T5.4 (`make rematch`), qua `make check` + `code-reviewer` + `qa-tester`; đã merge vào `main` (fb5442d). Việc mới T5.9 (BUG-S4-3, 4, 7)).
 - Backlog chưa làm: T5.9, T6.7, T7.7 (BUG-M7-3, 6b), T8.12; kế tiếp đề xuất: T7.7 (lượt việc nhỏ), T8.12/T5.8 cần người dùng chọn hành vi trước; bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5, BUG-S4-3, 4, 7 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-10-29 — M11 dọn kiến trúc (T11.6 `utc_now` → `domain`, T11.7 test ranh giới mọi lớp, T11.8 tách gói `scrapers/pipeline/`)
+- Cập nhật lần cuối: 2026-10-30 — lượt "việc nhỏ 4" (T11.9 gom khối hủy lượt, T5.4 `make rematch` + giới hạn chuẩn hóa)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
