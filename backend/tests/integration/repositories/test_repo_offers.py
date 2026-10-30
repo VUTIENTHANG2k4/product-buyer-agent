@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from app.db.models import Offer
 from app.db.repositories.offers import OfferRepository, OfferUpsert, effective_price
 from app.db.repositories.price_history import PriceHistoryRepository
-from app.domain.enums import Category, PriceType, SiteKey, StockStatus
+from app.domain.enums import Category, MatchMethod, PriceType, SiteKey, StockStatus
 from tests.factories import make_offer, make_product
 
 T0 = datetime(2026, 10, 1, 8, 0, tzinfo=UTC)
@@ -252,3 +252,35 @@ def test_upsert_result_feeds_record_snapshot_with_the_new_price(db_session: Sess
         27_490_000,
         25_990_000,
     ]
+
+
+def test_list_by_category_returns_every_offer_of_the_category_by_id(db_session: Session) -> None:
+    laptop = _product(db_session)
+    mouse = _product(db_session, category=Category.mouse, model_code=None)
+    first = make_offer(laptop, url="https://mock.example/p/a")
+    inactive = make_offer(laptop, url="https://mock.example/p/b", is_active=False)
+    other = make_offer(mouse, url="https://mock.example/p/c")
+    db_session.add_all([first, inactive, other])
+    db_session.flush()
+
+    found = OfferRepository(db_session).list_by_category(Category.laptop)
+
+    ids = [o.id for o in found]
+    assert first.id in ids and inactive.id in ids and other.id not in ids
+    assert ids == sorted(ids)
+
+
+def test_reassign_moves_the_offer_with_its_new_match(db_session: Session) -> None:
+    old, new = _product(db_session), _product(db_session)
+    offer = make_offer(old, match_method=MatchMethod.new)
+    db_session.add(offer)
+    db_session.flush()
+
+    OfferRepository(db_session).reassign(offer, new, MatchMethod.fuzzy, 0.93)
+    db_session.expire(offer)
+
+    assert (offer.product_id, offer.match_method, offer.match_score) == (
+        new,
+        MatchMethod.fuzzy,
+        0.93,
+    )

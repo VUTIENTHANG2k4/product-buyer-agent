@@ -115,7 +115,7 @@ def resolve_product(
     if existing is not None:
         product = products.get(existing.product_id)
         if product is not None and product.category is category:
-            _enrich(products, product, category, extraction.specs, None)
+            _enrich(products, product, category, extraction.specs, None, _image_of(item))
         elif product is not None:
             logger.info(
                 "Offer đã thuộc nhóm %s, không gộp thông số nhóm %s", product.category, category
@@ -136,7 +136,7 @@ def resolve_product(
         matched = products.get(decision.product_id)
         if matched is None:  # pragma: no cover - ứng viên vừa đọc trong cùng transaction
             raise RuntimeError("matched product disappeared")
-        _enrich(products, matched, category, extraction.specs, code)
+        _enrich(products, matched, category, extraction.specs, code, _image_of(item))
         return Resolution(decision.product_id, decision.method, decision.score)
     product = products.add(
         Product(
@@ -146,7 +146,7 @@ def resolve_product(
             canonical_name=name,
             specs=extraction.specs,
             specs_confidence=extraction.confidence,
-            image_url=str(item.image_url) if item.image_url else None,
+            image_url=_image_of(item),
         )
     )
     return Resolution(_require_product_id(product), MatchMethod.new, None)
@@ -158,8 +158,9 @@ def _enrich(
     category: Category,
     specs: Mapping[str, Any],
     model_code: str | None,
+    image_url: str | None = None,
 ) -> None:
-    """Điền thông số và mã model còn thiếu cho sản phẩm đã có (không ghi đè giá trị cũ)."""
+    """Điền thông số, mã model và ảnh còn thiếu cho sản phẩm đã có (không ghi đè giá trị cũ)."""
     conflicts = [
         name
         for name, value in specs.items()
@@ -176,6 +177,12 @@ def _enrich(
         and products.find_by_model_key(category, product.brand, model_code) is None
     ):
         products.set_model_code(product, model_code)
+    if image_url is not None and product.image_url is None:
+        products.set_image_url(product, image_url)
+
+
+def _image_of(item: ListingItem) -> str | None:
+    return str(item.image_url) if item.image_url else None
 
 
 def _require_product_id(product: Product) -> int:

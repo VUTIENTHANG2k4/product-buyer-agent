@@ -501,6 +501,7 @@
   fixture: fixtures/fptshop/detail_chuot-khong-day-elecom-m-ir07dr.html
   title: Chuột không dây Elecom M-IR07DR
   expect:
+    dpi_max: 1200
     connection:
     - bluetooth
 - id: gearvn-mouse-40-detail
@@ -509,6 +510,7 @@
   title: Chuột gaming không dây Logitech Pro X3 Superstrike Lightspeed Black
   detail_fixture: fixtures/gearvn/detail_chuot-gaming-khong-day-logitech-pro-x3-superstrike-lightspeed-black.html
   expect:
+    dpi_max: 48000
     connection:
     - wireless_2_4
 - id: anphat-mouse-43-detail
@@ -517,5 +519,6 @@
   title: Chuột Logitech G102 Gen2 LightSync
   detail_fixture: fixtures/anphat/detail_chuot-logitech-g102-lightsync.html
   expect:
+    dpi_max: 8000
     connection:
     - wired

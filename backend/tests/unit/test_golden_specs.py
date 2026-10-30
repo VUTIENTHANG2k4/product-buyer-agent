@@ -1,7 +1,10 @@
 """Golden trích xuất thông số (tests/unit/golden/{laptop,mouse,keyboard,headset}.yaml).
 
 Tiêu đề lấy từ fixture thật của GearVN, An Phát, FPT Shop (docs/09 §3). Ngưỡng theo docs/11 T5.1:
-≥ 40 ca laptop, ≥ 15 ca mỗi nhóm phụ kiện, độ chính xác trường bắt buộc ≥ 95%.
+≥ 40 ca laptop, ≥ 15 ca mỗi nhóm phụ kiện, độ chính xác trường bắt buộc ≥ 95%. T5.4 thêm recall
+riêng từng trường (tỉ lệ giá trị kỳ vọng có thật được đọc đúng) và trường tùy chọn
+`OPTIONAL_FIELDS`; trường tùy chọn chỉ được chấm ở ca có khóa đó trong `expect` (`null` = không
+được điền, ví dụ "Plus V3 Switch" không có tên switch).
 """
 
 from typing import Any
@@ -20,6 +23,15 @@ GROUPS = [
     ("headset", Category.headset, 15),
 ]
 ACCURACY_FLOOR = 0.95
+OPTIONAL_FIELDS: dict[Category, tuple[str, ...]] = {
+    Category.laptop: ("screen_in",),
+    Category.mouse: ("dpi_max",),  # chỉ trang chi tiết ghi DPI: mới có 3 ca
+    Category.keyboard: ("form_factor", "switch_name"),
+    Category.headset: (),
+}
+MIN_OPTIONAL_CASES = {"screen_in": 40, "dpi_max": 3, "form_factor": 30, "switch_name": 10}
+# Recall đo được khi thêm (T5.4), không hạ. `form_factor`: "AKKO 5087" (87 phím = TKL) chưa đọc.
+RECALL_FLOORS = {(Category.keyboard, "form_factor"): 0.94}
 
 
 def _compare(case: GoldenCase, category: Category) -> tuple[int, int, list[str], list[str]]:
@@ -106,3 +118,62 @@ def test_extractor_does_not_lose_values_the_golden_expects(
     for case in load_cases(name):
         lost += _compare(case, category)[3]
     assert lost == []
+
+
+def _checked_fields(category: Category) -> tuple[str, ...]:
+    return (*REQUIRED_FIELDS[category], *OPTIONAL_FIELDS[category])
+
+
+def _recall(category: Category, cases: list[GoldenCase]) -> dict[str, tuple[int, int]]:
+    """Theo trường: (số giá trị kỳ vọng có thật được đọc đúng, số giá trị kỳ vọng có thật)."""
+    counts: dict[str, tuple[int, int]] = {}
+    for case in cases:
+        specs = extract_specs(category, case.title, case_raw_specs(case, category)).specs
+        for name in _checked_fields(category):
+            expected = case.expect.get(name)
+            if expected is None:
+                continue
+            hit, total = counts.get(name, (0, 0))
+            counts[name] = (hit + (specs.get(name) == expected), total + 1)
+    return counts
+
+
+@pytest.mark.parametrize(("name", "category", "minimum"), GROUPS)
+def test_recall_of_every_checked_field_meets_its_floor(
+    name: str, category: Category, minimum: int, record_property: Any
+) -> None:
+    counts = _recall(category, load_cases(name))
+    recall = {field: hit / total for field, (hit, total) in counts.items()}
+    record_property("recall", {field: round(value, 4) for field, value in recall.items()})
+    low = {
+        field: value
+        for field, value in recall.items()
+        if value < RECALL_FLOORS.get((category, field), 1.0)
+    }
+    assert low == {}
+
+
+@pytest.mark.parametrize(("name", "category", "minimum"), GROUPS)
+def test_optional_fields_have_enough_golden_cases(
+    name: str, category: Category, minimum: int
+) -> None:
+    counts = _recall(category, load_cases(name))
+    for field in OPTIONAL_FIELDS[category]:
+        assert counts.get(field, (0, 0))[1] >= MIN_OPTIONAL_CASES[field], field
+
+
+@pytest.mark.parametrize(("name", "category", "minimum"), GROUPS)
+def test_optional_fields_never_contradict_a_golden_value(
+    name: str, category: Category, minimum: int
+) -> None:
+    """Trường tùy chọn sai giá trị, hoặc được điền khi golden ghi `null`."""
+    wrong: list[str] = []
+    for case in load_cases(name):
+        specs = extract_specs(category, case.title, case_raw_specs(case, category)).specs
+        for field in OPTIONAL_FIELDS[category]:
+            if field not in case.expect:
+                continue
+            actual, expected = specs.get(field), case.expect[field]
+            if actual is not None and actual != expected:
+                wrong.append(f"{case.id}.{field}: {actual!r} != {expected!r}")
+    assert wrong == []

@@ -164,6 +164,32 @@ def test_keyboard_switch_name_drops_colours_and_connection_words(title: str, nam
     assert keyboard(title)["switch_name"] == name
 
 
+@pytest.mark.parametrize(
+    ("title", "name"),
+    [
+        ("Bàn phím E-Dra EK387 Pro Huano Switch", "Huano"),
+        ("Bàn phím cơ Asus ROG Falchion Ace 75 HE Black HFX V2 switch", "HFX V2"),
+        ("Bàn phím cơ AKKO 5075B Plus V3 Switch", None),
+        ("Bàn phím Keychron K8 Pro Hotswap Switch", None),
+        ("Bàn phím cơ Hot-swap switch", None),
+        ("Bàn phím Pro Switch Gateron", None),
+        # Review small-fixes-4: dấu "-" đứng riêng và từ chung có dấu không phải tên switch.
+        ("Bàn phím AULA F75 - Reaper Switch", "Reaper"),
+        ("Bàn phím cơ Màu Black Gold - Reaper switch (linear)", "Reaper"),
+        ("Bàn phím cơ AKKO 3068 - Blue Switch", None),
+        ("Bàn phím AKKO 3068 - Switch", None),
+        ("Bàn phím cơ không dây Red Switch", None),
+        ("Bàn phím cơ không dây Switch Red", None),
+    ],
+)
+def test_keyboard_switch_name_skips_model_line_words_and_bare_versions(
+    title: str, name: str | None
+) -> None:
+    # T5.4: "Pro/Plus/Hotswap" và phiên bản đứng riêng ("V3") không phải tên switch; chữ có dấu
+    # ("phím") không còn bị cắt thành "m".
+    assert keyboard(title).get("switch_name") == name
+
+
 def test_keyboard_multi_mode_means_wired_radio_and_bluetooth() -> None:
     assert keyboard("Bàn phím cơ AULA F75 3 Mode Iced Berry")["connection"] == [
         "wired",

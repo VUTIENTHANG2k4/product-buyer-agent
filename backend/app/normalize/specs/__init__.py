@@ -1,6 +1,6 @@
 """Khung thông số theo nhóm sản phẩm (docs/04 §5)."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from types import MappingProxyType
 from typing import Final
 
@@ -37,10 +37,16 @@ REQUIRED_FIELDS: Final[Mapping[Category, tuple[str, ...]]] = MappingProxyType(
     }
 )
 
+# Giá trị có nhưng chưa đủ cho trường bắt buộc: vẫn lưu, tính là thiếu, giá trị đủ thay khi gộp.
+WEAK_VALUES: Final[Mapping[Category, Mapping[str, Callable[[object], bool]]]] = MappingProxyType(
+    {Category.laptop: MappingProxyType({"cpu_model": laptop.cpu_is_family_only})}
+)
+
 __all__ = [
     "GPU_RANKS",
     "REQUIRED_FIELDS",
     "SPEC_MODELS",
+    "WEAK_VALUES",
     "HeadsetSpecs",
     "KeyboardSpecs",
     "LaptopSpecs",

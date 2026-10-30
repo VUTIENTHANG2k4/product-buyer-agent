@@ -82,7 +82,15 @@ def test_accessories_have_no_model_code_even_with_a_part_number(category: Catego
 def test_hint_wins_over_the_title_and_is_normalized() -> None:
     title = "Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB)"
     assert extract_model_code(Category.laptop, title, "mk-la 001") == "MK-LA001"
-    assert extract_model_code(Category.mouse, "Chuột X", "MK-MO004") == "MK-MO004"
+
+
+@pytest.mark.parametrize("category", [Category.mouse, Category.keyboard, Category.headset])
+def test_accessories_ignore_the_part_number_hint_because_it_differs_per_colour(
+    category: Category,
+) -> None:
+    # T5.4: MPN phụ kiện theo màu (Logitech 910-005880 đen / 910-005881 trắng).
+    assert extract_model_code(category, "Chuột X", "MK-MO004") is None
+    assert extract_model_code(category, "Chuột Logitech G502 X", "910-005880") is None
 
 
 @pytest.mark.parametrize("hint", [None, "", "33297", "00930661", "ab", "x" * 60])
@@ -163,6 +171,14 @@ def test_canonical_name_is_never_empty() -> None:
 )
 def test_name_key(name: str, brand: str, key: tuple[str, ...]) -> None:
     assert name_key(name, brand) == key
+
+
+def test_name_key_is_cached_because_the_matcher_recomputes_it_for_every_candidate() -> None:
+    # T5.4: tránh tính lại khóa tên của mọi ứng viên cho mỗi offer khi nạp hàng nghìn offer.
+    name_key.cache_clear()
+    name_key("Logitech G304 X Superlight", "Logitech")
+    name_key("Logitech G304 X Superlight", "Logitech")
+    assert name_key.cache_info().hits == 1
 
 
 def test_brand_words_include_company_aliases() -> None:
@@ -308,7 +324,7 @@ def test_unknown_connection_does_not_block_a_name_match() -> None:
 
 
 def test_laptop_without_code_needs_all_required_specs_to_match() -> None:
-    full = {"cpu_model": "i5", "gpu_model": "RTX 3050", "ram_gb": 16, "storage_gb": 512}
+    full = {"cpu_model": "i5-1235U", "gpu_model": "RTX 3050", "ram_gb": 16, "storage_gb": 512}
     existing = [candidate(1, "Foo Bar 15", **full)]
     assert (
         decide_match(Category.laptop, "Foo", None, "Foo Bar 15", dict(full), existing).product_id
@@ -319,6 +335,14 @@ def test_laptop_without_code_needs_all_required_specs_to_match() -> None:
         decide_match(Category.laptop, "Foo", None, "Foo Bar 15", partial, existing).product_id
         is None
     )
+
+
+def test_laptop_with_only_a_cpu_family_is_not_fuzzy_matched() -> None:
+    # T5.4: "Core i5" không phân biệt cấu hình nên không đủ để ghép mờ laptop (ưu tiên chính xác).
+    family = {"cpu_model": "Core i5", "gpu_model": "RTX 3050", "ram_gb": 16, "storage_gb": 512}
+    existing = [candidate(1, "Foo Bar 15", **family)]
+    decision = decide_match(Category.laptop, "Foo", None, "Foo Bar 15", dict(family), existing)
+    assert decision.product_id is None
 
 
 def test_no_candidates_means_new() -> None:

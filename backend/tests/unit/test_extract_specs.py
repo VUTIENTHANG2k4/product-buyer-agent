@@ -13,6 +13,7 @@ from app.normalize.extract import (
 from app.normalize.specs import LaptopSpecs
 
 FULL_LAPTOP = 'Laptop gaming Acer Aspire 7 (Core 5-210H/ RTX 3050 4GB/ 16GB/ 512GB/ 15.6" FHD)'
+FULL_SPECS = {"cpu_model": "i5-1235U", "gpu_model": "RTX 3050", "ram_gb": 16, "storage_gb": 512}
 
 
 def test_complete_laptop_has_full_confidence_and_nothing_missing() -> None:
@@ -85,8 +86,53 @@ def test_extract_uses_raw_specs_table() -> None:
             "Dòng CPU": "Core 5",
         },
     )
-    assert result.missing == ()
+    # T5.4: "Dòng CPU: Core 5" chỉ là tên dòng, được giữ nhưng chưa đủ nên vẫn thiếu `cpu_model`.
+    assert result.missing == ("cpu_model",)
+    assert result.specs["cpu_model"] == "Core 5"
     assert result.specs["gpu_model"] == "Integrated"
+    assert result.label_fields >= {"ram_gb", "storage_gb", "gpu_model", "cpu_model"}
+
+
+@pytest.mark.parametrize(
+    "value", ["Core 5", "Intel Core i5", "Ryzen 7", "AMD Ryzen™ 5", "Core Ultra 7", "Celeron"]
+)
+def test_cpu_family_without_model_number_counts_as_missing(value: str) -> None:
+    assert missing_required(Category.laptop, {**FULL_SPECS, "cpu_model": value}) == ("cpu_model",)
+    assert specs_confidence(Category.laptop, {**FULL_SPECS, "cpu_model": value}) < 0.5
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "i5-1235U",
+        "Core 5 120U",
+        "Core Ultra 7 155H",
+        "Ryzen 7 7735HS",
+        "Ryzen AI 9 HX 370",
+        "Apple M2",
+        "Celeron N4500",
+        "MediaTek Kompanio 520",  # không phải tên dòng quen thuộc: không đoán là yếu
+    ],
+)
+def test_full_cpu_names_are_not_weak(value: str) -> None:
+    assert missing_required(Category.laptop, {**FULL_SPECS, "cpu_model": value}) == ()
+
+
+def test_merge_replaces_a_cpu_family_with_a_full_cpu_name_but_not_the_reverse() -> None:
+    family = {**FULL_SPECS, "cpu_model": "Core i5"}
+    full = {**FULL_SPECS, "cpu_model": "i5-1235U"}
+    assert merge_specs(Category.laptop, family, full)["cpu_model"] == "i5-1235U"
+    assert merge_specs(Category.laptop, full, family)["cpu_model"] == "i5-1235U"
+    assert merge_specs(Category.laptop, family, {"cpu_model": "Ryzen 5"})["cpu_model"] == "Core i5"
+
+
+def test_label_fields_are_the_fields_the_table_changed_or_added() -> None:
+    title = "Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB)"
+    result = extract_specs(Category.laptop, title, {"Dung lượng RAM": "16 GB"})
+    assert result.specs["ram_gb"] == 16
+    assert "ram_gb" in result.label_fields
+    assert "storage_gb" not in result.label_fields  # chỉ có trong tiêu đề
+    assert extract_specs(Category.laptop, title).label_fields == frozenset()
 
 
 def test_merge_fills_gaps_and_keeps_existing_values() -> None:

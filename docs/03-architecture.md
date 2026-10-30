@@ -148,7 +148,7 @@ Chi tiết:
 
 - `api` không gọi `db` hay `scrapers` trực tiếp. Phiên CSDL của request đến từ `services/database.py` (`session_scope`: commit khi xong, rollback khi lỗi) qua dependency `get_session` ở `api/deps.py` (`scope="function"`, nên commit chạy trước khi gửi response).
 - `agent` không đụng CSDL hay web: mọi truy cập đi qua tool (`agent/tools` → `services`) hoặc `services` trong hai file ở bảng ngoại lệ (`runner.py`, `memory.py`); các file khác của `agent` không được import `services`.
-- `services` → `db/repositories`, `normalize`, `scrapers` (chỉ `live_search_service` dùng scraper/fetcher; chỉ `scrape_service` gọi `pipeline`; `admin_service` chỉ đọc `SiteConfig` từ registry, tóm tắt robots.txt đã tải và hằng số thời gian nghỉ của pipeline, không gọi pipeline hay mạng; `scrape_runtime` dựng Fetcher + `scrape_service` dùng chung cho API).
+- `services` → `db/repositories`, `normalize`, `scrapers` (chỉ `live_search_service` dùng scraper/fetcher; chỉ `scrape_service` gọi `pipeline`; `admin_service` chỉ đọc `SiteConfig` từ registry, tóm tắt robots.txt đã tải và hằng số thời gian nghỉ của pipeline, không gọi pipeline hay mạng; `scrape_runtime` dựng Fetcher + `scrape_service` dùng chung cho API; `rematch_service` chỉ dùng `db` + `normalize`, chạy bằng `make rematch`, không gọi mạng).
 - `scrapers` không import `db` và `services`, **ngoại lệ duy nhất** là gói `scrapers/pipeline/` được import `db` (repositories và models; nơi nối scraper → normalize → repository). Pipeline không gọi `services` (tránh vòng phụ thuộc).
 - Worker (`app/worker.py`) và router quản trị chạy thu thập qua `scrape_service`, không gọi pipeline trực tiếp.
 
@@ -251,7 +251,7 @@ product-buyer-agent/
 │   │   │                         #   intent.py, spec_filler.py, schemas.py, prompts.py, llm.py, fake_llm.py, testing.py,
 │   │   │                         #   tools/ (8 tool), prompts/ (planner, executor, extractor .md)
 │   │   ├── services/             # catalog, compare, shopping_list, alert, alert_evaluation, live_search,
-│   │   │                         #   scrape_service, scrape_runtime, admin, conversation, health, database, spec_filters, views,
+│   │   │                         #   scrape_service, scrape_runtime, rematch_service, admin, conversation, health, database, spec_filters, views,
 │   │   │                         #   notifier/ (email, telegram)
 │   │   ├── scrapers/             # base.py, challenge.py, registry.py, pipeline/, parsing.py,
 │   │   │                         #   http/ (fetcher, robots, rate_limiter, raw_cache, factory, types, errors), sites/ (gearvn,

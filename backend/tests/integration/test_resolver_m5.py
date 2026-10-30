@@ -182,16 +182,42 @@ def test_offer_with_code_is_a_separate_product_from_a_codeless_one_with_a_differ
 def test_model_code_is_assigned_to_a_fuzzy_matched_product_without_code(
     db_session: Session,
 ) -> None:
-    red = item("Chuột Pulsar X2 Red", slug="red")
-    store(db_session, resolve_product(db_session, Category.mouse, red, None), red)
-    detail = ProductDetail(url="https://gearvn.example/p/black", model_code_hint="PX2-BLK")
+    title = 'Laptop Acer Aspire Lite 15 (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)'
+    gpu = {"Card đồ hoạ": "Intel Graphics"}
+    plain = item(title, slug="plain", **gpu)
+    res_plain = resolve_product(db_session, Category.laptop, plain, None)
+    store(db_session, res_plain, plain)
+    detail = ProductDetail(url="https://gearvn.example/p/coded", model_code_hint="MK-LA001")
 
-    res_black = resolve_product(
-        db_session, Category.mouse, item("Chuột Pulsar X2 Black", slug="black"), detail
+    res_coded = resolve_product(
+        db_session, Category.laptop, item(title, slug="coded", **gpu), detail
     )
 
-    assert product_of(db_session, res_black).canonical_name == "Pulsar X2"
-    assert product_of(db_session, res_black).model_code == "PX2-BLK"
+    assert res_coded.product_id == res_plain.product_id
+    assert res_coded.method is MatchMethod.fuzzy
+    assert product_of(db_session, res_coded).model_code == "MK-LA001"
+
+
+def test_colour_part_numbers_do_not_split_an_accessory(db_session: Session) -> None:
+    # T5.4: MPN theo màu không thành mã model của phụ kiện nên hai màu vẫn là một sản phẩm.
+    red = item("Chuột Pulsar X2 Red", slug="red")
+    res_red = resolve_product(
+        db_session,
+        Category.mouse,
+        red,
+        ProductDetail(url="https://gearvn.example/p/red", model_code_hint="PX2-RED"),
+    )
+    store(db_session, res_red, red)
+
+    res_black = resolve_product(
+        db_session,
+        Category.mouse,
+        item("Chuột Pulsar X2 Black", slug="black"),
+        ProductDetail(url="https://gearvn.example/p/black", model_code_hint="PX2-BLK"),
+    )
+
+    assert res_black.product_id == res_red.product_id
+    assert product_of(db_session, res_black).model_code is None
 
 
 def test_hint_code_from_the_detail_page_is_used(db_session: Session) -> None:

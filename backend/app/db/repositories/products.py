@@ -11,7 +11,7 @@ from sqlalchemy import ColumnElement, and_, case, false, func, or_
 from sqlalchemy import select as core_select
 from sqlmodel import Session, col, select
 
-from app.db.models import Offer, Product
+from app.db.models import Offer, PriceAlert, Product, ShoppingListItem
 from app.db.repositories.ids import fits_int4, keep_valid
 from app.db.repositories.offers import effective_price
 from app.domain.dto import INT8_MAX, SpecFilter, Vnd
@@ -152,6 +152,12 @@ class ProductRepository:
         self._session.flush()
         return product
 
+    def set_image_url(self, product: Product, image_url: str) -> Product:
+        """Gán ảnh đại diện (người gọi quyết định có ghi đè ảnh cũ hay không)."""
+        product.image_url = image_url
+        self._session.flush()
+        return product
+
     def update_specs(
         self, product: Product, specs: Mapping[str, Any], specs_confidence: float | None = None
     ) -> Product:
@@ -161,6 +167,37 @@ class ProductRepository:
             product.specs_confidence = specs_confidence
         self._session.flush()
         return product
+
+    def set_identity(
+        self, product: Product, *, brand: str, canonical_name: str, model_code: str | None
+    ) -> Product:
+        """Đặt lại hãng, tên chuẩn và mã model (script ghép lại, T5.4). Mã phải chưa thuộc sản
+        phẩm khác cùng (category, brand), nếu không `flush` ném lỗi ràng buộc unique."""
+        product.brand = brand
+        product.canonical_name = canonical_name
+        product.model_code = model_code
+        self._session.flush()
+        return product
+
+    def is_referenced(self, product_id: int, *, count_offers: bool = True) -> bool:
+        """Sản phẩm còn offer (bỏ qua khi `count_offers=False`), nằm trong danh sách mua hoặc có
+        cảnh báo giá (mọi trạng thái)."""
+        models = (
+            (Offer, ShoppingListItem, PriceAlert)
+            if count_offers
+            else (ShoppingListItem, PriceAlert)
+        )
+        for model in models:
+            statement = select(model.id).where(model.product_id == product_id).limit(1)
+            if self._session.exec(statement).first() is not None:
+                return True
+        return False
+
+    def delete(self, product: Product) -> None:
+        """Xóa sản phẩm; người gọi kiểm `is_referenced` trước (offer chặn xóa bằng khóa ngoại,
+        cảnh báo giá thì bị xóa theo)."""
+        self._session.delete(product)
+        self._session.flush()
 
     def search(self, query: ProductQuery) -> ProductPage:
         """Sản phẩm có ít nhất một offer đang bán khớp điều kiện giá/trang và specs khớp bộ lọc."""

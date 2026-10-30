@@ -173,6 +173,16 @@ def _cpu(text: str) -> tuple[str, CpuVendor] | None:
     return None
 
 
+def cpu_is_family_only(value: object) -> bool:
+    """`cpu_model` chỉ là tên dòng ("Intel Core i5", "Ryzen 7"): giữ để lọc theo dòng nhưng chưa
+    xác định cấu hình nên vẫn tính là thiếu và nhường chỗ cho tên CPU đầy đủ khi gộp (T5.4)."""
+    return (
+        isinstance(value, str)
+        and _CPU_FAMILY_HINT.search(value) is not None
+        and _cpu(value) is None
+    )
+
+
 def _vendor_of(cpu_model: str) -> CpuVendor | None:
     lowered = cpu_model.lower()
     if lowered.startswith(("ryzen", "athlon")):
@@ -213,19 +223,29 @@ def _gpu(text: str) -> str | None:
 
 
 def _extract_gpu(title: str, raw_specs: Mapping[str, str]) -> tuple[str | None, int | None]:
-    """(tên GPU, VRAM GB). Nhãn bảng thông số được ưu tiên hơn tiêu đề."""
+    """(tên GPU, VRAM GB). Nhãn bảng thông số được ưu tiên hơn tiêu đề.
+
+    Nhãn và tiêu đề mâu thuẫn về loại GPU (một bên rời, một bên tích hợp) thì để trống: không biết
+    bên nào đúng nên để `gpu_model` vào `missing` (T5.4).
+    """
     # "16GB onboard" trong tiêu đề nói về RAM; chỉ "onboard graphics/VGA/GPU" mới nói về GPU.
     title = _TITLE_ONBOARD.sub(" ", title)
-    for source in (*label_values(raw_specs, _GPU_LABELS), title):
-        name = _gpu(source)
-        if name is None:
-            continue
-        if name == INTEGRATED:
-            return name, None
-        vram = _DISCRETE_WITH_VRAM.search(_TRADEMARKS.sub(" ", source))
-        size = int(vram[1]) if vram else None
-        return name, size if size is not None and 0 < size <= _VRAM_MAX_GB else None
-    return None, None
+    found = [
+        (source, name)
+        for source in (*label_values(raw_specs, _GPU_LABELS), title)
+        if (name := _gpu(source)) is not None
+    ]
+    if not found:
+        return None, None
+    source, name = found[0]
+    title_name = _gpu(title)
+    if title_name is not None and (title_name == INTEGRATED) != (name == INTEGRATED):
+        return None, None
+    if name == INTEGRATED:
+        return name, None
+    vram = _DISCRETE_WITH_VRAM.search(_TRADEMARKS.sub(" ", source))
+    size = int(vram[1]) if vram else None
+    return name, size if size is not None and 0 < size <= _VRAM_MAX_GB else None
 
 
 def _split_memory(title: str) -> tuple[int | None, int | None]:

@@ -173,6 +173,38 @@ class OfferRepository:
             grouped[offer.product_id].append(offer)
         return grouped
 
+    def list_by_category(self, category: Category) -> list[Offer]:
+        """Mọi offer (kể cả đã tắt) của sản phẩm thuộc `category`, theo id tăng dần (rematch)."""
+        statement = (
+            select(Offer)
+            .join(Product, col(Product.id) == col(Offer.product_id))
+            .where(Product.category == category)
+            .order_by(col(Offer.id))
+        )
+        return list(self._session.exec(statement))
+
+    def reassign(
+        self, offer: Offer, product_id: int, method: MatchMethod, score: float | None
+    ) -> Offer:
+        """Chuyển offer sang sản phẩm khác kèm cách ghép mới (script ghép lại, T5.4).
+
+        Mục danh sách mua của sản phẩm cũ đang ưu tiên offer này thì bỏ ưu tiên (về `NULL`):
+        `preferred_offer_id` luôn phải là offer của chính sản phẩm của mục.
+        """
+        offer.product_id = product_id
+        offer.match_method = method
+        offer.match_score = score
+        self._session.flush()
+        self._session.execute(
+            update(ShoppingListItem)
+            .where(
+                col(ShoppingListItem.preferred_offer_id) == offer.id,
+                col(ShoppingListItem.product_id) != product_id,
+            )
+            .values(preferred_offer_id=None)
+        )
+        return offer
+
     def upsert(self, data: OfferUpsert, *, now: datetime | None = None) -> UpsertResult:
         """`INSERT … ON CONFLICT (url) DO UPDATE`: giữ `id`, `first_seen_at`, làm mới phần còn lại.
 
