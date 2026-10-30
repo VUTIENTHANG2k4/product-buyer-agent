@@ -302,3 +302,109 @@ def test_more_detailed_old_values_are_not_overruled_by_a_title(db_session: Sessi
     db_session.refresh(mouse)
     assert mouse.specs["connection"] == ["wireless_2_4", "bluetooth"]
     assert report.products_specs_changed == []
+
+
+def test_a_strong_code_in_the_title_splits_a_laptop_from_the_product_holding_another_code(
+    db_session: Session,
+) -> None:
+    # Review small-fixes-4: mã đang có chỉ thắng mã yếu/không có; mã mạnh khác nghĩa là cấu hình
+    # khác dù thông số bắt buộc giống nhau.
+    laptop = product(
+        db_session,
+        Category.laptop,
+        brand="Acer",
+        canonical_name="Acer Aspire Lite 15 AL15-53P-56QH",
+        model_code="AL15-53P-56QH",
+    )
+    first = offer(db_session, laptop, ACER)
+    other_title = ACER.replace("AL15-53P-56QH", "AL15-99X-1234")
+    second = offer(db_session, laptop, other_title)
+
+    report = RematchService(db_session).run([Category.laptop], apply=True)
+
+    assert owner_of(db_session, first) == laptop.id
+    new_owner = owner_of(db_session, second)
+    assert new_owner != laptop.id
+    split = db_session.get(Product, new_owner)
+    assert split is not None and split.model_code == "AL15-99X-1234"
+    assert report.products_created == 1
+
+
+def test_a_kept_orphan_keeps_its_model_code_when_no_target_wants_it(db_session: Session) -> None:
+    wrong, _right, _red, _black = split_pulsar(db_session)
+    kept = product(
+        db_session, brand="Unknown", canonical_name="Chuột Pulsar X2 Blue", model_code="KEEP-001"
+    )
+    assert kept.id is not None
+    db_session.add(make_price_alert(kept.id))
+    db_session.flush()
+    blue = offer(db_session, kept, "Chuột Pulsar X2 Blue")  # ghép sang sản phẩm Pulsar
+
+    report = RematchService(db_session).run([Category.mouse], apply=True)
+
+    assert owner_of(db_session, blue) == wrong.id
+    assert report.orphans_kept == [kept.id]
+    db_session.refresh(kept)
+    assert kept.model_code == "KEEP-001"
+
+
+def test_a_target_never_takes_a_code_held_by_a_product_outside_the_run(
+    db_session: Session,
+) -> None:
+    holder = product(
+        db_session,
+        Category.laptop,
+        brand="Acer",
+        canonical_name="Acer Aspire Lite 15 AL15-53P-56QH",
+        model_code="AL15-53P-56QH",
+    )
+    # Offer của holder ở trang fptshop; lượt chỉ xét gearvn nên holder là đích cố định.
+    offer(db_session, holder, ACER, site=SiteKey.fptshop)
+    stray = product(db_session, Category.laptop, brand="Unknown", canonical_name="Laptop lạ")
+    moved = offer(db_session, stray, ACER.replace("Laptop Acer", "Laptop Acer ").replace("  ", " "))
+
+    report = RematchService(db_session).run([Category.laptop], site=SiteKey.gearvn, apply=True)
+
+    db_session.refresh(holder)
+    assert holder.model_code == "AL15-53P-56QH"
+    assert owner_of(db_session, moved) == holder.id  # ghép theo mã vào holder, không tranh mã
+    assert report.products_deleted == [stray.id]
+
+
+def test_dry_run_and_apply_produce_the_same_report(db_session: Session) -> None:
+    split_pulsar(db_session)
+    both = product(db_session, brand="Pulsar", canonical_name="Pulsar X2 Mini")
+    offer(db_session, both, "Chuột Pulsar X2 Mini Black")
+    offer(db_session, both, "Chuột Pulsar X2 Mini Pro Black")
+
+    dry = RematchService(db_session).run([Category.mouse])
+    applied = RematchService(db_session).run([Category.mouse], apply=True)
+
+    assert dry.applied is False and applied.applied is True
+    dry.applied = True
+    assert dry == applied
+
+
+def test_a_new_product_does_not_take_a_model_code_held_by_a_product_with_no_offers(
+    db_session: Session,
+) -> None:
+    # Sản phẩm không còn offer nào nên ngoài lượt: mã của nó không bị giành, nếu không `flush`
+    # sẽ vỡ chỉ mục unique (category, brand, model_code).
+    holder = product(
+        db_session,
+        Category.laptop,
+        brand="Acer",
+        canonical_name="Acer Aspire Lite 15 AL15-53P-56QH",
+        model_code="AL15-53P-56QH",
+    )
+    stray = product(db_session, Category.laptop, brand="Unknown", canonical_name="Laptop lạ")
+    row = offer(db_session, stray, ACER)
+
+    report = RematchService(db_session).run([Category.laptop], apply=True)
+
+    db_session.refresh(holder)
+    assert holder.model_code == "AL15-53P-56QH"
+    db_session.refresh(stray)
+    assert (stray.brand, stray.model_code) == ("Acer", None)
+    assert owner_of(db_session, row) == stray.id
+    assert report.moves == []

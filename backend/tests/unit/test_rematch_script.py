@@ -2,8 +2,9 @@
 
 import pytest
 
-from app.domain.enums import MatchMethod
-from app.services.rematch_service import OfferMove, RematchReport
+from app.domain.enums import Category, MatchMethod, SiteKey
+from app.services.rematch_service import REMATCH_CATEGORIES, OfferMove, RematchReport
+from scripts import rematch
 from scripts.rematch import MAX_LISTED_MOVES, format_report, parse_args
 
 
@@ -43,3 +44,91 @@ def test_report_lists_at_most_a_page_of_moves_and_says_when_nothing_changed() ->
     assert text.count("offer #") == MAX_LISTED_MOVES
     assert "… và 5 offer khác" in text
     assert format_report(RematchReport(applied=True))[-1] == "Không có gì thay đổi."
+
+
+class FakeSession:
+    """Ghi lại commit/rollback; `Session(engine)` dùng như context manager."""
+
+    instances: list["FakeSession"] = []
+
+    def __init__(self, engine: object) -> None:
+        self.events: list[str] = []
+        FakeSession.instances.append(self)
+
+    def __enter__(self) -> "FakeSession":
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.events.append("close")
+
+    def commit(self) -> None:
+        self.events.append("commit")
+
+    def rollback(self) -> None:
+        self.events.append("rollback")
+
+
+class FakeEngine:
+    disposed = False
+
+    def dispose(self) -> None:
+        FakeEngine.disposed = True
+
+
+class StubService:
+    calls: list[tuple[list[Category], SiteKey | None, bool]] = []
+    error: Exception | None = None
+
+    def __init__(self, session: FakeSession) -> None:
+        pass
+
+    def run(
+        self, categories: list[Category], *, site: SiteKey | None, apply: bool
+    ) -> RematchReport:
+        StubService.calls.append((categories, site, apply))
+        if StubService.error is not None:
+            raise StubService.error
+        return RematchReport(applied=apply, offers_checked=2)
+
+
+@pytest.fixture
+def wired(monkeypatch: pytest.MonkeyPatch) -> type[FakeSession]:
+    FakeSession.instances = []
+    FakeEngine.disposed = False
+    StubService.calls = []
+    StubService.error = None
+    monkeypatch.setattr(rematch, "get_engine", lambda url: FakeEngine())
+    monkeypatch.setattr(rematch, "Session", FakeSession)
+    monkeypatch.setattr(rematch, "RematchService", StubService)
+    return FakeSession
+
+
+def test_dry_run_rolls_back_and_never_commits(
+    wired: type[FakeSession], capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert rematch.main([]) == 0
+
+    assert wired.instances[0].events == ["rollback", "close"]
+    assert StubService.calls == [(list(REMATCH_CATEGORIES), None, False)]
+    assert FakeEngine.disposed
+    assert "Chạy thử" in capsys.readouterr().out
+
+
+def test_apply_commits_with_the_selected_category_and_site(
+    wired: type[FakeSession], capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert rematch.main(["--category", "mouse", "--site", "gearvn", "--apply"]) == 0
+
+    assert wired.instances[0].events == ["commit", "close"]
+    assert StubService.calls == [([Category.mouse], SiteKey.gearvn, True)]
+    assert capsys.readouterr().out.startswith("Đã ghi")
+
+
+def test_an_error_never_commits_and_still_disposes_the_engine(wired: type[FakeSession]) -> None:
+    StubService.error = RuntimeError("boom")
+
+    with pytest.raises(RuntimeError, match="boom"):
+        rematch.main(["--apply"])
+
+    assert "commit" not in wired.instances[0].events
+    assert FakeEngine.disposed

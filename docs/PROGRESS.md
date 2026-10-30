@@ -4,7 +4,7 @@
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
 - Đang làm: 🔄 lượt "việc nhỏ 4" trên nhánh `milestone/small-fixes-4`: T11.9 ✅ (`ScrapePipeline._finish_cancelled`), T5.4 ✅ (chuẩn hóa: e444a0a; `make rematch`). Kế tiếp: `/check` → `/review` → `qa-tester` → `/done`.
-- Backlog chưa làm: T5.4, T6.7, T7.7 (BUG-M7-3, 6b), T8.12, T11.9; kế tiếp đề xuất: T7.7 hoặc T5.4 (lượt việc nhỏ), T8.12/T5.8 cần người dùng chọn hành vi trước; bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Backlog chưa làm: T6.7, T7.7 (BUG-M7-3, 6b), T8.12; kế tiếp đề xuất: T7.7 (lượt việc nhỏ), T8.12/T5.8 cần người dùng chọn hành vi trước; bug giữ `xfail(strict)`: BUG-M7-3, 6b, BUG-S2-5 (cần quyết định, T5.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-10-29 — M11 dọn kiến trúc (T11.6 `utc_now` → `domain`, T11.7 test ranh giới mọi lớp, T11.8 tách gói `scrapers/pipeline/`)
 
 ## Milestone

@@ -173,6 +173,13 @@ def test_keyboard_switch_name_drops_colours_and_connection_words(title: str, nam
         ("Bàn phím Keychron K8 Pro Hotswap Switch", None),
         ("Bàn phím cơ Hot-swap switch", None),
         ("Bàn phím Pro Switch Gateron", None),
+        # Review small-fixes-4: dấu "-" đứng riêng và từ chung có dấu không phải tên switch.
+        ("Bàn phím AULA F75 - Reaper Switch", "Reaper"),
+        ("Bàn phím cơ Màu Black Gold - Reaper switch (linear)", "Reaper"),
+        ("Bàn phím cơ AKKO 3068 - Blue Switch", None),
+        ("Bàn phím AKKO 3068 - Switch", None),
+        ("Bàn phím cơ không dây Red Switch", None),
+        ("Bàn phím cơ không dây Switch Red", None),
     ],
 )
 def test_keyboard_switch_name_skips_model_line_words_and_bare_versions(

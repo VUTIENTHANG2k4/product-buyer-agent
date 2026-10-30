@@ -29,7 +29,7 @@ from app.domain.enums import Category, MatchMethod, SiteKey
 from app.normalize.brand import detect_brand
 from app.normalize.extract import SpecsExtraction, extract_specs, merge_specs, specs_confidence
 from app.normalize.matcher import Candidate, decide_match
-from app.normalize.model_code import extract_model_code
+from app.normalize.model_code import extract_model_code, is_strong_code
 from app.normalize.names import canonical_name
 
 logger = logging.getLogger(__name__)
@@ -143,9 +143,15 @@ class RematchService:
             own = current[offer.product_id]
             same_brand = own.brand == brand
             code = extract_model_code(category, offer.title)
-            if category is Category.laptop and same_brand and own.model_code is not None:
-                # Mã đang có (có thể từ MPN trang chi tiết, offer không lưu hint) thắng mã đọc từ
-                # tên: giữ nguyên cách ghép theo mã của lần đầu.
+            if (
+                category is Category.laptop
+                and same_brand
+                and own.model_code is not None
+                and (code is None or not is_strong_code(code))
+            ):
+                # Mã đang có (có thể từ MPN trang chi tiết, offer không lưu hint) thắng mã yếu hoặc
+                # không có trong tên: giữ nguyên cách ghép theo mã của lần đầu. Mã mạnh khác trong
+                # tên nói rõ đây là cấu hình khác nên được tách.
                 code = own.model_code
             # Sản phẩm hiện tại (thông số seed, LLM đã điền, trang chi tiết) chỉ bù trường trống.
             specs = merge_specs(category, extraction.specs, own.specs)
@@ -272,8 +278,10 @@ class RematchService:
         orphans: list[Product],
     ) -> None:
         own = [t for t in targets.values() if not t.fixed]
-        # Pha 1: bỏ mã của sản phẩm sẽ đổi mã và của sản phẩm mồ côi (xóa sau cùng) để đặt lại
+        # Pha 1: bỏ mã của sản phẩm sẽ đổi mã và của sản phẩm mồ côi mà một đích cần mã đó (mồ côi
+        # còn được giữ vì danh sách mua/cảnh báo thì giữ nguyên mã nếu không ai cần) để đặt lại
         # không va chỉ mục unique (category, brand, model_code) giữa chừng.
+        wanted = {(t.brand, t.model_code) for t in own if t.model_code is not None}
         clear = [
             t.product
             for t in own
@@ -281,7 +289,7 @@ class RematchService:
             and t.product.model_code is not None
             and (t.product.brand, t.product.model_code) != (t.brand, t.model_code)
         ]
-        for product in [*clear, *(p for p in orphans if p.model_code is not None)]:
+        for product in [*clear, *(p for p in orphans if (p.brand, p.model_code) in wanted)]:
             self._products.set_identity(
                 product, brand=product.brand, canonical_name=product.canonical_name, model_code=None
             )

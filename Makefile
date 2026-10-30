@@ -100,7 +100,7 @@ seed: ## Nạp dữ liệu hư cấu: make seed FIXTURE=dev|eval|e2e [RESET=1: x
 	$(BE) uv run python -m scripts.seed --fixture $(FIXTURE) $(if $(RESET),--reset --yes)
 
 rematch: ## Ghép lại offer theo luật hiện tại: make rematch [CAT=laptop] [SITE=gearvn] [APPLY=1: ghi]
-	$(BE) uv run python -m scripts.rematch $(if $(CAT),--category $(CAT)) $(if $(SITE),--site $(SITE)) $(if $(APPLY),--apply)
+	$(BE) uv run python -m scripts.rematch $(if $(CAT),--category $(CAT)) $(if $(SITE),--site $(SITE)) $(if $(filter 1,$(APPLY)),--apply)
 
 gen-api: ## Sinh kiểu TypeScript từ OpenAPI (frontend/openapi.json -> src/api/types.gen.ts)
 	$(BE) uv run python -m scripts.dump_openapi

@@ -46,11 +46,14 @@ _MEMBRANE = re.compile(r"membrane|gia co\b")
 _MECHANICAL = re.compile(r"\bban phim co\b|mechanical|\bswitch\b|\b(?:tactile|linear|clicky)\b")
 # "HE" (Hall Effect) chỉ nhận khi viết hoa nguyên từ trong tiêu đề gốc: "he" chữ thường quá chung.
 _HE_WORD = re.compile(r"\bHE\b")
-_SWITCH_NAME = re.compile(r"((?:[\w-]+\s+)?[\w-]+)\s+switch\b", re.IGNORECASE)
+# Mỗi từ bắt đầu bằng chữ/số (kể cả có dấu): dấu gạch ngang đứng riêng ("Tên - Reaper switch")
+# không phải một từ.
+_SWITCH_NAME = re.compile(r"((?:[^\W_][\w-]*\s+)?[^\W_][\w-]*)\s+switch\b", re.IGNORECASE)
 # Từ chỉ dòng máy/tính năng đứng trước "switch" ("K8 Pro Hotswap Switch", "Plus V3 Switch").
 # "Tactile/Linear" vẫn là tên: Logitech đặt tên switch như vậy (GX Tactile).
 _SWITCH_NOISE: Final = frozenset(
     ["pro", "plus", "max", "hotswap", "hot-swap", "swap", "hot", "ban", "phim", "co"]
+    + ["khong", "day", "gaming"]
 )
 _VERSION_TOKEN = re.compile(r"^v\d+$", re.IGNORECASE)
 _NOT_SWITCH_NAME = frozenset(
