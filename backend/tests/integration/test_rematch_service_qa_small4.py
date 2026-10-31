@@ -335,10 +335,6 @@ def test_empty_very_long_and_decomposed_titles_do_not_break_the_run(db_session: 
     assert owner_of(db_session, composed) == owner_of(db_session, decomposed)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-S4-4: raw_specs có giá trị không phải chuỗi làm cả lượt ghép lại ném TypeError",
-)
 @pytest.mark.parametrize("value", [16, None, ["16 GB"], True])
 def test_an_offer_with_a_non_string_raw_spec_value_does_not_abort_the_whole_run(
     db_session: Session, value: object

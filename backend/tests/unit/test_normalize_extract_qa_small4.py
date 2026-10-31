@@ -82,12 +82,25 @@ def test_weak_values_exist_only_for_the_laptop_cpu() -> None:
     assert is_weak(LAPTOP, "unknown_field", "Intel Core i5") is False
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-S4-3: 'Intel Core i3-N305' (tên CPU đầy đủ) bị coi là giá trị yếu",
-)
 def test_a_full_cpu_name_with_a_letter_prefixed_number_is_not_weak() -> None:
     assert cpu_is_family_only("Intel Core i3-N305") is False
+
+
+@pytest.mark.parametrize("value", ["Intel Core i3 N305", "i3-n305", "Core i3-N305 8 nhân"])
+def test_an_intel_n_series_cpu_is_read_as_a_concrete_model(value: str) -> None:
+    assert cpu_is_family_only(value) is False
+
+
+def test_an_intel_n_series_cpu_in_the_title_gives_a_canonical_cpu_model() -> None:
+    result = extract_specs(LAPTOP, "Laptop Acer Aspire Go 15 Intel Core i3-N305/8GB/256GB", {})
+
+    assert result.specs["cpu_model"] == "i3-N305"
+    assert result.specs["cpu_vendor"] == "intel"
+
+
+@pytest.mark.parametrize("value", ["Intel Core i3 N", "Intel Core i5 N30", "Intel Core i3 N3055"])
+def test_an_incomplete_n_series_name_stays_weak(value: str) -> None:
+    assert cpu_is_family_only(value) is True
 
 
 def test_a_family_only_cpu_counts_as_missing_and_keeps_confidence_below_half() -> None:
@@ -261,12 +274,17 @@ def test_a_clash_does_not_mark_the_laptop_as_gaming_from_the_losing_side() -> No
 
 
 # ---- giá trị lạ trong bảng thông số ----
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-S4-4: raw_specs có giá trị không phải chuỗi làm extract_specs ném TypeError",
-)
 @pytest.mark.parametrize("value", [16, None, ["16 GB"], True, {"a": 1}])
 def test_extract_specs_tolerates_non_string_spec_table_values(value: object) -> None:
     result = extract_specs(LAPTOP, CORE_TITLE, {"Dung lượng RAM": value})  # type: ignore[dict-item]
 
     assert result.specs["ram_gb"] == 16
+
+
+def test_a_non_string_value_does_not_hide_the_other_spec_table_rows() -> None:
+    raw: dict[str, Any] = {"Dung lượng RAM": 8, "Ổ cứng": "1TB SSD", "CPU": None}
+
+    result = extract_specs(LAPTOP, "Laptop Acer Aspire 7 A715 i5-12450H", raw)
+
+    assert result.specs["storage_gb"] == 1000
+    assert "ram_gb" not in result.specs

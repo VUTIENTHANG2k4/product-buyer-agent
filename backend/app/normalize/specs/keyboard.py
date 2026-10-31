@@ -59,6 +59,9 @@ _SWITCH_NOISE: Final = frozenset(
     + ["khong", "day", "gaming"]
 )
 _VERSION_TOKEN = re.compile(r"^v\d+$", re.IGNORECASE)
+# Số model đứng trước tên switch ("3068 Reaper", "G915 Tactile", "EK75 Pegasus"): chỉ số (≥ 2 chữ
+# số) hoặc 1–3 chữ rồi số. "MX2A" có chữ cuối nên là tên switch; "V2/V3" xử lý bằng _VERSION_TOKEN.
+_MODEL_TOKEN = re.compile(r"^(?:\d{2,}|[a-z]{1,3}\d{2,})$", re.IGNORECASE)
 _NOT_SWITCH_NAME = frozenset(
     [
         "black",
@@ -123,14 +126,16 @@ def _switch_type(title: str, folded: str) -> SwitchType | None:
 def _switch_name(text: str) -> str | None:
     """Tên switch ("Milk White", "Pegasus", "HFX V2") là tối đa hai từ đứng trước chữ "switch".
 
-    Bỏ màu/từ chung và từ chỉ dòng máy ở đầu; chỉ còn số phiên bản ("Plus V3 Switch") thì không
-    có tên.
+    Bỏ màu/từ chung và từ chỉ dòng máy ở đầu, rồi số model đứng trước tên ("3068 Reaper" →
+    "Reaper"); chỉ còn số phiên bản ("Plus V3 Switch") thì không có tên.
     """
     match = _SWITCH_NAME.search(text)
     if match is None:
         return None
     words = match[1].split()
     while words and fold(words[0]) in _NOT_SWITCH_NAME | _SWITCH_NOISE:
+        words.pop(0)
+    if len(words) > 1 and _MODEL_TOKEN.match(words[0]):
         words.pop(0)
     if all(_VERSION_TOKEN.match(word) for word in words):
         return None

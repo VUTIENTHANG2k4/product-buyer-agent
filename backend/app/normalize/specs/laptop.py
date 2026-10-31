@@ -96,7 +96,7 @@ _CORE_ULTRA = re.compile(
     r"\b(?:core\s*)?ultra\s*([3579])\s*[-–]?\s*(?:processor\s+)?(\d{3}[a-z]{0,2})\b", _FLAGS
 )
 _CORE_NEW = re.compile(r"\bcore\s*([3579])\s*[-–]?\s*(\d{3}[a-z]{0,2})\b", _FLAGS)
-_CORE_I = re.compile(r"\bi([3579])\s*[-–]?\s*(\d{4,5}[a-z]{0,2})\b", _FLAGS)
+_CORE_I = re.compile(r"\bi([3579])\s*[-–]?\s*(n\d{3}|\d{4,5}[a-z]{0,2})\b", _FLAGS)
 _RYZEN = re.compile(
     r"\bryzen\s*(ai\s*)?([3579])\s*[-–]?\s*(?:pro\s+)?((?:hx\s*)?\d{2,5}[a-z]{0,3}\d?)"
     r"(?![0-9]|\s?gb)\b",
