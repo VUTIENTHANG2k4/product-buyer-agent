@@ -106,6 +106,9 @@ def test_refusal_with_three_word_gap_does_not_unlock_the_write_tool() -> None:
         ("thêm vào danh sách, làm gì tiếp theo?", ADD),
         ("thêm vào danh sách giúp tôi để làm việc", ADD),
         ("đặt cảnh báo giúp tôi", ALERT),
+        # Giới hạn đã biết: "làm gì" phải liền sau cụm yêu cầu, chen thêm từ thì vẫn là yêu cầu.
+        ("thêm vào danh sách mua sắm để làm gì", ADD),
+        ("đặt cảnh báo giá để làm gì", ALERT),
     ],
 )
 def test_a_rhetorical_question_after_the_request_is_a_refusal_but_a_followup_is_not(

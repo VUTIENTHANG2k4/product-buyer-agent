@@ -326,6 +326,12 @@ def test_unaccented_query_finds_accented_product(client: TestClient, db_session:
         ("Bàn phím cơ Mock", "chuot", 0),
         ("Chuột 100% Mock", "100%", 1),
         ("Chuột 100% Mock", "10_%", 0),
+        ("Chuột A\\B Mock", "a\\b", 1),
+        ("Chuột A\\B Mock", "a\\\\b", 0),
+        ("Chuột Cường Mock", "cuong", 1),
+        ("Bàn phím Thể thao Mock", "the thao", 1),
+        ("Chuột Ăn Mock", "an", 1),
+        ("Chuột Ơn Mock", "on", 1),
         ("Chuột không dây Mock", "chuot dien", 0),
     ],
 )
