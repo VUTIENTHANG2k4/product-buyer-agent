@@ -18,6 +18,7 @@ from app.db.repositories import (
     ProductRepository,
     effective_price_of,
 )
+from app.db.repositories.products import MAX_TEXT_CHARS
 from app.domain.catalog import (
     CatalogFilters,
     CatalogSearchResult,
@@ -95,7 +96,8 @@ class CatalogService:
             price_min=filters.price_min,
             price_max=filters.price_max,
             spec_filters=filters.spec_filters,
-            text=None if filters.q is None else _nfkc(filters.q),
+            # NFKC có thể làm chuỗi dài ra ("ǆ" thành "dž"): cắt cho vừa trần của ProductQuery.
+            text=None if filters.q is None else _nfkc(filters.q)[:MAX_TEXT_CHARS],
             include_out_of_stock=filters.include_out_of_stock,
             # Chưa có điểm liên quan: `relevance` xếp theo giá thấp nhất (docs/04 §3).
             sort="price_asc" if filters.sort == "relevance" else filters.sort,

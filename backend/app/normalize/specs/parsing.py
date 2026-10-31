@@ -54,9 +54,14 @@ def _is_limit_label(label: str) -> bool:
 def label_values(raw_specs: Mapping[str, str], aliases: Sequence[str]) -> Iterator[str]:
     """Giá trị của các nhãn chứa bí danh, theo thứ tự ưu tiên của `aliases`.
 
-    `aliases` đã viết dạng `fold` (không dấu, chữ thường). Giá trị rỗng bị bỏ qua.
+    `aliases` đã viết dạng `fold` (không dấu, chữ thường). Giá trị rỗng hoặc không phải chuỗi
+    (JSON cũ trong CSDL có thể chứa số, `null`, danh sách) bị bỏ qua, không đoán đơn vị.
     """
-    folded = [(fold(label), clean(value)) for label, value in raw_specs.items()]
+    folded = [
+        (fold(label), clean(value))
+        for label, value in raw_specs.items()
+        if isinstance(label, str) and isinstance(value, str)
+    ]
     yielded: set[int] = set()  # mỗi nhãn chỉ trả một lần dù khớp nhiều bí danh
     for alias in aliases:
         for index, (label, value) in enumerate(folded):

@@ -310,14 +310,52 @@ def test_empty_catalog_has_null_data_as_of(client: TestClient) -> None:
     assert body["data_as_of"] is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M7-3: `q` không bỏ dấu nên 'chuot' không tìm thấy 'Chuột' (gõ không dấu)",
-)
 def test_unaccented_query_finds_accented_product(client: TestClient, db_session: Session) -> None:
     add_offer(db_session, add_product(db_session, canonical_name="Chuột không dây Mock"))
 
     assert client.get("/api/products", params={"q": "chuot khong day"}).json()["total"] == 1
+
+
+@pytest.mark.parametrize(
+    ("name", "query", "total"),
+    [
+        ("Chuột không dây Mock", "CHUỘT KHÔNG DÂY", 1),
+        ("Chuột Đen Mock", "den", 1),
+        ("Chuột Đen Mock", "Đen", 1),
+        ("Bàn phím cơ Mock", "ban phim co", 1),
+        ("Bàn phím cơ Mock", "chuot", 0),
+        ("Chuột 100% Mock", "100%", 1),
+        ("Chuột 100% Mock", "10_%", 0),
+        ("Chuột A\\B Mock", "a\\b", 1),
+        ("Chuột A\\B Mock", "a\\\\b", 0),
+        ("Chuột Cường Mock", "cuong", 1),
+        ("Bàn phím Thể thao Mock", "the thao", 1),
+        ("Chuột Ăn Mock", "an", 1),
+        ("Chuột Ơn Mock", "on", 1),
+        ("Chuột không dây Mock", "chuot dien", 0),
+    ],
+)
+def test_accent_insensitive_query_keeps_every_term_required_and_wildcards_literal(
+    client: TestClient, db_session: Session, name: str, query: str, total: int
+) -> None:
+    add_offer(db_session, add_product(db_session, canonical_name=name))
+
+    assert client.get("/api/products", params={"q": query}).json()["total"] == total
+
+
+def test_accent_insensitive_query_also_matches_brand_and_model_code(
+    client: TestClient, db_session: Session
+) -> None:
+    product = add_product(
+        db_session, canonical_name="Mock mẫu một", brand="Đạt Mock", model_code="Ẩn-01"
+    )
+    add_offer(db_session, product)
+
+    totals = [
+        client.get("/api/products", params={"q": q}).json()["total"] for q in ("dat mock", "an-01")
+    ]
+
+    assert totals == [1, 1]
 
 
 def test_unicode_query_matches_regardless_of_normalization(

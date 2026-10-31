@@ -113,22 +113,38 @@ def test_pathological_titles_run_in_linear_looking_time(title: str) -> None:
     assert time.perf_counter() - started < TIME_BUDGET_S
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-S4-7: so/ma model dung ngay truoc ten switch bi tinh vao ten switch",
-)
 @pytest.mark.parametrize(
     ("title", "expected"),
     [
         ("B\u00e0n ph\u00edm c\u01a1 AKKO 3068 Reaper switch", "Reaper"),
         ("B\u00e0n ph\u00edm c\u01a1 Logitech G915 Tactile switch", "Tactile"),
         ("B\u00e0n ph\u00edm c\u01a1 DAREU EK75 Pegasus switch", "Pegasus"),
+        ("B\u00e0n ph\u00edm c\u01a1 Keychron K2 Pro 75 Gateron Brown switch", "Gateron Brown"),
     ],
 )
 def test_a_model_number_just_before_the_switch_name_is_not_part_of_it(
     title: str, expected: str
 ) -> None:
     assert switch_name(title) == expected
+
+
+@pytest.mark.parametrize(
+    ("title", "expected"),
+    [
+        ("B\u00e0n ph\u00edm c\u01a1 Cherry MX2A Brown Switch", "MX2A Brown"),
+        ("B\u00e0n ph\u00edm c\u01a1 Akko Reaper switch", "Akko Reaper"),
+        ("B\u00e0n ph\u00edm c\u01a1 HFX V2 switch", "HFX V2"),
+        ("B\u00e0n ph\u00edm c\u01a1 K8 Tactile switch", "K8 Tactile"),
+    ],
+)
+def test_only_a_leading_model_number_is_dropped_from_the_switch_name(
+    title: str, expected: str
+) -> None:
+    assert switch_name(title) == expected
+
+
+def test_a_lone_model_number_before_switch_is_not_a_switch_name() -> None:
+    assert switch_name("B\u00e0n ph\u00edm c\u01a1 3068 switch") is None
 
 
 def test_many_long_unbroken_spec_table_values_labelled_switch_finish_quickly() -> None:
