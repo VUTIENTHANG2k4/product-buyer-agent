@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử đã có trong git log).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (lượt "việc nhỏ 5" xong: T5.9, T7.7, qua `make check` + `code-reviewer` + `qa-tester`; nhánh `milestone/small-fixes-5` chờ người dùng merge vào `main`).
+- Đang làm: – (lượt "việc nhỏ 5" xong: T5.9, T7.7, qua `make check` + `code-reviewer` + `qa-tester`; đã merge vào `main` (6469eee)).
 - Backlog chưa làm: T5.10 (tên switch "Kailh Box White V2", `llm_extract` chịu `raw_specs` lạ), T6.7, T7.8 (BUG-S5-2, `unaccent` đổi ký tự thành `\`), T8.12; kế tiếp đề xuất: T5.10 + T7.8 (lượt việc nhỏ), T8.12/T5.8 cần người dùng chọn hành vi trước; bug giữ `xfail(strict)`: BUG-S2-5 (T5.8, cần quyết định), BUG-S5-2 (T7.8). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-11-01 — lượt "việc nhỏ 5" (tìm `q` không dấu bằng `unaccent`, guardrail câu hỏi tu từ, CPU dòng N, tên switch bàn phím)
 
