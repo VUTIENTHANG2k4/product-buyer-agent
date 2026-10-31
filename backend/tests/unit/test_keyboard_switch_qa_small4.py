@@ -143,8 +143,8 @@ def test_only_a_leading_model_number_is_dropped_from_the_switch_name(
     assert switch_name(title) == expected
 
 
-def test_a_lone_model_number_before_switch_is_kept_as_the_only_word() -> None:
-    assert switch_name("B\u00e0n ph\u00edm c\u01a1 3068 switch") == "3068"
+def test_a_lone_model_number_before_switch_is_not_a_switch_name() -> None:
+    assert switch_name("B\u00e0n ph\u00edm c\u01a1 3068 switch") is None
 
 
 def test_many_long_unbroken_spec_table_values_labelled_switch_finish_quickly() -> None:

@@ -50,8 +50,8 @@ _ALERT: Final = re.compile(
 # mệnh đề và khi từ phủ định cách động từ tối đa 2 từ, nên "không quá 30 triệu và đặt cảnh báo"
 # (phủ định thuộc về giá) không bị chặn nhầm. Gắn với cuối cửa sổ (`$`).
 _NEGATION: Final = re.compile(
-    r"\b(dung(?! (?:quen|ngai)\b)|khong|ko|chang|khoi|thoi|chua|sao phai|do not|don'?t|no need"
-    r"|never)\b(?: \w+){0,2} ?$"
+    r"\b(dung(?! (?:quen|ngai)\b)|khong|ko|chang|khoi|thoi|chua|sao(?: \w+){0,2} phai|do not"
+    r"|don'?t|no need|never|why(?: (?:should|would|do|did) (?:i|we))?)\b(?: \w+){0,2} ?$"
 )
 # Câu hỏi tu từ ngay sau cụm yêu cầu ("tôi thêm vào danh sách làm gì", "đặt cảnh báo để làm gì")
 # là lời từ chối. Chỉ xét liền sau cụm: "thêm vào danh sách rồi làm gì tiếp" vẫn là yêu cầu.

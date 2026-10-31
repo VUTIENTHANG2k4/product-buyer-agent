@@ -59,9 +59,11 @@ _SWITCH_NOISE: Final = frozenset(
     + ["khong", "day", "gaming"]
 )
 _VERSION_TOKEN = re.compile(r"^v\d+$", re.IGNORECASE)
-# Số model đứng trước tên switch ("3068 Reaper", "G915 Tactile", "EK75 Pegasus"): chỉ số (≥ 2 chữ
-# số) hoặc 1–3 chữ rồi số. "MX2A" có chữ cuối nên là tên switch; "V2/V3" xử lý bằng _VERSION_TOKEN.
-_MODEL_TOKEN = re.compile(r"^(?:\d{2,}|[a-z]{1,3}\d{2,})$", re.IGNORECASE)
+# Số model đứng trước tên switch ("3068 Reaper", "5075B Reaper", "G915 Tactile", "EK75 Pegasus"):
+# ≥ 2 chữ số (kèm tối đa một chữ cuối) hoặc 1–3 chữ rồi số. "MX2A" chỉ có một chữ số nên là tên
+# switch; "V2/V3" xử lý bằng _VERSION_TOKEN.
+_MODEL_TOKEN = re.compile(r"^(?:\d{2,}[a-z]?|[a-z]{1,3}\d{2,})$", re.IGNORECASE)
+_BARE_NUMBER = re.compile(r"^\d+(?:[.,]\d+)?$")  # "2", "3.0": không bao giờ là tên switch
 _NOT_SWITCH_NAME = frozenset(
     [
         "black",
@@ -123,21 +125,28 @@ def _switch_type(title: str, folded: str) -> SwitchType | None:
     return None
 
 
+def _drop_generic(words: list[str]) -> None:
+    """Bỏ các từ đầu là màu hoặc từ chung/dòng máy (sửa tại chỗ)."""
+    while words and fold(words[0]) in _NOT_SWITCH_NAME | _SWITCH_NOISE:
+        words.pop(0)
+
+
 def _switch_name(text: str) -> str | None:
     """Tên switch ("Milk White", "Pegasus", "HFX V2") là tối đa hai từ đứng trước chữ "switch".
 
     Bỏ màu/từ chung và từ chỉ dòng máy ở đầu, rồi số model đứng trước tên ("3068 Reaper" →
-    "Reaper"); chỉ còn số phiên bản ("Plus V3 Switch") thì không có tên.
+    "Reaper") và lại bỏ màu/từ chung còn lại ("3068 Black" → không có tên); chỉ còn số phiên bản
+    ("Plus V3 Switch") hoặc số rời ("Pro 2.0 Switch") thì không có tên.
     """
     match = _SWITCH_NAME.search(text)
     if match is None:
         return None
     words = match[1].split()
-    while words and fold(words[0]) in _NOT_SWITCH_NAME | _SWITCH_NOISE:
-        words.pop(0)
+    _drop_generic(words)
     if len(words) > 1 and _MODEL_TOKEN.match(words[0]):
         words.pop(0)
-    if all(_VERSION_TOKEN.match(word) for word in words):
+        _drop_generic(words)
+    if all(_VERSION_TOKEN.match(word) or _BARE_NUMBER.match(word) for word in words):
         return None
     return " ".join(words)
 

@@ -20,6 +20,9 @@ from app.domain.enums import Category, SiteKey, StockStatus
 ProductSort = Literal["price_asc", "price_desc", "rating_desc", "updated_desc"]
 
 
+MAX_TEXT_CHARS = 200  # độ dài tối đa của `ProductQuery.text` (sau chuẩn hóa NFKC)
+
+
 class ProductQuery(BaseModel):
     """Điều kiện tìm sản phẩm. `relevance` và từ khóa do `catalog_service` ánh xạ trước khi gọi."""
 
@@ -32,7 +35,7 @@ class ProductQuery(BaseModel):
     price_max: Vnd | None = None
     spec_filters: list[SpecFilter] = Field(default_factory=list)
     # Mọi từ (tách theo khoảng trắng) phải xuất hiện trong tên chuẩn, hãng hoặc mã model.
-    text: str | None = Field(default=None, max_length=200)
+    text: str | None = Field(default=None, max_length=MAX_TEXT_CHARS)
     # Mặc định bỏ offer hết hàng khỏi giá/số offer; sản phẩm chỉ còn offer hết hàng thì không hiện.
     include_out_of_stock: bool = False
     sort: ProductSort = "price_asc"

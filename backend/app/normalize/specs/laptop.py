@@ -176,11 +176,10 @@ def _cpu(text: str) -> tuple[str, CpuVendor] | None:
 def cpu_is_family_only(value: object) -> bool:
     """`cpu_model` chỉ là tên dòng ("Intel Core i5", "Ryzen 7"): giữ để lọc theo dòng nhưng chưa
     xác định cấu hình nên vẫn tính là thiếu và nhường chỗ cho tên CPU đầy đủ khi gộp (T5.4)."""
-    return (
-        isinstance(value, str)
-        and _CPU_FAMILY_HINT.search(value) is not None
-        and _cpu(value) is None
-    )
+    if not isinstance(value, str):
+        return False
+    value = clean(value)  # gộp khoảng trắng và cắt độ dài trước khi chạy regex (`\s*[-–]?\s*`)
+    return _CPU_FAMILY_HINT.search(value) is not None and _cpu(value) is None
 
 
 def _vendor_of(cpu_model: str) -> CpuVendor | None:
