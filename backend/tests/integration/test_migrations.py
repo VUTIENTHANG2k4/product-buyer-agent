@@ -76,7 +76,7 @@ def test_upgrade_head_on_empty_database_creates_every_table(empty_engine: Engine
 
 def test_upgrade_head_twice_is_a_no_op(migrated_engine: Engine) -> None:
     upgrade_to_head(migrated_engine)
-    assert _scalars(migrated_engine, "SELECT version_num FROM alembic_version") == ["0005"]
+    assert _scalars(migrated_engine, "SELECT version_num FROM alembic_version") == ["0006"]
 
 
 def test_downgrade_base_removes_every_table_and_upgrade_restores_them(
@@ -229,6 +229,28 @@ def test_0002_keeps_old_rows_and_accepts_the_new_sites(empty_engine: Engine) -> 
     assert sites == ["hoangha", "fptshop", "anphat"]
     with pytest.raises(IntegrityError):
         _insert_run(empty_engine, "shopee")
+
+
+def _unaccent(engine: Engine, value: str) -> str:
+    with engine.connect() as connection:
+        return str(connection.execute(text("SELECT unaccent(:v)"), {"v": value}).scalar_one())
+
+
+def test_0006_adds_the_unaccent_extension_and_downgrade_removes_it(
+    empty_engine: Engine,
+) -> None:
+    upgrade_to(empty_engine, "0005")
+    assert (
+        _scalars(empty_engine, "SELECT extname FROM pg_extension WHERE extname = 'unaccent'") == []
+    )
+
+    upgrade_to(empty_engine, "0006")
+
+    assert _unaccent(empty_engine, "Chuột không dây Đen") == "Chuot khong day Den"
+    downgrade_to(empty_engine, "0005")
+    assert (
+        _scalars(empty_engine, "SELECT extname FROM pg_extension WHERE extname = 'unaccent'") == []
+    )
 
 
 def test_0002_downgrade_restores_the_six_site_list(migrated_engine: Engine) -> None:

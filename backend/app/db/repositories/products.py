@@ -239,11 +239,13 @@ class ProductRepository:
             base = base.where(func.lower(Product.brand).in_(lowered))
         for term in (query.text or "").split():
             pattern = "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            # Bỏ dấu cả hai vế (extension unaccent, migration 0006): "chuot" tìm được "Chuột".
+            unaccented = func.unaccent(pattern)
             base = base.where(
                 or_(
-                    col(Product.canonical_name).ilike(pattern, escape="\\"),
-                    col(Product.brand).ilike(pattern, escape="\\"),
-                    col(Product.model_code).ilike(pattern, escape="\\"),
+                    func.unaccent(col(Product.canonical_name)).ilike(unaccented, escape="\\"),
+                    func.unaccent(col(Product.brand)).ilike(unaccented, escape="\\"),
+                    func.unaccent(col(Product.model_code)).ilike(unaccented, escape="\\"),
                 )
             )
         for spec_filter in query.spec_filters:

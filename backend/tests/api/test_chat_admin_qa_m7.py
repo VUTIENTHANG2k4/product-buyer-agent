@@ -89,12 +89,29 @@ def test_refusal_with_long_product_name_does_not_unlock_the_write_tool() -> None
     assert allowed_write_tools(f"Đừng thêm {name} vào danh sách") == NONE
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-M7-6: phủ định xa động từ (> 2 từ) trong cùng mệnh đề không được nhận ra",
-)
 def test_refusal_with_three_word_gap_does_not_unlock_the_write_tool() -> None:
     assert allowed_write_tools("Không muốn đâu, tôi thêm vào danh sách làm gì") == NONE
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("tôi thêm vào danh sách làm gì", NONE),
+        ("Thêm vào danh sách để làm gì?", NONE),
+        ("sao phải thêm vào danh sách", NONE),
+        ("sao phải đặt cảnh báo", NONE),
+        ("đặt cảnh báo để làm gì", NONE),
+        ("dat canh bao lam chi", NONE),
+        ("thêm vào danh sách rồi làm gì tiếp", ADD),
+        ("thêm vào danh sách, làm gì tiếp theo?", ADD),
+        ("thêm vào danh sách giúp tôi để làm việc", ADD),
+        ("đặt cảnh báo giúp tôi", ALERT),
+    ],
+)
+def test_a_rhetorical_question_after_the_request_is_a_refusal_but_a_followup_is_not(
+    message: str, expected: frozenset[str]
+) -> None:
+    assert allowed_write_tools(message) == expected
 
 
 @pytest.mark.parametrize(

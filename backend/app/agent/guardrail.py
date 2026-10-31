@@ -50,9 +50,12 @@ _ALERT: Final = re.compile(
 # mệnh đề và khi từ phủ định cách động từ tối đa 2 từ, nên "không quá 30 triệu và đặt cảnh báo"
 # (phủ định thuộc về giá) không bị chặn nhầm. Gắn với cuối cửa sổ (`$`).
 _NEGATION: Final = re.compile(
-    r"\b(dung(?! (?:quen|ngai)\b)|khong|ko|chang|khoi|thoi|chua|do not|don'?t|no need|never)"
-    r"\b(?: \w+){0,2} ?$"
+    r"\b(dung(?! (?:quen|ngai)\b)|khong|ko|chang|khoi|thoi|chua|sao phai|do not|don'?t|no need"
+    r"|never)\b(?: \w+){0,2} ?$"
 )
+# Câu hỏi tu từ ngay sau cụm yêu cầu ("tôi thêm vào danh sách làm gì", "đặt cảnh báo để làm gì")
+# là lời từ chối. Chỉ xét liền sau cụm: "thêm vào danh sách rồi làm gì tiếp" vẫn là yêu cầu.
+_RHETORICAL: Final = re.compile(r"\s*(?:de )?lam (?:gi|chi)\b")
 _NEGATION_WINDOW: Final = 40
 _CLAUSE_LOOKBACK: Final = 200  # xem lại tối đa ngần này ký tự để tìm động từ của mệnh đề
 # Động từ yêu cầu; phủ định được xét ngay trước động từ GẦN NHẤT của mệnh đề, vì cụm khớp có thể
@@ -83,6 +86,8 @@ def allowed_write_tools(message: str) -> frozenset[str]:
 def _requested(pattern: re.Pattern[str], folded: str) -> bool:
     """Có cụm yêu cầu khớp `pattern` mà không bị từ phủ định đứng ngay trước trong cùng câu."""
     for match in pattern.finditer(folded):
+        if _RHETORICAL.match(folded, match.end()):
+            continue
         start = match.start()
         lo = max(0, start - _CLAUSE_LOOKBACK)
         segment = folded[lo:start]
