@@ -74,6 +74,7 @@ Một lượt chỉ làm một milestone. Phiên dài quá thì `/clear` giữa 
 **Git**
 - Commit: `feat(T2.6): …`, `fix(T…)`, `test(T…)`, `docs(T…)`, `chore(T…)`; sửa sau review/QA dùng ID milestone (`fix(M2): …`). Một milestone = một nhánh, mỗi task ít nhất một commit.
 - Không push, merge, rebase khi người dùng chưa yêu cầu.
+- Ngày 2026-11-01 lịch sử `main` đã được gộp thành 1 commit; toàn bộ commit/nhánh cũ (kể cả ID task trong tin nhắn commit, `git log` cũ) xem ở tag `archive/full-history`. Từ đây trở đi quy ước commit/nhánh ở trên áp dụng như cũ.
 
 ## Kiến trúc tóm tắt
 `api` → `agent` → `agent/tools` → `services` → `db/repositories`; `services/scrape_service` → `scrapers/pipeline` → `scrapers/sites` + `normalize` → `db/repositories`. Mọi module được import `domain`, `config`; `db` không import gì khác. Trong `scrapers/` chỉ gói `pipeline/` được import `db`. Chi tiết và sơ đồ: `docs/03-architecture.md`.
