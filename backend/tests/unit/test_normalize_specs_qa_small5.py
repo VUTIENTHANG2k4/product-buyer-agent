@@ -382,3 +382,40 @@ def test_a_switch_name_is_never_a_bare_number(title: str) -> None:
     name = switch_name(title)
 
     assert name is None or not name.replace(".", "").isdigit()
+
+
+# ---------------------------------------------------------------- 4. màu + "V2" (T5.10)
+@pytest.mark.parametrize(
+    ("title", "expected"),
+    [
+        ("Bàn phím cơ Kailh Box White V2 switch", "Box White V2"),
+        ("Bàn phím cơ KAILH BOX WHITE V2 SWITCH", "BOX WHITE V2"),
+        ("Bàn phím cơ Kailh Box Red V3 switch", "Box Red V3"),
+    ],
+)
+def test_a_switch_name_made_of_a_word_a_colour_and_a_version_keeps_all_three(
+    title: str, expected: str
+) -> None:
+    assert switch_name(title) == expected
+
+
+def test_a_switch_name_with_a_colour_and_a_version_is_read_from_the_spec_table_too() -> None:
+    assert switch_name("Bàn phím cơ", {"Switch": "Kailh Box White V2 switch"}) == "Box White V2"
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Bàn phím cơ Black V2 switch",
+        "Bàn phím cơ Gaming Black V2 switch",
+        "Bàn phím cơ Hotswap White V3 switch",
+    ],
+)
+def test_a_colour_and_a_version_with_nothing_else_is_still_not_a_switch_name(title: str) -> None:
+    assert switch_name(title) is None
+
+
+def test_the_three_word_window_does_not_change_names_the_two_word_window_already_found() -> None:
+    assert switch_name("Bàn phím Kailh Box V2 switch") == "Box V2"
+    assert switch_name("Bàn phím Keychron K2 V2 Gateron Brown Switch") == "Gateron Brown"
+    assert switch_name("Bàn phím Akko CS Jelly Pink switch") == "Jelly Pink"

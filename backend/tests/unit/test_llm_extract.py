@@ -181,3 +181,31 @@ def test_input_sent_to_the_llm_is_size_capped() -> None:
     payload = json.loads(str(model.calls[0][1].content))
     assert len(payload["title"]) == 300 and len(payload["specs"]) == 60
     assert all(len(value) == 300 for value in payload["specs"].values())
+
+
+ODD_RAW: dict[str, Any] = {**RAW, "Số nút": 6, "Ghi chú 2": None, "Danh sách": ["a", "b"]}
+
+
+def test_raw_specs_values_that_are_not_strings_are_ignored_not_a_crash() -> None:
+    fill, model = filler(LaptopSpecs(gpu_model="RTX 4050"))
+
+    after = fill(MemoryCache(), Category.laptop, ACER, ODD_RAW, rule_extraction(raw=RAW))
+
+    assert after.specs["gpu_model"] == "RTX 4050"
+    assert json.loads(str(model.calls[0][1].content)) == {"title": ACER, "specs": RAW}
+
+
+def test_content_hash_ignores_raw_specs_values_that_are_not_strings() -> None:
+    assert content_hash(Category.laptop, "a", {"x": "1", "y": 5}) == content_hash(
+        Category.laptop, "a", {"x": "1"}
+    )
+
+
+def test_grounding_ignores_values_that_are_not_strings() -> None:
+    fill, _ = filler(LaptopSpecs(gpu_model="RTX 4090"))
+
+    after = fill(
+        MemoryCache(), Category.laptop, ACER, {**RAW, "GPU": ["RTX 4090"]}, rule_extraction()
+    )
+
+    assert "gpu_model" not in after.specs  # chỉ giá trị chuỗi mới là nguồn kiểm chứng

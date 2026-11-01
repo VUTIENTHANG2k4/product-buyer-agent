@@ -40,10 +40,25 @@ def _alnum(text: str) -> str:
     return re.sub(r"[^a-z0-9]", "", fold(text))
 
 
+def _text_items(raw_specs: Mapping[str, str]) -> list[tuple[str, str]]:
+    """Cặp (nhãn, giá trị) cùng là chuỗi. JSON cũ trong CSDL có thể chứa số, `null`, danh sách:
+    bỏ qua, không đoán đơn vị (giống `label_values`)."""
+    return [
+        (label, value)
+        for label, value in raw_specs.items()
+        if isinstance(label, str) and isinstance(value, str)
+    ]
+
+
 def _source_text(title: str, raw_specs: Mapping[str, str]) -> str:
     """Văn bản LLM được phép dựa vào, chỉ giữ chữ-số thường để so khớp ("RTX 4060" ~ "RTX4060")."""
     return _alnum(
-        " ".join([title[:MAX_TITLE_CHARS], *(v[:MAX_VALUE_CHARS] for v in raw_specs.values())])
+        " ".join(
+            [
+                title[:MAX_TITLE_CHARS],
+                *(value[:MAX_VALUE_CHARS] for _, value in _text_items(raw_specs)),
+            ]
+        )
     )
 
 
@@ -69,7 +84,7 @@ class SpecsCache(Protocol):
 def content_hash(category: Category, title: str, raw_specs: Mapping[str, str]) -> str:
     """SHA-256 của (nhóm, tiêu đề, bảng thông số thô); không phụ thuộc thứ tự nhãn."""
     payload = json.dumps(
-        [category.value, title, sorted(raw_specs.items())], ensure_ascii=False, sort_keys=True
+        [category.value, title, sorted(_text_items(raw_specs))], ensure_ascii=False, sort_keys=True
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -142,7 +157,7 @@ class LlmSpecsFiller:
                 "title": title[:MAX_TITLE_CHARS],
                 "specs": {
                     label[:MAX_VALUE_CHARS]: value[:MAX_VALUE_CHARS]
-                    for label, value in list(raw_specs.items())[:MAX_SPEC_ENTRIES]
+                    for label, value in _text_items(raw_specs)[:MAX_SPEC_ENTRIES]
                 },
             },
             ensure_ascii=False,
