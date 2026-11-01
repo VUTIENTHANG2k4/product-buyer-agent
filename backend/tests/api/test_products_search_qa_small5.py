@@ -314,14 +314,37 @@ def test_a_query_that_expands_under_nfkc_is_handled_not_a_server_error(
     assert response.status_code in (200, 422), response.text[:200]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-S5-2: unaccent() chạy SAU khi escape nên ký tự mà unaccent đổi thành '\\' "
-    "(U+2216 '∖') trở thành ký tự escape của ILIKE: q='a∖b' khớp tên chứa 'ab'",
-)
 def test_a_character_that_unaccent_turns_into_a_backslash_is_not_an_escape(
     client: TestClient, db_session: Session
 ) -> None:
     stock(db_session, "Chuột Mock Tab")
 
     assert total(client, q="a∖b") == 0
+
+
+def test_a_character_that_unaccent_turns_into_a_backslash_matches_it_literally(
+    client: TestClient, db_session: Session
+) -> None:
+    stock(db_session, "Chuột Mock Tab")
+    stock(db_session, r"Chuột Mock a\b")  # tên có dấu gạch chéo ngược thật
+
+    assert names(client, q="a∖b") == [r"Chuột Mock a\b"]
+
+
+@pytest.mark.parametrize(
+    ("q", "expected"),
+    [
+        ("mock_a", "Chuột Mock_A"),
+        ("mock%a", "Chuột Mock%A"),
+        ("môck_a", "Chuột Mock_A"),
+        ("môck%a", "Chuột Mock%A"),
+    ],
+)
+def test_like_wildcards_stay_literal_with_and_without_accents_in_the_term(
+    client: TestClient, db_session: Session, q: str, expected: str
+) -> None:
+    stock(db_session, "Chuột Mock_A")
+    stock(db_session, "Chuột Mock%A")
+    stock(db_session, "Chuột MockXA")
+
+    assert names(client, q=q) == [expected]
