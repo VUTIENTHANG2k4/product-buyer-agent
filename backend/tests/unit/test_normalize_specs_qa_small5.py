@@ -419,3 +419,37 @@ def test_the_three_word_window_does_not_change_names_the_two_word_window_already
     assert switch_name("Bàn phím Kailh Box V2 switch") == "Box V2"
     assert switch_name("Bàn phím Keychron K2 V2 Gateron Brown Switch") == "Gateron Brown"
     assert switch_name("Bàn phím Akko CS Jelly Pink switch") == "Jelly Pink"
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Bàn phím cơ Rapoo Black V2 switch",
+        "Bàn phím cơ RGB Black V2 switch",
+        "Bàn phím cơ TKL White V2 switch",
+        "Bàn phím cơ Mini Black V2 switch",
+        "Bàn phím cơ Mechanical Black V2 switch",
+        "Bàn phím cơ Clicky Purple V2 switch",
+        "Bàn phím cơ Akko Black V2 switch",
+    ],
+)
+def test_a_brand_or_keyboard_word_before_a_colour_and_a_version_is_not_a_switch_name(
+    title: str,
+) -> None:
+    assert switch_name(title) is None
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Red switch Blue switch", None),
+        ("Akko switch Pegasus switch", "Akko"),
+        ("Pegasus switch hotswap switch", "Pegasus"),
+        ("Kailh switch Box White V2 switch", "Kailh"),
+    ],
+)
+def test_the_first_switch_phrase_wins_when_the_word_switch_repeats_within_three_words(
+    text: str, expected: str | None
+) -> None:
+    assert switch_name(f"Bàn phím cơ {text}") == expected
+    assert switch_name("Bàn phím cơ", {"Switch": text}) == expected

@@ -332,9 +332,15 @@ def test_a_character_that_unaccent_turns_into_a_backslash_matches_it_literally(
 
 
 @pytest.mark.parametrize(
-    ("q", "expected"), [("mock_a", "Chuột Mock_A"), ("mock%a", "Chuột Mock%A")]
+    ("q", "expected"),
+    [
+        ("mock_a", "Chuột Mock_A"),
+        ("mock%a", "Chuột Mock%A"),
+        ("môck_a", "Chuột Mock_A"),
+        ("môck%a", "Chuột Mock%A"),
+    ],
 )
-def test_like_wildcards_after_an_accented_term_stay_literal(
+def test_like_wildcards_stay_literal_with_and_without_accents_in_the_term(
     client: TestClient, db_session: Session, q: str, expected: str
 ) -> None:
     stock(db_session, "Chuột Mock_A")

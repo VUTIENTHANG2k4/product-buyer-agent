@@ -51,7 +51,9 @@ _HE_WORD = re.compile(r"\bHE\b")
 # không phải một từ. Từ dài tối đa 40 ký tự và bắt đầu ở đầu từ (lookbehind) để regex chạy tuyến
 # tính trên chuỗi nhãn dài không khoảng trắng (BUG-S4-5).
 _SWITCH_NAME = re.compile(
-    r"(?<![\w-])((?:[^\W_][\w-]{0,39}\s+){0,2}[^\W_][\w-]{0,39})\s+switch\b", re.IGNORECASE
+    r"(?<![\w-])((?:(?!switch\b)[^\W_][\w-]{0,39}\s+){0,2}(?!switch\b)[^\W_][\w-]{0,39})"
+    r"\s+switch\b",
+    re.IGNORECASE,
 )
 # Từ chỉ dòng máy/tính năng đứng trước "switch" ("K8 Pro Hotswap Switch", "Plus V3 Switch").
 # "Tactile/Linear" vẫn là tên: Logitech đặt tên switch như vậy (GX Tactile).
@@ -60,6 +62,11 @@ _SWITCH_NOISE: Final = frozenset(
     + ["khong", "day", "gaming"]
 )
 _VERSION_TOKEN = re.compile(r"^v\d+$", re.IGNORECASE)
+# Từ mô tả bàn phím đứng trước "<màu> V2": chỉ dùng cho nhánh "Box White V2", không phải tên switch.
+_KEYBOARD_WORDS: Final = frozenset(
+    ["rgb", "led", "tkl", "mini", "full", "fullsize", "keyboard", "mechanical", "custom"]
+    + ["clicky", "linear", "tactile", "optical", "magnetic", "wired", "wireless", "compact"]
+)
 # Số model đứng trước tên switch ("3068 Reaper", "5075B Reaper", "G915 Tactile", "EK75 Pegasus"):
 # ≥ 2 chữ số (kèm tối đa một chữ cuối) hoặc 1–3 chữ rồi số. "MX2A" chỉ có một chữ số nên là tên
 # switch; "V2/V3" xử lý bằng _VERSION_TOKEN.
@@ -154,17 +161,23 @@ def _switch_name(text: str) -> str | None:
 def _coloured_version_name(words: list[str]) -> str | None:
     """ "Box White V2": ba từ cuối khi từ cuối là phiên bản, từ giữa là màu và từ đầu là tên thật.
 
-    Từ đầu là màu/từ chung/số model/phiên bản/số rời thì không có tên ("Gaming Black V2").
+    Từ đầu là màu/từ chung/từ mô tả bàn phím/hãng/số model/phiên bản/số rời thì không có tên
+    ("Gaming Black V2", "TKL White V2", "Rapoo Black V2").
     """
     if len(words) < 3 or not _VERSION_TOKEN.match(words[-1]) or fold(words[-2]) not in _COLOURS:
         return None
     first = words[-3]
     if (
-        fold(first) in _NOT_SWITCH_NAME | _SWITCH_NOISE
+        fold(first) in _NOT_SWITCH_NAME | _SWITCH_NOISE | _KEYBOARD_WORDS
         or _MODEL_TOKEN.match(first)
         or _VERSION_TOKEN.match(first)
         or _BARE_NUMBER.match(first)
     ):
+        return None
+    # Nhập trong hàm: `brand` nhập `specs.parsing`, nên nhập ở đầu file tạo vòng với gói `specs`.
+    from app.normalize.brand import UNKNOWN_BRAND, detect_brand
+
+    if detect_brand(first) != UNKNOWN_BRAND:
         return None
     return " ".join(words[-3:])
 
