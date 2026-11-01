@@ -1,0 +1,71 @@
+[project]
+name = "product-buyer-agent"
+version = "0.1.0"
+description = "AI agent mua sắm đồ công nghệ tiếng Việt"
+requires-python = ">=3.11"
+dependencies = [
+    "alembic==1.20.0",
+    "apscheduler==3.11.3",
+    "beautifulsoup4==4.15.0",
+    "certifi==2026.7.22",
+    "fastapi==0.143.3",
+    "httpx==0.28.1",
+    "langchain==1.4.6",
+    "langchain-google-genai==4.4.2",
+    "langchain-openai==1.7.2",
+    "psycopg[binary]==3.3.6",
+    "pydantic-settings==2.16.0",
+    "rapidfuzz==3.14.6",
+    "selectolax==1.0.0",
+    "sqlmodel==0.0.48",
+    "uvicorn[standard]==0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy==2.4.0",
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "pytest-cov==7.1.0",
+    "python-dotenv==1.2.4",
+    "pyyaml==6.0.3",
+    "respx==0.23.1",
+    "ruff==0.17.1",
+    "time-machine==3.5.1",
+    "types-pyyaml==6.0.12.20260906",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+# Migration là mã sinh ra: chuỗi SQL dài (CHECK) không ngắt dòng được.
+"alembic/versions/*" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["app", "scripts"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+# APScheduler 3.x không có stub và không có py.typed.
+module = ["apscheduler.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+addopts = '-m "not live"'
+markers = [
+    "live: chạy với trang thật, chỉ chạy thủ công (cần SCRAPER_OFFLINE_ONLY=false)",
+    "slow: test chậm",
+]

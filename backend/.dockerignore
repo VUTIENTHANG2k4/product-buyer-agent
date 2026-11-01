@@ -1,0 +1,23 @@
+# Chỉ giữ những gì image cần: xem backend/Dockerfile.
+.venv
+__pycache__
+*.py[cod]
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.coverage
+coverage.xml
+htmlcov
+
+# Dữ liệu chạy trên máy chủ (gắn volume khi cần, không đóng vào image)
+data
+
+# Chỉ dữ liệu seed hư cấu được đóng vào image
+tests/*
+!tests/fixtures
+tests/fixtures/*
+!tests/fixtures/seed
+
+# Bí mật không bao giờ vào image
+.env
+.env.*

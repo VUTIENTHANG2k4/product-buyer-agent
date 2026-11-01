@@ -1,0 +1,414 @@
+# Golden ghép mẫu (docs/04 §7): cặp offer (a, b) nên ghép (merge) hoặc nên giữ riêng (separate).
+# Tiêu đề lấy từ fixture thật của GearVN, An Phát, FPT Shop. Fixture chưa có cặp laptop trùng giữa
+# hai trang, nên các cặp laptop chéo trang dùng bản viết lại theo định dạng của trang kia
+# (`synthetic_from` trỏ tới tiêu đề thật làm gốc). Ưu tiên "không ghép sai": thiếu cặp nên ghép
+# chỉ làm tách hai dòng, ghép nhầm thì hiện sai giá.
+
+# ---------- NÊN GHÉP: chuột ----------
+- id: mouse-cross-site-colour
+  category: mouse
+  expect: merge
+  why: cùng mẫu G304 X Superlight ở hai trang, khác màu
+  a: {site: gearvn, title: "Chuột gaming không dây Logitech G304 X Superlight Black"}
+  b: {site: anphat, title: "Chuột Logitech G304 X Superlight White"}
+- id: mouse-colour-pulsar-x2
+  category: mouse
+  expect: merge
+  why: cùng trang, khác màu
+  a: {site: gearvn, title: "Chuột Pulsar X2 Red"}
+  b: {site: gearvn, title: "Chuột Pulsar X2 Black"}
+- id: mouse-colour-pulsar-xlite
+  category: mouse
+  expect: merge
+  why: cùng trang, khác màu
+  a: {site: gearvn, title: "Chuột Pulsar Xlite Wireless V2 Blue"}
+  b: {site: gearvn, title: "Chuột Pulsar Xlite Wireless V2 White"}
+- id: mouse-colour-pulsar-xlite-mini
+  category: mouse
+  expect: merge
+  why: cùng trang, khác màu (bản Mini)
+  a: {site: gearvn, title: "Chuột Pulsar Xlite Wireless V2 Mini Pink"}
+  b: {site: gearvn, title: "Chuột Pulsar Xlite Wireless V2 Mini Black"}
+- id: mouse-colour-akko-nest
+  category: mouse
+  expect: merge
+  why: cùng trang, khác màu
+  a: {site: gearvn, title: "Chuột không dây AKKO Nest Black"}
+  b: {site: gearvn, title: "Chuột không dây AKKO Nest White"}
+- id: mouse-colour-hyperwork
+  category: mouse
+  expect: merge
+  why: cùng trang, màu tiếng Việt
+  a: {site: gearvn, title: "Chuột không dây HyperWork Silentium MS01 Đen"}
+  b: {site: gearvn, title: "Chuột không dây HyperWork Silentium MS01 Trắng"}
+- id: mouse-colour-hyperwork-gen2
+  category: mouse
+  expect: merge
+  why: cùng trang, màu tiếng Việt
+  a: {site: gearvn, title: "Chuột không dây HyperWork Silentium Gen 2 MS01 Đen"}
+  b: {site: gearvn, title: "Chuột không dây HyperWork Silentium Gen 2 MS01 Trắng"}
+- id: mouse-colour-atk-x1
+  category: mouse
+  expect: merge
+  why: cùng trang, khác màu (dấu + thuộc tên mẫu)
+  a: {site: anphat, title: "Chuột ATK X1 V2 Ultimate+ Silver"}
+  b: {site: anphat, title: "Chuột ATK X1 V2 Ultimate+ Red"}
+- id: mouse-colour-atk-ghost
+  category: mouse
+  expect: merge
+  why: cùng trang, khác màu
+  a: {site: anphat, title: "Chuột ATK GHOST Ultimate+ Silver"}
+  b: {site: anphat, title: "Chuột ATK GHOST Ultimate+ Black"}
+- id: mouse-colour-g304
+  category: mouse
+  expect: merge
+  why: cùng trang, khác màu
+  a: {site: anphat, title: "Chuột Logitech G304 X Superlight Black"}
+  b: {site: anphat, title: "Chuột Logitech G304 X Superlight White"}
+- id: mouse-colour-m650l-part-number
+  category: mouse
+  expect: merge
+  why: mã phụ tùng 910-006247 và màu không phải khác biệt mẫu
+  a: {site: anphat, title: "Chuột không dây Logitech SIGNATURE M650L Wireless/Bluetooth - màu đen 910-006247"}
+  b: {site: anphat, title: "Chuột không dây Logitech SIGNATURE M650L Wireless/Bluetooth - màu trắng nhạt"}
+- id: mouse-parenthesised-sku
+  category: mouse
+  expect: merge
+  why: '"(PMW920)" là mã phụ tùng, "Acer" là hãng đã có trong nhận diện'
+  a: {site: gearvn, title: "Chuột Gaming Predator Cestus 330 (PMW920)"}
+  b: {site: gearvn, title: "Chuột gaming Acer Predator Cestus 330"}
+
+# ---------- NÊN GHÉP: bàn phím ----------
+- id: keyboard-colour-aula-f75
+  category: keyboard
+  expect: merge
+  why: 'màu ghép nhiều từ, tên switch "Milk White" giữ nguyên'
+  a: {site: anphat, title: "Bàn phím cơ AULA F75 Grey White Milk White switch"}
+  b: {site: anphat, title: "Bàn phím cơ AULA F75 Black Grey Milk White switch"}
+- id: keyboard-colour-g512
+  category: keyboard
+  expect: merge
+  why: khác màu, cùng Tactile switch
+  a: {site: anphat, title: "Bàn phím cơ Logitech G512 X 98 TMR White Tactile switch"}
+  b: {site: anphat, title: "Bàn phím cơ Logitech G512 X 98 TMR Black Tactile switch"}
+- id: keyboard-colour-h108
+  category: keyboard
+  expect: merge
+  why: khác màu, cùng switch Cotton Candy
+  a: {site: anphat, title: "Bàn phím cơ AULA H108 Yellow Purple Silent Cotton Candy Switch"}
+  b: {site: anphat, title: "Bàn phím cơ AULA H108 White Black Silent Cotton Candy Switch"}
+- id: keyboard-colour-rs6
+  category: keyboard
+  expect: merge
+  why: khác màu
+  a: {site: anphat, title: "Bàn phím cơ ATK RS6 Air Pink Iceblade switch"}
+  b: {site: anphat, title: "Bàn phím cơ ATK RS6 Air Black Iceblade switch"}
+- id: keyboard-colour-falchion
+  category: keyboard
+  expect: merge
+  why: khác màu
+  a: {site: gearvn, title: "Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2X White"}
+  b: {site: gearvn, title: "Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2X Red"}
+- id: keyboard-colour-azoth
+  category: keyboard
+  expect: merge
+  why: khác màu
+  a: {site: gearvn, title: "Bàn phím gaming ASUS ROG Azoth 96 HE White"}
+  b: {site: gearvn, title: "Bàn phím gaming ASUS ROG Azoth 96 HE Black"}
+- id: keyboard-colour-g316-vietnamese
+  category: keyboard
+  expect: merge
+  why: màu tiếng Việt
+  a: {site: gearvn, title: "Bàn phím Logitech G316 X 98 RGB Trắng Tactile"}
+  b: {site: gearvn, title: "Bàn phím Logitech G316 X 98 RGB Đen Tactile"}
+- id: keyboard-colour-g316-english
+  category: keyboard
+  expect: merge
+  why: khác màu
+  a: {site: anphat, title: "Bàn phím cơ Logitech G316 X 98 Black"}
+  b: {site: anphat, title: "Bàn phím cơ Logitech G316 X 98 White"}
+
+# ---------- NÊN GHÉP: tai nghe ----------
+- id: headset-cross-site-g-prefix
+  category: headset
+  expect: merge
+  why: '"PRO X3" và "G Pro X3" là cùng dòng; cùng màu'
+  a: {site: gearvn, title: "Tai nghe Logitech PRO X3 Lightspeed Magenta"}
+  b: {site: anphat, title: "Tai nghe Logitech G Pro X3 LightSpeed Magenta"}
+- id: headset-cross-site-g-prefix-colour
+  category: headset
+  expect: merge
+  why: như trên, khác màu
+  a: {site: gearvn, title: "Tai nghe Logitech PRO X3 Lightspeed White"}
+  b: {site: anphat, title: "Tai nghe Logitech G Pro X3 LightSpeed Black"}
+- id: headset-cross-site-hp-hyperx
+  category: headset
+  expect: merge
+  why: 'GearVN ghi "HP HYPERX", An Phát ghi "HyperX": cùng hãng HyperX'
+  a: {site: gearvn, title: "Tai nghe HP HYPERX Cloud Earbuds III Black"}
+  b: {site: anphat, title: "Tai nghe HyperX Cloud Earbuds III Black"}
+- id: headset-cross-site-hp-hyperx-s
+  category: headset
+  expect: merge
+  why: bản III S, khác màu
+  a: {site: gearvn, title: "Tai nghe HP HYPERX Cloud Earbuds III S Red"}
+  b: {site: anphat, title: "Tai nghe HyperX Cloud Earbuds III S Black"}
+- id: headset-cross-site-hammerhead-x
+  category: headset
+  expect: merge
+  why: tiêu đề giống hệt ở hai trang
+  a: {site: gearvn, title: "Tai nghe Razer Hammerhead V3 X HyperSpeed"}
+  b: {site: anphat, title: "Tai nghe Razer Hammerhead V3 X HyperSpeed"}
+- id: headset-cross-site-hammerhead
+  category: headset
+  expect: merge
+  why: cùng bản HyperSpeed, An Phát không ghi màu
+  a: {site: gearvn, title: "Tai nghe Razer Hammerhead V3 HyperSpeed Black"}
+  b: {site: anphat, title: "Tai nghe Razer Hammerhead V3 HyperSpeed"}
+- id: headset-colour-akko-verge
+  category: headset
+  expect: merge
+  why: 'khác màu (có màu hai từ "Black Red")'
+  a: {site: gearvn, title: "Tai nghe gaming không dây Akko Verge S9 Ultra White"}
+  b: {site: gearvn, title: "Tai nghe gaming không dây Akko Verge S9 Ultra Black Red"}
+- id: headset-colour-g321
+  category: headset
+  expect: merge
+  why: khác màu
+  a: {site: anphat, title: "Tai nghe Logitech G321 LightSpeed White"}
+  b: {site: anphat, title: "Tai nghe Logitech G321 LightSpeed Black"}
+
+# ---------- NÊN GHÉP: laptop (cùng mã model, khác định dạng tiêu đề giữa các trang) ----------
+- id: laptop-gearvn-to-fptshop-format
+  category: laptop
+  expect: merge
+  why: 'cùng mã AL15-53P-56QH, FPT Shop ghi thông số cách nhau bằng "/" không ngoặc'
+  a: {site: gearvn, title: 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)'}
+  b:
+    site: fptshop
+    title: 'Laptop Acer Aspire Lite 15 AL15-53P-56QH Core 5 120U/8GB/512GB/15.6" FHD/Win11'
+    synthetic_from: {site: gearvn, title: 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)'}
+- id: laptop-anphat-to-gearvn-format
+  category: laptop
+  expect: merge
+  why: HP lấy mã cuối cùng D44VLPA ở cả hai định dạng
+  a: {site: anphat, title: "Laptop HP VICTUS 15-fa2452TX D44VLPA (Intel Core i5-13420H | RTX 3050 6GB | 15.6 inch FHD 144Hz | 16GB | 512GB | Win 11 | Đen)"}
+  b:
+    site: gearvn
+    title: 'Laptop gaming HP Victus 15-fa2452TX D44VLPA (Core i5-13420H/ RTX 3050 6GB/ 16GB/ 512GB/ 15.6" FHD 144Hz/ Win 11)'
+    synthetic_from: {site: anphat, title: "Laptop HP VICTUS 15-fa2452TX D44VLPA (Intel Core i5-13420H | RTX 3050 6GB | 15.6 inch FHD 144Hz | 16GB | 512GB | Win 11 | Đen)"}
+- id: laptop-fptshop-to-gearvn-format
+  category: laptop
+  expect: merge
+  why: cùng mã FX610JH-TU008W
+  a: {site: fptshop, title: 'Laptop Asus TUF Gaming 16 FX610JH-TU008W i5-14450HX/16GB/512GB/16"/Nvidia Geforce RTX5050 8GB/Win 11'}
+  b:
+    site: gearvn
+    title: 'Laptop gaming ASUS TUF Gaming 16 FX610JH-TU008W (Core i5-14450HX/ RTX 5050 8GB/ 16GB/ 512GB/ 16" FHD/ Win 11)'
+    synthetic_from: {site: fptshop, title: 'Laptop Asus TUF Gaming 16 FX610JH-TU008W i5-14450HX/16GB/512GB/16"/Nvidia Geforce RTX5050 8GB/Win 11'}
+- id: laptop-lenovo-takes-the-mtm-code
+  category: laptop
+  expect: merge
+  why: Lenovo ghi nền tảng 15IRX9 rồi tới mã 83DV01MCVN; trang kia bỏ nền tảng
+  a: {site: anphat, title: "Laptop Lenovo LOQ 15IRX9 83DV01MCVN (Intel Core i7-14650HX | RTX 4050 6GB GDDR6 | 15.6 inch FHD | 16GB | 512GB | Windows 11 | Xám)"}
+  b:
+    site: gearvn
+    title: 'Laptop gaming Lenovo LOQ 83DV01MCVN (Core i7-14650HX/ RTX 4050 6GB/ 16GB/ 512GB/ 15.6" FHD/ Win 11)'
+    synthetic_from: {site: anphat, title: "Laptop Lenovo LOQ 15IRX9 83DV01MCVN (Intel Core i7-14650HX | RTX 4050 6GB GDDR6 | 15.6 inch FHD | 16GB | 512GB | Windows 11 | Xám)"}
+- id: laptop-dell-numeric-sku
+  category: laptop
+  expect: merge
+  why: Dell dùng mã chỉ gồm số 71100521
+  a: {site: anphat, title: "Laptop Dell XPS 13 9350 71100521 (Intel Core Ultra 5 226V | 16GB | 1TB | Intel Arc | 13.4 inch QHD 2.5K 120Hz | Win 11 | Office | Đen)"}
+  b:
+    site: fptshop
+    title: 'Laptop Dell XPS 13 9350 71100521 Core Ultra 5 226V/16GB/1TB/13.4"/Win11'
+    synthetic_from: {site: anphat, title: "Laptop Dell XPS 13 9350 71100521 (Intel Core Ultra 5 226V | 16GB | 1TB | Intel Arc | 13.4 inch QHD 2.5K 120Hz | Win 11 | Office | Đen)"}
+
+# ---------- KHÔNG NÊN GHÉP: chuột ----------
+- id: mouse-g-pro-x2-vs-x3
+  category: mouse
+  expect: separate
+  why: X2 và X3 là hai đời khác nhau
+  a: {site: anphat, title: "Chuột Logitech G Pro X2 SUPERSTRIKE"}
+  b: {site: anphat, title: "Chuột Logitech G Pro X3 SUPERSTRIKE Midnight Black"}
+- id: mouse-superlight-2-vs-1
+  category: mouse
+  expect: separate
+  why: Superlight 2 khác Superlight đời đầu
+  a: {site: anphat, title: "Chuột Logitech G Pro X Superlight 2 Wireless"}
+  b: {site: anphat, title: "Chuột Logitech G Pro X Superlight Wireless"}
+- id: mouse-pulsar-x2-vs-mini
+  category: mouse
+  expect: separate
+  why: bản Mini nhỏ hơn, giá khác
+  a: {site: gearvn, title: "Chuột Pulsar X2 Black"}
+  b: {site: gearvn, title: "Chuột Pulsar X2 Mini Black"}
+- id: mouse-pulsar-xlite-vs-mini
+  category: mouse
+  expect: separate
+  why: bản Mini khác
+  a: {site: gearvn, title: "Chuột Pulsar Xlite Wireless V2 Black"}
+  b: {site: gearvn, title: "Chuột Pulsar Xlite Wireless V2 Mini Black"}
+- id: mouse-silentium-vs-gen2
+  category: mouse
+  expect: separate
+  why: Gen 2 là đời khác
+  a: {site: gearvn, title: "Chuột không dây HyperWork Silentium MS01 Đen"}
+  b: {site: gearvn, title: "Chuột không dây HyperWork Silentium Gen 2 MS01 Đen"}
+- id: mouse-atk-ultimate-vs-extreme
+  category: mouse
+  expect: separate
+  why: Ultimate+ và Extreme+ là hai bản
+  a: {site: anphat, title: "Chuột ATK GHOST Ultimate+ Black"}
+  b: {site: anphat, title: "Chuột ATK GHOST Extreme+ Black"}
+- id: mouse-atk-x1-vs-z1
+  category: mouse
+  expect: separate
+  why: X1 và Z1 là hai mẫu
+  a: {site: anphat, title: "Chuột ATK X1 V2 Ultimate+ Black"}
+  b: {site: anphat, title: "Chuột ATK Z1 V2 Ultimate+ Orange"}
+- id: mouse-m650-vs-m650l
+  category: mouse
+  expect: separate
+  why: M650L là bản lớn
+  a: {site: anphat, title: "Chuột không dây Logitech SIGNATURE M650 Wireless/Bluetooth - màu hồng"}
+  b: {site: anphat, title: "Chuột không dây Logitech SIGNATURE M650L Wireless/Bluetooth - màu đen 910-006247"}
+- id: mouse-cestus-330-vs-353
+  category: mouse
+  expect: separate
+  why: số hiệu khác
+  a: {site: gearvn, title: "Chuột gaming Acer Predator Cestus 330"}
+  b: {site: gearvn, title: "Chuột gaming không dây Predator Cestus 353"}
+- id: mouse-g502-hero-vs-lightspeed
+  category: mouse
+  expect: separate
+  why: G502 HERO có dây, bản Lightspeed là không dây
+  a: {site: anphat, title: "Chuột Logitech G502 HERO"}
+  b: {site: gearvn, title: "Chuột Logitech G502 Lightspeed Wireless Black"}
+- id: mouse-different-brand-same-number
+  category: mouse
+  expect: separate
+  why: khác hãng thì không bao giờ ghép
+  a: {site: anphat, title: "Chuột Gigabyte Aorus M5"}
+  b: {site: anphat, title: "Chuột Gigabyte Aorus M2"}
+- id: mouse-unknown-brand-is-never-fuzzy-matched
+  category: mouse
+  expect: separate
+  why: 'hãng chưa nhận ra ("Unknown") nên không ghép mờ với bất kỳ ai'
+  a: {site: anphat, title: "Chuột Infinity Shadow White - Gaming Mouse"}
+  b:
+    site: gearvn
+    title: "Chuột Infinity Shadow Black Gaming Mouse"
+    synthetic_from: {site: anphat, title: "Chuột Infinity Shadow White - Gaming Mouse"}
+
+# ---------- KHÔNG NÊN GHÉP: bàn phím ----------
+- id: keyboard-g316-98-vs-75
+  category: keyboard
+  expect: separate
+  why: bố cục 98 phím khác 75%
+  a: {site: anphat, title: "Bàn phím cơ Logitech G316 X 98 White"}
+  b: {site: anphat, title: "Bàn phím cơ Logitech G316 X 75 White"}
+- id: keyboard-g512-98-vs-75
+  category: keyboard
+  expect: separate
+  why: bố cục khác
+  a: {site: anphat, title: "Bàn phím cơ Logitech G512 X 98 TMR White Tactile switch"}
+  b: {site: anphat, title: "Bàn phím cơ Logitech G512 X 75 TMR White Tactile switch"}
+- id: keyboard-falchion-v2x-vs-v2
+  category: keyboard
+  expect: separate
+  why: V2X khác V2
+  a: {site: gearvn, title: "Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2X White"}
+  b: {site: gearvn, title: "Bàn phím cơ ASUS ROG Falchion Ace 75 HE V2 White"}
+- id: keyboard-aula-different-switch
+  category: keyboard
+  expect: separate
+  why: AULA F75 với hai loại switch khác nhau là hai SKU
+  a: {site: anphat, title: "Bàn phím cơ AULA F75 Grey White Milk White switch"}
+  b: {site: anphat, title: "Bàn phím cơ AULA F75 3 Mode Iced Berry Star Vector switch"}
+
+# ---------- KHÔNG NÊN GHÉP: tai nghe ----------
+- id: headset-earbuds-iii-vs-iii-s
+  category: headset
+  expect: separate
+  why: III S là bản khác của III
+  a: {site: anphat, title: "Tai nghe HyperX Cloud Earbuds III Black"}
+  b: {site: anphat, title: "Tai nghe HyperX Cloud Earbuds III S Black"}
+- id: headset-cloud-iii-vs-iii-s-wireless
+  category: headset
+  expect: separate
+  why: Cloud III có dây, Cloud III S Wireless không dây
+  a: {site: anphat, title: "Tai nghe HyperX Cloud III Black"}
+  b: {site: anphat, title: "Tai nghe HyperX Cloud III S Wireless Black"}
+- id: headset-hammerhead-v3-vs-hyperspeed
+  category: headset
+  expect: separate
+  why: Hammerhead V3 có dây, bản HyperSpeed không dây
+  a: {site: anphat, title: "Tai nghe Razer Hammerhead V3 White"}
+  b: {site: anphat, title: "Tai nghe Razer Hammerhead V3 HyperSpeed"}
+- id: headset-hammerhead-v3-vs-v3-x
+  category: headset
+  expect: separate
+  why: V3 X là bản rút gọn
+  a: {site: anphat, title: "Tai nghe Razer Hammerhead V3 HyperSpeed"}
+  b: {site: anphat, title: "Tai nghe Razer Hammerhead V3 X HyperSpeed"}
+- id: headset-g321-vs-g325
+  category: headset
+  expect: separate
+  why: số hiệu khác
+  a: {site: anphat, title: "Tai nghe Logitech G321 LightSpeed White"}
+  b: {site: anphat, title: "Tai nghe Logitech G325 LightSpeed White"}
+- id: headset-stinger-3-vs-2-core
+  category: headset
+  expect: separate
+  why: Stinger 3 và Stinger 2 Core là hai đời
+  a: {site: gearvn, title: "Tai nghe HyperX Cloud Stinger 3 Black"}
+  b: {site: anphat, title: "Tai nghe HyperX Cloud Stinger 2 Core"}
+- id: headset-different-brands
+  category: headset
+  expect: separate
+  why: khác hãng
+  a: {site: anphat, title: "Tai nghe Razer Kraken V3 X USB"}
+  b: {site: anphat, title: "Tai nghe HyperX Cloud III Black"}
+
+# ---------- KHÔNG NÊN GHÉP: laptop ----------
+- id: laptop-different-codes-same-family
+  category: laptop
+  expect: separate
+  why: cùng dòng Aspire Lite 15 nhưng khác mã (AL15-53P-56QH và AL15-410P-R1W8)
+  a: {site: gearvn, title: 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)'}
+  b: {site: gearvn, title: 'Laptop Acer Aspire Lite 15 AL15-410P-R1W8 (Ryzen 5-3500U/ 8GB/ 512GB/ 15.6" FHD IPS/ Win 11)'}
+- id: laptop-gigabyte-eagle-3050-vs-4050
+  category: laptop
+  expect: separate
+  why: khác mã và khác GPU
+  a: {site: gearvn, title: "Laptop gaming Gigabyte Eagle GL6J EAGLE-9LJR2VNF93SH (Ryzen 5 7533HS/ RTX 3050 6GB/ 16GB/ 512GB/ 16\" FHD+/ Win 11)"}
+  b: {site: gearvn, title: "Laptop gaming Gigabyte Eagle GL6J EAGLE-9MJR2VNF93SH (Ryzen 5 7533HS/ RTX 4050 6GB/ 16GB/ 512GB/ 16\" FHD+/ Win 11)"}
+- id: laptop-expertbook-p3-sku-suffix
+  category: laptop
+  expect: separate
+  why: P3406CCAP-U516W và P3406CCAP-U516S8W là hai SKU
+  a: {site: gearvn, title: 'Laptop Asus ExpertBook P3 P3406CCAP-U516W (Ultra 5-225H/ 16GB/ 512GB/ 14" WUXGA / Win 11)'}
+  b: {site: gearvn, title: 'Laptop Asus ExpertBook P3 G1 P3406CCAP-U516S8W (Ultra 5-225H/ 16GB/ 512GB/ 14" WUXGA/ Win 11)'}
+- id: laptop-dell-xps-two-skus
+  category: laptop
+  expect: separate
+  why: DX13260 với hai mã SKU khác nhau
+  a: {site: anphat, title: "Laptop Dell XPS 13 DX13260- DX3C5376W1 (Intel Core 5 320 | 16GB | 512GB | Intel Graphics | 13.4 inch 2.5K | Cảm ứng | Win 11 | Office | Sky)"}
+  b: {site: anphat, title: "Laptop Dell XPS 13 DX13260 - 71102177 (Intel Core 5 320 | 16GB | 512GB | Intel Graphics | 13.4 inch 2.5K Cảm ứng | Win 11 | OfficeH24+365 | Sky)"}
+- id: laptop-same-code-conflicting-ram
+  category: laptop
+  expect: separate
+  why: 'cùng mã AL15-53P-56QH nhưng RAM khác (8GB và 16GB): không dám coi là một mẫu'
+  a: {site: gearvn, title: 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)'}
+  b:
+    site: gearvn
+    title: 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 16GB/ 512GB/ 15.6" FHD/ Win 11)'
+    synthetic_from: {site: gearvn, title: 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)'}
+- id: laptop-different-brands
+  category: laptop
+  expect: separate
+  why: khác hãng
+  a: {site: anphat, title: "Laptop ASUS ExpertBook B3 B3405CCA-LY0080W (Intel Core Ultra 7 255H | Intel Graphics | 14 inch WUXGA | 16GB | 512GB | Win 11 | Xám)"}
+  b: {site: anphat, title: "Laptop HP Elitebook 8 G1i Next Gen AI 47 TOPS D85ZNAT (Intel Core Ultra 7-258V | Intel Arc Graphics | 14 inch WUXGA | 32 GB | 512 GB | Windows 11 Home 64 | Bạc)"}

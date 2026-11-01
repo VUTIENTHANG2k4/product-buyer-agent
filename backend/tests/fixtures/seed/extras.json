@@ -1,0 +1,27 @@
+{
+  "shopping_list_name": "Mock danh sách mua",
+  "shopping_list_items": [
+    {
+      "category": "laptop",
+      "brand": "Lenovo",
+      "model_code": "MOCK-LEN-15IRX9",
+      "note": "Máy chính để chơi game"
+    },
+    {
+      "category": "mouse",
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-G304",
+      "quantity": 1
+    }
+  ],
+  "alerts": [
+    {
+      "category": "laptop",
+      "brand": "Lenovo",
+      "model_code": "MOCK-LEN-LEGION5",
+      "target_price": 25000000,
+      "channel": "email",
+      "destination": "mock@example.com"
+    }
+  ]
+}

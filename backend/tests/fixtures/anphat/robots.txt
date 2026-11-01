@@ -1,0 +1,50 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /ajax/
+Disallow: /cart
+Disallow: /cart/*
+Crawl-delay: 5
+
+Sitemap: https://www.anphatpc.com.vn/sitemap.xml
+# >>> hurasoft-fix >>> phase4  additive only, no existing rule is removed
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: *
+Disallow: /tim
+
+# <<< hurasoft-fix <<<

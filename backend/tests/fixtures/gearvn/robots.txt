@@ -1,0 +1,9 @@
+User-Agent: *
+Allow: /
+Disallow: /gio-hang
+Disallow: /thanh-toan
+Disallow: /design-system
+Disallow: /tai-khoan
+Disallow: /api/
+
+Sitemap: https://gearvn.com/sitemap.xml

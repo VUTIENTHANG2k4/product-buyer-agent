@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /DataFiles/
+Disallow: /bin/
+Disallow: /css/
+Disallow: /js/
+Disallow: /layout/
+Disallow: /Log/
+Disallow: /Properties/
+Disallow: /Web References/
+
+Sitemap: https://viettelstore.vn/sitemap.xml
