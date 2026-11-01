@@ -241,9 +241,15 @@ class ProductRepository:
             lowered = [brand.lower() for brand in query.brands]
             base = base.where(func.lower(Product.brand).in_(lowered))
         for term in (query.text or "").split():
-            pattern = "%" + term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
             # Bỏ dấu cả hai vế (extension unaccent, migration 0006): "chuot" tìm được "Chuột".
-            unaccented = func.unaccent(pattern)
+            # Escape SAU khi bỏ dấu: có ký tự mà unaccent đổi thành "\" ("∖" U+2216) và nếu escape
+            # trước thì nó thành ký tự escape của ILIKE (BUG-S5-2).
+            escaped = func.replace(
+                func.replace(func.replace(func.unaccent(term), "\\", "\\\\"), "%", "\\%"),
+                "_",
+                "\\_",
+            )
+            unaccented = func.concat("%", escaped, "%")
             base = base.where(
                 or_(
                     func.unaccent(col(Product.canonical_name)).ilike(unaccented, escape="\\"),
