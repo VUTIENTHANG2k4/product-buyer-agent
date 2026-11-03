@@ -90,6 +90,11 @@ _COLORS: Final = frozenset(
         "nhat",
     ]
 )
+# Màu tiếng Việt (đã bỏ dấu): sau "<màu> Switch" chỉ màu này mới chắc là màu vỏ (BUG-S2-5).
+_VI_COLORS: Final = frozenset(
+    ["den", "trang", "xam", "hong", "xanh", "vang", "tim", "do", "luc", "bac", "nau", "cam"]
+    + ["kem", "than", "chi", "nhat"]
+)
 # Màu đứng ngay sau / ngay trước các từ này là tên switch bàn phím chứ không phải màu vỏ.
 _SWITCH_BEFORE: Final = frozenset(
     [
@@ -241,6 +246,12 @@ def _tokens(title: str) -> list[_Token]:
     return tokens
 
 
+def _is_named_switch_colour(tokens: list[_Token], index: int) -> bool:
+    """Màu ở `index` đứng ngay sau hãng/dòng switch ("Gateron Red", "Cream Blue")."""
+    before = tokens[index - 1].key if index > 0 else ""
+    return (before in _SWITCH_BEFORE and before not in {"switch", "sw"}) or before == "cream"
+
+
 def _is_switch_colour(tokens: list[_Token], index: int) -> bool:
     """Màu là một phần tên switch (`MX Red`, `Gateron Brown`, `Red Axis`, `Cream Blue`)."""
     before = tokens[index - 1].key if index > 0 else ""
@@ -248,7 +259,10 @@ def _is_switch_colour(tokens: list[_Token], index: int) -> bool:
     if before in {"switch", "sw"} and index >= 2 and tokens[index - 2].key in _COLORS:
         # "<Hãng> <màu> Switch <màu>" ("Gateron Red Switch Đen"): màu thứ hai là màu vỏ (BUG-S1-7).
         # "Optical Switch Red/Blue" hay "MX Switch Red" thì màu sau chữ Switch là tên switch.
-        return False
+        # Màu thứ hai tiếng Anh chỉ là màu vỏ khi màu thứ nhất chắc chắn là tên switch ("Gateron Red
+        # SW Black"); "3068 Black Switch Red" mơ hồ nên coi màu sau là tên switch (BUG-S2-5).
+        is_shell = tokens[index].key in _VI_COLORS or _is_named_switch_colour(tokens, index - 2)
+        return not is_shell
     if before in _SWITCH_BEFORE or after in _SWITCH_AFTER:
         return True
     # "Cream Blue" / "Cream Yellow" là tên switch của Akko, không phải hai màu vỏ.

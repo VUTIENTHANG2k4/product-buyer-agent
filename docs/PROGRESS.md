@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (lượt "việc nhỏ 6" xong: T5.10, T7.8, qua `make check` + `code-reviewer` + `qa-tester`; đã merge vào `main` (de3f8f2)).
+- Đang làm: 🔄 lượt "việc nhỏ 7" (nhánh `milestone/S7-small-fixes-7`): T6.7 (chỉnh prompt/seed sau eval), T8.12 (4 điểm UI, cần chọn hành vi), T5.8 (còn BUG-S2-5, cần quyết định). Lượt "việc nhỏ 6" xong: T5.10, T7.8, qua `make check` + `code-reviewer` + `qa-tester`; đã merge vào `main` (de3f8f2).
 - Backlog chưa làm: T6.7, T8.12; bug giữ `xfail(strict)`: BUG-S2-5 (T5.8, cần quyết định). T8.12/T5.8 cần người dùng chọn hành vi trước. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-11-01 — lượt "việc nhỏ 6" (tên switch màu + "V2", `llm_extract` chịu `raw_specs` lạ, escape `ILIKE` sau `unaccent`)
 

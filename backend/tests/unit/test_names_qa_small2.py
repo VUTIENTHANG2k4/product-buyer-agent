@@ -188,17 +188,33 @@ def test_different_switches_never_merge_whatever_the_colour_word_order(
     assert not merges(KEYBOARD, f"Bàn phím cơ {first}", f"Bàn phím cơ {second}")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG-S2-5: '<màu> Switch <màu>' luôn coi màu thứ hai là màu vỏ, nên 'Black Switch Red' "
-    "và 'Black Switch Blue' (switch Red/Blue) bị ghép làm một; cần quyết định thiết kế "
-    "(ví dụ chỉ coi là màu vỏ khi màu thứ hai là tiếng Việt)",
-)
 def test_colour_word_before_and_after_switch_with_english_names_is_ambiguous_not_merged() -> None:
     assert not merges(
         KEYBOARD,
         "Bàn phím cơ Akko 3068 Black Switch Red",
         "Bàn phím cơ Akko 3068 Black Switch Blue",
+    )
+
+
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [
+        ("Akko 3068 Black Switch Red", "Akko 3068 Black Switch Blue"),
+        ("Akko 3068 White Switch Red", "Akko 3068 White Switch Brown"),
+        ("Akko 3068 Black SW Red", "Akko 3068 Black SW Blue"),
+    ],
+)
+def test_english_colour_after_an_unnamed_colour_and_switch_is_the_switch_name(
+    first: str, second: str
+) -> None:
+    assert not merges(KEYBOARD, f"Bàn phím cơ {first}", f"Bàn phím cơ {second}")
+
+
+def test_vietnamese_colour_after_an_unnamed_colour_and_switch_is_still_the_shell_colour() -> None:
+    assert merges(
+        KEYBOARD,
+        "Bàn phím cơ Akko 3068 Black Switch Đen",
+        "Bàn phím cơ Akko 3068 Black Switch Trắng",
     )
 
 
