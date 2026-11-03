@@ -7,7 +7,7 @@ thiếu khóa API: thu thập vẫn chạy bằng luật, chỉ không điền �
 import logging
 
 from app.agent.llm import get_chat_model
-from app.agent.prompts import load_prompt
+from app.agent.prompt_loader import load_prompt
 from app.config import Settings
 from app.domain.errors import LlmUnavailable
 from app.normalize.llm_extract import LlmSpecsFiller

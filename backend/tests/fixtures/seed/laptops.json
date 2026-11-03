@@ -1655,6 +1655,64 @@
           "price": 28440000
         }
       ]
+    },
+    {
+      "brand": "Acer",
+      "model_code": "MOCK-ACER-NOSPEC",
+      "canonical_name": "Acer Mock Aspire Go 15 (thiếu thông số)",
+      "incomplete_specs": true,
+      "specs": {
+        "cpu_model": "i5-1235U",
+        "ram_gb": 8,
+        "screen_in": 15.6
+      },
+      "image_url": "https://mock-images.example/mock-acer-nospec.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-acer-nospec",
+          "title": "Acer Mock Aspire Go 15 - Chính hãng",
+          "price": 14490000
+        }
+      ]
+    },
+    {
+      "brand": "MSI",
+      "model_code": "MOCK-MSI-SOLDOUT",
+      "canonical_name": "MSI Mock Katana 15 B13V (hết hàng)",
+      "specs": {
+        "cpu_model": "i7-13620H",
+        "cpu_vendor": "intel",
+        "gpu_model": "RTX 4060",
+        "gpu_vram_gb": 8,
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "storage_type": "ssd",
+        "screen_in": 15.6,
+        "resolution": "1920x1080",
+        "refresh_hz": 144,
+        "panel": "IPS",
+        "weight_kg": 2.25,
+        "os": "Windows 11 Home",
+        "is_gaming": true
+      },
+      "image_url": "https://mock-images.example/mock-msi-soldout.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-msi-soldout",
+          "title": "MSI Mock Katana 15 B13V - Chính hãng",
+          "price": 17990000,
+          "stock_status": "out_of_stock"
+        },
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-msi-soldout",
+          "title": "MSI Mock Katana 15 B13V - Chính hãng",
+          "price": 18290000,
+          "stock_status": "out_of_stock"
+        }
+      ]
     }
   ]
 }

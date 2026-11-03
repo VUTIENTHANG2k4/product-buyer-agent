@@ -8,7 +8,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 from sqlmodel import Session, select
 
 from app.agent.executor import FINAL_TOOL
-from app.agent.prompts import load_prompt
+from app.agent.prompt_loader import load_prompt
 from app.agent.runner import HALLUCINATION_MESSAGE, STEP_LIMIT_NOTE
 from app.agent.schemas import (
     ClarificationEvent,

@@ -248,7 +248,7 @@ product-buyer-agent/
 │   │   ├── api/                  # routers/ (products, categories, chat, lists, alerts, admin, health),
 │   │   │                         #   schemas.py, deps.py, errors.py, sse.py, tasks.py (chạy nền)
 │   │   ├── agent/                # planner.py, executor.py (ToolLoop), guardrail.py, runner.py, memory.py,
-│   │   │                         #   intent.py, spec_filler.py, schemas.py, prompts.py, llm.py, fake_llm.py, testing.py,
+│   │   │                         #   intent.py, spec_filler.py, schemas.py, prompt_loader.py, llm.py, fake_llm.py, testing.py,
 │   │   │                         #   tools/ (8 tool), prompts/ (planner, executor, extractor .md)
 │   │   ├── services/             # catalog, compare, shopping_list, alert, alert_evaluation, live_search,
 │   │   │                         #   scrape_service, scrape_runtime, rematch_service, admin, conversation, health, database, spec_filters, views,
@@ -258,7 +258,7 @@ product-buyer-agent/
 │   │   │                         #   fptshop, anphat, mockshop)
 │   │   ├── normalize/            # price.py, url.py, brand.py, model_code.py, names.py, matcher.py,
 │   │   │                         #   text.py, extract.py, llm_extract.py, specs/ (khung thông số theo nhóm, gpu_rank)
-│   │   ├── db/                   # engine.py, models.py, repositories/
+│   │   ├── db/                   # engine.py, migrations.py, models.py, repositories/
 │   │   ├── domain/               # enums.py, dto.py, catalog.py, chat.py, admin.py, live_search.py,
 │   │   │                         #   errors.py (AppError theo 07 §2), clock.py (utc_now)
 │   │   └── mock_shop/            # main.py, pages.py, state.py, catalog.py, data.json

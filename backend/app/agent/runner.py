@@ -23,7 +23,7 @@ from app.agent.guardrail import Evidence, GuardrailOutcome, allowed_write_tools,
 from app.agent.intent import extract_amounts
 from app.agent.memory import ConversationContext, to_context
 from app.agent.planner import Planner
-from app.agent.prompts import load_prompt
+from app.agent.prompt_loader import load_prompt
 from app.agent.schemas import (
     AnyEvent,
     ClarificationEvent,

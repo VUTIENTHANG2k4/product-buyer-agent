@@ -140,6 +140,23 @@ class TestNormalizeSpecs:
         with pytest.raises(SeedDataError, match="thiếu trường bắt buộc"):
             normalize_specs(Category.mouse, {"connection": []})
 
+    def test_incomplete_specs_flag_allows_missing_required_fields(self) -> None:
+        specs = normalize_specs(Category.mouse, {"weight_g": 60}, allow_incomplete=True)
+
+        assert specs == {"weight_g": 60}
+
+    def test_incomplete_specs_flag_rejects_specs_that_are_in_fact_complete(self) -> None:
+        with pytest.raises(SeedDataError, match="đã đủ trường bắt buộc"):
+            normalize_specs(Category.laptop, LAPTOP["specs"], allow_incomplete=True)
+
+    def test_incomplete_specs_flag_rejects_empty_specs(self) -> None:
+        with pytest.raises(SeedDataError, match="rỗng"):
+            normalize_specs(Category.mouse, {"connection": []}, allow_incomplete=True)
+
+    def test_incomplete_specs_flag_still_rejects_unknown_keys(self) -> None:
+        with pytest.raises(SeedDataError, match="khóa lạ"):
+            normalize_specs(Category.mouse, {"weight_gg": 60}, allow_incomplete=True)
+
     def test_rejects_value_outside_the_spec_schema(self) -> None:
         with pytest.raises(SeedDataError, match="sai khung"):
             normalize_specs(Category.laptop, {**LAPTOP["specs"], "ram_gb": "16"})

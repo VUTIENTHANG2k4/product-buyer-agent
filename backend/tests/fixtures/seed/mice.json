@@ -595,6 +595,39 @@
           "rating_count": 475
         }
       ]
+    },
+    {
+      "brand": "Logitech",
+      "model_code": "MOCK-LOG-G203-SOLDOUT",
+      "canonical_name": "Logitech Mock G203 Lightsync (hết hàng)",
+      "specs": {
+        "connection": [
+          "wired"
+        ],
+        "dpi_max": 8000,
+        "sensor": "Mercury",
+        "buttons": 6,
+        "weight_g": 85,
+        "rgb": true,
+        "shape": "ambidextrous"
+      },
+      "image_url": "https://mock-images.example/mock-log-g203.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-log-g203-soldout",
+          "title": "Logitech Mock G203 Lightsync - Chính hãng",
+          "price": 299000,
+          "stock_status": "out_of_stock"
+        },
+        {
+          "site": "anphat",
+          "url": "https://mock-anphat.example/p/mock-log-g203-soldout",
+          "title": "Logitech Mock G203 Lightsync - Chính hãng",
+          "price": 319000,
+          "stock_status": "out_of_stock"
+        }
+      ]
     }
   ]
 }

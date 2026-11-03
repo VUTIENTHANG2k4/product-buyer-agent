@@ -12,7 +12,7 @@ from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from app.agent.intent import postprocess_intent
-from app.agent.prompts import load_prompt
+from app.agent.prompt_loader import load_prompt
 from app.domain.dto import QueryIntent
 from app.domain.errors import LlmUnavailable
 from app.normalize.specs.gpu_rank import GPU_RANKS

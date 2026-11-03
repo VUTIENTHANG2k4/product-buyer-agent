@@ -3,7 +3,7 @@
 import pytest
 from pydantic import SecretStr
 
-from app.agent.prompts import load_prompt
+from app.agent.prompt_loader import load_prompt
 from app.agent.spec_filler import build_spec_filler
 from app.config import Settings
 from app.normalize.llm_extract import LlmSpecsFiller

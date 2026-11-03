@@ -18,7 +18,8 @@ from sqlmodel import Session, col, func, select
 from app.db.models import Offer, PriceAlert, PriceHistory, Product, ShoppingListItem
 from app.db.repositories import ProductQuery, ProductRepository
 from app.domain.dto import SpecFilter
-from app.domain.enums import Category, SiteKey
+from app.domain.enums import Category, SiteKey, StockStatus
+from app.normalize.specs import REQUIRED_FIELDS
 from scripts.seed import FIXTURE_DIR, load_catalog, seed_database
 
 NOW = datetime(2026, 10, 17, 12, 0, tzinfo=UTC)
@@ -205,6 +206,57 @@ class TestEvalCoverage:
         with_context = {case["id"] for case in CASES if case.get("context")}
 
         assert with_context == set(CONTEXT_SOURCE)
+
+
+class TestHardCases:
+    """Ca khó cho eval (T6.7): sản phẩm thiếu thông số và sản phẩm hết hàng ở mọi trang."""
+
+    def test_every_search_case_declares_min_results_so_an_empty_table_cannot_pass(self) -> None:
+        missing = [
+            case["id"] for case in SEARCH_CASES if "min_results" not in case.get("expected", {})
+        ]
+
+        assert missing == []
+
+    def test_some_products_miss_required_specs(self, seeded: Session) -> None:
+        incomplete = [
+            product.canonical_name
+            for product in seeded.exec(select(Product)).all()
+            if any(not product.specs.get(f) for f in REQUIRED_FIELDS[product.category])
+        ]
+
+        assert len(incomplete) >= 2
+        assert any("Acer" in name for name in incomplete)
+
+    def test_some_products_have_no_in_stock_offer_and_are_not_searchable(
+        self, seeded: Session
+    ) -> None:
+        sold_out = [
+            product
+            for product in seeded.exec(select(Product)).all()
+            if all(
+                offer.stock_status == StockStatus.out_of_stock
+                for offer in seeded.exec(select(Offer).where(Offer.product_id == product.id)).all()
+            )
+        ]
+        found = ProductRepository(seeded).search(ProductQuery(limit=100)).items
+
+        assert len(sold_out) >= 2
+        assert {product.id for product in sold_out}.isdisjoint({hit.product.id for hit in found})
+
+    def test_sold_out_logitech_mouse_would_be_the_cheapest_if_it_were_listed(
+        self, seeded: Session
+    ) -> None:
+        """A07 ("chuột Logitech rẻ nhất") phải bỏ qua con chuột rẻ hơn nhưng hết hàng."""
+        query = build_query(CASES_BY_ID["A07"])
+        cheapest_listed = ProductRepository(seeded).search(query).items[0].min_price
+        sold_out_price = seeded.exec(
+            select(func.min(Offer.price))
+            .join(Product, col(Product.id) == col(Offer.product_id))
+            .where(Product.model_code == "MOCK-LOG-G203-SOLDOUT")
+        ).one()
+
+        assert sold_out_price < cheapest_listed
 
 
 class TestOffersAndHistory:

@@ -2,7 +2,7 @@
 
 from sqlmodel import Session, select
 
-from app.agent.prompts import load_prompt
+from app.agent.prompt_loader import load_prompt
 from app.agent.testing import ScriptedChatModel
 from app.db.models import LlmExtractionCache, Product
 from app.domain.dto import ListingItem

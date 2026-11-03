@@ -1,28 +1,18 @@
 """Hàm dùng chung cho test CSDL: cấu hình Alembic chạy qua kết nối có sẵn (docs/09 §4)."""
 
-from pathlib import Path
-
-from alembic.config import Config as AlembicConfig
 from sqlalchemy import Engine
 
 from alembic import command
+from app.db.migrations import BACKEND_DIR, alembic_config, upgrade_to_head
 
-BACKEND_DIR = Path(__file__).resolve().parents[1]
-
-
-def alembic_config() -> AlembicConfig:
-    """Cấu hình Alembic không qua alembic.ini để test không đổi cấu hình logging của pytest."""
-    config = AlembicConfig()
-    config.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
-    return config
-
-
-def upgrade_to_head(engine: Engine) -> None:
-    """Chạy `alembic upgrade head` trên `engine` trong một transaction (DDL của PostgreSQL)."""
-    config = alembic_config()
-    with engine.begin() as connection:
-        config.attributes["connection"] = connection
-        command.upgrade(config, "head")
+__all__ = [
+    "BACKEND_DIR",
+    "alembic_config",
+    "downgrade_to",
+    "downgrade_to_base",
+    "upgrade_to",
+    "upgrade_to_head",
+]
 
 
 def upgrade_to(engine: Engine, revision: str) -> None:

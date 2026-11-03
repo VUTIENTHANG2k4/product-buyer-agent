@@ -24,9 +24,11 @@ from pathlib import Path
 from typing import Final
 
 import httpx
+import yaml
+from alembic.util.exc import CommandError
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.engine import make_url
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from sqlmodel import Session
 
 from app.agent.guardrail import GuardrailOutcome
@@ -34,6 +36,7 @@ from app.agent.llm import get_chat_model
 from app.agent.runner import AgentRunner
 from app.agent.schemas import ClarificationEvent, ErrorEvent, FinalEvent, PlanEvent, ToolStartEvent
 from app.config import Settings, get_settings
+from app.db.migrations import upgrade_to_head
 from app.domain.clock import utc_now
 from app.domain.errors import AppError
 from app.mock_shop.main import create_app
@@ -53,7 +56,6 @@ from scripts.eval_core import (
 )
 from scripts.scrape import configure_console
 from scripts.seed import seed_database
-from tests.db_support import upgrade_to_head
 
 logger = logging.getLogger("eval")
 
@@ -232,7 +234,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         cases = load_cases(only=_parse_ids(args.cases))
         planner_model = get_chat_model("planner", settings)
         executor_model = get_chat_model("executor", settings)
-    except (ValueError, AppError) as error:
+    except (ValueError, OSError, yaml.YAMLError, AppError) as error:  # YAML hỏng, thiếu khóa API…
         logger.error("Không chạy được: %s", getattr(error, "message", None) or error)
         return EXIT_SETUP
 
@@ -245,6 +247,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return EXIT_SETUP
     except OperationalError:
         logger.error("Không kết nối được DB test. Chạy `make db-up` và kiểm tra TEST_DATABASE_URL.")
+        return EXIT_SETUP
+    except (CommandError, SQLAlchemyError) as error:  # migrate lỗi: DB hỏng hoặc lệch phiên bản
+        logger.error("Không nâng được DB test lên phiên bản mới nhất: %s", error)
         return EXIT_SETUP
 
     transaction = connection.begin()

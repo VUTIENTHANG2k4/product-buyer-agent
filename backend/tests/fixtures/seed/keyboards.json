@@ -550,6 +550,25 @@
           "rating_count": 475
         }
       ]
+    },
+    {
+      "brand": "Akko",
+      "model_code": "MOCK-AKKO-5075-NOSPEC",
+      "canonical_name": "Akko Mock 5075 (thiếu thông số)",
+      "incomplete_specs": true,
+      "specs": {
+        "form_factor": "75",
+        "backlight": "rgb"
+      },
+      "image_url": "https://mock-images.example/mock-akko-5075.jpg",
+      "offers": [
+        {
+          "site": "gearvn",
+          "url": "https://mock-gearvn.example/p/mock-akko-5075-nospec",
+          "title": "Akko Mock 5075 - Chính hãng",
+          "price": 1590000
+        }
+      ]
     }
   ]
 }

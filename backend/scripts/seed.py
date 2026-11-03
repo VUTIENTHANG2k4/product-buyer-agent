@@ -141,6 +141,8 @@ class SeedProduct(BaseModel):
     specs: dict[str, Any]
     image_url: HttpUrl | None = None
     e2e: bool = False
+    # Cố ý thiếu trường bắt buộc (như hàng thu thập có `specs_confidence` thấp) để eval có ca khó.
+    incomplete_specs: bool = False
     offers: list[SeedOffer] = Field(min_length=1)
 
     @field_validator("image_url")
@@ -214,11 +216,14 @@ class SeedSummary:
     scrape_runs: int = 0
 
 
-def normalize_specs(category: Category, raw: dict[str, Any]) -> dict[str, Any]:
+def normalize_specs(
+    category: Category, raw: dict[str, Any], *, allow_incomplete: bool = False
+) -> dict[str, Any]:
     """Kiểm `raw` bằng khung specs của nhóm; trả dict JSON để lưu vào `product.specs`.
 
     Khung dùng `extra="ignore"` nên khóa gõ sai sẽ bị bỏ im lặng ở parser; với dữ liệu seed ta
-    muốn lỗi to, nên từ chối khóa lạ và thiếu trường bắt buộc.
+    muốn lỗi to, nên từ chối khóa lạ và thiếu trường bắt buộc. Sản phẩm khai báo
+    `incomplete_specs` (`allow_incomplete`) được phép thiếu trường bắt buộc nhưng không được rỗng.
     """
     model_cls = SPEC_MODELS.get(category)
     if model_cls is None:
@@ -232,7 +237,14 @@ def normalize_specs(category: Category, raw: dict[str, Any]) -> dict[str, Any]:
         raise SeedDataError(f"specs sai khung của nhóm {category.value}: {error}") from error
     dumped = model.model_dump(mode="json", exclude_none=True)
     missing = [name for name in REQUIRED_FIELDS[category] if not dumped.get(name)]
-    if missing:
+    if allow_incomplete:
+        if not missing:
+            raise SeedDataError(
+                f"incomplete_specs nhưng specs của {category.value} đã đủ trường bắt buộc"
+            )
+        if not any(dumped.values()):
+            raise SeedDataError(f"specs của {category.value} rỗng")
+    elif missing:
         raise SeedDataError(f"specs thiếu trường bắt buộc của {category.value}: {missing}")
     return dumped
 
@@ -271,7 +283,9 @@ def load_catalog(fixtures_dir: Path = FIXTURE_DIR) -> list[CatalogProduct]:
                     raise SeedDataError(f"{label}: trùng URL offer {offer.url}")
                 urls.add(str(offer.url))
             try:
-                specs = normalize_specs(seed_file.category, product.specs)
+                specs = normalize_specs(
+                    seed_file.category, product.specs, allow_incomplete=product.incomplete_specs
+                )
             except SeedDataError as error:
                 raise SeedDataError(f"{label}: {error}") from error
             catalog.append(CatalogProduct(seed_file.category, product, specs))
