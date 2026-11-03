@@ -228,6 +228,16 @@ class TestHardCases:
         assert len(incomplete) >= 2
         assert any("Acer" in name for name in incomplete)
 
+    def test_products_missing_required_specs_have_low_specs_confidence(
+        self, seeded: Session
+    ) -> None:
+        for product in seeded.exec(select(Product)).all():
+            missing = any(not product.specs.get(f) for f in REQUIRED_FIELDS[product.category])
+            if missing:
+                assert product.specs_confidence < 0.5, product.canonical_name
+            else:
+                assert product.specs_confidence == 1.0, product.canonical_name
+
     def test_some_products_have_no_in_stock_offer_and_are_not_searchable(
         self, seeded: Session
     ) -> None:

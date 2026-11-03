@@ -65,6 +65,7 @@ from app.domain.enums import (
     SiteKey,
     StockStatus,
 )
+from app.normalize.extract import specs_confidence
 from app.normalize.specs import REQUIRED_FIELDS, SPEC_MODELS
 
 logger = logging.getLogger("seed")
@@ -334,6 +335,7 @@ class _Seeder:
         data = item.product
         product = self.products.find_by_model_key(item.category, data.brand, data.model_code)
         image_url = None if data.image_url is None else str(data.image_url)
+        confidence = specs_confidence(item.category, item.specs)  # < 0,5 nếu thiếu trường bắt buộc
         if product is None:
             product = self.products.add(
                 Product(
@@ -342,6 +344,7 @@ class _Seeder:
                     model_code=data.model_code,
                     canonical_name=data.canonical_name,
                     specs=item.specs,
+                    specs_confidence=confidence,
                     image_url=image_url,
                     created_at=self.moment - timedelta(days=HISTORY_DAYS),
                 )
@@ -350,7 +353,7 @@ class _Seeder:
         else:
             product.canonical_name = data.canonical_name
             product.image_url = image_url
-            self.products.update_specs(product, item.specs)
+            self.products.update_specs(product, item.specs, confidence)
             self.counts["products_existing"] += 1
         assert product.id is not None
         for offer in data.offers:

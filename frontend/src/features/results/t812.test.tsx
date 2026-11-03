@@ -139,4 +139,20 @@ describe('ResultsTable · id đã chọn không còn trong rows (T8.12)', () => 
     expect(screen.getByText('Đã chọn 4')).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: /Mock sản phẩm 6/ })).toBeEnabled()
   })
+
+  it('id đã mất rồi quay lại không tự được chọn lại', async () => {
+    media = mockMatchMedia(true)
+    const user = userEvent.setup()
+    const { rerender } = renderTable([make(1), make(2), make(3)])
+    await user.click(screen.getByRole('checkbox', { name: /Mock sản phẩm 1 để/ }))
+    await user.click(screen.getByRole('checkbox', { name: /Mock sản phẩm 2 để/ }))
+
+    rerender(<ResultsTable rows={[make(2), make(3)]} />)
+    // Bấm một ô khi id 1 đã mất: state bị dọn, id 1 không còn "ngủ" trong đó.
+    await user.click(screen.getByRole('checkbox', { name: /Mock sản phẩm 3 để/ }))
+    rerender(<ResultsTable rows={[make(1), make(2), make(3)]} />)
+
+    expect(screen.getByRole('checkbox', { name: /Mock sản phẩm 1 để/ })).not.toBeChecked()
+    expect(screen.getByText('Đã chọn 2')).toBeInTheDocument()
+  })
 })

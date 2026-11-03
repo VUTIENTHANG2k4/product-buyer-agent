@@ -148,17 +148,19 @@ export function ResultsTable({ rows, footer }: ResultsTableProps) {
 
   const sorted = useMemo(() => sortRows(rows, sort), [rows, sort])
   // `rows` đổi (vd. lượt hỏi lại) thì id đã chọn mà hàng không còn không được tính nữa (T8.12).
-  const chosen = useMemo(() => {
-    const present = new Set(rows.map((row) => row.product_id))
-    return new Set([...selected].filter((id) => present.has(id)))
-  }, [rows, selected])
+  const present = useMemo(() => new Set(rows.map((row) => row.product_id)), [rows])
+  const chosen = useMemo(
+    () => new Set([...selected].filter((id) => present.has(id))),
+    [present, selected],
+  )
   if (rows.length === 0) return null
 
   const full = chosen.size >= MAX_COMPARE
 
   function toggleSelected(id: number) {
-    setSelected(() => {
-      const next = new Set(chosen)
+    setSelected((previous) => {
+      // Bỏ luôn id đã mất khỏi state để nó không tự sống lại nếu sau này `rows` chứa lại.
+      const next = new Set([...previous].filter((other) => present.has(other)))
       if (next.has(id)) next.delete(id)
       else if (next.size < MAX_COMPARE) next.add(id)
       return next

@@ -210,6 +210,15 @@ def test_english_colour_after_an_unnamed_colour_and_switch_is_the_switch_name(
     assert not merges(KEYBOARD, f"Bàn phím cơ {first}", f"Bàn phím cơ {second}")
 
 
+def test_vietnamese_colour_word_that_is_a_switch_name_is_a_known_limit_and_still_merges() -> None:
+    """ "Switch Đỏ/Xanh" có thể là switch Red/Blue nhưng bị coi là màu vỏ (docs/04 §7)."""
+    assert merges(
+        KEYBOARD,
+        "Bàn phím cơ Akko 3068 Black Switch Đỏ",
+        "Bàn phím cơ Akko 3068 Black Switch Xanh",
+    )
+
+
 def test_vietnamese_colour_after_an_unnamed_colour_and_switch_is_still_the_shell_colour() -> None:
     assert merges(
         KEYBOARD,
