@@ -37,6 +37,13 @@ function isMissing(value: unknown): boolean {
   )
 }
 
+/** TB chỉ khi là bội của 1000 hoặc 1024 GB ("1 TB", "2 TB"); còn lại GB để không ra "1.024 TB". */
+function formatStorage(gb: number): string {
+  if (gb >= 1000 && gb % 1000 === 0) return `${gb / 1000} TB`
+  if (gb >= 1024 && gb % 1024 === 0) return `${gb / 1024} TB`
+  return `${gb} GB`
+}
+
 /** Giá trị thông số đọc được: có đơn vị, "Có/Không" cho boolean; thiếu thì `—`. */
 export function formatSpecValue(field: string, value: unknown): string {
   if (isMissing(value)) return '—'
@@ -48,7 +55,7 @@ export function formatSpecValue(field: string, value: unknown): string {
       case 'gpu_vram_gb':
         return `${value} GB`
       case 'storage_gb':
-        return value >= 1000 ? `${value / 1000} TB` : `${value} GB`
+        return formatStorage(value)
       case 'screen_in':
         return `${value}"`
       case 'refresh_hz':

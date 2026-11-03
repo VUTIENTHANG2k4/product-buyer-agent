@@ -40,6 +40,18 @@ export function cheapestOfferPrice(row: ProductRow): number | null {
   return prices.length > 0 ? Math.min(...prices) : (row.min_price ?? null)
 }
 
+/**
+ * Giá thấp nhất trong các offer còn hàng (không tính `out_of_stock`), khớp `min_price` của backend;
+ * `null` khi rỗng hoặc hết hàng cả. Chỉ offer này được gắn nhãn "Rẻ nhất" (T8.12).
+ */
+export function lowestInStockPrice<T extends { stock_status: string }>(
+  offers: readonly T[],
+  priceOf: (offer: T) => number,
+): number | null {
+  const prices = offers.filter((o) => o.stock_status !== 'out_of_stock').map(priceOf)
+  return prices.length > 0 ? Math.min(...prices) : null
+}
+
 /** `ProductFull` (từ `GET /products/{id}`) về dạng hàng bảng, cho hội thoại mở lại chỉ có `product_ids`. */
 export function rowFromFull(product: Schemas['ProductFull']): ProductRow {
   const offers: RowOffer[] = (product.offers ?? [])

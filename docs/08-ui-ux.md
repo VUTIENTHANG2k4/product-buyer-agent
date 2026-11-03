@@ -158,6 +158,12 @@ Thẻ cho mỗi nguồn: trạng thái robots, độ trễ áp dụng, lần ch�
 - **Tự làm mới:** mỗi 3 giây khi trang đang xem có lượt `RUNNING`/`PENDING` (bảng) hoặc lượt gần nhất của một nguồn đang chạy (thẻ nguồn); dừng hẳn khi hết lượt chạy. Biểu tượng quay tắt khi người dùng bật giảm chuyển động.
 - **Hộp thoại challenge:** lượt `NEEDS_HUMAN` có nút "Xử lý" (ở thẻ nguồn và ở bảng). Hộp thoại tải `GET …/challenge` mỗi lần mở (không dùng lại bản cũ), hiện loại, đề bài (chỉ là chữ; HTML trong đề bài không được dựng) và ảnh nếu `image_url` là http(s) (không gửi referrer). **Chỉ người nhập đáp án** (1–200 ký tự, không NUL); giao diện không đoán hay giải đáp án. Kết cục: 200 → đóng và báo, lượt chạy tiếp ở nền; 400 `CHALLENGE_FAILED` → giữ hộp thoại và cho thử lại; 409 `CHALLENGE_NOT_PENDING` (khi tải hoặc khi gửi) → đóng, báo "không còn chờ đáp án" và làm mới. Trang thật bị chặn không có luồng này, chỉ dừng ở "Bị chặn".
 
+### 3.14 Quyết định nhỏ còn lại của M8 (T8.12, 2026-11-03)
+- **"Rẻ nhất" chỉ tính offer còn hàng** (`lowestInStockPrice` trong `features/results/rows.ts`), khớp `min_price` của backend; offer hết hàng vẫn liệt kê nhưng không gắn nhãn hay tô màu giá. Hết hàng cả thì không có nhãn. Áp dụng cho danh sách giá trong bảng kết quả (`OffersList`) và bảng "Giá theo trang" của trang chi tiết.
+- **Dung lượng ổ cứng:** hiện TB khi là bội của 1000 hoặc 1024 GB (1000/1024 → "1 TB", 2000/2048 → "2 TB"); giá trị khác hiện GB ("1500 GB"), không còn "1.024 TB".
+- **Chọn để so sánh:** id đã chọn mà hàng không còn trong `rows` (vd. lượt hỏi lại) không được tính vào số đã chọn, giới hạn 5 hay nút "So sánh".
+- **`useAgentRun` không tự đặt lại khi `runId` đổi:** giữ thiết kế, nơi dùng (`ConversationPage`) dựng `RunTurn` với `key={runId}`; có test ở `useAgentRun.test.tsx`.
+
 ## 4. Trạng thái giao diện (bắt buộc cho mọi màn hình có dữ liệu)
 
 | Trạng thái | Cách hiển thị |

@@ -4,15 +4,15 @@ import { formatDateTime, isStale } from '@/lib/format'
 import { safeUrl } from '@/lib/safeUrl'
 import { strings } from '@/lib/strings'
 import { cn } from '@/lib/utils'
-import type { RowOffer } from './rows'
+import { lowestInStockPrice, type RowOffer } from './rows'
 
 /** Giá từng trang của một sản phẩm: loại giá, tình trạng hàng, thời điểm cập nhật, liên kết tới trang bán. */
 export function OffersList({ offers }: { offers: readonly RowOffer[] }) {
-  const lowest = offers.length > 0 ? Math.min(...offers.map((offer) => offer.price)) : null
+  const lowest = lowestInStockPrice(offers, (offer) => offer.price)
   return (
     <ul className="space-y-2">
       {offers.map((offer, index) => {
-        const isLowest = offer.price === lowest
+        const isLowest = offer.stock_status !== 'out_of_stock' && offer.price === lowest
         const href = safeUrl(offer.url)
         const priceType = strings.priceTypes[offer.price_type]
         const stale = isStale(offer.scraped_at)

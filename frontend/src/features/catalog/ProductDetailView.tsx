@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { CreateAlertDialog, type AlertProduct } from '@/features/alerts/CreateAlertDialog'
+import { lowestInStockPrice } from '@/features/results/rows'
 import { AddToListDialog, type DialogProduct } from '@/features/lists/AddToListDialog'
 import { formatDateTime, formatVnd, isStale } from '@/lib/format'
 import { safeUrl } from '@/lib/safeUrl'
@@ -30,7 +31,9 @@ function OffersTable({ product }: { product: ProductDetail }) {
   const offers = [...(product.offers ?? [])].sort((a, b) => a.effective_price - b.effective_price)
   const text = strings.product
   if (offers.length === 0) return <EmptyState title={text.noOffers} />
-  const lowest = offers[0]?.effective_price
+  const lowest = lowestInStockPrice(offers, (offer) => offer.effective_price)
+  const isLowest = (offer: (typeof offers)[number]) =>
+    offer.stock_status !== 'out_of_stock' && offer.effective_price === lowest
   return (
     <div className="overflow-x-auto rounded-lg border">
       <Table aria-label={text.offersTitle}>
@@ -63,13 +66,9 @@ function OffersTable({ product }: { product: ProductDetail }) {
                   <div className="flex flex-wrap items-baseline gap-x-2">
                     <Price
                       amount={offer.effective_price}
-                      className={
-                        offer.effective_price === lowest
-                          ? 'font-semibold text-success'
-                          : 'font-medium'
-                      }
+                      className={isLowest(offer) ? 'font-semibold text-success' : 'font-medium'}
                     />
-                    {offer.effective_price === lowest ? (
+                    {isLowest(offer) ? (
                       <span className="text-xs font-medium text-success">
                         {strings.results.cheapest}
                       </span>

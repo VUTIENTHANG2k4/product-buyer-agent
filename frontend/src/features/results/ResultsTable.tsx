@@ -147,13 +147,18 @@ export function ResultsTable({ rows, footer }: ResultsTableProps) {
   const [alertFor, setAlertFor] = useState<AlertProduct | null>(null)
 
   const sorted = useMemo(() => sortRows(rows, sort), [rows, sort])
+  // `rows` đổi (vd. lượt hỏi lại) thì id đã chọn mà hàng không còn không được tính nữa (T8.12).
+  const chosen = useMemo(() => {
+    const present = new Set(rows.map((row) => row.product_id))
+    return new Set([...selected].filter((id) => present.has(id)))
+  }, [rows, selected])
   if (rows.length === 0) return null
 
-  const full = selected.size >= MAX_COMPARE
+  const full = chosen.size >= MAX_COMPARE
 
   function toggleSelected(id: number) {
-    setSelected((previous) => {
-      const next = new Set(previous)
+    setSelected(() => {
+      const next = new Set(chosen)
       if (next.has(id)) next.delete(id)
       else if (next.size < MAX_COMPARE) next.add(id)
       return next
@@ -185,8 +190,8 @@ export function ResultsTable({ rows, footer }: ResultsTableProps) {
 
   const checkbox = (row: ProductRow) => (
     <Checkbox
-      checked={selected.has(row.product_id)}
-      disabled={full && !selected.has(row.product_id)}
+      checked={chosen.has(row.product_id)}
+      disabled={full && !chosen.has(row.product_id)}
       onCheckedChange={() => toggleSelected(row.product_id)}
       aria-label={strings.results.select(row.name)}
     />
@@ -281,13 +286,13 @@ export function ResultsTable({ rows, footer }: ResultsTableProps) {
 
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-sm" aria-live="polite">
-          {strings.results.selectedCount(selected.size)}
+          {strings.results.selectedCount(chosen.size)}
         </span>
         <Button
           size="sm"
-          disabled={selected.size < MIN_COMPARE}
+          disabled={chosen.size < MIN_COMPARE}
           onClick={() =>
-            setCompareIds(sorted.filter((r) => selected.has(r.product_id)).map((r) => r.product_id))
+            setCompareIds(sorted.filter((r) => chosen.has(r.product_id)).map((r) => r.product_id))
           }
         >
           {strings.results.compare}
@@ -295,7 +300,7 @@ export function ResultsTable({ rows, footer }: ResultsTableProps) {
         <span className="text-xs text-muted-foreground">
           {full
             ? strings.results.compareLimit
-            : selected.size < MIN_COMPARE
+            : chosen.size < MIN_COMPARE
               ? strings.results.compareHint
               : ''}
         </span>

@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, render as renderUi, renderHook, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { apiUrl } from '@/api/client'
 import { server } from '@/mocks/server'
@@ -257,5 +257,32 @@ describe('useAgentRun · nối lại và dự phòng', () => {
     await waitFor(() => expect(result.current.state.phase).toBe('running'))
     unmount()
     await waitFor(() => expect(aborted).toBe(true))
+  })
+})
+
+describe('useAgentRun · đổi runId (T8.12)', () => {
+  // Hook không tự đặt lại khi `runId` đổi: nơi dùng phải dựng lại bằng `key={runId}`
+  // (ConversationPage làm vậy với RunTurn). Test khẳng định cách dùng đó cho trạng thái mới.
+  const OTHER = '3f1c2d4e-0000-4000-8000-000000000002'
+
+  function Probe({ runId }: { runId: string }) {
+    const { state } = useAgentRun(runId, FAST)
+    return (
+      <p data-testid="probe">
+        {state.phase}:{state.final?.text ?? '-'}
+      </p>
+    )
+  }
+
+  it('với key={runId}, lượt mới bắt đầu từ connecting và không giữ câu trả lời lượt trước', async () => {
+    server.use(
+      http.get(events(), () => sseResponse([planFrame, finalFrame])),
+      http.get(apiUrl(`chat/${OTHER}/events`), () => new Promise<Response>(() => undefined)),
+    )
+    const view = renderUi(<Probe key={RUN} runId={RUN} />)
+    await waitFor(() => expect(screen.getByTestId('probe')).toHaveTextContent('done:Có 7 laptop'))
+
+    view.rerender(<Probe key={OTHER} runId={OTHER} />)
+    expect(screen.getByTestId('probe')).toHaveTextContent('connecting:-')
   })
 })
