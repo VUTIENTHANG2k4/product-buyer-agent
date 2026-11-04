@@ -243,7 +243,7 @@ def normalize_specs(
             raise SeedDataError(
                 f"incomplete_specs nhưng specs của {category.value} đã đủ trường bắt buộc"
             )
-        if not any(dumped.values()):
+        if all(value in ([], "") for value in dumped.values()):  # False/0 vẫn là giá trị thật
             raise SeedDataError(f"specs của {category.value} rỗng")
     elif missing:
         raise SeedDataError(f"specs thiếu trường bắt buộc của {category.value}: {missing}")

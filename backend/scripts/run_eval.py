@@ -55,7 +55,7 @@ from scripts.eval_core import (
     score_case,
 )
 from scripts.scrape import configure_console
-from scripts.seed import seed_database
+from scripts.seed import SeedDataError, seed_database
 
 logger = logging.getLogger("eval")
 
@@ -153,7 +153,10 @@ def make_facts_of(factory: Callable[[], Session]) -> FactsOf:
 
 
 def _test_engine(settings: Settings) -> Engine:
-    url = make_url(settings.test_database_url.get_secret_value())
+    try:
+        url = make_url(settings.test_database_url.get_secret_value())
+    except ValueError as error:  # cổng không phải số…; ArgumentError (URL sai dạng) xử lý ở main
+        raise SetupError(f"TEST_DATABASE_URL không đọc được: {error}") from error
     if not (url.database or "").endswith("_test"):
         raise SetupError(
             "TEST_DATABASE_URL phải trỏ tới DB có tên kết thúc bằng _test "
@@ -258,9 +261,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         def factory() -> Session:
             return Session(bind=connection, join_transaction_mode="create_savepoint")
 
-        with factory() as session:
-            seed_database(session, "eval", now=utc_now())
-            session.commit()
+        try:
+            with factory() as session:
+                seed_database(session, "eval", now=utc_now())
+                session.commit()
+        except (SeedDataError, SQLAlchemyError) as error:  # fixture seed hỏng: lỗi thiết lập
+            logger.error("Không nạp được dữ liệu seed `eval`: %s", error)
+            return EXIT_SETUP
         guard: list[GuardrailOutcome] = []
         runner = AgentRunner(
             factory,
