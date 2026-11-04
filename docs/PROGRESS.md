@@ -3,9 +3,9 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: 🔄 lượt "việc nhỏ 7" (nhánh `milestone/S7-small-fixes-7`): T6.7 (chỉnh prompt/seed sau eval), T8.12 (4 điểm UI, cần chọn hành vi), T5.8 (còn BUG-S2-5, cần quyết định). Lượt "việc nhỏ 6" xong: T5.10, T7.8, qua `make check` + `code-reviewer` + `qa-tester`; đã merge vào `main` (de3f8f2).
-- Backlog chưa làm: T6.7, T8.12; bug giữ `xfail(strict)`: BUG-S2-5 (T5.8, cần quyết định). T8.12/T5.8 cần người dùng chọn hành vi trước. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-11-01 — lượt "việc nhỏ 6" (tên switch màu + "V2", `llm_extract` chịu `raw_specs` lạ, escape `ILIKE` sau `unaccent`)
+- Đang làm: – (lượt "việc nhỏ 7" xong: T5.8/BUG-S2-5, T8.12, T6.7 phần tất định; qua `make check` + `code-reviewer` + `qa-tester`; nhánh `milestone/S7-small-fixes-7`, chờ người dùng merge). Lượt "việc nhỏ 6" đã merge vào `main` (de3f8f2).
+- Backlog chưa làm: T6.7 phần còn lại ((a) `LlmSpecsFiller` ngoài giao dịch lưu, (e), (g), đo lại eval bằng LLM thật: L10 và 14 câu mới có `min_results` có thể rớt), T8.12 đã xong. Không còn `xfail` đã biết. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-11-04 — lượt "việc nhỏ 7" (màu switch tiếng Anh sau "<màu> Switch", 4 điểm UI T8.12, seed `eval` có ca khó + `min_results`, `app/db/migrations.py`, `agent/prompt_loader.py`)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -18,7 +18,7 @@
 | M5 Chuẩn hóa & ghép | ✅ | Qua `code-reviewer` + `qa-tester`; T5.1, T5.2 xong, T5.3 hoãn sang M6. QA còn 8 lỗi nhỏ ghi thành test `xfail(strict)` (T5.4–T5.7) |
 | M6 Agent | ✅ | Gộp T5.3; qua `code-reviewer` + `qa-tester` (10 bug sửa ngay, 7 bug giữ `xfail(strict)` BUG-M6-11…17 → T6.8–T6.13). T6.7 tùy chọn |
 | M7 API | ✅ | Gộp T6.8, T6.9; qua `code-reviewer` (3 Phải sửa đã sửa) + `qa-tester` (4 bug sửa ngay, 3 bug giữ `xfail(strict)` BUG-M7-3, 4, 6b → T7.7, đã sửa hết ở lượt "việc nhỏ" 2 và 5; còn T7.6 từ review). T2.8 chưa làm |
-| M8 Frontend | ✅ | Gộp T8.9–T8.11; qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (9 bug sửa ngay, 278 test `*.qa-m8`); 30 ảnh `docs/ui/screens/` đã trình người dùng một lần (cho tiếp tục); E2E 8/8. Còn T8.12 (4 điểm nhỏ cần quyết định) |
+| M8 Frontend | ✅ | Gộp T8.9–T8.11; qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (9 bug sửa ngay, 278 test `*.qa-m8`); 30 ảnh `docs/ui/screens/` đã trình người dùng một lần (cho tiếp tục); E2E 8/8. T8.12 xong ở lượt "việc nhỏ 7" |
 | M9 Theo dõi giá | ✅ | Qua `code-reviewer` (4 Phải sửa + 10/11 Nên sửa đã sửa) + `qa-tester` (8 bug sửa ngay, 227 test `*_qa_m9`); T9.1–T9.4 xong, `make demo-up` chạy cả hệ thống bằng Docker ([ADR-0009](adr/0009-mock-shop-compose-host.md)). T9.5–T9.8 xong |
 | M10 Tầng 2 | ✅ | Qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (5 bug sửa ngay, 346 test `*_qa_m10`); tầng 2 thật = GearVN + FPT Shop, Viettel Store/Nguyễn Kim bỏ vì tìm kiếm cần JS ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)). T10.4 xong (dọn cache, 24 mục, TTL rỗng 1 giờ) |
 | M11 Hoàn thiện | ✅ | Qua `code-reviewer` (2 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (1 bug sửa ngay, 27 test `*_qa_m11`); T11.1–T11.3 xong: eval cuối (intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; **latency p50 26–31 s chưa đạt**), README/docs theo code, diễn tập demo 7 bước. T11.5: người dùng chấp nhận ngoại lệ latency (2026-10-25). T11.4 (`make demo-price-drop`) xong. Lượt dọn kiến trúc T11.6–T11.8 (2026-10-29): qua `code-reviewer` (1 Phải sửa + Nên sửa đã sửa), bỏ qua `qa-tester`; ranh giới lớp kiểm bằng `test_layer_boundaries.py` (ngoại lệ theo file), `pipeline.py` thành gói 6 module (lớn nhất 402 dòng) |
@@ -29,8 +29,8 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,17% (9267 pass + 1 xfail đã biết, ngưỡng 80% trong `make test-be`, ~15–17 phút) | 2026-11-01 |
-| Test frontend (Vitest + E2E) | 1072 Vitest pass (không còn expected-fail), 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100); chưa đo coverage | 2026-10-29 |
+| Coverage backend | 99,17% (9456 pass, không còn xfail, ngưỡng 80% trong `make test-be`, ~11–17 phút) | 2026-11-04 |
+| Test frontend (Vitest + E2E) | 1105 Vitest pass, 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100; chưa chạy lại ở lượt "việc nhỏ 7"); chưa đo coverage | 2026-11-04 |
 | Eval (intent accuracy / constraint satisfaction / hallucination) | Lượt 1: 100% / 100% / 0, 31/31 câu (clarification 100%, tool 100%). Lượt cuối (sau trần gọi lặp `live_search_other`): 96,4% / 98,6% / 0, 29/31 (A03 `LLM_UNAVAILABLE` tạm thời, L10 dao động); chạy lại A03, L10 đều đạt. Tool 96,4%. **Latency p50 26–31 s: chưa đạt ≤ 15 s** (không do `LLM_MAX_RPM`: `--rpm 1000` vẫn 21–32 s; ≥ 3 lần gọi Gemini/câu, mỗi lần 4–10 s hôm nay). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-10-23*.md` (T11.1) | 2026-10-23 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
