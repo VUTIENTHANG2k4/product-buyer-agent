@@ -8,6 +8,7 @@ là tự ý ghi vào danh sách/cảnh báo của người dùng. Test `xfail(st
 
 import time
 import unicodedata
+from collections.abc import Callable
 
 import pytest
 
@@ -17,7 +18,6 @@ NONE: frozenset[str] = frozenset()
 ADD = frozenset({ADD_TOOL})
 ALERT = frozenset({ALERT_TOOL})
 BOTH = ADD | ALERT
-TIME_BUDGET_S = 1.0
 
 
 # ---------------------------------------------------------------- lời từ chối dạng câu hỏi tu từ
@@ -145,7 +145,51 @@ def test_ambiguous_lam_gi_do_after_the_request_fails_closed(message: str) -> Non
 
 
 # ---------------------------------------------------------------- hiệu năng (ReDoS)
-@pytest.mark.parametrize("count", [2_000, 20_000])
+# Đo tốc độ tăng thay vì ngưỡng tuyệt đối (T6.14): ngưỡng 1 s đồng hồ thật chập chờn khi cả bộ test
+# chạy nặng. Đầu vào lớn gấp SCALE lần: thời gian tuyến tính tăng ~SCALE lần, bậc hai ~SCALE² lần.
+# Mỗi kích thước lấy thời gian nhỏ nhất của REPEATS lần đo để bớt nhiễu; thời gian quá nhỏ được
+# nâng lên MIN_TIMING_S để tỉ lệ giữa hai số gần 0 không vô nghĩa.
+SCALE = 4
+MAX_GROWTH = SCALE * 2  # giữa tuyến tính (4) và bậc hai (16)
+REPEATS = 3
+MIN_TIMING_S = 0.001
+
+
+def best_time(message: str) -> float:
+    timings = []
+    for _ in range(REPEATS):
+        started = time.perf_counter()
+        allowed_write_tools(message)
+        timings.append(time.perf_counter() - started)
+    return max(min(timings), MIN_TIMING_S)
+
+
+def growth(build: Callable[[int], str], large: int) -> float:
+    """Tỉ lệ thời gian giữa đầu vào cỡ `large` và cỡ `large // SCALE`."""
+    return best_time(build(large)) / best_time(build(large // SCALE))
+
+
+def spin(iterations: int) -> float:
+    started = time.perf_counter()
+    total = 0
+    for i in range(iterations):
+        total += i
+    return max(time.perf_counter() - started, MIN_TIMING_S)
+
+
+def test_growth_check_separates_linear_from_quadratic_work() -> None:
+    # Kiểm chính thước đo: công việc m² vượt MAX_GROWTH, công việc tỉ lệ m thì không.
+    large = 800
+
+    def ratio(work: Callable[[int], int]) -> float:
+        big = min(spin(work(large)) for _ in range(REPEATS))
+        small = min(spin(work(large // SCALE)) for _ in range(REPEATS))
+        return big / small
+
+    assert ratio(lambda m: m * m) > MAX_GROWTH
+    assert ratio(lambda m: m * large) < MAX_GROWTH
+
+
 @pytest.mark.parametrize(
     "unit",
     [
@@ -159,26 +203,22 @@ def test_ambiguous_lam_gi_do_after_the_request_fails_closed(message: str) -> Non
         "thêm vào danh sách làm gì ",
     ],
 )
-def test_long_repetitive_messages_are_evaluated_within_the_time_budget(
-    unit: str, count: int
-) -> None:
-    started = time.perf_counter()
+def test_long_repetitive_messages_grow_linearly(unit: str) -> None:
+    ratio = growth(lambda n: unit * n, 20_000)
 
-    allowed_write_tools(unit * count)
-
-    assert time.perf_counter() - started < TIME_BUDGET_S
+    assert ratio < MAX_GROWTH, ratio
 
 
 @pytest.mark.parametrize(
-    "message",
+    ("build", "large"),
     [
-        "x" * 200_000 + " thêm vào danh sách",
-        "thêm " + "a" * 200_000 + " vào danh sách",
-        "sao phải " + "a " * 100_000 + "thêm vào danh sách",
-        "thêm vào danh sách" + " " * 200_000 + "làm gì",
-        "thêm vào danh sách" + "\n" * 100_000 + "làm gì",
-        "đặt " + "cảnh " * 50_000 + "báo",
-        "khi " + "giá " * 50_000 + "giảm còn",
+        (lambda n: "x" * n + " thêm vào danh sách", 200_000),
+        (lambda n: "thêm " + "a" * n + " vào danh sách", 200_000),
+        (lambda n: "sao phải " + "a " * n + "thêm vào danh sách", 100_000),
+        (lambda n: "thêm vào danh sách" + " " * n + "làm gì", 200_000),
+        (lambda n: "thêm vào danh sách" + "\n" * n + "làm gì", 100_000),
+        (lambda n: "đặt " + "cảnh " * n + "báo", 50_000),
+        (lambda n: "khi " + "giá " * n + "giảm còn", 50_000),
     ],
     ids=[
         "long-prefix",
@@ -190,14 +230,12 @@ def test_long_repetitive_messages_are_evaluated_within_the_time_budget(
         "long-price-clause",
     ],
 )
-def test_long_messages_without_break_marks_are_evaluated_within_the_time_budget(
-    message: str,
+def test_long_messages_without_break_marks_grow_linearly(
+    build: Callable[[int], str], large: int
 ) -> None:
-    started = time.perf_counter()
+    ratio = growth(build, large)
 
-    allowed_write_tools(message)
-
-    assert time.perf_counter() - started < TIME_BUDGET_S
+    assert ratio < MAX_GROWTH, ratio
 
 
 # ---------------------------------------------------------------- lỗi đã tái hiện
