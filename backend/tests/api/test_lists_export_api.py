@@ -6,7 +6,7 @@ import io
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.domain.enums import StockStatus
+from app.domain.enums import SiteKey, StockStatus
 from app.services.list_export import BOM, HEADER, TOTAL_LABEL
 from tests.service_support import add_offer, add_product
 
@@ -102,3 +102,28 @@ def test_export_with_non_numeric_id_is_422(client: TestClient) -> None:
     response = client.get("/api/lists/abc/export.csv")
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_export_uses_the_preferred_offer_for_price_site_and_link(
+    client: TestClient, db_session: Session
+) -> None:
+    list_id = new_list(client)
+    product = add_product(db_session, canonical_name="Mock ưu tiên")
+    add_offer(db_session, product, price=10_000_000, url="https://mock.example/p/cheap")
+    preferred = add_offer(
+        db_session,
+        product,
+        site=SiteKey.gearvn,
+        price=11_000_000,
+        url="https://mock-gearvn.example/p/preferred",
+    )
+    response = client.post(
+        f"/api/lists/{list_id}/items",
+        json={"product_id": product.id, "preferred_offer_id": preferred.id},
+    )
+    assert response.status_code == 201, response.text
+
+    rows = parse(client.get(f"/api/lists/{list_id}/export.csv").content)
+
+    assert rows[1][4] == "11000000"
+    assert rows[1][7:9] == ["gearvn", "https://mock-gearvn.example/p/preferred"]

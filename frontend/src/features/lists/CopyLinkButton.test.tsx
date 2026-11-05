@@ -58,6 +58,8 @@ describe('CopyLinkButton', () => {
     const field = screen.getByRole('textbox', { name: text.shareUrl })
     expect(field).toHaveValue(expectedUrl)
     expect(field).toHaveAttribute('readonly')
+    expect(field).toHaveFocus()
+    expect(alert).not.toContainElement(field)
   })
 
   it('không có clipboard (ngoài secure context): cũng hiện ô URL', async () => {

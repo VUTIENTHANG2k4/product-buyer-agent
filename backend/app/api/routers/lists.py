@@ -48,7 +48,8 @@ def get_list(list_id: ListId, service: ShoppingListServiceDep) -> ShoppingListDe
     summary="Xuất danh sách ra CSV (UTF-8 có BOM, tiền là số nguyên VND)",
     description=(
         "Cột: STT, Sản phẩm, Số lượng, Giá lúc thêm, Giá hiện tại, Chênh lệch, Thành tiền, Trang, "
-        "Link, Ghi chú; dòng cuối `Tổng`. Ô văn bản mở đầu bằng `= + - @` được thêm `'`."
+        "Link, Ghi chú; dòng cuối `Tổng`. Ô văn bản mở đầu bằng `=`, `+`, `-`, `@`, tab hoặc CR "
+        "được thêm `'`."
     ),
     responses={
         200: {"content": {"text/csv": {"schema": {"type": "string"}}}, "description": "Tệp CSV"},

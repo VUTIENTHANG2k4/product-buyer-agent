@@ -13,16 +13,20 @@ type CopyState = 'idle' | 'copied' | 'failed'
 /**
  * Chép URL tuyệt đối của trang danh sách vào clipboard (X3). App không có đăng nhập nên link mở
  * được với bất kỳ ai truy cập được app. Không có clipboard (ngoài secure context) hoặc bị từ chối
- * thì hiện ô chứa URL đã chọn sẵn để người dùng tự chép.
+ * thì hiện ô chỉ đọc chứa URL, tự focus và chọn sẵn chữ để người dùng tự chép.
  */
 export function CopyLinkButton({ listId }: { listId: number }) {
   const href = useHref(`/lists/${listId}`)
   const url = new URL(href, window.location.origin).toString()
   const [state, setState] = useState<CopyState>('idle')
   const timer = useRef<number | undefined>(undefined)
+  const field = useRef<HTMLInputElement>(null)
   const text = strings.lists
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
+  useEffect(() => {
+    if (state === 'failed') field.current?.focus()
+  }, [state])
 
   const copy = async () => {
     window.clearTimeout(timer.current)
@@ -46,9 +50,10 @@ export function CopyLinkButton({ listId }: { listId: number }) {
         {state === 'copied' ? text.linkCopied : ''}
       </span>
       {state === 'failed' ? (
-        <div role="alert" className="basis-full space-y-1 text-sm">
-          <p>{text.copyFailed}</p>
+        <div className="basis-full space-y-1 text-sm">
+          <p role="alert">{text.copyFailed}</p>
           <Input
+            ref={field}
             readOnly
             value={url}
             aria-label={text.shareUrl}

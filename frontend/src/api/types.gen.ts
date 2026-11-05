@@ -155,7 +155,7 @@ export interface paths {
         };
         /**
          * Xuất danh sách ra CSV (UTF-8 có BOM, tiền là số nguyên VND)
-         * @description Cột: STT, Sản phẩm, Số lượng, Giá lúc thêm, Giá hiện tại, Chênh lệch, Thành tiền, Trang, Link, Ghi chú; dòng cuối `Tổng`. Ô văn bản mở đầu bằng `= + - @` được thêm `'`.
+         * @description Cột: STT, Sản phẩm, Số lượng, Giá lúc thêm, Giá hiện tại, Chênh lệch, Thành tiền, Trang, Link, Ghi chú; dòng cuối `Tổng`. Ô văn bản mở đầu bằng `=`, `+`, `-`, `@`, tab hoặc CR được thêm `'`.
          */
         get: operations["export_list_api_lists__list_id__export_csv_get"];
         put?: never;
