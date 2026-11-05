@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: 🔄 X3 Xuất danh sách mua ra CSV / chia sẻ link (nhánh `milestone/X3-shopping-list-export`; X3.1 endpoint CSV ✅, đang làm X3.2 nút "Tải CSV" + "Sao chép link"). Lượt "việc nhỏ 7" đã merge vào `main` (995c4ad).
+- Đang làm: 🔄 X3 Xuất danh sách mua ra CSV / chia sẻ link (nhánh `milestone/X3-shopping-list-export`; X3.1 endpoint CSV ✅, X3.2 nút "Tải CSV" + "Sao chép link" ✅; tiếp theo `/check`, `/review X3`). Lượt "việc nhỏ 7" đã merge vào `main` (995c4ad).
 - Backlog chưa làm: T6.7 phần còn lại ((a) `LlmSpecsFiller` ngoài giao dịch lưu, (e), (g), đo lại eval bằng LLM thật: L10 và 14 câu mới có `min_results` có thể rớt), T8.12 đã xong. Không còn `xfail` đã biết. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-11-04 — lượt "việc nhỏ 7" (màu switch tiếng Anh sau "<màu> Switch", 4 điểm UI T8.12, seed `eval` có ca khó + `min_results`, `app/db/migrations.py`, `agent/prompt_loader.py`)
 

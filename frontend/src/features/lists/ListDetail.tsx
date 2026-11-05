@@ -1,6 +1,7 @@
-import { Pencil, Trash2 } from 'lucide-react'
+import { Download, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { apiUrl } from '@/api/client'
 import { Price } from '@/components/common/badges'
 import { QueryBoundary } from '@/components/common/QueryBoundary'
 import { EmptyState } from '@/components/common/states'
@@ -9,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { errorMessage } from '@/lib/errorMessage'
 import { strings } from '@/lib/strings'
 import { useList, useRemoveItem, useUpdateItem, type ShoppingListDetail } from './api'
+import { CopyLinkButton } from './CopyLinkButton'
 import { DeleteListDialog, RenameListDialog } from './ListDialogs'
 import { ListItemCard } from './ListItemCard'
 
@@ -31,7 +33,17 @@ function DetailBody({ list }: { list: ShoppingListDetail }) {
           <h2 className="text-xl font-semibold break-words">{list.name}</h2>
           <p className="text-sm text-muted-foreground">{text.itemsCount(list.item_count)}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" size="sm">
+            <a
+              href={apiUrl(`lists/${list.list_id}/export.csv`)}
+              download={`danh-sach-${list.list_id}.csv`}
+            >
+              <Download aria-hidden="true" />
+              {text.exportCsv}
+            </a>
+          </Button>
+          <CopyLinkButton listId={list.list_id} />
           <Button variant="outline" size="sm" onClick={() => setRenaming(true)}>
             <Pencil aria-hidden="true" />
             {text.rename}

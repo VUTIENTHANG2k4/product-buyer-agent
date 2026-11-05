@@ -125,6 +125,11 @@ export const strings = {
     total: 'Tổng tiền theo giá hiện tại',
     totalNote: 'Các mục không còn bán không được tính vào tổng.',
     actionError: 'Không cập nhật được danh sách',
+    exportCsv: 'Tải CSV',
+    copyLink: 'Sao chép link',
+    linkCopied: 'Đã sao chép link',
+    copyFailed: 'Không sao chép được, hãy chép link thủ công:',
+    shareUrl: 'Link danh sách',
   },
   alerts: {
     filterLabel: 'Lọc theo trạng thái',

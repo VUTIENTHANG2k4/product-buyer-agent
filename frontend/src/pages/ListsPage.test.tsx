@@ -570,3 +570,34 @@ describe('ListsPage · ghi chú, nơi mua, xóa mục', () => {
     )
   })
 })
+
+describe('ListsPage · xuất CSV và chia sẻ link (X3)', () => {
+  it('nút "Tải CSV" là link tải về endpoint xuất của đúng danh sách', async () => {
+    installFakeLists([listDetail({ list_id: 4, items: [laptop] })])
+    renderAt('/lists/4')
+    const link = await screen.findByRole('link', { name: 'Tải CSV' })
+    expect(link).toHaveAttribute('href', apiUrl('lists/4/export.csv'))
+    expect(link).toHaveAttribute('download', 'danh-sach-4.csv')
+  })
+
+  it('danh sách rỗng vẫn có "Tải CSV" và "Sao chép link"', async () => {
+    installFakeLists([listDetail({ list_id: 9, items: [] })])
+    renderAt('/lists/9')
+    expect(await screen.findByRole('link', { name: 'Tải CSV' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sao chép link' })).toBeInTheDocument()
+  })
+
+  it('"Sao chép link" chép URL trang của danh sách đang mở', async () => {
+    const writeText = vi.fn(() => Promise.resolve())
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    try {
+      installFakeLists([listDetail({ list_id: 4, items: [laptop] })])
+      renderAt('/lists/4')
+      await userEvent.click(await screen.findByRole('button', { name: 'Sao chép link' }))
+      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/lists/4`)
+      expect(screen.getByRole('button', { name: 'Đã sao chép link' })).toBeInTheDocument()
+    } finally {
+      Reflect.deleteProperty(navigator, 'clipboard')
+    }
+  })
+})
