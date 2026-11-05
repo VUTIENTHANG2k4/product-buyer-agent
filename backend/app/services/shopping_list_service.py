@@ -25,6 +25,7 @@ from app.domain.catalog import (
 from app.domain.clock import utc_now
 from app.domain.dto import INT8_MAX
 from app.domain.errors import ListNotFound, ProductNotFound, ValidationFailed
+from app.services.list_export import render_list_csv
 from app.services.views import Clock, aware_now, sellable, to_offer_view
 
 MAX_NAME_LENGTH = 100
@@ -92,6 +93,10 @@ class ShoppingListService:
         items = self._lists.list_items(list_id)
         views = self._item_views(items)
         return ShoppingListDetail(**self._summary(shopping_list, views).model_dump(), items=views)
+
+    def export_csv(self, list_id: int) -> str:
+        """Danh sách dạng CSV (UTF-8 có BOM, tiền là số nguyên VND theo giá hiện tại)."""
+        return render_list_csv(self.get_list(list_id))
 
     def rename_list(self, list_id: int, name: str) -> ShoppingListSummary:
         renamed = self._lists.rename(

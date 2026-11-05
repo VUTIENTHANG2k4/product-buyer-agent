@@ -97,7 +97,7 @@ flowchart LR
 Hiển thị thông số chuẩn hóa, giá ở từng trang, biểu đồ lịch sử giá, link gốc.
 
 ### UC3. Quản lý danh sách mua
-Tạo danh sách, thêm/xóa sản phẩm (từ giao diện hoặc qua agent), ghi chú, xem tổng tiền theo giá thấp nhất hiện tại. Danh sách lưu trong cơ sở dữ liệu của hệ thống, **không** liên quan đến giỏ hàng của trang bán.
+Tạo danh sách, thêm/xóa sản phẩm (từ giao diện hoặc qua agent), ghi chú, xem tổng tiền theo giá thấp nhất hiện tại. Danh sách lưu trong cơ sở dữ liệu của hệ thống, **không** liên quan đến giỏ hàng của trang bán. Có thể tải danh sách ra CSV và sao chép link trang danh sách để chia sẻ (X3; app không có đăng nhập nên link mở được với ai truy cập được app).
 
 ### UC4. Đặt cảnh báo giá
 Chọn sản phẩm, ngưỡng giá, kênh (email/Telegram). Hệ thống kiểm tra sau mỗi lượt làm mới giá; gửi một lần khi giá xuống dưới ngưỡng, không gửi lặp cho cùng mức giá.

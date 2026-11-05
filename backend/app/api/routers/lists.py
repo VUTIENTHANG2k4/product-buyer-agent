@@ -5,9 +5,10 @@ from typing import Annotated
 from fastapi import APIRouter, Path, Response, status
 
 from app.api.deps import ShoppingListServiceDep
-from app.api.errors import error_responses
+from app.api.errors import error_responses, json_error_responses
 from app.api.schemas import ItemCreate, ItemPatch, ListBody, ListsResponse
 from app.domain.catalog import ShoppingListDetail, ShoppingListItemView, ShoppingListSummary
+from app.services.list_export import export_filename
 
 router = APIRouter(tags=["lists"])
 
@@ -39,6 +40,27 @@ def create_list(body: ListBody, service: ShoppingListServiceDep) -> ShoppingList
 )
 def get_list(list_id: ListId, service: ShoppingListServiceDep) -> ShoppingListDetail:
     return service.get_list(list_id)
+
+
+@router.get(
+    "/lists/{list_id}/export.csv",
+    response_class=Response,
+    summary="Xuất danh sách ra CSV (UTF-8 có BOM, tiền là số nguyên VND)",
+    description=(
+        "Cột: STT, Sản phẩm, Số lượng, Giá lúc thêm, Giá hiện tại, Chênh lệch, Thành tiền, Trang, "
+        "Link, Ghi chú; dòng cuối `Tổng`. Ô văn bản mở đầu bằng `= + - @` được thêm `'`."
+    ),
+    responses={
+        200: {"content": {"text/csv": {"schema": {"type": "string"}}}, "description": "Tệp CSV"},
+        **json_error_responses(404, 422),
+    },
+)
+def export_list(list_id: ListId, service: ShoppingListServiceDep) -> Response:
+    return Response(
+        content=service.export_csv(list_id).encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{export_filename(list_id)}"'},
+    )
 
 
 @router.patch(

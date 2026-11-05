@@ -146,6 +146,26 @@ export interface paths {
         patch: operations["rename_list_api_lists__list_id__patch"];
         trace?: never;
     };
+    "/api/lists/{list_id}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Xuất danh sách ra CSV (UTF-8 có BOM, tiền là số nguyên VND)
+         * @description Cột: STT, Sản phẩm, Số lượng, Giá lúc thêm, Giá hiện tại, Chênh lệch, Thành tiền, Trang, Link, Ghi chú; dòng cuối `Tổng`. Ô văn bản mở đầu bằng `= + - @` được thêm `'`.
+         */
+        get: operations["export_list_api_lists__list_id__export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/lists/{list_id}/items": {
         parameters: {
             query?: never;
@@ -1709,6 +1729,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ShoppingListSummary"];
+                };
+            };
+            /** @description Không tìm thấy */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Dữ liệu gửi lên không hợp lệ */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Lỗi máy chủ */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    export_list_api_lists__list_id__export_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Id danh sách; id không tồn tại hoặc ngoài miền → 404 */
+                list_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tệp CSV */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
             /** @description Không tìm thấy */

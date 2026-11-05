@@ -23,6 +23,7 @@ DOCUMENTED = {
     ("get", "/api/lists"),
     ("post", "/api/lists"),
     ("get", "/api/lists/{list_id}"),
+    ("get", "/api/lists/{list_id}/export.csv"),
     ("patch", "/api/lists/{list_id}"),
     ("delete", "/api/lists/{list_id}"),
     ("post", "/api/lists/{list_id}/items"),
@@ -93,6 +94,8 @@ def test_every_success_response_has_a_typed_body_unless_it_has_none_by_design(
             assert "content" not in response, (method, path)
         elif path.endswith("/events"):
             assert "text/event-stream" in response["content"], (method, path)
+        elif path.endswith(".csv"):
+            assert response["content"]["text/csv"]["schema"] == {"type": "string"}, (method, path)
         else:
             assert response["content"]["application/json"]["schema"], (method, path)
 

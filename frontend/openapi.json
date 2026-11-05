@@ -765,6 +765,71 @@
         }
       }
     },
+    "/api/lists/{list_id}/export.csv": {
+      "get": {
+        "tags": [
+          "lists"
+        ],
+        "summary": "Xuất danh sách ra CSV (UTF-8 có BOM, tiền là số nguyên VND)",
+        "description": "Cột: STT, Sản phẩm, Số lượng, Giá lúc thêm, Giá hiện tại, Chênh lệch, Thành tiền, Trang, Link, Ghi chú; dòng cuối `Tổng`. Ô văn bản mở đầu bằng `= + - @` được thêm `'`.",
+        "operationId": "export_list_api_lists__list_id__export_csv_get",
+        "parameters": [
+          {
+            "name": "list_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404",
+              "title": "List Id"
+            },
+            "description": "Id danh sách; id không tồn tại hoặc ngoài miền → 404"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tệp CSV",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dữ liệu gửi lên không hợp lệ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Lỗi máy chủ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Không tìm thấy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/lists/{list_id}/items": {
       "post": {
         "tags": [

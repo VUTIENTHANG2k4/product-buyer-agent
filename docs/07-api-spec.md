@@ -86,6 +86,7 @@ Id trong đường dẫn hoặc thân yêu cầu ngoài miền khóa chính (≤
 | GET | `/lists` | `{items: [{list_id, name, item_count, total_price, updated_at}]}`; tổng tiền theo giá hiện tại của từng mục |
 | POST | `/lists` | `{name}` → 201 |
 | GET | `/lists/{id}` | Chi tiết với các mục (kèm giá hiện tại và chênh lệch so với `price_at_add`) |
+| GET | `/lists/{id}/export.csv` | Tệp CSV (X3): `text/csv; charset=utf-8`, `Content-Disposition: attachment; filename="danh-sach-<id>.csv"`; xem dưới bảng |
 | PATCH | `/lists/{id}` | `{name}` |
 | DELETE | `/lists/{id}` | 204 |
 | POST | `/lists/{id}/items` | `{product_id, quantity?, note?, preferred_offer_id?}` → 201; trùng → tăng `quantity` (giữ `price_at_add` ban đầu). `quantity` 1..2.147.483.647 và `quantity × giá hiện tại` của mục ≤ 10^12 ₫ (T6.12), vượt thì 422 `VALIDATION_ERROR`; `PATCH` số lượng cùng luật |
@@ -93,6 +94,8 @@ Id trong đường dẫn hoặc thân yêu cầu ngoài miền khóa chính (≤
 | DELETE | `/lists/{id}/items/{item_id}` | 204 |
 
 `quantity` 1..2.147.483.647 (cộng dồn cũng không được vượt); `note` ≤ 500 ký tự; `preferred_offer_id` phải là offer của chính sản phẩm của mục, nếu không 422 `VALIDATION_ERROR`; mục của danh sách khác → 404 `LIST_NOT_FOUND`; `product_id` không tồn tại → 404 `PRODUCT_NOT_FOUND`.
+
+Xuất CSV (X3): UTF-8 có BOM (Excel hiện đúng tiếng Việt), dấu phẩy, xuống dòng CRLF. Cột `STT, Sản phẩm, Số lượng, Giá lúc thêm, Giá hiện tại, Chênh lệch, Thành tiền, Trang, Link, Ghi chú` (thứ tự mục như `GET /lists/{id}`; tiền là số nguyên VND không định dạng; `Trang` là khóa trang như `gearvn`); mục không còn bán để trống giá hiện tại, chênh lệch, thành tiền, trang, link. Dòng cuối `Tổng` có `total_price` ở cột Thành tiền. Ô văn bản (tên, link, ghi chú) mở đầu bằng `=`, `+`, `-`, `@`, tab hoặc CR được thêm `'` để bảng tính không chạy như công thức. Lỗi (404 `LIST_NOT_FOUND`, 422) vẫn là JSON chuẩn.
 
 ### 3.5 Cảnh báo giá
 | Method | Path | Mô tả |
