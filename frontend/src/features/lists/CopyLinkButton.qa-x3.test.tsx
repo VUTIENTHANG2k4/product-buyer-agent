@@ -75,9 +75,9 @@ describe('CopyLinkButton · QA X3', () => {
     errors.mockRestore()
   })
 
-  // BUG-X3-2 (it.fails = xfail strict: sửa xong thì đổi lại thành it): gỡ component khi
-  // writeText chưa xong, promise resolve sau đó vẫn đặt hẹn giờ mới; cleanup đã chạy nên không hủy.
-  it.fails('gỡ component khi clipboard chưa xong: không để lại hẹn giờ mồ côi', async () => {
+  // BUG-X3-2 (đã sửa): gỡ component khi writeText chưa xong, promise resolve sau đó không được
+  // đặt hẹn giờ mới vì cleanup đã chạy và không còn ai hủy.
+  it('gỡ component khi clipboard chưa xong: không để lại hẹn giờ mồ côi', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     const pending = deferred()
     stubClipboard(() => pending.promise)
@@ -93,31 +93,28 @@ describe('CopyLinkButton · QA X3', () => {
     expect(vi.getTimerCount()).toBe(0)
   })
 
-  // BUG-X3-3 (it.fails = xfail strict): hai lần bấm chồng nhau, lần đầu bị từ chối SAU lần hai
-  // thành công → giao diện báo lỗi + hiện ô URL dù link đã được chép.
-  it.fails(
-    'lần bấm trước bị từ chối muộn không ghi đè kết quả lần bấm sau đã thành công',
-    async () => {
-      const first = deferred()
-      let call = 0
-      stubClipboard(() => {
-        call += 1
-        return call === 1 ? first.promise : Promise.resolve()
-      })
-      renderWithProviders(<CopyLinkButton listId={3} />)
-      const button = screen.getByRole('button', { name: text.copyLink })
+  // BUG-X3-3 (đã sửa): hai lần bấm chồng nhau, lần đầu bị từ chối SAU lần hai thành công không
+  // được báo lỗi + hiện ô URL vì link đã được chép.
+  it('lần bấm trước bị từ chối muộn không ghi đè kết quả lần bấm sau đã thành công', async () => {
+    const first = deferred()
+    let call = 0
+    stubClipboard(() => {
+      call += 1
+      return call === 1 ? first.promise : Promise.resolve()
+    })
+    renderWithProviders(<CopyLinkButton listId={3} />)
+    const button = screen.getByRole('button', { name: text.copyLink })
 
-      await userEvent.click(button)
-      await userEvent.click(button)
-      expect(screen.getByRole('button', { name: text.linkCopied })).toBeInTheDocument()
-      await act(async () => {
-        first.reject(new Error('denied'))
-        await first.promise.catch(() => undefined)
-      })
+    await userEvent.click(button)
+    await userEvent.click(button)
+    expect(screen.getByRole('button', { name: text.linkCopied })).toBeInTheDocument()
+    await act(async () => {
+      first.reject(new Error('denied'))
+      await first.promise.catch(() => undefined)
+    })
 
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    },
-  )
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
 
   it('đổi listId: chép URL của danh sách mới', async () => {
     const writeText = stubClipboard(() => Promise.resolve())

@@ -2,8 +2,9 @@
 
 Hàm thuần: nhận `ShoppingListDetail` đã tính giá từ DB, trả văn bản CSV. UTF-8 có BOM để Excel
 trên Windows hiện đúng tiếng Việt; tiền là số nguyên VND (không định dạng) để bảng tính còn tính
-được. Ô văn bản bắt đầu bằng ký tự công thức được thêm tiền tố `'` (chống CSV injection, OWASP):
-tên sản phẩm lấy từ web và ghi chú do người dùng nhập đều là dữ liệu, không phải công thức.
+được. Chống CSV injection theo OWASP: mọi ô được bọc nháy kép và ô văn bản bắt đầu bằng ký tự
+công thức được thêm tiền tố `'`. Tên sản phẩm lấy từ web và ghi chú do người dùng nhập đều là dữ
+liệu, không phải công thức.
 """
 
 import csv
@@ -45,7 +46,9 @@ def export_filename(list_id: int) -> str:
 
 def render_list_csv(detail: ShoppingListDetail) -> str:
     buffer = io.StringIO()
-    writer = csv.writer(buffer, lineterminator="\r\n")
+    # Bọc nháy kép mọi ô: Excel vùng Việt Nam tách cột theo `;`, ô không bọc như `a;=CMD()` sẽ tách
+    # ra một ô mở đầu bằng `=` mà tiền tố `'` không che được (BUG-X3-1).
+    writer = csv.writer(buffer, lineterminator="\r\n", quoting=csv.QUOTE_ALL)
     writer.writerow(HEADER)
     for position, item in enumerate(detail.items, start=1):
         available = item.current_price is not None

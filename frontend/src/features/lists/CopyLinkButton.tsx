@@ -23,20 +23,32 @@ export function CopyLinkButton({ listId }: { listId: number }) {
   const field = useRef<HTMLInputElement>(null)
   const text = strings.lists
 
-  useEffect(() => () => window.clearTimeout(timer.current), [])
+  // Số lượt bấm: chỉ kết quả của lượt mới nhất được áp dụng; gỡ component cũng tăng số này để kết
+  // quả clipboard về muộn bị bỏ qua (BUG-X3-2, BUG-X3-3).
+  const attempt = useRef(0)
+
+  useEffect(
+    () => () => {
+      attempt.current += 1
+      window.clearTimeout(timer.current)
+    },
+    [],
+  )
   useEffect(() => {
     if (state === 'failed') field.current?.focus()
   }, [state])
 
   const copy = async () => {
     window.clearTimeout(timer.current)
+    const mine = ++attempt.current
     try {
       if (!navigator.clipboard) throw new Error('clipboard unavailable')
       await navigator.clipboard.writeText(url)
+      if (mine !== attempt.current) return
       setState('copied')
       timer.current = window.setTimeout(() => setState('idle'), COPIED_RESET_MS)
     } catch {
-      setState('failed')
+      if (mine === attempt.current) setState('failed')
     }
   }
 

@@ -180,15 +180,8 @@ def _excel_split(line: str, delimiter: str) -> list[str]:
     return [cell.strip('"') for cell in cells]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG-X3-1: ô văn bản chứa ';' không được bọc nháy kép, Excel vùng Việt Nam tách theo ';' "
-        "(giới hạn đã ghi ở docs/07 §3.4) nên phần sau ';' thành ô mở đầu bằng '=' và chạy như "
-        "công thức. OWASP khuyên bọc mọi ô văn bản trong nháy kép (QUOTE_ALL/QUOTE_NONNUMERIC)."
-    ),
-)
 def test_semicolon_inside_text_cannot_start_a_formula_in_semicolon_locale_qa_x3() -> None:
+    # BUG-X3-1 (đã sửa): Excel vùng Việt Nam tách theo ';' nên mọi ô phải được bọc nháy kép.
     name = 'Mock Laptop;=HYPERLINK("https://evil.example","bấm")'
     note = "ghi chú;@SUM(1+1)"
     text = render_list_csv(detail([item(name=name, note=note)]))
