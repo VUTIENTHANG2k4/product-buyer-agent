@@ -3,9 +3,9 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: 🔄 X3 Xuất danh sách mua ra CSV / chia sẻ link (nhánh `milestone/X3-shopping-list-export`; X3.1 endpoint CSV ✅, X3.2 nút "Tải CSV" + "Sao chép link" ✅; tiếp theo `/check`, `/review X3`). Lượt "việc nhỏ 7" đã merge vào `main` (995c4ad).
-- Backlog chưa làm: T6.7 phần còn lại ((a) `LlmSpecsFiller` ngoài giao dịch lưu, (e), (g), đo lại eval bằng LLM thật: L10 và 14 câu mới có `min_results` có thể rớt), T8.12 đã xong. Không còn `xfail` đã biết. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-11-04 — lượt "việc nhỏ 7" (màu switch tiếng Anh sau "<màu> Switch", 4 điểm UI T8.12, seed `eval` có ca khó + `min_results`, `app/db/migrations.py`, `agent/prompt_loader.py`)
+- Đang làm: – (X3 xong, nhánh `milestone/X3-shopping-list-export`, chờ người dùng merge). Kế tiếp đề xuất: T6.7 phần còn lại (cần `GOOGLE_API_KEY`) hoặc X1 (phải chọn lại nguồn điện thoại, ADR-0010).
+- Backlog chưa làm: T6.7 phần còn lại ((a) `LlmSpecsFiller` ngoài giao dịch lưu, (e), (g), đo lại eval bằng LLM thật), X1, X2 (thực tế đã xong nhờ ADR-0008). Không còn `xfail` đã biết. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-11-05 — X3 (CSV `GET /lists/{id}/export.csv` + nút "Tải CSV"/"Sao chép link") và T6.14 (test ReDoS đo tốc độ tăng)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -22,15 +22,15 @@
 | M9 Theo dõi giá | ✅ | Qua `code-reviewer` (4 Phải sửa + 10/11 Nên sửa đã sửa) + `qa-tester` (8 bug sửa ngay, 227 test `*_qa_m9`); T9.1–T9.4 xong, `make demo-up` chạy cả hệ thống bằng Docker ([ADR-0009](adr/0009-mock-shop-compose-host.md)). T9.5–T9.8 xong |
 | M10 Tầng 2 | ✅ | Qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (5 bug sửa ngay, 346 test `*_qa_m10`); tầng 2 thật = GearVN + FPT Shop, Viettel Store/Nguyễn Kim bỏ vì tìm kiếm cần JS ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)). T10.4 xong (dọn cache, 24 mục, TTL rỗng 1 giờ) |
 | M11 Hoàn thiện | ✅ | Qua `code-reviewer` (2 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (1 bug sửa ngay, 27 test `*_qa_m11`); T11.1–T11.3 xong: eval cuối (intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; **latency p50 26–31 s chưa đạt**), README/docs theo code, diễn tập demo 7 bước. T11.5: người dùng chấp nhận ngoại lệ latency (2026-10-25). T11.4 (`make demo-price-drop`) xong. Lượt dọn kiến trúc T11.6–T11.8 (2026-10-29): qua `code-reviewer` (1 Phải sửa + Nên sửa đã sửa), bỏ qua `qa-tester`; ranh giới lớp kiểm bằng `test_layer_boundaries.py` (ngoại lệ theo file), `pipeline.py` thành gói 6 module (lớn nhất 402 dòng) |
+| X3 Xuất CSV / chia sẻ link | ✅ | Gộp T6.14; qua `code-reviewer` (0 Phải sửa, 3 Nên sửa đã sửa) + `qa-tester` (3 bug BUG-X3-1…3 sửa ngay, 51 test `*_qa_x3`/`*.qa-x3`); mọi ô CSV bọc nháy kép (Excel vùng VN tách theo `;`); link chia sẻ = URL `/lists/:id` (không đăng nhập) |
 
-## Bị chặn / cần người dùng quyết định
-- Không có (nguồn đã đổi sang FPT Shop + An Phát, người dùng đã duyệt T0.4 ngày 2026-10-19; [ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)).
+## Bị chặn / cần người dùng quyết định: không có
 
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,17% (9456 pass, không còn xfail, ngưỡng 80% trong `make test-be`, ~11–17 phút) | 2026-11-04 |
-| Test frontend (Vitest + E2E) | 1105 Vitest pass, 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100; chưa chạy lại ở lượt "việc nhỏ 7"); chưa đo coverage | 2026-11-04 |
+| Coverage backend | 99,18% (9515 pass, không còn xfail, ngưỡng 80% trong `make test-be`, ~15–22 phút) | 2026-11-05 |
+| Test frontend (Vitest + E2E) | 1125 Vitest pass, 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100; chưa chạy lại từ lượt "việc nhỏ 7"); chưa đo coverage | 2026-11-05 |
 | Eval (intent accuracy / constraint satisfaction / hallucination) | Lượt 1: 100% / 100% / 0, 31/31 câu (clarification 100%, tool 100%). Lượt cuối (sau trần gọi lặp `live_search_other`): 96,4% / 98,6% / 0, 29/31 (A03 `LLM_UNAVAILABLE` tạm thời, L10 dao động); chạy lại A03, L10 đều đạt. Tool 96,4%. **Latency p50 26–31 s: chưa đạt ≤ 15 s** (không do `LLM_MAX_RPM`: `--rpm 1000` vẫn 21–32 s; ≥ 3 lần gọi Gemini/câu, mỗi lần 4–10 s hôm nay). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-10-23*.md` (T11.1) | 2026-10-23 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)

@@ -427,6 +427,6 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 | --- | --- | --- | --- |
 | X1 | Nhóm điện thoại: nâng Viettel Store và Nguyễn Kim thành trang lõi cho nhóm này ([02 §1](02-scope-and-sources.md#1-ma-trận-trang--nhóm-sản-phẩm)); `PhoneSpecs`, scraper FPT Shop/Viettel Store/Nguyễn Kim cho điện thoại, biến thể dung lượng | L | ⬜ |
 | X2 | Đổi trang lõi nếu một nguồn bị loại ở T0.4 (gợi ý: FPT Shop, HACOM) | L | ⬜ |
-| X3 | Xuất danh sách mua ra CSV / chia sẻ link | S | 🔄 |
-| X3.1 | Endpoint `GET /lists/{id}/export.csv`. Xong khi: CSV đúng cột 07 §3.4, giá từ DB (kể cả offer ưu tiên, mục không còn bán), BOM + CRLF, chống CSV injection, 404/422 JSON; test unit + API, `make gen-api` | S | 🔄 |
-| X3.2 | Nút "Tải CSV" + "Sao chép link" ở chi tiết danh sách. Xong khi: link tải đúng endpoint, chép URL tuyệt đối, có ô URL dự phòng khi clipboard lỗi; Vitest + ảnh `docs/ui/screens/lists-*` | S | 🔄 |
+| X3 | Xuất danh sách mua ra CSV / chia sẻ link | S | ✅ |
+| X3.1 | Endpoint `GET /lists/{id}/export.csv`. Xong khi: CSV đúng cột 07 §3.4, giá từ DB (kể cả offer ưu tiên, mục không còn bán), BOM + CRLF, chống CSV injection, 404/422 JSON; test unit + API, `make gen-api` | S | ✅ |
+| X3.2 | Nút "Tải CSV" + "Sao chép link" ở chi tiết danh sách. Xong khi: link tải đúng endpoint, chép URL tuyệt đối, có ô URL dự phòng khi clipboard lỗi; Vitest + ảnh `docs/ui/screens/lists-*` | S | ✅ |
