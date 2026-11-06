@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { apiUrl } from '@/api/client'
@@ -8,6 +8,7 @@ import { mockMatchMedia, type MatchMediaControl } from '@/test/matchMedia'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import { ListsPage } from './ListsPage'
 
+const SLOW = { timeout: 5000 }
 let media: MatchMediaControl
 
 beforeEach(() => {
@@ -37,18 +38,29 @@ describe('ListsPage · xuất CSV / chia sẻ link (QA X3)', () => {
       listDetail({ list_id: 12, name: 'Mock B', items: [] }),
     ])
     renderAt('/lists/11')
-    expect(await screen.findByRole('link', { name: 'Tải CSV' })).toHaveAttribute(
+    // Chờ tải dữ liệu: timeout mặc định 1 s quá sát khi cả bộ test chạy song song.
+    expect(await screen.findByRole('link', { name: 'Tải CSV' }, SLOW)).toHaveAttribute(
       'href',
       apiUrl('lists/11/export.csv'),
     )
 
     const nav = screen.getByRole('navigation', { name: 'Danh sách của bạn' })
     await userEvent.click(within(nav).getByRole('link', { name: /Mock B/ }))
-    await screen.findByRole('heading', { level: 2, name: 'Mock B' })
+    await screen.findByRole('heading', { level: 2, name: 'Mock B' }, SLOW)
 
-    const csv = screen.getByRole('link', { name: 'Tải CSV' })
-    expect(csv).toHaveAttribute('href', apiUrl('lists/12/export.csv'))
-    expect(csv).toHaveAttribute('download', 'danh-sach-12.csv')
+    // Tiêu đề lấy từ thanh bên nên hiện trước chi tiết danh sách 12: chờ link đổi theo nó.
+    await waitFor(
+      () =>
+        expect(screen.getByRole('link', { name: 'Tải CSV' })).toHaveAttribute(
+          'href',
+          apiUrl('lists/12/export.csv'),
+        ),
+      SLOW,
+    )
+    expect(screen.getByRole('link', { name: 'Tải CSV' })).toHaveAttribute(
+      'download',
+      'danh-sach-12.csv',
+    )
     await userEvent.click(screen.getByRole('button', { name: 'Sao chép link' }))
     expect(writeText).toHaveBeenLastCalledWith(`${window.location.origin}/lists/12`)
   })
