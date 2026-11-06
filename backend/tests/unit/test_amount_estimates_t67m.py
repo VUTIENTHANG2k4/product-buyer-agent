@@ -28,7 +28,7 @@ def warnings_for(text: str) -> tuple[int, ...]:
         "Ngân sách tối đa 40 triệu thì nên chọn RTX 4060",
         "Đắt hơn 4 triệu nhưng màn hình tốt hơn",
         "Giá ~ 23 triệu",
-        "Đến 28 triệu vẫn còn máy RTX 4070",
+        "Từ 20 đến 28 triệu vẫn còn máy RTX 4070",
     ],
 )
 def test_thresholds_and_estimates_are_not_price_warnings(text: str) -> None:
@@ -48,6 +48,18 @@ def test_thresholds_and_estimates_are_not_price_warnings(text: str) -> None:
 def test_real_prices_that_differ_from_the_database_are_still_flagged(
     text: str, expected: tuple[int, ...]
 ) -> None:
+    assert warnings_for(text) == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Chuột Logitech màu đen - 1.990.000₫", (1_990_000,)),
+        ("Phiên bản màu đen 450k", (450_000,)),
+        ("Đến 28 triệu vẫn còn máy", (28_000_000,)),  # "đến" đứng đầu, không sau một số
+    ],
+)
+def test_the_colour_black_is_not_the_word_until(text: str, expected: tuple[int, ...]) -> None:
     assert warnings_for(text) == expected
 
 

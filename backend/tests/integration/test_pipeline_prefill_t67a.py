@@ -4,6 +4,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 import pytest
+from sqlalchemy import Engine, delete
 from sqlmodel import Session, select
 
 from app.agent.prompt_loader import load_prompt
@@ -14,11 +15,12 @@ from app.domain.dto import ListingItem
 from app.domain.enums import Category, SiteKey
 from app.normalize.llm_extract import LlmSpecsFiller
 from app.normalize.specs import LaptopSpecs
-from app.scrapers.pipeline.resolve import resolve_product
+from app.scrapers.pipeline.resolve import resolve_product, url_key
 from app.scrapers.pipeline.state import PreparedItem
 from app.scrapers.pipeline.writer import OfferWriter
 from app.scrapers.registry import SCRAPERS
 
+CONFIG = SCRAPERS[SiteKey.gearvn].config
 ACER = 'Laptop Acer Aspire Lite 15 AL15-53P-56QH (Core 5-120U/ 8GB/ 512GB/ 15.6" FHD/ Win 11)'
 
 
@@ -82,42 +84,21 @@ def writer(tracker: Tracker, filler: LlmSpecsFiller | None) -> OfferWriter:
 def test_llm_runs_while_no_session_is_open(tracker: Tracker) -> None:
     filler = ProbeFiller(lambda: tracker.open)
 
-    out = writer(tracker, filler).prefill_specs(Category.laptop, [PreparedItem(listing("a"))])
+    out = writer(tracker, filler).prefill_specs(
+        CONFIG, Category.laptop, [PreparedItem(listing("a"))]
+    )
 
     assert filler.open_during_calls == [0]
     assert out[0].extraction is not None and not out[0].extraction.missing
     assert out[0].extraction.specs["gpu_model"] == "RTX 4050"
 
 
-def test_cache_survives_even_if_the_item_fails_to_save(
-    tracker: Tracker, db_session: Session
-) -> None:
-    filler = ProbeFiller(lambda: tracker.open)
-    unpriced = PreparedItem(listing("a", price=None))
-
-    out = writer(tracker, filler).prefill_specs(Category.laptop, [unpriced])
-    config = SCRAPERS[SiteKey.gearvn].config
-    # mục không có giá: save_item ném, savepoint hoàn tác
-    with pytest.raises(ValueError), db_session.begin_nested():
-        writer(tracker, filler).save_item(
-            db_session,
-            config,
-            Category.laptop,
-            unpriced.item,
-            None,
-            utc_now(),
-            extraction=out[0].extraction,
-        )
-
-    assert len(db_session.exec(select(LlmExtractionCache)).all()) == 1
-
-
 def test_second_page_with_same_input_hits_the_cache(tracker: Tracker) -> None:
     filler = ProbeFiller(lambda: tracker.open)
     w = writer(tracker, filler)
 
-    w.prefill_specs(Category.laptop, [PreparedItem(listing("a"))])
-    w.prefill_specs(Category.laptop, [PreparedItem(listing("b"))])
+    w.prefill_specs(CONFIG, Category.laptop, [PreparedItem(listing("a"))])
+    w.prefill_specs(CONFIG, Category.laptop, [PreparedItem(listing("b"))])
 
     assert (filler.llm_calls, filler.cache_hits) == (1, 1)
 
@@ -127,8 +108,8 @@ def test_save_item_uses_the_prefilled_extraction_without_a_filler(
 ) -> None:
     filler = ProbeFiller(lambda: tracker.open)
     w = writer(tracker, filler)
-    prepared = w.prefill_specs(Category.laptop, [PreparedItem(listing("a"))])[0]
-    config = SCRAPERS[SiteKey.gearvn].config
+    prepared = w.prefill_specs(CONFIG, Category.laptop, [PreparedItem(listing("a"))])[0]
+    config = CONFIG
 
     offer_id, _ = OfferWriter(tracker, utc_now, resolve_product).save_item(
         db_session,
@@ -149,7 +130,7 @@ def test_save_item_uses_the_prefilled_extraction_without_a_filler(
 def test_without_filler_prefill_returns_items_unchanged(tracker: Tracker) -> None:
     items = [PreparedItem(listing("a"))]
 
-    assert writer(tracker, None).prefill_specs(Category.laptop, items) is items
+    assert writer(tracker, None).prefill_specs(CONFIG, Category.laptop, items) is items
 
 
 def test_prefill_never_raises_when_the_filler_crashes(tracker: Tracker) -> None:
@@ -158,7 +139,54 @@ def test_prefill_never_raises_when_the_filler_crashes(tracker: Tracker) -> None:
             raise RuntimeError("LLM hỏng")
 
     out = writer(tracker, Boom(lambda: 0)).prefill_specs(
-        Category.laptop, [PreparedItem(listing("a"))]
+        CONFIG, Category.laptop, [PreparedItem(listing("a"))]
     )
 
     assert out[0].extraction is None
+
+
+def test_items_the_save_step_will_reject_never_reach_the_llm(tracker: Tracker) -> None:
+    filler = ProbeFiller(lambda: tracker.open)
+    items = [
+        PreparedItem(listing("unpriced", price=None)),
+        PreparedItem(listing("cheap", price=1)),  # ngoài miền giá
+        PreparedItem(listing("dup")),
+        PreparedItem(listing("dup")),  # trùng URL trong trang: bản đầu thắng
+        PreparedItem(listing("seen")),
+        PreparedItem(
+            ListingItem(
+                site=SiteKey.gearvn,
+                url="https://elsewhere.example/p/x",  # ngoài trang
+                title=ACER,
+                price=1_000_000,
+                raw_specs={"Ghi chú": "Card rời RTX 4050 6GB"},
+            )
+        ),
+    ]
+
+    out = writer(tracker, filler).prefill_specs(
+        CONFIG, Category.laptop, items, seen=[url_key(listing("seen")) or ""]
+    )
+
+    assert [o.extraction is not None for o in out] == [False, False, True, False, False, False]
+    assert filler.llm_calls == 1
+
+
+def test_llm_cache_is_really_committed_in_its_own_transaction(db_engine: Engine) -> None:
+
+    def real_session() -> Session:
+        return Session(db_engine)
+
+    filler = ProbeFiller(lambda: 0)
+    try:
+        OfferWriter(real_session, utc_now, resolve_product, filler).prefill_specs(
+            CONFIG, Category.laptop, [PreparedItem(listing("commit"))]
+        )
+
+        with Session(db_engine) as other:  # kết nối khác phải thấy dòng cache đã commit
+            rows = other.exec(select(LlmExtractionCache)).all()
+        assert [r.model for r in rows] == ["probe"]
+    finally:
+        with Session(db_engine) as cleanup:
+            cleanup.exec(delete(LlmExtractionCache))
+            cleanup.commit()

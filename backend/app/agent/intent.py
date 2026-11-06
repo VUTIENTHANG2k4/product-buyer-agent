@@ -96,7 +96,7 @@ _WORD_OR_MARK = re.compile(r"[a-z]+|\d+|[~<>≈]")
 _LEAD_CHARS = 40  # chỉ xét chừng này ký tự đứng trước số tiền
 # Từ đứng ngay trước số tiền cho biết đó là ngưỡng/ước lượng/chênh lệch chứ không phải một mức giá.
 _ESTIMATE_LAST = frozenset(
-    {"tren", "duoi", "khoang", "tam", "hon", "gan", "den", "giam", "chenh", "~", "<", ">", "≈"}
+    {"tren", "duoi", "khoang", "tam", "hon", "gan", "giam", "chenh", "~", "<", ">", "≈"}
 )
 _ESTIMATE_PAIRS = frozenset(
     {
@@ -115,6 +115,9 @@ def _is_estimate(lead: str) -> bool:
     "trên", "dưới", "khoảng", "tầm", "rẻ hơn", "tối đa", "ngân sách", "tiết kiệm", "giảm"…
     Đầu khoảng "từ 20-25 triệu" cũng tính (số đứng trước dấu gạch)."""
     tokens = _WORD_OR_MARK.findall(lead[-_LEAD_CHARS:])
+    # "đến" và "đen" (màu) cùng fold thành "den": chỉ "20 đến 25 triệu" (sau một số) là khoảng giá.
+    if len(tokens) >= 2 and tokens[-1] == "den" and tokens[-2].isdigit():
+        return True
     stripped = False
     while tokens and tokens[-1].isdigit():
         tokens.pop()  # "20-" trong "từ 20-25 triệu"

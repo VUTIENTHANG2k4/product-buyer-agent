@@ -329,7 +329,11 @@ class ScrapePipeline:
                     break
                 prepared = await self._prepare_items(scraper, page.items, progress)
                 prepared = await asyncio.to_thread(
-                    self._writer.prefill_specs, context.category, prepared
+                    self._writer.prefill_specs,
+                    scraper.config,
+                    context.category,
+                    prepared,
+                    progress.seen_urls,
                 )
                 await asyncio.to_thread(
                     self._writer.save_page,

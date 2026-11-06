@@ -1,7 +1,7 @@
 """Lưu kết quả thu thập: offer (gộp dữ liệu đã có), lịch sử giá và bộ đếm của lượt."""
 
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
 from datetime import datetime
 from typing import Any
 
@@ -60,12 +60,19 @@ class OfferWriter:
         self._resolver = resolver
         self._spec_filler = spec_filler
 
-    def prefill_specs(self, category: Category, prepared: list[PreparedItem]) -> list[PreparedItem]:
+    def prefill_specs(
+        self,
+        config: SiteConfig,
+        category: Category,
+        prepared: list[PreparedItem],
+        seen: Collection[str] = (),
+    ) -> list[PreparedItem]:
         """Trích thông số (luật rồi LLM dự phòng) cho cả trang TRƯỚC khi mở giao dịch lưu (T6.7a).
 
         LLM gọi đồng bộ nên không được chờ nó khi đang giữ transaction của trang. Cache LLM ghi
         bằng session riêng và commit ngay. Không bao giờ ném lỗi: mục không làm sẵn được thì giữ
-        `extraction=None` và bước lưu tự trích theo luật.
+        `extraction=None` và bước lưu tự trích theo luật. Mục `save_item` chắc chắn từ chối (không
+        giá, URL ngoài trang, trùng URL đã gặp trong lượt) không tốn lần gọi LLM nào.
         """
         filler = self._spec_filler
         if filler is None:
@@ -74,11 +81,25 @@ class OfferWriter:
         try:
             with self._session_factory() as session:  # phiên ngắn: chỉ đọc offer đã lưu
                 offers = OfferRepository(session)
+                page_seen = set(seen)
                 for entry in prepared:
+                    price = entry.item.price
+                    key = url_key(entry.item)
+                    if (
+                        price is None
+                        or key is None
+                        or not MIN_PRICE_VND <= price <= MAX_PRICE_VND
+                        or key in page_seen
+                    ):
+                        raws.append(None)  # bước lưu sẽ bỏ mục này: khỏi gọi LLM
+                        continue
+                    page_seen.add(key)
                     try:
-                        found = find_existing_offer(offers, clean_url(str(entry.item.url)))
-                    except ValueError:
-                        raws.append(None)  # URL hỏng: mục sẽ lỗi ở bước lưu, khỏi gọi LLM
+                        url = clean_url(str(entry.item.url))
+                        check_item_url(config, url)
+                        found = find_existing_offer(offers, url)
+                    except ValueError:  # gồm InvalidItemUrl: mục sẽ lỗi ở bước lưu
+                        raws.append(None)
                         continue
                     raws.append(
                         merge_raw_specs(

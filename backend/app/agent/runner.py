@@ -221,7 +221,7 @@ class AgentRunner:
             self.observer(verdict)
         if verdict.dropped_product_ids or verdict.dropped_live_urls or verdict.dropped_text_urls:
             logger.warning(
-                "Run %s: guardrail loại id %s, link %s và link trong văn bản %s không có trong "
+                "[run %s] guardrail loại id %s, link %s và link trong văn bản %s không có trong "
                 "kết quả tool",
                 handle.run_id,
                 verdict.dropped_product_ids,
@@ -230,7 +230,7 @@ class AgentRunner:
             )
         if verdict.price_warnings:
             logger.warning(
-                "Run %s: số tiền trong câu trả lời lệch giá CSDL: %s",
+                "[run %s] số tiền trong câu trả lời lệch giá CSDL: %s",
                 handle.run_id,
                 verdict.price_warnings,
             )
