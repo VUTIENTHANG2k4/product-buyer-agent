@@ -107,7 +107,7 @@ Bộ nhớ (`memory.py`): sáu tin nhắn gần nhất đưa vào executor như 
 | Mọi `product_id` trong `FinalAnswer` tồn tại và đã xuất hiện trong kết quả tool của lượt này | Loại id sai; nếu rỗng → phát sự kiện `error` với mã `AGENT_HALLUCINATION` ([07 §2](07-api-spec.md#2-mã-lỗi)) và thông báo không tìm được |
 | Mọi `live_items[].url` đã xuất hiện trong kết quả `live_search_other` | Loại mục sai |
 | Bảng hiển thị luôn dựng từ DB theo `product_ids`, **không** từ con số LLM viết | Giá trong bảng luôn đúng nguồn |
-| Số tiền LLM viết trong `text` khác giá DB của sản phẩm tương ứng hơn 1% | Ghi log cảnh báo và liệt kê trong báo cáo eval (chưa tính vào điểm vì còn dương tính giả, xem T6.7). Mọi log của planner/executor/runner có tiền tố `[run <id>]` (T6.7e) |
+| Số tiền LLM viết trong `text` khác giá DB của sản phẩm tương ứng hơn 1% | Ghi log cảnh báo và liệt kê trong báo cáo eval (chưa tính vào điểm). Số đứng ngay sau từ chỉ ngưỡng/ước lượng/chênh lệch (`trên`, `dưới`, `khoảng`, `tầm`, `hơn`, `gần`, `đến`, `tối đa`, `tối thiểu`, `ngân sách`, `tiết kiệm`, `chênh lệch`, `giảm`, `~`, `<`, `>`, và `từ` của khoảng "từ 20-25 triệu") không bị báo (T6.7m, `intent.extract_amounts(skip_estimates=True)`); "giảm còn 18 triệu" và "từ 23 triệu" vẫn được kiểm Mọi log của planner/executor/runner có tiền tố `[run <id>]` (T6.7e) |
 | Link trong `text` (không chỉ `live_items`) không có trong kết quả tool | Thay bằng "[liên kết đã loại]", ghi log; tính là hallucination ở eval |
 | Vượt `AGENT_MAX_STEPS` | Dừng vòng lặp, tổng hợp từ kết quả đã có |
 | Lỗi tool | Trả lỗi dạng ngắn cho LLM để nó thử cách khác; lỗi lặp 2 lần → dừng |
