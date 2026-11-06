@@ -163,7 +163,9 @@ class AgentRunner:
         self, handle: RunHandle, message: str
     ) -> AsyncIterator[tuple[AnyEvent, Finish | None]]:
         """Phát (sự kiện, thông tin chốt lượt). Thông tin chốt chỉ có ở sự kiện cuối."""
-        intent = await self._planner.plan(message, handle.context.user_messages)
+        intent = await self._planner.plan(
+            message, handle.context.user_messages, run_id=handle.run_id
+        )
         await self._db(
             lambda s: ConversationService(s, now=self._now).set_intent(
                 handle.run_id, intent.model_dump(mode="json")
@@ -198,6 +200,7 @@ class AgentRunner:
             allowed_writes=allowed_write_tools(message),
             user_amounts=amounts,
             clock=self._clock,
+            run_id=handle.run_id,
         )
         async for tool_event in loop.run(messages, outcome):
             yield tool_event, None
@@ -218,7 +221,7 @@ class AgentRunner:
             self.observer(verdict)
         if verdict.dropped_product_ids or verdict.dropped_live_urls or verdict.dropped_text_urls:
             logger.warning(
-                "Run %s: guardrail loại id %s, link %s và link trong văn bản %s không có trong "
+                "[run %s] guardrail loại id %s, link %s và link trong văn bản %s không có trong "
                 "kết quả tool",
                 handle.run_id,
                 verdict.dropped_product_ids,
@@ -226,7 +229,11 @@ class AgentRunner:
                 verdict.dropped_text_urls,
             )
         if verdict.price_warnings:
-            logger.warning("Số tiền trong câu trả lời lệch giá CSDL: %s", verdict.price_warnings)
+            logger.warning(
+                "[run %s] số tiền trong câu trả lời lệch giá CSDL: %s",
+                handle.run_id,
+                verdict.price_warnings,
+            )
         if verdict.hallucinated:
             yield ErrorEvent(code="AGENT_HALLUCINATION", message=HALLUCINATION_MESSAGE), failed
             return

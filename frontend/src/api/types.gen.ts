@@ -1221,8 +1221,9 @@ export interface components {
          * SpecFilter
          * @description Một điều kiện lọc trên trường trong khung specs.
          *
-         *     - `contains`: trường kiểu list chứa `value`.
-         *     - `contains_any`: trường kiểu list chứa ít nhất một phần tử của `value` (list).
+         *     - `contains`: trường kiểu list chứa `value`; với `value` là chuỗi, trường kiểu chuỗi
+         *       (`cpu_model`, `switch_name`) chứa `value` làm chuỗi con, không phân biệt hoa/thường.
+         *     - `contains_any`: như `contains` nhưng chứa ít nhất một phần tử của `value` (list).
          *     - `in`: trường vô hướng thuộc `value` (list).
          */
         SpecFilter: {

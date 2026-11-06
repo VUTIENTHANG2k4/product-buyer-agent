@@ -118,8 +118,8 @@ async def drive(
 # ---- MAX_CALLS_PER_STEP ----
 @pytest.mark.parametrize("count", [MAX_CALLS_PER_STEP, MAX_CALLS_PER_STEP + 1])
 async def test_calls_per_step_boundary(count: int) -> None:
-    read = Fake("search_catalog")
-    batch = several(*[("search_catalog", {"n": i}, f"c{i}") for i in range(count)])
+    read = Fake("get_product_detail")  # tool đọc không có trần riêng
+    batch = several(*[("get_product_detail", {"n": i}, f"c{i}") for i in range(count)])
 
     run = await drive([batch, final()], [read])
 

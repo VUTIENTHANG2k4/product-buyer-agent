@@ -103,12 +103,12 @@ async def test_the_counter_starts_from_zero_in_every_turn() -> None:
 
 
 async def test_tools_without_a_cap_are_not_limited_and_not_counted() -> None:
-    search = Fake(SEARCH)
-    script = [tool_call_message(SEARCH, {"n": i}, f"s{i}") for i in range(6)] + [final()]
+    detail = Fake("get_product_detail")  # tool đọc không có trần riêng
+    script = [tool_call_message("get_product_detail", {"n": i}, f"s{i}") for i in range(6)]
 
-    run = await drive(script, [search])
+    run = await drive([*script, final()], [detail])
 
-    assert len(search.calls) == 6
+    assert len(detail.calls) == 6
     assert run.error_codes() == []
     assert run.outcome.stop_reason == "final"
 

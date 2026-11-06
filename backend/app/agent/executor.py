@@ -34,7 +34,11 @@ MAX_WRITE_CALLS: Final = 5  # tool ghi tối đa mỗi lượt
 TOOL_FAILURE_LIMIT: Final = 2  # cùng một tool lỗi 2 lần thì dừng (docs/05 §5)
 # Trần số lần chạy thật của một tool mỗi lượt. Tìm trực tiếp đi qua Fetcher (độ trễ ≥ 5 s/trang)
 # nên gọi lặp làm lượt rất chậm: eval T03 từng gọi 8 lần (78 s). Tool ghi có trần riêng ở trên.
-TOOL_CALL_CAPS: Final[Mapping[str, int]] = MappingProxyType({"live_search_other": 2})
+# `search_catalog` rẻ nhưng LLM gọi đi gọi lại khi kết quả rỗng (eval L10: 8 lần, 58 s); 3 lần là
+# nhiều nhất một câu hợp lệ cần (eval L07: tìm, nới điều kiện, rồi tìm thêm).
+TOOL_CALL_CAPS: Final[Mapping[str, int]] = MappingProxyType(
+    {"live_search_other": 2, "search_catalog": 3}
+)
 
 StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures"]
 
@@ -132,7 +136,9 @@ class ToolLoop:
         allowed_writes: frozenset[str],
         user_amounts: Collection[int] = frozenset(),
         clock: Callable[[], float] = time.perf_counter,
+        run_id: object | None = None,
     ) -> None:
+        self._tag = "" if run_id is None else f"[run {run_id}] "  # tiền tố log (docs/05 §5)
         self._model = model
         self._tools = {tool.name: tool for tool in tools}
         self._bound = model.bind_tools([*tools, FinalAnswer])
@@ -146,15 +152,32 @@ class ToolLoop:
     ) -> AsyncIterator[ToolStartEvent | ToolEndEvent]:
         """Chạy vòng lặp, phát sự kiện tool; `messages` và `outcome` được cập nhật tại chỗ."""
         failures: dict[str, int] = {}
-        for _ in range(self._max_steps):
+        for step in range(1, self._max_steps + 1):
             reply = await self._ask(self._bound, messages)
             outcome.llm_steps += 1
+            _ensure_call_ids(reply, step)  # trước khi vào lịch sử: id AIMessage = id ToolMessage
             messages.append(reply)
             calls = list(reply.tool_calls)
-            if not calls:
+            invalid = list(reply.invalid_tool_calls)
+            if not calls and not invalid:
                 outcome.stop_reason = "text_fallback"
                 outcome.answer = await self._synthesize(messages, "text_fallback")
                 return
+
+            for bad in invalid:  # tham số không phải JSON hợp lệ: báo lại để LLM gọi lại
+                name = str(bad.get("name") or "unknown")
+                logger.warning("%sLLM gọi %s với tham số hỏng", self._tag, name[:40])
+                failures[name] = failures.get(name, 0) + 1
+                messages.append(
+                    _tool_message(
+                        {"id": bad["id"], "name": name},
+                        error_result(
+                            "INVALID_TOOL_CALL",
+                            "Tham số tool không phải JSON hợp lệ: "
+                            f"{str(bad.get('error') or '')[:200]}. Hãy gọi lại đúng định dạng",
+                        ),
+                    )
+                )
 
             real = [call for call in calls if call["name"] != FINAL_TOOL]
             for call in real[:MAX_CALLS_PER_STEP]:
@@ -163,7 +186,7 @@ class ToolLoop:
             for call in real[MAX_CALLS_PER_STEP:]:  # LLM đòi quá nhiều tool trong một bước
                 messages.append(
                     _tool_message(
-                        {"id": call.get("id") or "call_extra", "name": call["name"]},
+                        {"id": call["id"], "name": call["name"]},
                         error_result(
                             "TOO_MANY_CALLS",
                             f"Tối đa {MAX_CALLS_PER_STEP} tool mỗi bước; bỏ qua lời gọi này",
@@ -173,7 +196,7 @@ class ToolLoop:
             for call in calls:
                 if call["name"] != FINAL_TOOL:
                     continue
-                if real:
+                if real or invalid:
                     messages.append(
                         _tool_message(
                             call,
@@ -210,7 +233,7 @@ class ToolLoop:
         failures: dict[str, int],
     ) -> AsyncIterator[ToolStartEvent | ToolEndEvent]:
         name: str = call["name"]
-        call_id: str = call.get("id") or f"call_{outcome.tool_calls + 1}"
+        call_id = str(call["id"])
         args: dict[str, Any] = dict(call.get("args") or {})
         outcome.tool_calls += 1
         yield ToolStartEvent(call_id=call_id, tool=name, args_summary=summarize_args(args))
@@ -220,7 +243,7 @@ class ToolLoop:
         if tool is None:
             result = error_result("UNKNOWN_TOOL", f"Không có tool {name[:40]}")
         elif name in WRITE_TOOLS and name not in self._allowed_writes:
-            logger.warning("Chặn tool ghi %s: người dùng chưa yêu cầu rõ ràng", name)
+            logger.warning("%sChặn tool ghi %s: người dùng chưa yêu cầu rõ ràng", self._tag, name)
             result = error_result(
                 "WRITE_NOT_REQUESTED",
                 "Người dùng chưa yêu cầu rõ ràng thao tác này nên không thực hiện",
@@ -250,7 +273,7 @@ class ToolLoop:
             try:
                 result = _as_result(await tool.ainvoke(args))
             except Exception:
-                logger.exception("Tool %s lỗi hệ thống", name)
+                logger.exception("%sTool %s lỗi hệ thống", self._tag, name)
                 result = error_result("TOOL_ERROR", "Lỗi hệ thống khi chạy tool")
             if result.get("error") != "VALIDATION_ERROR":  # sai tham số: chưa tới Fetcher
                 outcome.calls_by_tool[name] = outcome.calls_by_tool.get(name, 0) + 1
@@ -274,7 +297,10 @@ class ToolLoop:
             reply = await runnable.ainvoke(messages)
         except Exception as error:
             logger.error(
-                "Executor không gọi được LLM: %s: %s", type(error).__name__, str(error)[:200]
+                "%sExecutor không gọi được LLM: %s: %s",
+                self._tag,
+                type(error).__name__,
+                str(error)[:200],
             )
             raise LlmUnavailable(details={"stage": "executor"}) from error
         if not isinstance(reply, AIMessage):
@@ -289,11 +315,14 @@ class ToolLoop:
         try:
             result = await self._model.with_structured_output(FinalAnswer).ainvoke(prompt)
         except (ValidationError, OutputParserException):
-            logger.warning("LLM trả FinalAnswer không hợp lệ (%s)", reason, exc_info=True)
+            logger.warning(
+                "%sLLM trả FinalAnswer không hợp lệ (%s)", self._tag, reason, exc_info=True
+            )
             return None
         except Exception as error:  # lỗi gọi LLM (429, 503, hết hạn…) khác lỗi dữ liệu
             logger.error(
-                "Executor không gọi được LLM khi tổng hợp: %s: %s",
+                "%sExecutor không gọi được LLM khi tổng hợp: %s: %s",
+                self._tag,
                 type(error).__name__,
                 str(error)[:200],
             )
@@ -303,8 +332,26 @@ class ToolLoop:
         try:
             return FinalAnswer.model_validate(result)
         except ValidationError:
-            logger.warning("LLM trả FinalAnswer không hợp lệ (%s)", reason, exc_info=True)
+            logger.warning(
+                "%sLLM trả FinalAnswer không hợp lệ (%s)", self._tag, reason, exc_info=True
+            )
             return None
+
+
+def _ensure_call_ids(reply: AIMessage, step: int) -> None:
+    """Gán id `call_<bước>_<thứ tự>` cho tool call thiếu id (Gemini hay trả `id=None`). Sửa tại
+    chỗ để AIMessage và ToolMessage khớp nhau; id LLM đã đặt (kể cả trùng) được giữ nguyên, còn id
+    sinh ra không bao giờ trùng một id có trong phản hồi."""
+    calls = [*reply.tool_calls, *reply.invalid_tool_calls]
+    taken = {str(call["id"]) for call in calls if call.get("id")}
+    for index, call in enumerate(calls, start=1):
+        if call.get("id"):
+            continue
+        candidate = f"call_{step}_{index}"
+        while candidate in taken:
+            candidate += "_"
+        taken.add(candidate)
+        call["id"] = candidate
 
 
 def _tool_message(call: Any, result: Result) -> ToolMessage:

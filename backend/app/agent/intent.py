@@ -92,9 +92,54 @@ _PRICE_TRO_XUONG = re.compile(
 )
 
 
-def extract_amounts(message: str) -> set[int]:
+_WORD_OR_MARK = re.compile(r"[a-z]+|\d+|[~<>≈]")
+_LEAD_CHARS = 40  # chỉ xét chừng này ký tự đứng trước số tiền
+# Từ đứng ngay trước số tiền cho biết đó là ngưỡng/ước lượng/chênh lệch chứ không phải một mức giá.
+# "20 đến", "20tr đến", "1.500.000 đến": số đứng riêng (không phải đuôi mã model "G502", "K70")
+# rồi "đến". Chữ "đen" (màu) sau mã model không khớp.
+_RANGE_UNTIL = re.compile(r"(?<![a-z0-9\-])\d[\d.,]*\s*(?:trieu|tr|m|k|nghin|ngan)?\s*den\s*$")
+_ESTIMATE_LAST = frozenset(
+    {"tren", "duoi", "khoang", "tam", "hon", "gan", "giam", "chenh", "~", "<", ">", "≈"}
+)
+_ESTIMATE_PAIRS = frozenset(
+    {
+        ("toi", "da"),
+        ("toi", "thieu"),
+        ("tiet", "kiem"),
+        ("chenh", "lech"),
+        ("ngan", "sach"),
+        ("xap", "xi"),
+    }
+)
+
+
+def _is_estimate(lead: str) -> bool:
+    """`lead` (văn bản đã `fold`, ngay trước số tiền) kết thúc bằng từ chỉ ngưỡng/ước lượng:
+    "trên", "dưới", "khoảng", "tầm", "rẻ hơn", "tối đa", "ngân sách", "tiết kiệm", "giảm"…
+    Đầu khoảng "từ 20-25 triệu" cũng tính (số đứng trước dấu gạch)."""
+    tokens = _WORD_OR_MARK.findall(lead[-_LEAD_CHARS:])
+    # "đến" và "đen" (màu) cùng fold thành "den": chỉ "20 đến 25 triệu" (sau một số) là khoảng giá.
+    if _RANGE_UNTIL.search(lead):
+        return True
+    stripped = False
+    while tokens and tokens[-1].isdigit():
+        tokens.pop()  # "20-" trong "từ 20-25 triệu"
+        stripped = True
+    if not tokens:
+        return False
+    if tokens[-1] in _ESTIMATE_LAST:
+        return True
+    if tokens[-1] == "tu" and stripped:
+        return True
+    return len(tokens) >= 2 and (tokens[-2], tokens[-1]) in _ESTIMATE_PAIRS
+
+
+def extract_amounts(message: str, *, skip_estimates: bool = False) -> set[int]:
     """Các số tiền (VND) người dùng viết trong câu: "30 triệu", "30tr", "1,5tr", "2tr5", "500k",
-    "30.000.000". Số nhỏ hơn 10.000 (RAM, Hz, inch…) không được coi là tiền."""
+    "30.000.000". Số nhỏ hơn 10.000 (RAM, Hz, inch…) không được coi là tiền.
+
+    `skip_estimates` bỏ các số đứng sau từ chỉ ngưỡng/ước lượng/chênh lệch ("trên 50 triệu",
+    "rẻ hơn 2 triệu", "tầm 20-25 triệu"): đó không phải giá của một sản phẩm cụ thể (T6.7m)."""
     found: set[int] = set()
     folded = fold(message)
     for match in _AMOUNT.finditer(folded):
@@ -121,8 +166,13 @@ def extract_amounts(message: str) -> set[int]:
                 value = round(float(text) * _UNIT_FACTOR[unit])
             except ValueError:  # pragma: no cover - regex chỉ cho chuỗi số hợp lệ
                 continue
-        if MIN_AMOUNT_VND <= value <= MAX_AMOUNT_VND:
-            found.add(value)
+        if not MIN_AMOUNT_VND <= value <= MAX_AMOUNT_VND:
+            continue
+        if skip_estimates and _is_estimate(
+            folded[max(0, match.start() - _LEAD_CHARS) : match.start()]
+        ):
+            continue
+        found.add(value)
     return found
 
 

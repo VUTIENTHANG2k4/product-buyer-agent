@@ -47,9 +47,12 @@ class Planner:
     def __init__(self, model: BaseChatModel) -> None:
         self._structured = model.with_structured_output(QueryIntent)
 
-    async def plan(self, message: str, history: Sequence[str] = ()) -> QueryIntent:
+    async def plan(
+        self, message: str, history: Sequence[str] = (), *, run_id: object | None = None
+    ) -> QueryIntent:
         """`QueryIntent` đã hậu xử lý; hai lần không hợp lệ hoặc LLM lỗi → `LlmUnavailable`."""
         message = message.strip()[:MAX_MESSAGE_CHARS]
+        tag = "" if run_id is None else f"[run {run_id}] "
         messages = build_messages(message, history)
         last_error: Exception | None = None
         for attempt in range(1, MAX_ATTEMPTS + 1):
@@ -63,7 +66,7 @@ class Planner:
                 return postprocess_intent(intent, message)
             except (ValueError, OutputParserException) as error:  # gồm pydantic.ValidationError
                 last_error = error
-                logger.warning("Planner lần %d trả kết quả không hợp lệ: %s", attempt, error)
+                logger.warning("%sPlanner lần %d trả kết quả không hợp lệ: %s", tag, attempt, error)
                 messages = [
                     *messages,
                     HumanMessage(
@@ -75,7 +78,10 @@ class Planner:
                 ]
             except Exception as error:
                 logger.error(
-                    "Planner không gọi được LLM: %s: %s", type(error).__name__, str(error)[:200]
+                    "%sPlanner không gọi được LLM: %s: %s",
+                    tag,
+                    type(error).__name__,
+                    str(error)[:200],
                 )
                 raise LlmUnavailable(details={"stage": "planner"}) from error
         raise LlmUnavailable(

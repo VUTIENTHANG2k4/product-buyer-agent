@@ -102,9 +102,15 @@ def test_search_spec_filter_ignores_values_of_another_json_type(
     ("spec_filter", "expected"),
     [
         pytest.param(_spec("x", "contains", 16), {"Mock List"}, id="contains-number-in-list"),
-        pytest.param(_spec("x", "contains", "16"), set(), id="contains-text-does-not-match-number"),
         pytest.param(
-            _spec("x", "contains_any", ["16", "32"]), set(), id="contains-any-text-vs-numbers"
+            _spec("x", "contains", "16"),
+            {"Mock Text", "Mock NumText"},  # T6.7v: chuỗi con của "16GB"; số 16 thật không khớp
+            id="contains-text-matches-text-values-only",
+        ),
+        pytest.param(
+            _spec("x", "contains_any", ["16", "32"]),
+            {"Mock Text", "Mock NumText"},  # T6.7v: chuỗi con của "16GB"; số thật không khớp
+            id="contains-any-text-matches-text-values-only",
         ),
         pytest.param(_spec("x", "contains", 64), set(), id="contains-absent-value"),
         pytest.param(_spec("y", "contains", 16), set(), id="contains-on-scalar-field"),

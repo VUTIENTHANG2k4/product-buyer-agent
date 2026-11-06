@@ -8,9 +8,10 @@ from sqlmodel import Session
 
 from app.db.models import Offer, ScrapeRun
 from app.db.repositories import ScrapeRunRepository
-from app.domain.dto import Challenge
+from app.domain.dto import Challenge, ListingItem, ProductDetail
 from app.domain.enums import Category, ScrapeStatus, SiteKey
 from app.domain.errors import RunNotFound
+from app.normalize.extract import SpecsExtraction
 from app.scrapers.base import BaseScraper
 
 BLOCK_COOLDOWN = timedelta(hours=24)  # nghỉ sau khi trang thật chặn (docs/02 §3)
@@ -48,6 +49,16 @@ class PipelineResult:
     changed_offer_ids: tuple[int, ...]
     challenge: Challenge | None = None
     error_message: str | None = None
+
+
+@dataclass(frozen=True)
+class PreparedItem:
+    """Mục đã sẵn sàng lưu: thẻ danh sách, trang chi tiết (nếu tải được) và kết quả trích thông số
+    đã làm sẵn ngoài giao dịch lưu (`None` thì bước lưu tự trích theo luật)."""
+
+    item: ListingItem
+    detail: ProductDetail | None = None
+    extraction: SpecsExtraction | None = None
 
 
 @dataclass

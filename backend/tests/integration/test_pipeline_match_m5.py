@@ -10,6 +10,7 @@ from app.db.models import Offer, Product
 from app.db.repositories import ProductRepository
 from app.domain.dto import ListingItem, ProductDetail
 from app.domain.enums import Category, MatchMethod, ScrapeStatus, ScrapeTrigger, SiteKey
+from app.normalize.extract import SpecsExtraction
 from app.scrapers.http.types import FetchResponse
 from app.scrapers.pipeline import Resolution, ScrapePipeline, resolve_product
 from tests.integration.test_pipeline import Clock, ScriptedFetcher
@@ -181,7 +182,9 @@ async def test_unique_model_key_collision_fails_only_that_item(
         category: Category,
         item: ListingItem,
         detail: ProductDetail | None,
-        raw_specs: Mapping[str, str],
+        raw_specs: Mapping[str, str] | None,
+        *,
+        extraction: SpecsExtraction | None = None,
     ) -> Resolution:
         if "AKKO Nest Black" in item.title:
             repo = ProductRepository(session)
@@ -189,7 +192,7 @@ async def test_unique_model_key_collision_fails_only_that_item(
                 repo.add(
                     Product(category=category, brand="Akko", model_code="DUP-1", canonical_name="d")
                 )
-        return resolve_product(session, category, item, detail, raw_specs)
+        return resolve_product(session, category, item, detail, raw_specs, extraction=extraction)
 
     pipe = ScrapePipeline(factory, gearvn_mice(), now=clock, resolver=colliding_resolver)
 

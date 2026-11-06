@@ -82,11 +82,30 @@ class ShoppingListService:
     def get_or_create(self, name: str | None = None) -> ShoppingListSummary:
         """Danh sách tên `name` (mặc định "Danh sách mua"); chưa có thì tạo. Dùng cho agent."""
         cleaned = _clean_name(name or DEFAULT_LIST_NAME)
+        self._lists.lock_name(cleaned)  # hai yêu cầu đồng thời không cùng tạo danh sách này
         found = self._lists.get_by_name(cleaned)
         return self._summary(found or self._lists.create(cleaned, now=aware_now(self._now)))
 
     def list_lists(self) -> list[ShoppingListSummary]:
-        return [self._summary(shopping_list) for shopping_list in self._lists.list_all()]
+        lists = self._lists.list_all()
+        list_ids = [shopping_list.id for shopping_list in lists if shopping_list.id is not None]
+        items_by_list = self._lists.list_items_for_lists(list_ids)
+        # Một lượt cho mọi danh sách: offer và sản phẩm của tất cả mục được đọc gộp.
+        views = {
+            view.item_id: view
+            for view in self._item_views([i for items in items_by_list.values() for i in items])
+        }
+        return [
+            self._summary(
+                shopping_list,
+                [
+                    views[item.id]
+                    for item in items_by_list.get(shopping_list.id or 0, [])
+                    if item.id in views
+                ],
+            )
+            for shopping_list in lists
+        ]
 
     def get_list(self, list_id: int) -> ShoppingListDetail:
         shopping_list = self._require_list(list_id)
@@ -226,9 +245,10 @@ class ShoppingListService:
     def _item_views(self, items: list[ShoppingListItem]) -> list[ShoppingListItemView]:
         product_ids = list({item.product_id for item in items})
         offers_by_product = self._offers.list_for_products(product_ids)
+        products = {product.id: product for product in self._products.get_many(product_ids)}
         views: list[ShoppingListItemView] = []
         for item in items:
-            product = self._products.get(item.product_id)
+            product = products.get(item.product_id)
             if product is None or item.id is None:  # pragma: no cover - khóa ngoại bảo đảm
                 continue
             offers = offers_by_product[item.product_id]

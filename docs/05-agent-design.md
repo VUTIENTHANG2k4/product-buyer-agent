@@ -107,11 +107,15 @@ Bộ nhớ (`memory.py`): sáu tin nhắn gần nhất đưa vào executor như 
 | Mọi `product_id` trong `FinalAnswer` tồn tại và đã xuất hiện trong kết quả tool của lượt này | Loại id sai; nếu rỗng → phát sự kiện `error` với mã `AGENT_HALLUCINATION` ([07 §2](07-api-spec.md#2-mã-lỗi)) và thông báo không tìm được |
 | Mọi `live_items[].url` đã xuất hiện trong kết quả `live_search_other` | Loại mục sai |
 | Bảng hiển thị luôn dựng từ DB theo `product_ids`, **không** từ con số LLM viết | Giá trong bảng luôn đúng nguồn |
-| Số tiền LLM viết trong `text` khác giá DB của sản phẩm tương ứng hơn 1% | Ghi log cảnh báo và liệt kê trong báo cáo eval (chưa tính vào điểm vì còn dương tính giả, xem T6.7) |
+| Số tiền LLM viết trong `text` khác giá DB của sản phẩm tương ứng hơn 1% | Ghi log cảnh báo và liệt kê trong báo cáo eval (chưa tính vào điểm). Số đứng ngay sau từ chỉ ngưỡng/ước lượng/chênh lệch (`trên`, `dưới`, `khoảng`, `tầm`, `hơn`, `gần`, `đến`, `tối đa`, `tối thiểu`, `ngân sách`, `tiết kiệm`, `chênh lệch`, `giảm`, `~`, `<`, `>`, và `từ` của khoảng "từ 20-25 triệu") không bị báo (T6.7m, `intent.extract_amounts(skip_estimates=True)`); "giảm còn 18 triệu" và "từ 23 triệu" vẫn được kiểm. |
 | Link trong `text` (không chỉ `live_items`) không có trong kết quả tool | Thay bằng "[liên kết đã loại]", ghi log; tính là hallucination ở eval |
 | Vượt `AGENT_MAX_STEPS` | Dừng vòng lặp, tổng hợp từ kết quả đã có |
 | Lỗi tool | Trả lỗi dạng ngắn cho LLM để nó thử cách khác; lỗi lặp 2 lần → dừng |
+| Log của planner, executor và runner (T6.7e) | Mọi dòng log của một lượt có tiền tố `[run <id>]` để lọc theo lượt |
+| Tool call có tham số không phải JSON (`invalid_tool_calls`, T6.7e) | Trả `INVALID_TOOL_CALL` cho LLM gọi lại; tính như lỗi tool (lặp 2 lần cùng tên → dừng); không bị coi là trả lời bằng văn bản |
+| Tool call thiếu `id` (Gemini hay trả `None`) | Executor gán `call_<bước>_<thứ tự>` trên chính AIMessage nên ToolMessage luôn khớp; id LLM đã đặt giữ nguyên |
 | `live_search_other` gọi quá 2 lần trong một lượt (T11.1) | Lời gọi thứ 3 trở đi trả `TOOL_CALL_LIMIT`, không chạy tool và không thêm gì vào `Evidence` |
+| `search_catalog` gọi quá 3 lần trong một lượt (T6.7v; eval L10 từng gọi 8 lần khi kết quả rỗng) | Lời gọi thứ 4 trở đi trả `TOOL_CALL_LIMIT` như trên; lần lỗi thứ hai kết thúc lượt bằng câu trả lời tổng hợp từ kết quả đã có |
 
 **Triển khai guardrail (T6.5, `guardrail.py`, hàm thuần; sửa sau review M6):** `Evidence` gom `product_id`, link và giá từ mọi kết quả tool thành công của lượt (link của `live_search_other` riêng); `apply_guardrail` loại id/link ngoài `Evidence` (id có trong CSDL nhưng không xuất hiện trong kết quả tool vẫn bị loại), bỏ id trùng, cắt gợi ý còn 3; mọi id đều bị loại → `AGENT_HALLUCINATION`. Số tiền trong `text` lệch mọi giá trong kết quả tool (và số tiền người dùng tự nêu) hơn 1% chỉ ghi log cảnh báo. Tool ghi bị chặn ở code nếu câu người dùng không có cụm yêu cầu hành động đi kèm đích (`allowed_write_tools`: "vào danh sách", "thêm/lưu … danh sách", "đặt/tạo cảnh báo", "báo tôi", "nhắc tôi", "khi … xuống dưới"; câu hỏi chỉ đọc như "tôi đang có cảnh báo nào?" hay "thêm vài lựa chọn … vào khoảng 20 triệu" không mở khóa): tool trả `WRITE_NOT_REQUESTED` cho LLM, không chạy. Tool ghi còn đòi `product_id` đã xuất hiện trong kết quả tool của lượt này hoặc trong bảng lượt trước (`UNKNOWN_PRODUCT`), và mỗi bước LLM chạy tối đa 5 tool (`TOO_MANY_CALLS`). Tool lỗi hai lần → dừng vòng lặp và tổng hợp từ kết quả đã có; hết bước mà chưa có `FinalAnswer` hợp lệ → `AGENT_STEP_LIMIT`.
 
@@ -145,7 +149,7 @@ Bộ câu hỏi: [docs/eval/queries.yaml](eval/queries.yaml). `make eval` chạy
 | Hallucination | Sản phẩm/link không có trong DB/kết quả tool | 0 (G3) |
 | Clarification | Các ca `expect_clarification: true` có hỏi lại, không gọi tool | 100% |
 | Tool correctness | Tool bắt buộc (`expected.tools_required`) được gọi; tool cấm không bị gọi | ≥ 90% |
-| Latency p50 | Thời gian đến sự kiện `final` | ≤ 15 s (G4, chỉ đo ở chế độ LLM thật; **chưa đạt**, người dùng chấp nhận ngoại lệ ngày 2026-10-25: đo được 26–31 s (2026-10-23, `gemini-3.5-flash-lite`, ≥ 3 lần gọi LLM mỗi câu), T11.5; nếu cần cải thiện: gộp planner với bước chọn tool hoặc bỏ lần tổng hợp cuối khi đủ dữ liệu) |
+| Latency p50 | Thời gian đến sự kiện `final` | ≤ 15 s (G4, chỉ đo ở chế độ LLM thật; **chưa đạt**, người dùng chấp nhận ngoại lệ ngày 2026-10-25: đo được 26–31 s (2026-10-23, `gemini-3.5-flash-lite`, ≥ 3 lần gọi LLM mỗi câu), T11.5; đo lại 2026-11-06 sau T6.7: 15,3–15,6 s (vẫn trên ngưỡng, mỗi lần gọi LLM chờ ≥ 5 s vì `LLM_MAX_RPM=12`); nếu cần cải thiện: gộp planner với bước chọn tool hoặc bỏ lần tổng hợp cuối khi đủ dữ liệu) |
 
 Hai lớp kiểm tra:
 - **Test agent trong CI** (`backend/tests/agent/`, chạy trong `make check`): dùng `ScriptedChatModel` phát tool call định sẵn để kiểm tra nối tool, guardrail, sự kiện SSE, giới hạn bước. Không gọi mạng.

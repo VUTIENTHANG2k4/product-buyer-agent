@@ -229,7 +229,7 @@ def apply_guardrail(
     identifiers = evidence.product_ids | set(answer.product_ids)
     warnings = sorted(
         amount
-        for amount in extract_amounts(answer.text)
+        for amount in extract_amounts(answer.text, skip_estimates=True)
         if amount not in identifiers and not _near(amount, reference)
     )
 

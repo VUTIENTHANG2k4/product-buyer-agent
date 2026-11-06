@@ -3,9 +3,9 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (X3 xong, nhánh `milestone/X3-shopping-list-export`, chờ người dùng merge). Kế tiếp đề xuất: T6.7 phần còn lại (cần `GOOGLE_API_KEY`) hoặc X1 (phải chọn lại nguồn điện thoại, ADR-0010).
-- Backlog chưa làm: T6.7 phần còn lại ((a) `LlmSpecsFiller` ngoài giao dịch lưu, (e), (g), đo lại eval bằng LLM thật), X1, X2 (thực tế đã xong nhờ ADR-0008). Không còn `xfail` đã biết. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-11-05 — X3 (CSV `GET /lists/{id}/export.csv` + nút "Tải CSV"/"Sao chép link") và T6.14 (test ReDoS đo tốc độ tăng)
+- Đang làm: – (T6.7 xong, nhánh `milestone/T6.7-eval-tuning`, chờ người dùng merge). Kế tiếp đề xuất: T6.15 (cảnh báo số tiền với cách nói ngân sách, nhỏ) hoặc X1 (phải chọn lại nguồn điện thoại, ADR-0010).
+- Backlog chưa làm: T6.15, X1, X2 (thực tế đã xong nhờ ADR-0008). Gọi tool thừa ở L10/A04/L02 chưa xử lý (không rớt chỉ số). T6.15 (cảnh báo số tiền với cách nói ngân sách, 9 ca `xfail(strict)` BUG-T67-4). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Cập nhật lần cuối: 2026-11-07 — T6.7 (filler LLM ngoài giao dịch, `invalid_tool_calls`, N+1 + khóa tạo trùng, `contains` chuỗi con, trần `search_catalog`)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -29,9 +29,9 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,18% (9515 pass, không còn xfail, ngưỡng 80% trong `make test-be`, ~15–22 phút) | 2026-11-05 |
-| Test frontend (Vitest + E2E) | 1125 Vitest pass, 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100; chưa chạy lại từ lượt "việc nhỏ 7"); chưa đo coverage | 2026-11-05 |
-| Eval (intent accuracy / constraint satisfaction / hallucination) | Lượt 1: 100% / 100% / 0, 31/31 câu (clarification 100%, tool 100%). Lượt cuối (sau trần gọi lặp `live_search_other`): 96,4% / 98,6% / 0, 29/31 (A03 `LLM_UNAVAILABLE` tạm thời, L10 dao động); chạy lại A03, L10 đều đạt. Tool 96,4%. **Latency p50 26–31 s: chưa đạt ≤ 15 s** (không do `LLM_MAX_RPM`: `--rpm 1000` vẫn 21–32 s; ≥ 3 lần gọi Gemini/câu, mỗi lần 4–10 s hôm nay). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-10-23*.md` (T11.1) | 2026-10-23 |
+| Coverage backend | 99,20% (9756 pass, 9 xfail `BUG-T67-4`, ngưỡng 80% trong `make test-be`, ~20–25 phút) | 2026-11-07 |
+| Test frontend (Vitest + E2E) | 1125 Vitest pass (4 lần liên tiếp), 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100; chưa chạy lại từ lượt "việc nhỏ 7"); chưa đo coverage. `ListsPage.qa-x3` từng chập chờn khi cả bộ chạy song song (timeout 1 s), đã nới thời gian chờ tải | 2026-11-07 |
+| Eval (intent accuracy / constraint satisfaction / hallucination) | 2026-11-06 (sau T6.7, một lượt 31 câu liền mạch trên HEAD): 30/31 đạt, intent 100%, ràng buộc 100%, tool 100%, hallucination 0; L09 rớt do Gemini 503 (đạt khi chạy lại). **Latency p50 15,4 s, vẫn trên 15 s** (ngoại lệ T11.5). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-11-06-final.md`. Trước đó 2026-10-23: 96,4% / 98,6% / 0, latency 26–31 s | 2026-11-06 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
 - 2026-10-16: đổi CSDL sang PostgreSQL 17 qua Docker Compose, test trên Postgres thật ([ADR-0007](adr/0007-postgresql.md) thay ADR-0002). Cần `make db-up`.

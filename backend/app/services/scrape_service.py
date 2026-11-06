@@ -29,7 +29,6 @@ from app.scrapers.pipeline import (
     ScrapePipeline,
     SessionFactory,
     StartedRun,
-    make_resolver,
 )
 from app.scrapers.registry import SiteNotAvailable, get_scraper
 from app.services.views import Clock, aware_now
@@ -61,7 +60,7 @@ class ScrapeService:
             session_factory,
             fetcher,
             default_max_pages=settings.scraper_max_listing_pages,
-            resolver=make_resolver(spec_filler if settings.llm_extractor_enabled else None),
+            spec_filler=spec_filler if settings.llm_extractor_enabled else None,
         )
 
     async def run(

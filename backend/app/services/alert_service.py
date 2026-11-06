@@ -98,6 +98,9 @@ class AlertService:
         channel = request.channel or self._settings.alert_default_channel
         channel = AlertChannel(channel)
         destination = self._destination(channel, request.destination)
+        # Khóa theo (sản phẩm, kênh, nơi nhận): hai yêu cầu giống hệt đồng thời không cùng qua
+        # bước kiểm trùng dưới đây.
+        self._alerts.lock_key(request.product_id, channel, destination)
         for live in self._alerts.list_for_products([request.product_id]):
             if (
                 live.channel is channel
@@ -115,7 +118,7 @@ class AlertService:
         return self._view(alert)
 
     def list_alerts(self, status: AlertStatus | None = None) -> list[AlertView]:
-        return [self._view(alert) for alert in self._alerts.list_all(status=status)]
+        return self._views(self._alerts.list_all(status=status))
 
     def get(self, alert_id: int) -> AlertView:
         return self._view(self._require(alert_id))
@@ -148,6 +151,7 @@ class AlertService:
         retargeted = target_price is not None and target_price != alert.target_price
         reactivated = status in LIVE_STATUSES and alert.status not in LIVE_STATUSES
         if retargeted or reactivated:
+            self._alerts.lock_key(alert.product_id, alert.channel, alert.destination)
             for other in self._alerts.list_for_products([alert.product_id]):
                 if (
                     other.id != alert.id
@@ -214,13 +218,17 @@ class AlertService:
         else:
             alerts = self._alerts.list_for_products(self._offers.product_ids_of(offer_ids))
         by_product = self._offers.list_for_products(sorted({alert.product_id for alert in alerts}))
+        products = {
+            product.id: product
+            for product in self._products.get_many(sorted({a.product_id for a in alerts}))
+        }
         due: list[DueAlert] = []
         for alert in alerts:
             cheapest = sellable(by_product.get(alert.product_id, []))
             price = effective_price_of(cheapest[0]) if cheapest else None
             if alert.id is None or not should_notify(alert, price) or price is None:
                 continue
-            product = self._products.get(alert.product_id)
+            product = products.get(alert.product_id)
             if product is None:  # pragma: no cover - khóa ngoại bảo đảm
                 continue
             due.append(
@@ -287,20 +295,32 @@ class AlertService:
         return destination
 
     def _view(self, alert: PriceAlert) -> AlertView:
-        product = self._products.get(alert.product_id)
-        if alert.id is None or product is None:  # pragma: no cover - khóa ngoại bảo đảm
-            raise RuntimeError("alert without id or product")
-        offers = self._offers.list_for_products([alert.product_id])[alert.product_id]
-        return AlertView(
-            alert_id=alert.id,
-            product_id=alert.product_id,
-            product_name=product.canonical_name,
-            target_price=alert.target_price,
-            channel=alert.channel,
-            destination=alert.destination,
-            status=alert.status,
-            current_best_price=best_price(offers),
-            last_notified_price=alert.last_notified_price,
-            last_notified_at=alert.last_notified_at,
-            created_at=alert.created_at,
-        )
+        return self._views([alert])[0]
+
+    def _views(self, alerts: Sequence[PriceAlert]) -> list[AlertView]:
+        """Hiển thị nhiều cảnh báo bằng hai truy vấn (sản phẩm, offer) thay vì hai truy vấn mỗi
+        cảnh báo."""
+        product_ids = sorted({alert.product_id for alert in alerts})
+        products = {product.id: product for product in self._products.get_many(product_ids)}
+        offers_by_product = self._offers.list_for_products(product_ids)
+        views: list[AlertView] = []
+        for alert in alerts:
+            product = products.get(alert.product_id)
+            if alert.id is None or product is None:  # pragma: no cover - khóa ngoại bảo đảm
+                raise RuntimeError("alert without id or product")
+            views.append(
+                AlertView(
+                    alert_id=alert.id,
+                    product_id=alert.product_id,
+                    product_name=product.canonical_name,
+                    target_price=alert.target_price,
+                    channel=alert.channel,
+                    destination=alert.destination,
+                    status=alert.status,
+                    current_best_price=best_price(offers_by_product[alert.product_id]),
+                    last_notified_price=alert.last_notified_price,
+                    last_notified_at=alert.last_notified_at,
+                    created_at=alert.created_at,
+                )
+            )
+        return views

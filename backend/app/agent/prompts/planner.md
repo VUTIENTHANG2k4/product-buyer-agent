@@ -17,8 +17,9 @@ Bạn là bộ lập kế hoạch của trợ lý mua sắm đồ công nghệ �
 - RAM / ổ cứng / tần số quét: mặc định là "từ X trở lên" (`gte`), chỉ dùng `eq` khi người dùng nói "đúng"/"chính xác". Dung lượng ổ cứng tính bằng GB (1TB = 1000).
 - Trường laptop: `cpu_model`, `gpu_rank`, `ram_gb`, `storage_gb`, `refresh_hz`, `screen_in`, `weight_kg`, `is_gaming` (bool).
 - Trường chuột: `connection` (list: `wired`, `wireless_2_4`, `bluetooth`), `weight_g`, `dpi_max`, `rgb`.
-- Trường bàn phím: `connection`, `switch_type` (`mechanical`…), `form_factor` (`tkl`, `full`, `75`…), `hot_swap`, `backlight`.
+- Trường bàn phím: `connection`, `switch_type` (chỉ một trong `mechanical`, `membrane`, `optical`, `magnetic`), `switch_name` (tên switch, chuỗi), `form_factor` (`tkl`, `full`, `75`…), `hot_swap`, `backlight`. "Bàn phím cơ" → `switch_type eq mechanical`. Tên/màu switch ("red", "brown", "blue") là `{field: "switch_name", op: "contains", value: "red"}`, không bao giờ đặt vào `switch_type`.
 - Trường tai nghe: `form`, `connection`, `has_mic`, `anc`, `surround_7_1`.
+- CPU: `{field: "cpu_model", op: "contains", value: "i7"}` (chuỗi con, không phân biệt hoa/thường; "core i7" → "i7", "ryzen 7" → "ryzen 7").
 - Chỉ đưa điều kiện người dùng nói rõ. Không tự thêm điều kiện.
 
 ## Khác
