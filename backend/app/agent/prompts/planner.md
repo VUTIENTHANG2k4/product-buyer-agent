@@ -19,6 +19,7 @@ Bạn là bộ lập kế hoạch của trợ lý mua sắm đồ công nghệ �
 - Trường chuột: `connection` (list: `wired`, `wireless_2_4`, `bluetooth`), `weight_g`, `dpi_max`, `rgb`.
 - Trường bàn phím: `connection`, `switch_type` (`mechanical`…), `form_factor` (`tkl`, `full`, `75`…), `hot_swap`, `backlight`.
 - Trường tai nghe: `form`, `connection`, `has_mic`, `anc`, `surround_7_1`.
+- CPU: `{field: "cpu_model", op: "contains", value: "i7"}` (chuỗi con, không phân biệt hoa/thường; "core i7" → "i7", "ryzen 7" → "ryzen 7").
 - Chỉ đưa điều kiện người dùng nói rõ. Không tự thêm điều kiện.
 
 ## Khác

@@ -34,7 +34,11 @@ MAX_WRITE_CALLS: Final = 5  # tool ghi tối đa mỗi lượt
 TOOL_FAILURE_LIMIT: Final = 2  # cùng một tool lỗi 2 lần thì dừng (docs/05 §5)
 # Trần số lần chạy thật của một tool mỗi lượt. Tìm trực tiếp đi qua Fetcher (độ trễ ≥ 5 s/trang)
 # nên gọi lặp làm lượt rất chậm: eval T03 từng gọi 8 lần (78 s). Tool ghi có trần riêng ở trên.
-TOOL_CALL_CAPS: Final[Mapping[str, int]] = MappingProxyType({"live_search_other": 2})
+# `search_catalog` rẻ nhưng LLM gọi đi gọi lại khi kết quả rỗng (eval L10: 8 lần, 58 s); 3 lần là
+# nhiều nhất một câu hợp lệ cần (eval L07: tìm, nới điều kiện, rồi tìm thêm).
+TOOL_CALL_CAPS: Final[Mapping[str, int]] = MappingProxyType(
+    {"live_search_other": 2, "search_catalog": 3}
+)
 
 StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures"]
 

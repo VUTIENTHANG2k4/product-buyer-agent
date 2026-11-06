@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from typing import Any, Literal, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import ColumnElement, and_, case, false, func, or_
+from sqlalchemy import ColumnElement, String, and_, case, false, func, or_, type_coerce
 from sqlalchemy import select as core_select
 from sqlmodel import Session, col, select
 
@@ -58,6 +58,23 @@ class ProductPage(NamedTuple):
     items: list[ProductHit]
 
 
+def _contains_item(field: str, item: object) -> ColumnElement[bool]:
+    """Trường kiểu danh sách chứa `item`; với `item` là chuỗi, trường kiểu chuỗi (`cpu_model`,
+    `gpu_model`) chứa `item` như chuỗi con, không phân biệt hoa/thường (T6.7v: planner viết
+    `cpu_model contains "i7"` cho "core i7"). Ký tự đại diện của LIKE được hiểu nguyên văn."""
+    specs = col(Product.specs)
+    in_list: ColumnElement[bool] = specs.contains({field: [item]})
+    if not isinstance(item, str):
+        return in_list
+    node = specs[field]
+    text = type_coerce(
+        case((func.jsonb_typeof(node) == "string", func.lower(node.as_string())), else_=None),
+        String,
+    )
+    substring: ColumnElement[bool] = text.contains(item.lower(), autoescape=True)
+    return or_(in_list, substring)
+
+
 def spec_condition(spec_filter: SpecFilter) -> ColumnElement[bool]:
     """Điều kiện SQL cho một `SpecFilter` trên cột `product.specs` (JSONB).
 
@@ -69,12 +86,12 @@ def spec_condition(spec_filter: SpecFilter) -> ColumnElement[bool]:
     node = specs[field]
 
     if op == "contains":
-        return specs.contains({field: [value]})
+        return _contains_item(field, value)
     if op == "contains_any":
         values = value if isinstance(value, list) else [value]
         # `false()` đầu tiên: danh sách rỗng thì không khớp gì (or_() rỗng sẽ khớp tất cả).
         any_of: ColumnElement[bool] = or_(
-            false(), *(specs.contains({field: [item]}) for item in values)
+            false(), *(_contains_item(field, item) for item in values)
         )
         return any_of
     if op == "in":

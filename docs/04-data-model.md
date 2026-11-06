@@ -340,7 +340,8 @@ class Challenge(BaseModel):           # dấu hiệu bị chặn/captcha (06 §4
 class SpecFilter(BaseModel):
     field: str                         # tên trường trong khung specs, ví dụ "gpu_rank", "ram_gb"
     op: Literal["eq", "gte", "lte", "contains", "contains_any", "in"]
-    # contains: trường list chứa giá trị; contains_any: trường list chứa ít nhất một giá trị trong value (list);
+    # contains: trường list chứa giá trị, hoặc (giá trị chuỗi) trường chuỗi như cpu_model chứa nó làm chuỗi con
+    # không phân biệt hoa/thường (T6.7v: "i7" khớp "i7-14700HX"); contains_any: trường list chứa ít nhất một giá trị trong value (list);
     # in: trường vô hướng thuộc value (list)
     value: bool | int | float | str | list[str]   # bool cho trường bool (is_gaming); float hữu hạn
 
