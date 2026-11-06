@@ -9,6 +9,7 @@ from sqlmodel import Session, col, select
 
 from app.db.models import Offer, ShoppingList, ShoppingListItem
 from app.db.repositories.ids import fits_int4
+from app.db.repositories.locks import SHOPPING_LIST_NAME_LOCK, advisory_xact_lock
 from app.domain.clock import utc_now
 
 
@@ -32,6 +33,11 @@ class ShoppingListRepository:
 
     def get(self, list_id: int) -> ShoppingList | None:
         return self._session.get(ShoppingList, list_id) if fits_int4(list_id) else None
+
+    def lock_name(self, name: str) -> None:
+        """Giữ khóa theo tên (tới hết transaction) trước khi `get_by_name` rồi `create`, để hai
+        yêu cầu đồng thời không cùng tạo danh sách trùng tên."""
+        advisory_xact_lock(self._session, SHOPPING_LIST_NAME_LOCK, normalize_list_name(name))
 
     def get_by_name(self, name: str) -> ShoppingList | None:
         statement = (
@@ -70,6 +76,20 @@ class ShoppingListRepository:
             .order_by(col(ShoppingListItem.added_at), col(ShoppingListItem.id))
         )
         return list(self._session.exec(statement))
+
+    def list_items_for_lists(self, list_ids: list[int]) -> dict[int, list[ShoppingListItem]]:
+        """Mục của nhiều danh sách trong một truy vấn, mỗi danh sách theo thứ tự thêm."""
+        grouped: dict[int, list[ShoppingListItem]] = {list_id: [] for list_id in list_ids}
+        if not list_ids:
+            return grouped
+        statement = (
+            select(ShoppingListItem)
+            .where(col(ShoppingListItem.list_id).in_(list_ids))
+            .order_by(col(ShoppingListItem.added_at), col(ShoppingListItem.id))
+        )
+        for item in self._session.exec(statement):
+            grouped[item.list_id].append(item)
+        return grouped
 
     def get_item(self, item_id: int) -> ShoppingListItem | None:
         return self._session.get(ShoppingListItem, item_id) if fits_int4(item_id) else None

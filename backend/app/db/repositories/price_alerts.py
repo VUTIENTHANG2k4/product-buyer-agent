@@ -6,6 +6,7 @@ from sqlmodel import Session, col, select
 
 from app.db.models import PriceAlert
 from app.db.repositories.ids import fits_int4, keep_valid
+from app.db.repositories.locks import PRICE_ALERT_KEY_LOCK, advisory_xact_lock
 from app.domain.clock import utc_now
 from app.domain.enums import AlertChannel, AlertStatus
 
@@ -22,6 +23,12 @@ def normalize_destination(channel: AlertChannel, destination: str) -> str:
 class PriceAlertRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
+
+    def lock_key(self, product_id: int, channel: AlertChannel, destination: str) -> None:
+        """Giữ khóa theo (sản phẩm, kênh, nơi nhận) tới hết transaction, trước khi kiểm cảnh báo
+        trùng rồi `create`/đổi ngưỡng, để hai yêu cầu đồng thời không cùng qua bước kiểm."""
+        key = f"{product_id}:{channel.value}:{normalize_destination(channel, destination)}"
+        advisory_xact_lock(self._session, PRICE_ALERT_KEY_LOCK, key)
 
     def create(
         self,
