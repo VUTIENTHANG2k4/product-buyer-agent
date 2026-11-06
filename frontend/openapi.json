@@ -4428,7 +4428,7 @@
           "value"
         ],
         "title": "SpecFilter",
-        "description": "Một điều kiện lọc trên trường trong khung specs.\n\n- `contains`: trường kiểu list chứa `value`.\n- `contains_any`: trường kiểu list chứa ít nhất một phần tử của `value` (list).\n- `in`: trường vô hướng thuộc `value` (list)."
+        "description": "Một điều kiện lọc trên trường trong khung specs.\n\n- `contains`: trường kiểu list chứa `value`; với `value` là chuỗi, trường kiểu chuỗi\n  (`cpu_model`, `switch_name`) chứa `value` làm chuỗi con, không phân biệt hoa/thường.\n- `contains_any`: như `contains` nhưng chứa ít nhất một phần tử của `value` (list).\n- `in`: trường vô hướng thuộc `value` (list)."
       },
       "StockStatus": {
         "type": "string",
