@@ -138,14 +138,6 @@ def test_a_range_written_with_den_skips_its_upper_end(text: str) -> None:
         "không quá 30 triệu",
     ],
 )
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG-T67-4: người dùng/LLM hay viết 'tầm giá', 'khoảng giá', 'ngân sách của bạn là', 'tối "
-        "đa là', 'không quá', khoảng 'A-B triệu' hoặc 'A triệu đến B triệu' nhưng `_is_estimate` "
-        "chỉ nhìn đúng một từ liền trước số nên các số này vẫn bị báo là giá lệch CSDL"
-    ),
-)
 def test_common_budget_phrasings_are_not_price_mismatches(text: str) -> None:
     assert skipped(text) == set()
 
@@ -198,6 +190,8 @@ SHAPES: dict[str, Callable[[int], str]] = {
     "many_amounts": lambda n: "dưới 30tr, " * (n // 11),
     "tilde_marks": lambda n: "~" * n + "30tr",
     "den_chain": lambda n: "1 đen " * (n // 6) + "2tr",
+    "dash_ranges_with_units": lambda n: "20tr-25tr " * (n // 10),
+    "filler_words": lambda n: "của bạn là " * (n // 11) + "31 triệu",
     "unicode_decomposed": lambda n: "tầm ".replace("ầ", "à̂") * (n // 4) + "30tr",
 }
 

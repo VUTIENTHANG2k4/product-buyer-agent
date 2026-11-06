@@ -3,8 +3,8 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (T6.7 xong, nhánh `milestone/T6.7-eval-tuning`, chờ người dùng merge). Kế tiếp đề xuất: T6.15 (cảnh báo số tiền với cách nói ngân sách, nhỏ) hoặc X1 (phải chọn lại nguồn điện thoại, ADR-0010).
-- Backlog chưa làm: T6.15, X1, X2 (thực tế đã xong nhờ ADR-0008). Gọi tool thừa ở L10/A04/L02 chưa xử lý (không rớt chỉ số). T6.15 (cảnh báo số tiền với cách nói ngân sách, 9 ca `xfail(strict)` BUG-T67-4). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
+- Đang làm: – (T6.15 xong, nhánh `milestone/T6.15-budget-amount-warning`, chờ `make check` và người dùng merge). Kế tiếp đề xuất: X1 (phải chọn lại nguồn điện thoại, ADR-0010) để sau.
+- Backlog chưa làm: X1, X2 (thực tế đã xong nhờ ADR-0008). Gọi tool thừa ở L10/A04/L02 chưa xử lý (không rớt chỉ số). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-11-07 — T6.7 (filler LLM ngoài giao dịch, `invalid_tool_calls`, N+1 + khóa tạo trùng, `contains` chuỗi con, trần `search_catalog`)
 
 ## Milestone
