@@ -148,7 +148,7 @@ Bộ câu hỏi: [docs/eval/queries.yaml](eval/queries.yaml). `make eval` chạy
 | Hallucination | Sản phẩm/link không có trong DB/kết quả tool | 0 (G3) |
 | Clarification | Các ca `expect_clarification: true` có hỏi lại, không gọi tool | 100% |
 | Tool correctness | Tool bắt buộc (`expected.tools_required`) được gọi; tool cấm không bị gọi | ≥ 90% |
-| Latency p50 | Thời gian đến sự kiện `final` | ≤ 15 s (G4, chỉ đo ở chế độ LLM thật; **chưa đạt**, người dùng chấp nhận ngoại lệ ngày 2026-10-25: đo được 26–31 s (2026-10-23, `gemini-3.5-flash-lite`, ≥ 3 lần gọi LLM mỗi câu), T11.5; nếu cần cải thiện: gộp planner với bước chọn tool hoặc bỏ lần tổng hợp cuối khi đủ dữ liệu) |
+| Latency p50 | Thời gian đến sự kiện `final` | ≤ 15 s (G4, chỉ đo ở chế độ LLM thật; **chưa đạt**, người dùng chấp nhận ngoại lệ ngày 2026-10-25: đo được 26–31 s (2026-10-23, `gemini-3.5-flash-lite`, ≥ 3 lần gọi LLM mỗi câu), T11.5; đo lại 2026-11-06 sau T6.7: 15,3–15,6 s (vẫn trên ngưỡng, mỗi lần gọi LLM chờ ≥ 5 s vì `LLM_MAX_RPM=12`); nếu cần cải thiện: gộp planner với bước chọn tool hoặc bỏ lần tổng hợp cuối khi đủ dữ liệu) |
 
 Hai lớp kiểm tra:
 - **Test agent trong CI** (`backend/tests/agent/`, chạy trong `make check`): dùng `ScriptedChatModel` phát tool call định sẵn để kiểm tra nối tool, guardrail, sự kiện SSE, giới hạn bước. Không gọi mạng.
