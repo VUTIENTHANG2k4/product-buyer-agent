@@ -39,6 +39,11 @@ def warnings_for(text: str) -> tuple[int, ...]:
         "20-25 triệu",
         "20 đến 25tr",
         "từ 20tr đến 25tr",
+        "1.500.000đ - 2.000.000đ",
+        "1.500.000₫-2.000.000₫",
+        "20.000.000đ đến 25.000.000đ",
+        "1.500.000 - 2.000.000",
+        "giá 20 đến 25 triệu",
     ],
 )
 def test_budget_phrasings_skip_every_amount(text: str) -> None:
@@ -60,6 +65,10 @@ def test_budget_phrasings_skip_every_amount(text: str) -> None:
         ("Máy A 31 triệu, của bạn là", {31 * M}),
         ("Máy của bạn là máy 31 triệu", {31 * M}),
         ("i7-13700H giá 31 triệu", {31 * M}),
+        ("Logitech MX Master 3 đen 1.290.000₫", {1_290_000}),  # "đen" (màu) sau số trần
+        ("iPhone 15 đen 20.990.000₫", {20_990_000}),
+        ("Galaxy A 55 đen 9.990.000₫", {9_990_000}),
+        ("Laptop 14- 30 triệu", {30 * M}),  # gạch sát số nhưng có dấu cách sau
     ],
 )
 def test_real_prices_next_to_budget_words_are_still_checked(text: str, expected: set[int]) -> None:
