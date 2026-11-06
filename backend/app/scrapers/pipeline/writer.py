@@ -85,15 +85,13 @@ class OfferWriter:
                 for entry in prepared:
                     price = entry.item.price
                     key = url_key(entry.item)
-                    if (
-                        price is None
-                        or key is None
-                        or not MIN_PRICE_VND <= price <= MAX_PRICE_VND
-                        or key in page_seen
-                    ):
+                    if key is None or key in page_seen:
                         raws.append(None)  # bước lưu sẽ bỏ mục này: khỏi gọi LLM
                         continue
-                    page_seen.add(key)
+                    page_seen.add(key)  # như `save_page`: bản đầu thắng dù không có giá
+                    if price is None or not MIN_PRICE_VND <= price <= MAX_PRICE_VND:
+                        raws.append(None)
+                        continue
                     try:
                         url = clean_url(str(entry.item.url))
                         check_item_url(config, url)

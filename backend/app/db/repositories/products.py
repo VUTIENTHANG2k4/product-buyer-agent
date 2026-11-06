@@ -3,6 +3,7 @@
 Lọc specs dùng toán tử JSONB của SQLAlchemy (không SQL thô); tên trường luôn là tham số ràng buộc.
 """
 
+import unicodedata
 from collections.abc import Mapping
 from typing import Any, Literal, NamedTuple
 
@@ -63,6 +64,8 @@ def _contains_item(field: str, item: object) -> ColumnElement[bool]:
     `gpu_model`) chứa `item` như chuỗi con, không phân biệt hoa/thường (T6.7v: planner viết
     `cpu_model contains "i7"` cho "core i7"). Ký tự đại diện của LIKE được hiểu nguyên văn."""
     specs = col(Product.specs)
+    if isinstance(item, str):
+        item = unicodedata.normalize("NFC", item)  # thông số lưu ở NFC; NFD (macOS) vẫn khớp
     in_list: ColumnElement[bool] = specs.contains({field: [item]})
     if not isinstance(item, str):
         return in_list

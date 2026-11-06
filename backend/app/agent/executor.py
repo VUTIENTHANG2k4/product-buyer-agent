@@ -340,10 +340,18 @@ class ToolLoop:
 
 def _ensure_call_ids(reply: AIMessage, step: int) -> None:
     """Gán id `call_<bước>_<thứ tự>` cho tool call thiếu id (Gemini hay trả `id=None`). Sửa tại
-    chỗ để AIMessage và ToolMessage khớp nhau; id LLM đã đặt (kể cả trùng) được giữ nguyên."""
-    for index, call in enumerate([*reply.tool_calls, *reply.invalid_tool_calls], start=1):
-        if not call.get("id"):
-            call["id"] = f"call_{step}_{index}"
+    chỗ để AIMessage và ToolMessage khớp nhau; id LLM đã đặt (kể cả trùng) được giữ nguyên, còn id
+    sinh ra không bao giờ trùng một id có trong phản hồi."""
+    calls = [*reply.tool_calls, *reply.invalid_tool_calls]
+    taken = {str(call["id"]) for call in calls if call.get("id")}
+    for index, call in enumerate(calls, start=1):
+        if call.get("id"):
+            continue
+        candidate = f"call_{step}_{index}"
+        while candidate in taken:
+            candidate += "_"
+        taken.add(candidate)
+        call["id"] = candidate
 
 
 def _tool_message(call: Any, result: Result) -> ToolMessage:

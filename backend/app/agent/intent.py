@@ -95,6 +95,9 @@ _PRICE_TRO_XUONG = re.compile(
 _WORD_OR_MARK = re.compile(r"[a-z]+|\d+|[~<>≈]")
 _LEAD_CHARS = 40  # chỉ xét chừng này ký tự đứng trước số tiền
 # Từ đứng ngay trước số tiền cho biết đó là ngưỡng/ước lượng/chênh lệch chứ không phải một mức giá.
+# "20 đến", "20tr đến", "1.500.000 đến": số đứng riêng (không phải đuôi mã model "G502", "K70")
+# rồi "đến". Chữ "đen" (màu) sau mã model không khớp.
+_RANGE_UNTIL = re.compile(r"(?<![a-z0-9\-])\d[\d.,]*\s*(?:trieu|tr|m|k|nghin|ngan)?\s*den\s*$")
 _ESTIMATE_LAST = frozenset(
     {"tren", "duoi", "khoang", "tam", "hon", "gan", "giam", "chenh", "~", "<", ">", "≈"}
 )
@@ -116,7 +119,7 @@ def _is_estimate(lead: str) -> bool:
     Đầu khoảng "từ 20-25 triệu" cũng tính (số đứng trước dấu gạch)."""
     tokens = _WORD_OR_MARK.findall(lead[-_LEAD_CHARS:])
     # "đến" và "đen" (màu) cùng fold thành "den": chỉ "20 đến 25 triệu" (sau một số) là khoảng giá.
-    if len(tokens) >= 2 and tokens[-1] == "den" and tokens[-2].isdigit():
+    if _RANGE_UNTIL.search(lead):
         return True
     stripped = False
     while tokens and tokens[-1].isdigit():
