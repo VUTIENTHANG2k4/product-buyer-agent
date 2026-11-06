@@ -31,7 +31,7 @@
 | --- | --- | --- |
 | Coverage backend | 99,18% (9515 pass, không còn xfail, ngưỡng 80% trong `make test-be`, ~15–22 phút) | 2026-11-05 |
 | Test frontend (Vitest + E2E) | 1125 Vitest pass, 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100; chưa chạy lại từ lượt "việc nhỏ 7"); chưa đo coverage | 2026-11-05 |
-| Eval (intent accuracy / constraint satisfaction / hallucination) | 2026-11-06 (sau T6.7): 31/31 câu đạt theo kết quả mới nhất từng câu, intent 100%, ràng buộc 100%, tool 100%, hallucination 0 (A01/L09/A04 từng rớt vì Gemini 503, T02 một lần bị loại link, chạy lại đều đạt). **Latency p50 15,3–15,6 s, vẫn trên 15 s** (ngoại lệ T11.5). Không phải một lượt liền mạch trên đúng phiên bản cuối. `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-11-06-*.md`. Trước đó 2026-10-23: 96,4% / 98,6% / 0, latency 26–31 s | 2026-11-06 |
+| Eval (intent accuracy / constraint satisfaction / hallucination) | 2026-11-06 (sau T6.7, một lượt 31 câu liền mạch trên HEAD): 30/31 đạt, intent 100%, ràng buộc 100%, tool 100%, hallucination 0; L09 rớt do Gemini 503 (đạt khi chạy lại). **Latency p50 15,4 s, vẫn trên 15 s** (ngoại lệ T11.5). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-11-06-final.md`. Trước đó 2026-10-23: 96,4% / 98,6% / 0, latency 26–31 s | 2026-11-06 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
 - 2026-10-16: đổi CSDL sang PostgreSQL 17 qua Docker Compose, test trên Postgres thật ([ADR-0007](adr/0007-postgresql.md) thay ADR-0002). Cần `make db-up`.
