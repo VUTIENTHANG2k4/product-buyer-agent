@@ -13,6 +13,7 @@ from app.domain.clock import utc_now
 from app.domain.dto import Challenge, ListingItem, ProductDetail
 from app.domain.enums import Category, ScrapeTrigger, SiteKey
 from app.domain.errors import ChallengeFailed, InvalidScrapeRequest
+from app.normalize.llm_extract import LlmSpecsFiller
 from app.scrapers.base import BaseScraper
 from app.scrapers.challenge import ChallengeDetected, robots_block_challenge
 from app.scrapers.http.errors import FetchError, FetchFailed, HttpStatusError, RobotsBlocked
@@ -24,6 +25,7 @@ from app.scrapers.pipeline.state import (
     GONE_STATUSES,
     MAX_CONSECUTIVE_REFRESH_FAILURES,
     PipelineResult,
+    PreparedItem,
     Progress,
     RunContext,
     SessionFactory,
@@ -44,13 +46,14 @@ class ScrapePipeline:
         default_max_pages: int = 3,
         max_detail_requests: int = DEFAULT_MAX_DETAIL_REQUESTS,
         resolver: ProductResolver = resolve_product,
+        spec_filler: LlmSpecsFiller | None = None,
         now: Callable[[], datetime] = utc_now,
     ) -> None:
         self._fetcher = fetcher
         self._default_max_pages = default_max_pages
         self._max_detail_requests = max_detail_requests
         self._runs = RunStore(session_factory, now)
-        self._writer = OfferWriter(session_factory, now, resolver)
+        self._writer = OfferWriter(session_factory, now, resolver, spec_filler)
 
     # ---- API ----
     async def run(
@@ -325,6 +328,9 @@ class ScrapePipeline:
                     logger.warning("[run %s] %s", context.run_id, error)
                     break
                 prepared = await self._prepare_items(scraper, page.items, progress)
+                prepared = await asyncio.to_thread(
+                    self._writer.prefill_specs, context.category, prepared
+                )
                 await asyncio.to_thread(
                     self._writer.save_page,
                     scraper.config,
@@ -357,10 +363,10 @@ class ScrapePipeline:
 
     async def _prepare_items(
         self, scraper: BaseScraper, items: Sequence[ListingItem], progress: Progress
-    ) -> list[tuple[ListingItem, ProductDetail | None]]:
+    ) -> list[PreparedItem]:
         """Tải trang chi tiết cho mục thiếu thông số (trong giới hạn). Lỗi tải chi tiết không làm
         hỏng mục; challenge thì dừng cả lượt (ném `ChallengeDetected`)."""
-        prepared: list[tuple[ListingItem, ProductDetail | None]] = []
+        prepared: list[PreparedItem] = []
         for item in items:
             detail: ProductDetail | None = None
             if not item.raw_specs and progress.detail_requests < self._max_detail_requests:
@@ -371,7 +377,7 @@ class ScrapePipeline:
                     raise  # robots.txt hết hạn giữa lượt và bị chặn: dừng cả lượt như challenge
                 except (FetchError, ValueError) as exc:
                     logger.warning("Không tải được trang chi tiết (%s)", type(exc).__name__)
-            prepared.append((item, detail))
+            prepared.append(PreparedItem(item, detail))
         return prepared
 
 

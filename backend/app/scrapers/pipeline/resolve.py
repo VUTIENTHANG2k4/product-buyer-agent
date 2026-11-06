@@ -2,9 +2,9 @@
 (`normalize.matcher`, docs/04 §7); kiểm URL của mục."""
 
 import logging
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 from urllib.parse import urlsplit
 
 from sqlmodel import Session
@@ -21,6 +21,7 @@ from app.normalize.model_code import extract_model_code
 from app.normalize.names import canonical_name
 from app.normalize.url import clean_url, host_key, scheme_twin
 from app.scrapers.base import SiteConfig
+from app.scrapers.pipeline.state import SessionFactory
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +44,31 @@ class Resolution:
     score: float | None
 
 
-ProductResolver = Callable[
-    [Session, Category, ListingItem, ProductDetail | None, Mapping[str, str]], Resolution
-]
+class ProductResolver(Protocol):
+    """Gắn một mục vào product. `extraction` là kết quả trích thông số đã làm sẵn ngoài giao dịch
+    lưu (T6.7a); `None` thì tự trích theo luật."""
+
+    def __call__(
+        self,
+        session: Session,
+        category: Category,
+        item: ListingItem,
+        detail: ProductDetail | None,
+        raw_specs: Mapping[str, str] | None,
+        *,
+        extraction: SpecsExtraction | None = None,
+    ) -> Resolution: ...
+
+
+def merge_raw_specs(
+    existing: Mapping[str, Any] | None, item: ListingItem, detail: ProductDetail | None
+) -> dict[str, Any]:
+    """Bảng thông số thô gộp: offer đã lưu < thẻ danh sách < trang chi tiết (sau ghi đè trước)."""
+    merged: dict[str, Any] = dict(existing or {})
+    merged.update(item.raw_specs)
+    if detail is not None:
+        merged.update(detail.raw_specs)
+    return merged
 
 
 def find_existing_offer(offers: OfferRepository, url: str) -> Offer | None:
@@ -72,6 +95,25 @@ class _RepoSpecsCache:
         self._repo.put(content_hash, category, result, model)
 
 
+class FactorySpecsCache:
+    """`SpecsCache` mở session riêng cho từng thao tác và commit ngay: kết quả LLM được giữ dù mục
+    sau đó lỗi lưu, và không giữ giao dịch nào mở trong lúc chờ LLM (T6.7a)."""
+
+    def __init__(self, session_factory: SessionFactory) -> None:
+        self._session_factory = session_factory
+
+    def get(self, content_hash: str) -> Mapping[str, Any] | None:
+        with self._session_factory() as session:
+            return _RepoSpecsCache(session).get(content_hash)
+
+    def put(
+        self, content_hash: str, category: Category, result: Mapping[str, Any], model: str
+    ) -> None:
+        with self._session_factory() as session:
+            _RepoSpecsCache(session).put(content_hash, category, result, model)
+            session.commit()
+
+
 def make_resolver(spec_filler: LlmSpecsFiller | None = None) -> ProductResolver:
     """`resolve_product` có (hoặc không có) LLM dự phòng điền trường bắt buộc còn thiếu."""
 
@@ -81,8 +123,18 @@ def make_resolver(spec_filler: LlmSpecsFiller | None = None) -> ProductResolver:
         item: ListingItem,
         detail: ProductDetail | None,
         raw_specs: Mapping[str, str] | None = None,
+        *,
+        extraction: SpecsExtraction | None = None,
     ) -> Resolution:
-        return resolve_product(session, category, item, detail, raw_specs, spec_filler=spec_filler)
+        return resolve_product(
+            session,
+            category,
+            item,
+            detail,
+            raw_specs,
+            spec_filler=spec_filler,
+            extraction=extraction,
+        )
 
     return resolver
 
@@ -95,21 +147,26 @@ def resolve_product(
     raw_specs: Mapping[str, str] | None = None,
     *,
     spec_filler: LlmSpecsFiller | None = None,
+    extraction: SpecsExtraction | None = None,
 ) -> Resolution:
     """Product cho `item`: giữ sản phẩm của offer đã có, nếu không thì ghép hoặc tạo mới.
 
     `raw_specs` là bảng thông số đã gộp (offer cũ, thẻ, chi tiết); mặc định gộp thẻ + chi tiết.
     Thông số trích bằng luật chỉ điền thêm trường còn thiếu cho sản phẩm đã có, không ghi đè.
-    `spec_filler` (T5.3) chỉ chạy khi luật còn thiếu trường bắt buộc.
+    `spec_filler` (T5.3) chỉ chạy khi luật còn thiếu trường bắt buộc. Pipeline truyền sẵn
+    `extraction` (đã gồm bước LLM, làm ngoài giao dịch lưu, T6.7a) thì không trích lại.
     """
-    raw = (
-        dict(raw_specs)
-        if raw_specs is not None
-        else {**item.raw_specs, **(detail.raw_specs if detail is not None else {})}
-    )
-    extraction: SpecsExtraction = extract_specs(category, item.title, raw)
-    if spec_filler is not None and extraction.missing:
-        extraction = spec_filler(_RepoSpecsCache(session), category, item.title, raw, extraction)
+    if extraction is None:
+        raw = (
+            dict(raw_specs)
+            if raw_specs is not None
+            else {**item.raw_specs, **(detail.raw_specs if detail is not None else {})}
+        )
+        extraction = extract_specs(category, item.title, raw)
+        if spec_filler is not None and extraction.missing:
+            extraction = spec_filler(
+                _RepoSpecsCache(session), category, item.title, raw, extraction
+            )
     products = ProductRepository(session)
     existing = find_existing_offer(OfferRepository(session), clean_url(str(item.url)))
     if existing is not None:

@@ -18,17 +18,22 @@ from app.db.repositories import (
 )
 from app.domain.dto import ListingItem, ProductDetail
 from app.domain.enums import Category, PriceType, SiteKey, StockStatus
+from app.normalize.extract import SpecsExtraction, extract_specs
+from app.normalize.llm_extract import LlmSpecsFiller
 from app.normalize.price import MAX_PRICE_VND, MIN_PRICE_VND
 from app.normalize.url import clean_url
 from app.scrapers.base import SiteConfig
 from app.scrapers.pipeline.resolve import (
+    FactorySpecsCache,
     ProductResolver,
     UnpricedItem,
     check_item_url,
     find_existing_offer,
+    merge_raw_specs,
     url_key,
 )
 from app.scrapers.pipeline.state import (
+    PreparedItem,
     Progress,
     RunContext,
     SessionFactory,
@@ -48,17 +53,62 @@ class OfferWriter:
         session_factory: SessionFactory,
         now: Callable[[], datetime],
         resolver: ProductResolver,
+        spec_filler: LlmSpecsFiller | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._now = now
         self._resolver = resolver
+        self._spec_filler = spec_filler
+
+    def prefill_specs(self, category: Category, prepared: list[PreparedItem]) -> list[PreparedItem]:
+        """Trích thông số (luật rồi LLM dự phòng) cho cả trang TRƯỚC khi mở giao dịch lưu (T6.7a).
+
+        LLM gọi đồng bộ nên không được chờ nó khi đang giữ transaction của trang. Cache LLM ghi
+        bằng session riêng và commit ngay. Không bao giờ ném lỗi: mục không làm sẵn được thì giữ
+        `extraction=None` và bước lưu tự trích theo luật.
+        """
+        filler = self._spec_filler
+        if filler is None:
+            return prepared
+        raws: list[dict[str, Any] | None] = []
+        try:
+            with self._session_factory() as session:  # phiên ngắn: chỉ đọc offer đã lưu
+                offers = OfferRepository(session)
+                for entry in prepared:
+                    try:
+                        found = find_existing_offer(offers, clean_url(str(entry.item.url)))
+                    except ValueError:
+                        raws.append(None)  # URL hỏng: mục sẽ lỗi ở bước lưu, khỏi gọi LLM
+                        continue
+                    raws.append(
+                        merge_raw_specs(
+                            found.raw_specs if found else None, entry.item, entry.detail
+                        )
+                    )
+        except SQLAlchemyError:
+            logger.warning("Không đọc được offer cũ để làm sẵn thông số", exc_info=True)
+            return prepared
+        cache = FactorySpecsCache(self._session_factory)
+        result: list[PreparedItem] = []
+        for entry, raw in zip(prepared, raws, strict=True):
+            extraction: SpecsExtraction | None = None
+            if raw is not None:
+                try:
+                    extraction = extract_specs(category, entry.item.title, raw)
+                    if extraction.missing:
+                        extraction = filler(cache, category, entry.item.title, raw, extraction)
+                except Exception:
+                    logger.warning("Làm sẵn thông số lỗi, dùng luật khi lưu", exc_info=True)
+                    extraction = None
+            result.append(PreparedItem(entry.item, entry.detail, extraction))
+        return result
 
     def save_page(
         self,
         config: SiteConfig,
         context: RunContext,
         progress: Progress,
-        prepared: list[tuple[ListingItem, ProductDetail | None]],
+        prepared: list[PreparedItem],
         skipped: int,
     ) -> None:
         """Lưu một trang danh sách trong một transaction (mỗi mục một savepoint, URL trùng trong
@@ -68,7 +118,8 @@ class OfferWriter:
         changed: list[int] = []
         seen = set(progress.seen_urls)
         with self._session_factory() as session:
-            for item, detail in prepared:
+            for entry in prepared:
+                item = entry.item
                 parsed += 1
                 key = url_key(item)
                 if key is not None and key in seen:
@@ -78,7 +129,13 @@ class OfferWriter:
                 try:
                     with session.begin_nested():
                         offer_id, price_changed = self.save_item(
-                            session, config, context.category, item, detail, moment
+                            session,
+                            config,
+                            context.category,
+                            item,
+                            entry.detail,
+                            moment,
+                            extraction=entry.extraction,
                         )
                 except (ValueError, ValidationError, SQLAlchemyError) as exc:
                     failed += 1
@@ -125,6 +182,8 @@ class OfferWriter:
         item: ListingItem,
         detail: ProductDetail | None,
         moment: datetime,
+        *,
+        extraction: SpecsExtraction | None = None,
     ) -> tuple[int, bool]:
         """Lưu một mục; trả (offer_id, giá có đổi không). Ném `ValueError` nếu mục không hợp lệ."""
         if item.price is None or not MIN_PRICE_VND <= item.price <= MAX_PRICE_VND:
@@ -138,13 +197,10 @@ class OfferWriter:
             url = existing.url
 
         # `upsert` ghi đè cả None/{}: gộp với dữ liệu đã có để lượt không tải chi tiết không xóa nó.
-        raw_specs: dict[str, Any] = {}
-        if existing is not None:
-            raw_specs.update(existing.raw_specs)
-        raw_specs.update(item.raw_specs)
-        if detail is not None:
-            raw_specs.update(detail.raw_specs)
-        resolution = self._resolver(session, category, item, detail, raw_specs)
+        raw_specs = merge_raw_specs(existing.raw_specs if existing else None, item, detail)
+        resolution = self._resolver(
+            session, category, item, detail, raw_specs, extraction=extraction
+        )
         rating = item.rating if item.rating is not None else (existing.rating if existing else None)
         rating_count = (
             item.rating_count

@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (X3 xong, nhánh `milestone/X3-shopping-list-export`, chờ người dùng merge). Kế tiếp đề xuất: T6.7 phần còn lại (cần `GOOGLE_API_KEY`) hoặc X1 (phải chọn lại nguồn điện thoại, ADR-0010).
+- Đang làm: 🔄 T6.7 phần còn lại (nhánh `milestone/T6.7-eval-tuning`): (a) `LlmSpecsFiller` ra ngoài giao dịch lưu → (e) `invalid_tool_calls`, id tool call, log kèm `run_id` → (g) N+1 + `preferred_offer_id` + race tạo trùng → cảnh báo "số tiền lệch" dương tính giả → `make eval` LLM thật (cần `GOOGLE_API_KEY`) → chỉnh A03/T01/gọi thừa theo kết quả, đo lại.
 - Backlog chưa làm: T6.7 phần còn lại ((a) `LlmSpecsFiller` ngoài giao dịch lưu, (e), (g), đo lại eval bằng LLM thật), X1, X2 (thực tế đã xong nhờ ADR-0008). Không còn `xfail` đã biết. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-11-05 — X3 (CSV `GET /lists/{id}/export.csv` + nút "Tải CSV"/"Sao chép link") và T6.14 (test ReDoS đo tốc độ tăng)
 
