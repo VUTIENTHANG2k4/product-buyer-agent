@@ -95,9 +95,35 @@ _PRICE_TRO_XUONG = re.compile(
 _WORD_OR_MARK = re.compile(r"[a-z]+|\d+|[~<>≈]")
 _LEAD_CHARS = 40  # chỉ xét chừng này ký tự đứng trước số tiền
 # Từ đứng ngay trước số tiền cho biết đó là ngưỡng/ước lượng/chênh lệch chứ không phải một mức giá.
-# "20 đến", "20tr đến", "1.500.000 đến": số đứng riêng (không phải đuôi mã model "G502", "K70")
-# rồi "đến". Chữ "đen" (màu) sau mã model không khớp.
-_RANGE_UNTIL = re.compile(r"(?<![a-z0-9\-])\d[\d.,]*\s*(?:trieu|tr|m|k|nghin|ngan)?\s*den\s*$")
+# Đầu trên của khoảng giá: số đứng riêng (không phải đuôi mã model "G502", "K70", "i7-") rồi
+#   - "đến" hoặc gạch/dấu ngã sau số có đơn vị/ký hiệu tiền ("20 triệu -", "20tr đến", "1,5tr~",
+#     hoặc sau số viết có nhóm nghìn ("1.500.000 đến", "1.500.000 - "),
+#   - gạch sát số trần, không dấu cách sau ("20-25 triệu").
+# Gạch có dấu cách sau số trần ("RAM 16 - 31 triệu") không tính: đó có thể là danh sách giá.
+# "đến" sau số trần nhỏ ("20 đến 25 triệu"): xem `_BARE_UNTIL` ("MX Master 3 đen 1.290.000₫" khác).
+_UNIT_WORD = r"(?:trieu|tr|m|k|nghin|ngan)"
+_CURRENCY = r"(?:d|dong|vnd|₫)"
+_DASH = "[-–—~]"
+_NOT_MODEL_TAIL = r"(?<![a-z0-9\-.,])"
+_GROUPED_NUMBER = r"\d{1,3}(?:[.,]\d{3})+"
+_RANGE_UPPER = re.compile(
+    rf"{_NOT_MODEL_TAIL}\d[\d.,]*(?:\s*{_UNIT_WORD}(?:\s*{_CURRENCY})?|\s*{_CURRENCY})"
+    rf"\s*(?:den|{_DASH})\s*$"
+    rf"|{_NOT_MODEL_TAIL}{_GROUPED_NUMBER}\s*(?:den|{_DASH})\s*$"
+    rf"|{_NOT_MODEL_TAIL}\d[\d.,]*{_DASH}$"
+)
+# Số trần nhỏ rồi "đến" ("từ 20 đến 25 triệu"): "đen" (màu) cũng fold thành "den", nên chỉ tính khi
+# số đứng đầu câu/mệnh đề hoặc sau từ mở khoảng, không phải sau tên máy ("iPhone 15 đen 20 triệu").
+_BARE_UNTIL = re.compile(rf"{_NOT_MODEL_TAIL}\d[\d.,]*\s*den\s*$")
+_RANGE_OPENERS = frozenset({"tu", "gia", "khoang", "tam", "muc"})
+# Đầu dưới của khoảng giá: "20 triệu đến 25 triệu", "20 triệu - 25 triệu". Số sau gạch phải có đơn
+# vị tiền (hoặc viết có nhóm nghìn "2.000.000"), nên "17 triệu - 3 máy" không khớp.
+_RANGE_LOWER = re.compile(
+    rf"(?:\s*{_CURRENCY})?\s*(?:den|{_DASH})\s*(?:{_GROUPED_NUMBER}|\d[\d.,]*\s*{_UNIT_WORD}\b)"
+)
+# Từ đệm giữa từ ngưỡng và số tiền: "ngân sách của bạn là 30 triệu", "tối đa là 30 triệu".
+_LEAD_FILLER = frozenset({"la", "cua", "ban", "toi", "minh"})
+_MAX_FILLER = 3
 _ESTIMATE_LAST = frozenset(
     {"tren", "duoi", "khoang", "tam", "hon", "gan", "giam", "chenh", "~", "<", ">", "≈"}
 )
@@ -109,22 +135,36 @@ _ESTIMATE_PAIRS = frozenset(
         ("chenh", "lech"),
         ("ngan", "sach"),
         ("xap", "xi"),
+        ("tam", "gia"),
+        ("khoang", "gia"),
+        ("khong", "qua"),
+        ("khong", "vuot"),
+        ("vuot", "qua"),
     }
 )
 
 
 def _is_estimate(lead: str) -> bool:
     """`lead` (văn bản đã `fold`, ngay trước số tiền) kết thúc bằng từ chỉ ngưỡng/ước lượng:
-    "trên", "dưới", "khoảng", "tầm", "rẻ hơn", "tối đa", "ngân sách", "tiết kiệm", "giảm"…
-    Đầu khoảng "từ 20-25 triệu" cũng tính (số đứng trước dấu gạch)."""
-    tokens = _WORD_OR_MARK.findall(lead[-_LEAD_CHARS:])
+    "trên", "dưới", "khoảng", "tầm", "rẻ hơn", "tối đa", "ngân sách", "tiết kiệm", "giảm",
+    "tầm giá", "không quá"… (bỏ qua "là", "của bạn" ở cuối). Đầu trên của khoảng giá ("20-25 triệu",
+    "20 triệu - 25 triệu", "20 đến 25 triệu") và đầu khoảng "từ 20-25 triệu" cũng tính."""
+    tail = lead[-_LEAD_CHARS:]
     # "đến" và "đen" (màu) cùng fold thành "den": chỉ "20 đến 25 triệu" (sau một số) là khoảng giá.
-    if _RANGE_UNTIL.search(lead):
+    if _RANGE_UPPER.search(tail):
         return True
+    if (bare := _BARE_UNTIL.search(tail)) is not None:
+        before = _WORD_OR_MARK.findall(tail[: bare.start()])
+        if not before or before[-1] in _RANGE_OPENERS:
+            return True
+    tokens = _WORD_OR_MARK.findall(tail)
     stripped = False
     while tokens and tokens[-1].isdigit():
         tokens.pop()  # "20-" trong "từ 20-25 triệu"
         stripped = True
+    for _ in range(_MAX_FILLER):
+        if tokens and tokens[-1] in _LEAD_FILLER:
+            tokens.pop()
     if not tokens:
         return False
     if tokens[-1] in _ESTIMATE_LAST:
@@ -168,8 +208,9 @@ def extract_amounts(message: str, *, skip_estimates: bool = False) -> set[int]:
                 continue
         if not MIN_AMOUNT_VND <= value <= MAX_AMOUNT_VND:
             continue
-        if skip_estimates and _is_estimate(
-            folded[max(0, match.start() - _LEAD_CHARS) : match.start()]
+        if skip_estimates and (
+            _is_estimate(folded[max(0, match.start() - _LEAD_CHARS) : match.start()])
+            or _RANGE_LOWER.match(folded, match.end())
         ):
             continue
         found.add(value)
