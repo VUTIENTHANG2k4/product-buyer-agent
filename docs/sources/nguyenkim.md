@@ -74,3 +74,9 @@ Fixture (`backend/tests/fixtures/nguyenkim/`, bỏ script trừ JSON-LD và `__N
 | `detail_dien-thoai-oppo-reno16f-8gb-256gb-trang.html` | OPPO Reno16F 8GB/256GB Trắng: bán 13.599.000đ, niêm yết 15.990.000đ |
 
 Còn lại là mã số thuế của doanh nghiệp (`0302286281`, không phải số cá nhân).
+
+### Cài đặt (X1.4, `app/scrapers/sites/nguyenkim.py`)
+- `NguyenKimScraper`: `requires_js=False`, `supports_live_search=False`, `categories={phone: https://www.nguyenkim.com/dien-thoai.c}`, `min_delay_s=5`. Đã đăng ký trong `registry.py`. `listing_url` dùng `?page=N` mặc định của `BaseScraper`; `parse_listing` đặt `has_next = page < pages` (không đặt `next_url`, `crawl_category` tự dựng bằng `listing_url`).
+- Danh sách: URL = `/` + `slugs.value.vi` + `slugs.postfix` (kiểm đúng một đoạn `[A-Za-z0-9._-]`, mục sai bị bỏ và đếm vào `skipped`); giá bán = `salePrice` (rồi `mediaPrice`, rồi `price`), giá gốc = `price` khi lớn hơn giá bán, `finalPrice` (đã trừ mã giảm) không lưu; `stockStatus` → `StockStatus`; `code` → `site_sku`; `thumbnail` → ảnh. `raw_specs` để rỗng nên pipeline tải trang chi tiết cho từng máy (giới hạn mặc định của pipeline mỗi lượt).
+- Chi tiết: giá lấy từ `__NEXT_DATA__` (JSON-LD `offers.price` dự phòng); `raw_specs` từ `properties[]` (ô nhập `value.vi` hoặc các lựa chọn `values[].value.vi` nối bằng "; ", bỏ giá trị rỗng/quá 500 ký tự); `brand_hint` từ JSON-LD hoặc `brandName`; `model_code_hint` = `mpn` (mã hãng kèm cấu hình/màu, không dùng để ghép điện thoại). Bộ trích xuất đọc được từ bảng này RAM, bộ nhớ trong, màn hình (`Màn hình rộng`), pin (`Pin & Sạc`), chip, hệ điều hành.
+- Không có `parse_search`: tìm kiếm cần JavaScript (ADR-0010). Mỗi lượt đầy đủ ≈ 9 trang danh mục + tối đa số trang chi tiết pipeline cho phép, mỗi request ≥ 5 s. Chạy thật chờ X1.7.

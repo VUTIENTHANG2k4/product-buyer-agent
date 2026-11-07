@@ -99,7 +99,7 @@
 - id: nguyenkim-phone-13
   site: nguyenkim
   fixture: fixtures/nguyenkim/listing_phone_p1.html
-  title: 'Điện thoại Samsung Galaxy A07 LTE (4Gb/128Gb), Black '
+  title: Điện thoại Samsung Galaxy A07 LTE (4Gb/128Gb), Black
   expect:
     ram_gb: 4
     storage_gb: 128
@@ -113,7 +113,7 @@
 - id: nguyenkim-phone-15
   site: nguyenkim
   fixture: fixtures/nguyenkim/listing_phone_p2.html
-  title: 'Điện thoại Samsung A26 5G ( 8GB/128GB ) SM-A266BLGGXXV Xanh Opal '
+  title: Điện thoại Samsung A26 5G ( 8GB/128GB ) SM-A266BLGGXXV Xanh Opal
   expect:
     ram_gb: 8
     storage_gb: 128
@@ -145,7 +145,7 @@
 - id: nguyenkim-phone-20
   site: nguyenkim
   fixture: fixtures/nguyenkim/listing_phone_p2.html
-  title: ĐTDĐ Galaxy A37 5G (Exynos 1480/8GB/128GB/ 6.7” FHD+,120Hz/Light Violet  /SM-A376BLVSXXV )
+  title: ĐTDĐ Galaxy A37 5G (Exynos 1480/8GB/128GB/ 6.7” FHD+,120Hz/Light Violet /SM-A376BLVSXXV )
   expect:
     ram_gb: 8
     storage_gb: 128

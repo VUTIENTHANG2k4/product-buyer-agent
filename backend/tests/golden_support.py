@@ -5,8 +5,6 @@ thô (`raw_specs`) lấy lại từ fixture lúc chạy, không chép vào YAML,
 tiêu đề golden đúng là tiêu đề có thật trong fixture.
 """
 
-import json
-import re
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
@@ -19,6 +17,7 @@ from app.scrapers.base import BaseScraper
 from app.scrapers.sites.anphat import AnPhatScraper
 from app.scrapers.sites.fptshop import FptShopScraper
 from app.scrapers.sites.gearvn import GearVNScraper
+from app.scrapers.sites.nguyenkim import NguyenKimScraper
 
 TESTS_DIR = Path(__file__).resolve().parent
 GOLDEN_DIR = TESTS_DIR / "unit" / "golden"
@@ -27,6 +26,7 @@ _SCRAPERS: dict[SiteKey, type[BaseScraper]] = {
     SiteKey.gearvn: GearVNScraper,
     SiteKey.anphat: AnPhatScraper,
     SiteKey.fptshop: FptShopScraper,
+    SiteKey.nguyenkim: NguyenKimScraper,
 }
 
 
@@ -83,25 +83,12 @@ def _parsed_items(
     site: SiteKey, fixture: str, category: Category
 ) -> tuple[tuple[str, tuple[tuple[str, str], ...]], ...]:
     html = (TESTS_DIR / fixture).read_text(encoding="utf-8")
-    if site is SiteKey.nguyenkim:  # chưa có scraper (X1.4): đọc thẳng `__NEXT_DATA__` của danh mục
-        return tuple((title, ()) for title in _nguyenkim_titles(html))
     scraper = scraper_for(site)
     if isinstance(scraper, FptShopScraper):
         item = scraper.parse_product(html, "https://fptshop.com.vn/x", category)
         return ((item.title, tuple(item.raw_specs.items())),)
     page = scraper.parse_listing(html, category, scraper.listing_url(category, 1))
     return tuple((item.title, tuple(item.raw_specs.items())) for item in page.items)
-
-
-_NEXT_DATA = re.compile(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S)
-
-
-def _nguyenkim_titles(html: str) -> list[str]:
-    """Tên các máy trong `__NEXT_DATA__.pageProps.pageDetail.data` của trang danh mục Nguyễn Kim."""
-    match = _NEXT_DATA.search(html)
-    assert match is not None, "no __NEXT_DATA__ in the Nguyen Kim fixture"
-    data = json.loads(match.group(1))["props"]["pageProps"]["pageDetail"]["data"]
-    return [item["name"]["vi"] for item in data]
 
 
 def real_titles(site: SiteKey, category: Category) -> dict[str, dict[str, str]]:
