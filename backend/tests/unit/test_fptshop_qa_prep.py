@@ -122,7 +122,7 @@ def test_duplicates_and_foreign_urls_do_not_use_up_the_cap() -> None:
 
 
 def test_unsupported_category_selects_nothing() -> None:
-    assert select_sitemaps(Category.phone, [accessory(0)]) == []
+    assert select_sitemaps(Category.other, [accessory(0)]) == []
 
 
 def test_empty_index_selects_nothing() -> None:

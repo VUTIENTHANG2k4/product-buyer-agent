@@ -432,7 +432,7 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 | X1 | Nhóm điện thoại (tầng 1): FPT Shop + Nguyễn Kim ([ADR-0011](adr/0011-phone-sources-fptshop-nguyenkim.md)), `PhoneSpecs`, scraper, biến thể dung lượng; chia task X1.1–X1.7 bên dưới | L | 🔄 |
 | X1.1 | Khảo sát nguồn điện thoại + ADR-0011 + fixture (FPT Shop, Nguyễn Kim; Viettel Store bị loại vì challenge captcha) | S–M | ✅ |
 | X1.2 | `PhoneSpecs` + bộ trích xuất + chuẩn hóa/ghép biến thể dung lượng + golden | M | ✅ |
-| X1.3 | FptShopScraper cho điện thoại (sitemap `sitemap-dien-thoai.xml`) | S–M | ⬜ |
+| X1.3 | FptShopScraper cho điện thoại (sitemap `sitemap-dien-thoai.xml`) | S–M | ✅ |
 | X1.4 | NguyenKimScraper (danh mục `/dien-thoai.c?page=N` đọc `__NEXT_DATA__` + chi tiết JSON-LD) | M | ⬜ |
 | X1.5 | Agent, dịch vụ, rematch cho `phone` (intent tầng 1, `search_catalog`, prompt, `KEY_SPEC_FIELDS`) | M | ⬜ |
 | X1.6 | Seed `phones.json`, câu eval, giao diện (nhãn `chipset`/`battery_mah`), ảnh chụp, e2e | S–M | ⬜ |

@@ -53,7 +53,15 @@ MAX_CONSECUTIVE_ERRORS = 3  # tải lỗi liên tiếp (5xx, quá lớn...) thì
 # Phụ kiện chia `sitemap-phu-kien(-N).xml`; trần để chỉ mục bất thường không kéo hàng trăm request.
 MAX_ACCESSORY_SITEMAPS = 10
 
-_LAPTOP_SITEMAP_PATH = "/products/sitemap-may-tinh-xach-tay.xml"
+# Nhóm có sitemap riêng: toàn bộ URL của sitemap là sản phẩm của nhóm, nằm ở `/<mục>/<slug>`.
+_OWN_SITEMAP_PATH: dict[Category, str] = {
+    Category.laptop: "/products/sitemap-may-tinh-xach-tay.xml",
+    Category.phone: "/products/sitemap-dien-thoai.xml",  # X1, ADR-0011
+}
+_OWN_SECTION: dict[Category, str] = {
+    Category.laptop: "may-tinh-xach-tay",
+    Category.phone: "dien-thoai",
+}
 # Phụ kiện chia nhiều sitemap (`sitemap-phu-kien.xml`, `-1`, `-2`...); `-gia-dung` là đồ gia dụng.
 _ACCESSORY_SITEMAP = re.compile(r"^/products/sitemap-phu-kien(?:-\d+)?\.xml$")
 # Phụ kiện đều ở `/phu-kien/<slug>`: nhóm suy ra từ tiền tố slug (docs/sources/fptshop.md mục 3).
@@ -107,8 +115,8 @@ def select_sitemaps(category: Category, index_locs: Sequence[str]) -> list[str]:
         if not _same_site(loc):
             continue
         path = urlsplit(loc).path  # `_same_site` đã chắc `urlsplit(loc)` không lỗi
-        if category is Category.laptop:
-            matches = path == _LAPTOP_SITEMAP_PATH
+        if category in _OWN_SITEMAP_PATH:
+            matches = path == _OWN_SITEMAP_PATH[category]
         else:
             matches = category in _ACCESSORY_PREFIX and _ACCESSORY_SITEMAP.match(path) is not None
         if matches and loc not in chosen:
@@ -131,8 +139,8 @@ def select_product_urls(category: Category, locs: Sequence[str]) -> list[str]:
         if len(segments) != 2:
             continue
         section, slug = segments
-        if category is Category.laptop:
-            wanted = section == "may-tinh-xach-tay"
+        if category in _OWN_SECTION:
+            wanted = section == _OWN_SECTION[category]
         else:
             prefix = _ACCESSORY_PREFIX.get(category)
             wanted = prefix is not None and section == "phu-kien" and slug.startswith(prefix)
@@ -361,6 +369,7 @@ class FptShopScraper(BaseScraper):
             Category.mouse: f"{_BASE_URL}/phu-kien/chuot",
             Category.keyboard: f"{_BASE_URL}/phu-kien/ban-phim",
             Category.headset: f"{_BASE_URL}/phu-kien/tai-nghe",
+            Category.phone: f"{_BASE_URL}/dien-thoai",
         },
     )
 
