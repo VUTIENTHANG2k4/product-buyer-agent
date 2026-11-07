@@ -19,6 +19,23 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Gigabyte", ("gigabyte", "aorus")),
     ("Apple", ("apple", "macbook", "iphone", "ipad")),
     ("Samsung", ("samsung", "galaxy")),
+    ("Xiaomi", ("xiaomi", "redmi", "poco")),
+    ("OPPO", ("oppo",)),
+    ("vivo", ("vivo",)),
+    ("realme", ("realme",)),
+    ("Honor", ("honor",)),
+    ("Nokia", ("nokia",)),
+    ("Google", ("google", "pixel")),
+    ("Huawei", ("huawei",)),
+    ("TECNO", ("tecno",)),
+    ("Infinix", ("infinix",)),
+    ("itel", ("itel",)),
+    ("Masstel", ("masstel",)),
+    ("nubia", ("nubia",)),
+    ("Nothing", ("nothing",)),
+    ("Motorola", ("motorola", "moto")),
+    ("OnePlus", ("oneplus",)),
+    ("ZTE", ("zte",)),
     ("Sony", ("sony",)),
     ("Logitech", ("logitech", "logi")),
     ("Razer", ("razer",)),
@@ -86,6 +103,8 @@ _TYPE_STARTS = frozenset(
         "mechanical",
         "wireless",
         "pc",
+        "dien",  # "Điện thoại …"
+        "dtdd",  # "ĐTDĐ Samsung …" (điện thoại di động)
     ]
 )
 # Từ phụ kiện ở phần mô tả bị bỏ qua: "Bộ sạc laptop Dell 65W" là sạc, không phải laptop Dell.

@@ -21,6 +21,7 @@ GROUPS = [
     ("mouse", Category.mouse, 15),
     ("keyboard", Category.keyboard, 15),
     ("headset", Category.headset, 15),
+    ("phone", Category.phone, 15),
 ]
 ACCURACY_FLOOR = 0.95
 OPTIONAL_FIELDS: dict[Category, tuple[str, ...]] = {
@@ -28,8 +29,17 @@ OPTIONAL_FIELDS: dict[Category, tuple[str, ...]] = {
     Category.mouse: ("dpi_max",),  # chỉ trang chi tiết ghi DPI: mới có 3 ca
     Category.keyboard: ("form_factor", "switch_name"),
     Category.headset: (),
+    Category.phone: ("screen_in",),
 }
-MIN_OPTIONAL_CASES = {"screen_in": 40, "dpi_max": 3, "form_factor": 30, "switch_name": 10}
+MIN_OPTIONAL_CASES = {
+    "screen_in": 40,
+    "dpi_max": 3,
+    "form_factor": 30,
+    "switch_name": 10,
+}
+# Điện thoại: chỉ có FPT Shop và Nguyễn Kim bán (ADR-0011); ít ca có màn hình/pin hơn laptop.
+GROUP_SITES = {"phone": {"fptshop", "nguyenkim"}}
+PHONE_MIN_OPTIONAL = {"screen_in": 5}
 # Recall đo được khi thêm (T5.4), không hạ. `form_factor`: "AKKO 5087" (87 phím = TKL) chưa đọc.
 RECALL_FLOORS = {(Category.keyboard, "form_factor"): 0.94}
 
@@ -79,7 +89,7 @@ def test_golden_covers_every_site_that_sells_the_category(
     name: str, category: Category, minimum: int
 ) -> None:
     sites = {case.site.value for case in load_cases(name)}
-    assert {"gearvn", "anphat", "fptshop"} <= sites
+    assert GROUP_SITES.get(name, {"gearvn", "anphat", "fptshop"}) <= sites
 
 
 @pytest.mark.parametrize(("name", "category", "minimum"), GROUPS)
@@ -159,7 +169,10 @@ def test_optional_fields_have_enough_golden_cases(
 ) -> None:
     counts = _recall(category, load_cases(name))
     for field in OPTIONAL_FIELDS[category]:
-        assert counts.get(field, (0, 0))[1] >= MIN_OPTIONAL_CASES[field], field
+        minimum_cases = (PHONE_MIN_OPTIONAL if category is Category.phone else MIN_OPTIONAL_CASES)[
+            field
+        ]
+        assert counts.get(field, (0, 0))[1] >= minimum_cases, field
 
 
 @pytest.mark.parametrize(("name", "category", "minimum"), GROUPS)

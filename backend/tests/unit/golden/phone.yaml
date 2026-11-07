@@ -1,0 +1,190 @@
+# Golden trích xuất thông số (phone): tiêu đề thật lấy từ fixture FPT Shop và Nguyễn Kim,
+# kỳ vọng rà tay (docs/04 §7, ADR-0011). Trường bắt buộc vắng khỏi `expect` nghĩa là tiêu đề/bảng
+# thông số không nói rõ (không suy đoán; iPhone không ghi RAM trong tên).
+- id: fptshop-phone-01
+  site: fptshop
+  fixture: fixtures/fptshop/detail_dien-thoai-samsung-galaxy-a57.html
+  title: Samsung Galaxy A57 5G 8GB 128GB
+  expect:
+    ram_gb: 8
+    storage_gb: 128
+    screen_in: 6.7
+- id: fptshop-phone-02
+  site: fptshop
+  fixture: fixtures/fptshop/detail_dien-thoai-iphone-16.html
+  title: iPhone 16 128GB
+  expect:
+    ram_gb: 8
+    storage_gb: 128
+    screen_in: 6.1
+  note: RAM chỉ có trong bảng thông số (additionalProperty), không có trong tên
+- id: nguyenkim-phone-01
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại Samsung Galaxy A08 4G (4GB, 64GB ) Green
+  expect:
+    ram_gb: 4
+    storage_gb: 64
+- id: nguyenkim-phone-02
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại Samsung Galaxy A18 (6GB/128GB) bạc SM-A185GZSLXXV
+  expect:
+    ram_gb: 6
+    storage_gb: 128
+- id: nguyenkim-phone-03
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại iPhone 18 Pro Max 256GB Đen
+  expect:
+    storage_gb: 256
+- id: nguyenkim-phone-04
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại Samsung Galaxy S26FE (Exynos2500/8GB/128GB) xanh dương SM-S741BZVBXXV
+  expect:
+    ram_gb: 8
+    storage_gb: 128
+- id: nguyenkim-phone-05
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại iPhone 18 Pro Max 1TB Đen
+  expect:
+    storage_gb: 1000
+- id: nguyenkim-phone-06
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại iPhone 18 Pro 2TB Bạc
+  expect:
+    storage_gb: 2000
+- id: nguyenkim-phone-07
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại iPhone 17 Pro Max 256GB Cam Vũ Trụ (MFYN4ZP/A)
+  expect:
+    storage_gb: 256
+- id: nguyenkim-phone-08
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại Honor Magic V5 16GB/512GB Vàng Bình Minh
+  expect:
+    ram_gb: 16
+    storage_gb: 512
+- id: nguyenkim-phone-09
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại OPPO Find X9s 12GB/256GB Cam nhạt (CPH2873)
+  expect:
+    ram_gb: 12
+    storage_gb: 256
+- id: nguyenkim-phone-10
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại Honor H600 8GB/256GB cam hoàng kim
+  expect:
+    ram_gb: 8
+    storage_gb: 256
+- id: nguyenkim-phone-11
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại Nokia HMD 105 4G TA-1651 DS VN Đen
+  expect: {}
+- id: nguyenkim-phone-12
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: Điện thoại OPPO A6c 4GB/64GB Tím
+  expect:
+    ram_gb: 4
+    storage_gb: 64
+- id: nguyenkim-phone-13
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p1.html
+  title: 'Điện thoại Samsung Galaxy A07 LTE (4Gb/128Gb), Black '
+  expect:
+    ram_gb: 4
+    storage_gb: 128
+- id: nguyenkim-phone-14
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: Điện thoại OPPO A6t Pro 8GB/128GB Trắng
+  expect:
+    ram_gb: 8
+    storage_gb: 128
+- id: nguyenkim-phone-15
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: 'Điện thoại Samsung A26 5G ( 8GB/128GB ) SM-A266BLGGXXV Xanh Opal '
+  expect:
+    ram_gb: 8
+    storage_gb: 128
+- id: nguyenkim-phone-16
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: Điện thoại Nokia 105 4G Pro Xanh
+  expect: {}
+- id: nguyenkim-phone-17
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: Điện thoại iPhone 17 256GB Đen (MG6J4ZP/A)
+  expect:
+    storage_gb: 256
+- id: nguyenkim-phone-18
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: ĐTDĐ Samsung S26 Ultra SM-S948B/DS, 12GB+256GB, Đen, SM-S948BZKBXXV
+  expect:
+    ram_gb: 12
+    storage_gb: 256
+- id: nguyenkim-phone-19
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: Máy tính bảng Honor Pad X8b 6GB/128GB Xám
+  expect:
+    ram_gb: 6
+    storage_gb: 128
+- id: nguyenkim-phone-20
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: ĐTDĐ Galaxy A37 5G (Exynos 1480/8GB/128GB/ 6.7” FHD+,120Hz/Light Violet  /SM-A376BLVSXXV )
+  expect:
+    ram_gb: 8
+    storage_gb: 128
+    screen_in: 6.7
+- id: nguyenkim-phone-21
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: ĐTDĐ Galaxy A57 5G (Exynos 1680/8GB/128GB/ 6.7” FHD+,120Hz/Lilac/SM-A576BZVQXXV)
+  expect:
+    ram_gb: 8
+    storage_gb: 128
+    screen_in: 6.7
+- id: nguyenkim-phone-22
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: ĐTDĐ Galaxy A37 5G (Exynos 1480/8GB/128GB/ 6.7” FHD+,120Hz/White /SM-A376BZWSXXV)
+  expect:
+    ram_gb: 8
+    storage_gb: 128
+    screen_in: 6.7
+- id: nguyenkim-phone-23
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: ĐTDĐ Galaxy-A27 5G (6GB/128GB/ 6.7” FHD+,120Hz/Light Pink /SM-A276BLIDXXV)
+  expect:
+    ram_gb: 6
+    storage_gb: 128
+    screen_in: 6.7
+- id: nguyenkim-phone-24
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: Điện thoại Samsung Galaxy A07 LTE (4Gb/128Gb), Green, SM-A075FZGGXXV
+  expect:
+    ram_gb: 4
+    storage_gb: 128
+- id: nguyenkim-phone-25
+  site: nguyenkim
+  fixture: fixtures/nguyenkim/listing_phone_p2.html
+  title: Điện thoại Samsung Galaxy A17 5G (8GB/128GB) Xanh Navy
+  expect:
+    ram_gb: 8
+    storage_gb: 128

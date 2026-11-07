@@ -163,6 +163,10 @@ _PREFIX_WORDS: Final = frozenset(
         "bluetooth",
         "silent",
         "mechanical",
+        "dien",
+        "thoai",
+        "dtdd",
+        "smartphone",
     ]
 )
 _PHRASES: Final = (  # (cụm đã fold, token thay thế); cụm dài đứng trước
@@ -302,6 +306,30 @@ def _from_brand(text: str) -> str:
     return text if not index else " ".join(token.text for token in tokens[index:])
 
 
+_CAPACITY_KEY = re.compile(r"^\d{1,4}(?:gb|tb)$")
+_CAPACITY_PLUS = re.compile(r"^\d{1,4}(?:gb|tb)(?:\+\d{1,4}(?:gb|tb))+$")  # "12GB+256GB"
+_NETWORK_KEYS: Final = frozenset(["5g", "4g", "3g", "lte"])
+
+
+def _phone_core(tokens: list[_Token]) -> list[_Token]:
+    """Điện thoại: mọi thứ sau dung lượng cuối ("256GB Cam Vũ Trụ (MFYN4ZP/A)", "(6GB/128GB) bạc
+    SM-A185GZSLXXV") là màu và mã phụ tùng, không phân biệt mẫu; chỉ giữ chuẩn mạng (5G, LTE).
+    Tên không có dung lượng được giữ nguyên. "12GB+256GB" tách thành hai dung lượng."""
+    tokens = [
+        part
+        for token in tokens
+        for part in (
+            [_Token(p, p.lower()) for p in token.text.split("+")]
+            if _CAPACITY_PLUS.match(token.key)
+            else [token]
+        )
+    ]
+    last = max((i for i, token in enumerate(tokens) if _CAPACITY_KEY.match(token.key)), default=-1)
+    if last < 0:
+        return tokens
+    return [*tokens[: last + 1], *(t for t in tokens[last + 1 :] if t.key in _NETWORK_KEYS)]
+
+
 def canonical_name(title: str, category: Category) -> str:
     """Tên hiển thị sạch của sản phẩm.
 
@@ -317,6 +345,8 @@ def canonical_name(title: str, category: Category) -> str:
     brand_at = _brand_index(tokens)
     tokens = tokens[brand_at if brand_at is not None else _leading_prefix_length(tokens) :]
     tokens = [t for t in _drop_colors(tokens) if t.key not in {"mau", "chinh", "hang"}]
+    if category is Category.phone:
+        tokens = _phone_core(tokens)
     name = " ".join(token.text for token in tokens)
     return name or cleaned
 

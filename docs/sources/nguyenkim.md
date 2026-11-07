@@ -70,7 +70,7 @@ Fixture (`backend/tests/fixtures/nguyenkim/`, bỏ script trừ JSON-LD và `__N
 
 | File | Nội dung |
 | --- | --- |
-| `listing_dien-thoai_p1.html`, `listing_dien-thoai_p2.html` | Trang 1 và 2 của `/dien-thoai.c` (25 máy mỗi trang) |
+| `listing_phone_p1.html`, `listing_phone_p2.html` | Trang 1 và 2 của `/dien-thoai.c` (25 máy mỗi trang) |
 | `detail_dien-thoai-oppo-reno16f-8gb-256gb-trang.html` | OPPO Reno16F 8GB/256GB Trắng: bán 13.599.000đ, niêm yết 15.990.000đ |
 
 Còn lại là mã số thuế của doanh nghiệp (`0302286281`, không phải số cá nhân).

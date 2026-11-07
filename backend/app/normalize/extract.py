@@ -18,16 +18,18 @@ from app.normalize.specs.keyboard import extract_keyboard
 from app.normalize.specs.laptop import extract_laptop
 from app.normalize.specs.mouse import extract_mouse
 from app.normalize.specs.parsing import build_specs
+from app.normalize.specs.phone import extract_phone
 
 Extractor = Callable[[str, Mapping[str, str]], BaseModel]
 
-# Nhóm chưa có bộ trích xuất (điện thoại là pha mở rộng X1, `other` không có khung) → specs rỗng.
+# Nhóm chưa có bộ trích xuất (`other` không có khung) → specs rỗng.
 _EXTRACTORS: Final[Mapping[Category, Extractor]] = MappingProxyType(
     {
         Category.laptop: extract_laptop,
         Category.mouse: extract_mouse,
         Category.keyboard: extract_keyboard,
         Category.headset: extract_headset,
+        Category.phone: extract_phone,
     }
 )
 

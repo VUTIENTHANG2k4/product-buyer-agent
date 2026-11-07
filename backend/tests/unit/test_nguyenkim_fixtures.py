@@ -23,7 +23,7 @@ NEXT_DATA = re.compile(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S)
 
 def test_fixture_set_has_two_listing_pages_and_a_detail_page() -> None:
     names = {path.name for path in HTML_FIXTURES}
-    assert {"listing_dien-thoai_p1.html", "listing_dien-thoai_p2.html"} <= names
+    assert {"listing_phone_p1.html", "listing_phone_p2.html"} <= names
     assert any(name.startswith("detail_dien-thoai-") for name in names)
     assert (FIXTURE_DIR / "robots.txt").is_file()
 
@@ -63,7 +63,7 @@ def test_fixture_has_no_review_section(path: Path) -> None:
     assert all('"name": "[đã ẩn]"' in author or '"name":"[đã ẩn]"' in author for author in authors)
 
 
-@pytest.mark.parametrize("name", ["listing_dien-thoai_p1.html", "listing_dien-thoai_p2.html"])
+@pytest.mark.parametrize("name", ["listing_phone_p1.html", "listing_phone_p2.html"])
 def test_listing_fixture_embeds_a_page_of_phones_with_prices(name: str) -> None:
     text = (FIXTURE_DIR / name).read_text(encoding="utf-8")
     match = NEXT_DATA.search(text)
