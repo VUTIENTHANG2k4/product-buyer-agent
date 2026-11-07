@@ -33,6 +33,7 @@ Danh sách sản phẩm **không duyệt bằng phân trang** (xem mục 7): tra
 | mouse | `sitemap-phu-kien.xml`, `sitemap-phu-kien-1.xml`, `sitemap-phu-kien-2.xml` (cùng thư mục `/products/`) | Slug sau `/phu-kien/` bắt đầu bằng `chuot-` | 141 |
 | keyboard | như trên | Slug bắt đầu bằng `ban-phim-` | 85 |
 | headset | như trên | Slug bắt đầu bằng `tai-nghe-` | 286 |
+| phone (X1) | `https://fptshop.com.vn/products/sitemap-dien-thoai.xml` | Cả sitemap là điện thoại; URL `/dien-thoai/<slug>` (2 đoạn) | 221 (2026-11-07) |
 
 - `sitemap.xml` là chỉ mục: `sitemap-may-tinh-xach-tay.xml` (370 URL), `sitemap-phu-kien.xml` (1000), `sitemap-phu-kien-1.xml` (1000), `sitemap-phu-kien-2.xml` (645), `sitemap-phu-kien-gia-dung.xml` (không dùng), `sitemap-category.xml` (chưa xem). Mỗi `<url>` có `loc`, `changefreq`, `priority`, `image:image/image:loc`; không có `lastmod`.
 - Phụ kiện đều ở `/phu-kien/<slug>` nên nhóm chỉ suy ra từ tiền tố slug (heuristic). Số trên là đếm theo **tiền tố** (141/85/286); đếm theo "có chứa" là 169/120/294 vì có cả tên như `apple-ban-phim-ipad-…`. Chấp nhận bỏ sót thay vì đoán thêm.
@@ -46,6 +47,8 @@ Trang chi tiết `/<danh-mục>/<slug>` (Next.js app router, HTML ~1,0–1,3 MB 
 - **Giá hiển thị trong HTML:** khối giá đầu trang gồm giá bán và giá gốc gạch ngang (`p.line-through`/`span.line-through`) kèm `-N%`; trùng với `offers.price` của JSON-LD (ví dụ 38.990.000đ, gốc 43.990.000đ, -11%). Lớp CSS là Tailwind dài, dễ đổi; ưu tiên JSON-LD cho giá bán và dùng phần tử gạch ngang chỉ cho giá gốc.
 - **Trang danh mục** `/may-tinh-xach-tay`: 24–25 thẻ sản phẩm trong HTML tĩnh, "N kết quả", nút "Xem thêm N kết quả"; JSON-LD chỉ `WebSite`/`Organization`/`BreadcrumbList`; không `rel=next`; `?page=2` trả cùng 25 sản phẩm. Không dùng.
 - Tìm kiếm tầng 2 (T10.1, khảo sát 2026-10-23, 3 trang qua Fetcher): `https://fptshop.com.vn/tim-kiem?s=<từ khóa>` (`SearchAction` của JSON-LD trang chủ; robots.txt không chặn). **HTML dựng sẵn ở máy chủ, `requires_js=False`**: tiêu đề "Tìm thấy N kết quả với từ khoá …"; mỗi sản phẩm là thẻ `a[href="/<danh-mục>/<slug>"]` chứa `h3` (tên) và các `p` giá: giá bán đúng dạng `12.990.000đ` đứng cuối, giá gốc gạch ngang là phần tử `.line-through` (có thể kèm `-18%` cùng ô), cùng các `p` "Giảm 300.000đ" và đồng hồ "Còn 00 ngày 00:00:00" (không phải giá). Trang đầu có 24 thẻ ("loa bluetooth", 245 kết quả) hoặc 13 thẻ ("ssd 1tb", 121 kết quả); "Xem thêm" nạp qua API nên chỉ lấy trang đầu. Không có JSON-LD sản phẩm. Từ khóa không có kết quả: 0 thẻ. → `supports_live_search=True` ([ADR-0010](../adr/0010-tier2-sites-gearvn-fptshop.md)).
+
+- **Điện thoại (X1.1, khảo sát 2026-11-07, 3 request: sitemap + 2 trang chi tiết qua Fetcher):** cấu trúc giống laptop. JSON-LD `Product`: `name` không có dung lượng bộ nhớ trong ("Samsung Galaxy A57 5G 8GB", "iPhone 16"), `h1` đầy đủ hơn ("Samsung Galaxy A57 5G 8GB 128GB", "iPhone 16 128GB") nên `title` lấy từ `h1`; `offers.price` (11.290.000 / 24.490.000), giá gốc `.line-through` (13.490.000đ / 25.690.000đ); `sku` = `mpn` = mã nội bộ (`00926836`). `additionalProperty` rất ít và thay đổi theo máy: Samsung A57 có 4 mục (màn hình, camera, RAM `8 GB`, NFC); iPhone 16 có `Chip xử lý (CPU)`, `Dung lượng RAM`, `Bộ nhớ trong` `128 GB`, `Tần số quét` rỗng. Bảng thông số đầy đủ nằm trong bảng marketing của phần mô tả (`<td><strong>Hệ điều hành</strong>…`) và trong dữ liệu `self.__next_f`; không parse. **Biến thể dung lượng:** mỗi URL là một sản phẩm gốc, các dung lượng khác (128/256/512GB) chọn bằng JavaScript và không có URL riêng; HTML chỉ có biến thể mặc định, nên FPT Shop chỉ cung cấp biến thể đó (giới hạn đã biết, ADR-0011). Một số máy có URL riêng cho cấu hình (ví dụ `nothing-phone-4a` và `nothing-phone-4a-12gb`).
 
 ## 5. Loại giá hiển thị
 - **Giá bán công khai** (`offers.price`, khớp khối giá đầu trang): `regular` nếu không có giá gốc gạch ngang; `sale` nếu có giá gốc lớn hơn giá bán (kèm `-N%`).
@@ -66,6 +69,14 @@ Lưu ngày 2026-10-19 bằng bot dự án qua Fetcher (`scripts.fetch_page --all
 | `detail_laptop-asus-tuf-gaming-16-fx610jh-tu008w-i5-14450hx.html` | Laptop gaming giảm 11% (38.990.000đ, gốc 43.990.000đ) |
 | `detail_chuot-khong-day-elecom-m-ir07dr.html` | Chuột giảm 6% + khối flash sale theo suất |
 | `detail_ban-phim-co-khong-day-mchose-g75-pro-v2.html`, `detail_tai-nghe-corsair-hs50-pro-stereo.html` | Bàn phím và tai nghe |
+
+Điện thoại (X1.1, lưu 2026-11-07, cùng cách rút gọn):
+
+| File | Nội dung |
+| --- | --- |
+| `sitemap_dien-thoai.xml` | `sitemap-dien-thoai.xml` đầy đủ (221 URL) |
+| `detail_dien-thoai-samsung-galaxy-a57.html` | Samsung Galaxy A57 5G 8GB 128GB: giá 11.290.000đ, gốc 13.490.000đ, 4 `additionalProperty` |
+| `detail_dien-thoai-iphone-16.html` | iPhone 16 128GB: giá 24.490.000đ, gốc 25.690.000đ, có `Bộ nhớ trong` |
 
 Ba fixture tìm kiếm (T10.1, lưu 2026-10-23, rút gọn còn lưới thẻ + `<title>`; bỏ script, style, svg):
 

@@ -429,7 +429,14 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 
 | ID | Task | Ước lượng | Trạng thái |
 | --- | --- | --- | --- |
-| X1 | Nhóm điện thoại: nâng Viettel Store và Nguyễn Kim thành trang lõi cho nhóm này ([02 §1](02-scope-and-sources.md#1-ma-trận-trang--nhóm-sản-phẩm)); `PhoneSpecs`, scraper FPT Shop/Viettel Store/Nguyễn Kim cho điện thoại, biến thể dung lượng | L | ⬜ |
+| X1 | Nhóm điện thoại (tầng 1): FPT Shop + Nguyễn Kim ([ADR-0011](adr/0011-phone-sources-fptshop-nguyenkim.md)), `PhoneSpecs`, scraper, biến thể dung lượng; chia task X1.1–X1.7 bên dưới | L | 🔄 |
+| X1.1 | Khảo sát nguồn điện thoại + ADR-0011 + fixture (FPT Shop, Nguyễn Kim; Viettel Store bị loại vì challenge captcha) | S–M | ✅ |
+| X1.2 | `PhoneSpecs` + bộ trích xuất + chuẩn hóa/ghép biến thể dung lượng + golden | M | ⬜ |
+| X1.3 | FptShopScraper cho điện thoại (sitemap `sitemap-dien-thoai.xml`) | S–M | ⬜ |
+| X1.4 | NguyenKimScraper (danh mục `/dien-thoai.c?page=N` đọc `__NEXT_DATA__` + chi tiết JSON-LD) | M | ⬜ |
+| X1.5 | Agent, dịch vụ, rematch cho `phone` (intent tầng 1, `search_catalog`, prompt, `KEY_SPEC_FIELDS`) | M | ⬜ |
+| X1.6 | Seed `phones.json`, câu eval, giao diện (nhãn `chipset`/`battery_mah`), ảnh chụp, e2e | S–M | ⬜ |
+| X1.7 | Chạy thật có kiểm soát (người dùng bật), rematch, eval, cập nhật docs | S | ⬜ |
 | X2 | Đổi trang lõi nếu một nguồn bị loại ở T0.4 (gợi ý: FPT Shop, HACOM) | L | ⬜ |
 | X3 | Xuất danh sách mua ra CSV / chia sẻ link | S | ✅ |
 | X3.1 | Endpoint `GET /lists/{id}/export.csv`. Xong khi: CSV đúng cột 07 §3.4, giá từ DB (kể cả offer ưu tiên, mục không còn bán), BOM + CRLF, chống CSV injection, 404/422 JSON; test unit + API, `make gen-api` | S | ✅ |

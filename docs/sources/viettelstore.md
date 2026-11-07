@@ -45,3 +45,8 @@ Không lưu trang tìm kiếm (không có sản phẩm để kiểm thử).
 - **`requires_js = True` cho tìm kiếm** → không dùng cho tầng 2 ([ADR-0010](../adr/0010-tier2-sites-gearvn-fptshop.md)). Code chưa hỗ trợ JavaScript, và `ajax.aspx` là API nội bộ, không gọi.
 - Người dùng đã duyệt kết luận điều khoản ngày 2026-10-23; trang không bị loại vì điều khoản mà vì kỹ thuật. Nếu thêm trình duyệt headless hoặc nguồn dữ liệu công khai sau này, mở lại bằng ADR mới.
 - Đã đăng ký thử rồi gỡ khung scraper trong lúc khảo sát; `SiteKey.viettelstore` vẫn có trong enum (pha mở rộng điện thoại X1).
+
+## 8. Điện thoại — khảo sát X1.1 (2026-11-07)
+- `sitemap.xml` (3,2 MB, 22.406 URL, tải được) có 155 URL `/dien-thoai/<tên>-pid<id>.html` (mỗi dung lượng một URL, ví dụ `iphone-16-128gb-pid339614.html`) và trang thương hiệu `/dtdd-<hãng>`.
+- Trang chi tiết đầu tiên (`/dien-thoai/iphone-16-128gb-pid339614.html`) trả HTTP 200 nhưng `detect_challenge` báo **captcha**; `fetch_page` dừng và không lưu file. Theo 02 §3 mục 7 đây là `BLOCKED`: **không thử lại, không tìm cách vòng**. Chưa phân biệt được báo nhầm (chữ "captcha" trong script) với captcha thật vì không lưu trang.
+- Kết luận ([ADR-0011](../adr/0011-phone-sources-fptshop-nguyenkim.md)): không dùng Viettel Store cho điện thoại. Muốn mở lại: người dùng tự kiểm trang bằng trình duyệt, rồi ADR mới.
