@@ -3,9 +3,9 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: – (T6.15 xong, nhánh `milestone/T6.15-budget-amount-warning`, chờ `make check` và người dùng merge). Kế tiếp đề xuất: X1 (phải chọn lại nguồn điện thoại, ADR-0010) để sau.
+- Đang làm: – (T6.15 xong, nhánh `milestone/T6.15-budget-amount-warning`, `make check` xanh, qua `code-reviewer` (0 Phải sửa, 2 Nên sửa đã sửa), bỏ qua `qa-tester`; chờ người dùng merge). Kế tiếp đề xuất: X1 (phải chọn lại nguồn điện thoại, ADR-0010) để sau.
 - Backlog chưa làm: X1, X2 (thực tế đã xong nhờ ADR-0008). Gọi tool thừa ở L10/A04/L02 chưa xử lý (không rớt chỉ số). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
-- Cập nhật lần cuối: 2026-11-07 — T6.7 (filler LLM ngoài giao dịch, `invalid_tool_calls`, N+1 + khóa tạo trùng, `contains` chuỗi con, trần `search_catalog`)
+- Cập nhật lần cuối: 2026-11-07 — T6.15 (cảnh báo số tiền bỏ qua cách nói ngân sách và khoảng giá; BUG-T67-4 đã sửa)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -29,7 +29,7 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99,20% (9756 pass, 9 xfail `BUG-T67-4`, ngưỡng 80% trong `make test-be`, ~20–25 phút) | 2026-11-07 |
+| Coverage backend | 99,19% (9810 pass, không còn xfail `BUG-T67-4`, ngưỡng 80% trong `make test-be`, ~20–25 phút) | 2026-11-07 |
 | Test frontend (Vitest + E2E) | 1125 Vitest pass (4 lần liên tiếp), 10 E2E Playwright (`make e2e`, cần tắt demo Docker vì cổng 8100; chưa chạy lại từ lượt "việc nhỏ 7"); chưa đo coverage. `ListsPage.qa-x3` từng chập chờn khi cả bộ chạy song song (timeout 1 s), đã nới thời gian chờ tải | 2026-11-07 |
 | Eval (intent accuracy / constraint satisfaction / hallucination) | 2026-11-06 (sau T6.7, một lượt 31 câu liền mạch trên HEAD): 30/31 đạt, intent 100%, ràng buộc 100%, tool 100%, hallucination 0; L09 rớt do Gemini 503 (đạt khi chạy lại). **Latency p50 15,4 s, vẫn trên 15 s** (ngoại lệ T11.5). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-11-06-final.md`. Trước đó 2026-10-23: 96,4% / 98,6% / 0, latency 26–31 s | 2026-11-06 |
 
