@@ -194,3 +194,33 @@ def test_name_key_differs_by_storage_and_ignores_colour() -> None:
         "Điện thoại iPhone 17 256GB Trắng (MG6K4ZP/A)"
     )
     assert key("Điện thoại iPhone 17 256GB Đen") != key("Điện thoại iPhone 17 512GB Đen")
+
+
+# ---- sau review X1 ----
+def test_expansion_storage_labels_are_not_the_internal_memory() -> None:
+    raw = {"Thẻ nhớ ngoài / Lưu trữ mở rộng": "MicroSD 1 TB", "Dung lượng RAM": "8 GB"}
+    assert _specs("Điện thoại iPhone 16", raw) == {"ram_gb": 8}
+    # Nhãn bộ nhớ trong thật vẫn được đọc cùng một bảng.
+    raw["Bộ nhớ trong"] = "128 GB"
+    assert _specs("Điện thoại iPhone 16", raw) == {"ram_gb": 8, "storage_gb": 128}
+
+
+def test_a_pair_whose_first_value_is_too_big_for_phone_ram_is_left_empty() -> None:
+    assert _specs("Điện thoại Mock 32GB/64GB") == {}
+    assert _specs("Điện thoại Mock 24GB/512GB") == {"ram_gb": 24, "storage_gb": 512}
+
+
+def test_long_titles_are_processed_in_linear_time() -> None:
+    import time
+
+    def best(size: int) -> float:
+        title = "Điện thoại Mock X 8GB/128GB " * (size // 28)
+        runs = []
+        for _ in range(3):
+            start = time.perf_counter()
+            extract_phone(title, {"RAM": "8 GB"})
+            canonical_name(title, Category.phone)
+            runs.append(time.perf_counter() - start)
+        return min(runs)
+
+    assert best(160_000) / max(best(40_000), 1e-6) < 8  # ×4 đầu vào, tăng dưới ×8 (không bậc hai)

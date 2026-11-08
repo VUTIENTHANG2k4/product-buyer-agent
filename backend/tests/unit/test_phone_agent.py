@@ -118,9 +118,9 @@ def test_planner_prompt_lists_phone_as_tier_one_with_its_spec_fields() -> None:
 def test_phone_rematch_and_key_specs_are_configured() -> None:
     assert Category.phone in REMATCH_CATEGORIES
     assert KEY_SPEC_FIELDS[Category.phone] == (
-        "chipset",
         "ram_gb",
         "storage_gb",
+        "chipset",
         "screen_in",
         "battery_mah",
         "os",
@@ -132,3 +132,18 @@ def test_key_specs_of_a_phone_skip_missing_values_and_keep_the_order() -> None:
     shown = key_specs(Category.phone, specs)
     assert list(shown) == ["ram_gb", "storage_gb", "screen_in", "os"]
     assert len(shown) <= MAX_KEY_SPECS
+
+
+def test_frontend_key_spec_order_matches_the_backend() -> None:
+    """`KEY_SPEC_ORDER` (frontend/src/features/catalog/specs.ts) lặp lại `KEY_SPEC_FIELDS`."""
+    import re
+    from pathlib import Path
+
+    source = Path(__file__).resolve().parents[3] / "frontend/src/features/catalog/specs.ts"
+    block = re.search(r"KEY_SPEC_ORDER[^{]*\{(.*?)\n\}", source.read_text(encoding="utf-8"), re.S)
+    assert block is not None
+    frontend = {
+        name: tuple(re.findall(r"'(\w+)'", fields))
+        for name, fields in re.findall(r"(\w+): \[([^\]]*)\]", block.group(1))
+    }
+    assert frontend == {category.value: fields for category, fields in KEY_SPEC_FIELDS.items()}

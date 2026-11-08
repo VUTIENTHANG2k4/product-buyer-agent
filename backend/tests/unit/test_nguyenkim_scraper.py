@@ -384,3 +384,11 @@ async def test_fetch_detail_goes_through_the_fetcher_and_rejects_foreign_hosts()
     with pytest.raises(ValueError, match="outside"):
         await scraper_.fetch_detail("https://evil.example/x")
     assert fetcher.requested == [OPPO_URL]
+
+
+@pytest.mark.parametrize("slug", ["..", ".", "-x", ".hidden", "a/b", "a?b", "a#b", "a b"])
+def test_slugs_that_are_not_a_plain_path_segment_are_skipped(slug: str) -> None:
+    page = scraper().parse_listing(
+        next_page([entry(slugs={"value": {"vi": slug}, "postfix": ""})]), Category.phone, "x"
+    )
+    assert (page.items, page.skipped) == ([], 1)

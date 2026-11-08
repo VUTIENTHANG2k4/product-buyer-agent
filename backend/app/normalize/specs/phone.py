@@ -18,6 +18,7 @@ from app.normalize.specs.parsing import (
     parse_inches,
 )
 from app.normalize.specs.types import PositiveFloat, PositiveInt
+from app.normalize.text import fold
 
 REQUIRED_FIELDS: Final = ("ram_gb", "storage_gb")
 
@@ -33,14 +34,19 @@ class PhoneSpecs(BaseModel):
 
 # ---- bộ trích xuất theo luật ----
 _RAM_LABELS: Final = ("dung luong ram", "ram")
-_STORAGE_LABELS: Final = ("bo nho trong", "dung luong luu tru", "luu tru", "rom")
+_STORAGE_LABELS: Final = ("bo nho trong", "dung luong luu tru", "rom")
 _SCREEN_LABELS: Final = ("kich thuoc man hinh", "man hinh")
 _BATTERY_LABELS: Final = ("dung luong pin", "pin")
 _CHIPSET_LABELS: Final = ("chip xu ly", "chipset", "vi xu ly", "cpu")
 _OS_LABELS: Final = ("he dieu hanh",)
 
-# RAM điện thoại tới 24 GB; một dung lượng đơn dưới 32 GB không đủ để nói là RAM hay bộ nhớ trong.
-_MAX_RAM_GB: Final = 32
+# RAM điện thoại tới 24 GB. Một dung lượng đơn từ 32 GB trở lên là bộ nhớ trong; dưới mức đó
+# không đủ để nói là RAM hay bộ nhớ trong nên để trống.
+_MAX_RAM_GB: Final = 24
+_MIN_SINGLE_STORAGE_GB: Final = 32
+_PAIR: Final = 2
+# Nhãn nói về bộ nhớ mở rộng ("Thẻ nhớ ngoài", "Lưu trữ mở rộng") không phải bộ nhớ trong.
+_EXPANSION_LABEL = re.compile(r"mo rong|the nho|\bsd\b|micro ?sd")
 _MIN_STORAGE_GB: Final = 4
 _MAX_STORAGE_GB: Final = 4000
 _MIN_SCREEN_IN: Final = 2.0
@@ -62,9 +68,9 @@ def _memory_from_title(title: str) -> tuple[int | None, int | None]:
     ("8GB (+8GB mở rộng)/256GB") không đủ căn cứ nên để trống.
     """
     found = capacities_gb(title)
-    if len(found) == 1 and found[0] >= _MAX_RAM_GB:
+    if len(found) == 1 and found[0] >= _MIN_SINGLE_STORAGE_GB:
         return None, found[0]
-    if len(found) == 2 and found[0] < found[1] and found[0] <= _MAX_RAM_GB:  # noqa: PLR2004
+    if len(found) == _PAIR and found[0] < found[1] and found[0] <= _MAX_RAM_GB:
         return found[0], found[1]
     return None, None
 
@@ -74,7 +80,12 @@ def _labelled_capacity(
 ) -> int | None:
     """Dung lượng của nhãn khi nhãn chỉ ghi đúng một dung lượng ("128 GB"); danh sách các tùy
     chọn ("128GB, 256GB") là của cả dòng máy nên không dùng."""
-    for value in label_values(raw_specs, aliases):
+    own = {
+        label: value
+        for label, value in raw_specs.items()
+        if not (isinstance(label, str) and _EXPANSION_LABEL.search(fold(label)))
+    }
+    for value in label_values(own, aliases):
         found = capacities_gb(value)
         if len(found) == 1 and low <= found[0] <= high:
             return found[0]

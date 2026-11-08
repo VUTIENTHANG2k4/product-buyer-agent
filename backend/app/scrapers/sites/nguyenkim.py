@@ -25,8 +25,9 @@ logger = logging.getLogger(__name__)
 
 _BASE_URL = "https://www.nguyenkim.com"
 _HTTP_URL = TypeAdapter(HttpUrl)
-# Đường dẫn sản phẩm là `/<slug><postfix>` (một đoạn, không có `/`, `?`, `#`).
-_PATH_PART = re.compile(r"^[A-Za-z0-9._-]+$")
+# Đường dẫn sản phẩm là `/<slug><postfix>`: một đoạn, bắt đầu bằng chữ/số (không phải `.`/`..`),
+# không có `/`, `?`, `#`.
+_PATH_PART = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 _MAX_SPEC_VALUE = 500  # giá trị thuộc tính dài hơn là rác (hoặc đoạn quảng cáo): bỏ
 
 
