@@ -71,7 +71,7 @@ Lưu ở `app/agent/prompts/*.md` (không viết chuỗi prompt dài trong code)
 - Nhóm tầng 1: laptop, mouse, keyboard, headset, phone (X1, ADR-0011). Nhóm khác → `tier=2`, `category="other"`.
 - Quy đổi tiền: "30 triệu", "30tr", "30m" → 30000000; "dưới" → `price_max`; "trên" → `price_min`; "tầm 20 triệu" → `price_min=18000000`, `price_max=22000000` (±10%).
 - "RTX 4060 trở lên" → `{field: "gpu_rank", op: "gte", value: <rank của RTX 4060>}`; "RAM 16GB" → `ram_gb gte 16` (không phải eq) trừ khi người dùng nói "đúng".
-- Tên trang người dùng nhắc ("trên GearVN") → `sites`. Trang không hỗ trợ (Shopee, Tiki) → bỏ qua và thêm một bước kế hoạch nói rõ.
+- Tên trang người dùng nhắc ("trên GearVN") → `sites`. Trang không hỗ trợ (Shopee, Tiki) → bỏ qua và thêm một bước kế hoạch nói rõ, kèm nguồn thật sự có dữ liệu của nhóm đang hỏi (`SOURCES_BY_CATEGORY` ở `agent/intent.py`: điện thoại = FPT Shop, Nguyễn Kim; nhóm còn lại = GearVN, FPT Shop, An Phát).
 - Thiếu nhóm sản phẩm và không suy ra được → `needs_clarification=true` + một câu hỏi ngắn.
 - `plan_steps`: 2–5 câu tiếng Việt ngắn, mô tả việc sẽ làm.
 

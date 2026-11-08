@@ -177,16 +177,42 @@ def test_screen_boundaries(value: str, expected: float | None) -> None:
     assert got == expected
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG-X1-8: dấu trừ đứng trước số bị bỏ qua nên '-5000 mAh' thành 5000 "
-        "và '-6.7 inch' thành 6.7"
-    ),
-)
 def test_negative_battery_and_screen_values_are_not_read_as_positive() -> None:
     assert "battery_mah" not in specs_of("Điện thoại Mock X", {"Dung lượng pin": "-5000 mAh"})
     assert "screen_in" not in specs_of("Điện thoại Mock X", {"Màn hình rộng": "-6.7 inch"})
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("Pin: -5.000mAh", None),
+        ("−5000 mAh", None),  # dấu trừ Unicode
+        ("(-5000 mAh)", None),
+        ("-5000 mAh, 4500 mAh", 4500),  # khớp âm bị bỏ, khớp dương sau đó được dùng
+        ("4000-5000 mAh", 5000),  # khoảng: gạch nối không phải dấu trừ
+        ("Pin 5000mAh", 5000),
+    ],
+)
+def test_battery_sign_is_only_a_minus_when_it_stands_before_the_number(
+    value: str, expected: int | None
+) -> None:
+    assert specs_of("Điện thoại Mock X", {"Pin": value}).get("battery_mah") == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("−6.7 inch", None),
+        ("-6.7 inch, 120 Hz", None),
+        ("6.7 inch - 120Hz", 6.7),
+        ("Acer-6.7 inch", 6.7),  # gạch nối trong tên, không phải dấu trừ
+        ('-6.7" hoặc 6.1"', 6.1),
+    ],
+)
+def test_screen_sign_is_only_a_minus_when_it_stands_before_the_number(
+    value: str, expected: float | None
+) -> None:
+    assert specs_of("Điện thoại Mock X", {"Màn hình rộng": value}).get("screen_in") == expected
 
 
 def test_a_chipset_text_longer_than_80_characters_is_dropped_not_truncated() -> None:
@@ -408,15 +434,28 @@ def test_the_same_title_on_two_brands_is_never_merged() -> None:
     assert not merges("Điện thoại Samsung Mock X 8GB/128GB", "Điện thoại Xiaomi Mock X 8GB/128GB")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG-X1-5: dấu '+' đứng riêng bị khóa tên bỏ như dấu câu nên 'S25 + 256GB' bị gộp "
-        "với 'S25 256GB' (hai mẫu khác giá)"
-    ),
-)
 def test_a_detached_plus_sign_still_separates_the_plus_model() -> None:
     assert not merges("Samsung Galaxy S25 8GB/256GB", "Samsung Galaxy S25 + 8GB/256GB")
+    assert not merges("Samsung Galaxy S25 + 8GB/256GB", "Samsung Galaxy S25 8GB/256GB")
+
+
+def test_a_detached_plus_sign_is_the_same_model_as_the_attached_one() -> None:
+    assert merges("Samsung Galaxy S25+ 8GB/256GB", "Samsung Galaxy S25 + 8GB/256GB")
+    assert (
+        canonical_name("Samsung Galaxy S25 + 8GB/256GB", PHONE) == "Samsung Galaxy S25+ 8GB 256GB"
+    )
+
+
+@pytest.mark.parametrize(
+    ("title", "expected"),
+    [
+        ("+ Samsung Galaxy S25 8GB/256GB", "Samsung Galaxy S25 8GB 256GB"),
+        ("Samsung Galaxy S25 8GB + 256GB", "Samsung Galaxy S25 8GB 256GB"),
+        ("Samsung Galaxy S25 ++ 8GB/256GB", "Samsung Galaxy S25 8GB 256GB"),
+    ],
+)
+def test_a_plus_sign_that_is_not_a_model_suffix_is_still_dropped(title: str, expected: str) -> None:
+    assert canonical_name(title, PHONE) == expected
 
 
 def test_unknown_brand_phones_are_never_merged_by_name() -> None:

@@ -53,10 +53,18 @@ def test_first_capacity_is_none_without_a_unit() -> None:
         ('14.0" FHD+', 14.0),
         ("16 inch", 16.0),
         ("13,4 inch QHD", 13.4),
+        ("Laptop Acer-15.6 inch", 15.6),  # gạch nối trong tên không phải dấu trừ
+        ("14 inch - 15.6 inch", 14.0),
+        ("-6.7 inch, 15.6 inch", 15.6),  # khớp âm bị bỏ, khớp dương sau đó được dùng
     ],
 )
 def test_screen_size_in_inches(text: str, inches: float) -> None:
     assert parse_inches(text) == inches
+
+
+@pytest.mark.parametrize("text", ["-6.7 inch", '−15.6"', "(-14 inch)", "Màn hình: -16 inch"])
+def test_negative_screen_size_is_none(text: str) -> None:
+    assert parse_inches(text) is None
 
 
 @pytest.mark.parametrize("text", ["FHD 144Hz", "Màn hình lớn", "1920 x 1080", ""])

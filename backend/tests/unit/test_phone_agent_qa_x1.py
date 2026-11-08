@@ -83,17 +83,36 @@ def test_unknown_sites_are_dropped_for_phones_but_nguyen_kim_and_fpt_are_kept() 
     assert SiteKey.viettelstore not in result.sites
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG-X1-13: câu giải thích 'Chưa hỗ trợ Shopee' luôn liệt kê (GearVN, FPT Shop, An Phát) "
-        "dù điện thoại chỉ có ở FPT Shop và Nguyễn Kim"
-    ),
-)
 def test_unsupported_site_note_names_the_sources_that_really_sell_phones() -> None:
     result = postprocess_intent(phone_intent(), "điện thoại samsung trên shopee")
     note = next(step for step in result.plan_steps if "Shopee" in step)
     assert "Nguyễn Kim" in note and "GearVN" not in note
+
+
+@pytest.mark.parametrize(
+    ("category", "expected", "absent"),
+    [
+        ("laptop", "(GearVN, FPT Shop, An Phát)", "Nguyễn Kim"),
+        ("mouse", "(GearVN, FPT Shop, An Phát)", "Nguyễn Kim"),
+        ("phone", "(FPT Shop, Nguyễn Kim)", "GearVN"),
+        (None, "tìm trên các nguồn hiện có", "("),
+    ],
+)
+def test_unsupported_site_note_lists_the_sources_of_the_asked_category(
+    category: str | None, expected: str, absent: str
+) -> None:
+    intent = QueryIntent.model_validate(
+        {
+            "plan_steps": ["Tìm"],
+            "category": category,
+            "tier": 1,
+            "needs_clarification": category is None,
+            "clarification_question": "Bạn muốn tìm gì?" if category is None else None,
+        }
+    )
+    result = postprocess_intent(intent, "tìm trên shopee")
+    note = next(step for step in result.plan_steps if "Shopee" in step)
+    assert expected in note and absent not in note
 
 
 # ---- LLM giả ----

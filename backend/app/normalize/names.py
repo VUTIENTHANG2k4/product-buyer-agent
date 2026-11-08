@@ -312,6 +312,26 @@ _CAPACITY_PLUS = re.compile(r"^\d{1,4}(?:gb|tb)(?:\+\d{1,4}(?:gb|tb))+$")  # "12
 _NETWORK_KEYS: Final = frozenset(["5g", "4g", "3g", "lte"])
 
 
+def _attach_detached_plus(text: str) -> str:
+    """ "S25 + 8GB/256GB" → "S25+ 8GB/256GB": dấu "+" rời là bản Plus của từ liền trước, khác "S25".
+
+    Chỉ dùng cho điện thoại (nhóm khác coi "+" rời là trang trí). Sau dung lượng ("8GB + 256GB")
+    hoặc đứng đầu chuỗi thì không phải hậu tố của tên mẫu nên giữ nguyên để bị bỏ như dấu câu.
+    """
+    words: list[str] = []
+    for word in text.split(" "):
+        if (
+            word == "+"
+            and words
+            and not words[-1].endswith("+")
+            and not _CAPACITY_KEY.match(words[-1].lower())
+        ):
+            words[-1] += "+"
+        else:
+            words.append(word)
+    return " ".join(words)
+
+
 def _phone_core(tokens: list[_Token]) -> list[_Token]:
     """Điện thoại: mọi thứ sau dung lượng cuối ("256GB Cam Vũ Trụ (MFYN4ZP/A)", "(6GB/128GB) bạc
     SM-A185GZSLXXV") là màu và mã phụ tùng, không phân biệt mẫu; chỉ giữ chuẩn mạng (5G, LTE).
@@ -343,7 +363,7 @@ def canonical_name(title: str, category: Category) -> str:
         if span is not None:
             return _from_brand(span[0])
     if category is Category.phone:
-        cleaned = _CAPACITY_SPACE.sub("", cleaned)
+        cleaned = _attach_detached_plus(_CAPACITY_SPACE.sub("", cleaned))
     tokens = _tokens(cleaned)
     brand_at = _brand_index(tokens)
     tokens = tokens[brand_at if brand_at is not None else _leading_prefix_length(tokens) :]
