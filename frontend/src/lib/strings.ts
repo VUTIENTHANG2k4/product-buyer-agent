@@ -174,6 +174,7 @@ export const strings = {
     labels: {
       cpu_model: 'CPU',
       cpu_vendor: 'Hãng CPU',
+      chipset: 'Chip xử lý',
       gpu_model: 'GPU',
       gpu_vram_gb: 'VRAM',
       gpu_rank: 'Hạng GPU',
@@ -185,6 +186,7 @@ export const strings = {
       refresh_hz: 'Tần số quét',
       panel: 'Tấm nền',
       weight_kg: 'Khối lượng',
+      battery_mah: 'Pin',
       os: 'Hệ điều hành',
       is_gaming: 'Laptop gaming',
       connection: 'Kết nối',

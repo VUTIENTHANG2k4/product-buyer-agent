@@ -1,0 +1,538 @@
+{
+  "category": "phone",
+  "products": [
+    {
+      "brand": "Samsung",
+      "model_code": "MOCK-SS-A99-8128",
+      "canonical_name": "Samsung Mock Galaxy A99 8GB 128GB",
+      "specs": {
+        "chipset": "Exynos Mock 1480",
+        "ram_gb": 8,
+        "storage_gb": 128,
+        "screen_in": 6.7,
+        "battery_mah": 5000,
+        "os": "Android 16"
+      },
+      "image_url": "https://mock-images.example/mock-ss-a99-8128.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-ss-a99-8128",
+          "title": "Samsung Mock Galaxy A99 8GB 128GB - Chính hãng",
+          "price": 7090000,
+          "list_price": 7990000,
+          "price_type": "sale",
+          "rating": 4.8,
+          "rating_count": 215,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 7990000
+            },
+            {
+              "days_ago": 14,
+              "price": 7490000
+            },
+            {
+              "days_ago": 6,
+              "price": 7090000
+            }
+          ]
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-ss-a99-8128",
+          "title": "Samsung Mock Galaxy A99 8GB 128GB - Chính hãng",
+          "price": 7290000,
+          "list_price": 7990000,
+          "price_type": "sale",
+          "rating": 4.6,
+          "rating_count": 88
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-ss-a99-8128",
+          "title": "Samsung Mock Galaxy A99 8GB 128GB - Chính hãng",
+          "price": 7190000,
+          "rating": 4.5,
+          "rating_count": 40
+        }
+      ]
+    },
+    {
+      "brand": "Samsung",
+      "model_code": "MOCK-SS-A99-8256",
+      "canonical_name": "Samsung Mock Galaxy A99 8GB 256GB",
+      "specs": {
+        "chipset": "Exynos Mock 1480",
+        "ram_gb": 8,
+        "storage_gb": 256,
+        "screen_in": 6.7,
+        "battery_mah": 5000,
+        "os": "Android 16"
+      },
+      "image_url": "https://mock-images.example/mock-ss-a99-8256.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-ss-a99-8256",
+          "title": "Samsung Mock Galaxy A99 8GB 256GB - Chính hãng",
+          "price": 8390000,
+          "list_price": 8990000,
+          "price_type": "sale",
+          "rating": 4.8,
+          "rating_count": 120
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-ss-a99-8256",
+          "title": "Samsung Mock Galaxy A99 8GB 256GB - Chính hãng",
+          "price": 8190000,
+          "list_price": 8990000,
+          "price_type": "sale",
+          "rating": 4.6,
+          "rating_count": 51
+        }
+      ]
+    },
+    {
+      "brand": "Samsung",
+      "model_code": "MOCK-SS-S99-12256",
+      "canonical_name": "Samsung Mock Galaxy S99 12GB 256GB",
+      "specs": {
+        "chipset": "Snapdragon Mock 8 Gen 9",
+        "ram_gb": 12,
+        "storage_gb": 256,
+        "screen_in": 6.2,
+        "battery_mah": 4500,
+        "os": "Android 16"
+      },
+      "image_url": "https://mock-images.example/mock-ss-s99-12256.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-ss-s99-12256",
+          "title": "Samsung Mock Galaxy S99 12GB 256GB - Chính hãng",
+          "price": 21490000,
+          "list_price": 23990000,
+          "price_type": "sale",
+          "rating": 4.9,
+          "rating_count": 310,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 23990000
+            },
+            {
+              "days_ago": 10,
+              "price": 22490000
+            }
+          ]
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-ss-s99-12256",
+          "title": "Samsung Mock Galaxy S99 12GB 256GB - Chính hãng",
+          "price": 21990000,
+          "list_price": 23990000,
+          "price_type": "sale",
+          "rating": 4.8,
+          "rating_count": 140
+        }
+      ]
+    },
+    {
+      "brand": "Samsung",
+      "model_code": "MOCK-SS-S99U-12512",
+      "canonical_name": "Samsung Mock Galaxy S99 Ultra 12GB 512GB",
+      "specs": {
+        "chipset": "Snapdragon Mock 8 Gen 9",
+        "ram_gb": 12,
+        "storage_gb": 512,
+        "screen_in": 6.9,
+        "battery_mah": 5200,
+        "os": "Android 16"
+      },
+      "image_url": "https://mock-images.example/mock-ss-s99u-12512.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-ss-s99u-12512",
+          "title": "Samsung Mock Galaxy S99 Ultra 12GB 512GB - Chính hãng",
+          "price": 33490000,
+          "list_price": 36990000,
+          "price_type": "sale",
+          "rating": 4.9,
+          "rating_count": 270
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-ss-s99u-12512",
+          "title": "Samsung Mock Galaxy S99 Ultra 12GB 512GB - Chính hãng",
+          "price": 33990000,
+          "list_price": 36990000,
+          "price_type": "sale",
+          "rating": 4.9,
+          "rating_count": 95
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-ss-s99u-12512",
+          "title": "Samsung Mock Galaxy S99 Ultra 12GB 512GB - Chính hãng",
+          "price": 34490000,
+          "rating": 4.7,
+          "rating_count": 22
+        }
+      ]
+    },
+    {
+      "brand": "Apple",
+      "model_code": "MOCK-AP-I99-128",
+      "canonical_name": "Apple Mock iPhone 99 128GB",
+      "specs": {
+        "chipset": "Apple Mock A99",
+        "ram_gb": 8,
+        "storage_gb": 128,
+        "screen_in": 6.1,
+        "battery_mah": 3600,
+        "os": "iOS 26"
+      },
+      "image_url": "https://mock-images.example/mock-ap-i99-128.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-ap-i99-128",
+          "title": "Apple Mock iPhone 99 128GB - Chính hãng",
+          "price": 22490000,
+          "list_price": 24990000,
+          "price_type": "sale",
+          "rating": 4.9,
+          "rating_count": 480,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 24990000
+            },
+            {
+              "days_ago": 12,
+              "price": 23490000
+            },
+            {
+              "days_ago": 3,
+              "price": 22490000
+            }
+          ]
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-ap-i99-128",
+          "title": "Apple Mock iPhone 99 128GB - Chính hãng",
+          "price": 22790000,
+          "list_price": 24990000,
+          "price_type": "sale",
+          "rating": 4.8,
+          "rating_count": 210
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-ap-i99-128",
+          "title": "Apple Mock iPhone 99 128GB - Chính hãng",
+          "price": 23190000,
+          "rating": 4.7,
+          "rating_count": 64
+        }
+      ]
+    },
+    {
+      "brand": "Apple",
+      "model_code": "MOCK-AP-I99-256",
+      "canonical_name": "Apple Mock iPhone 99 256GB",
+      "specs": {
+        "chipset": "Apple Mock A99",
+        "ram_gb": 8,
+        "storage_gb": 256,
+        "screen_in": 6.1,
+        "battery_mah": 3600,
+        "os": "iOS 26"
+      },
+      "image_url": "https://mock-images.example/mock-ap-i99-256.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-ap-i99-256",
+          "title": "Apple Mock iPhone 99 256GB - Chính hãng",
+          "price": 25490000,
+          "list_price": 27990000,
+          "price_type": "sale",
+          "rating": 4.9,
+          "rating_count": 390
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-ap-i99-256",
+          "title": "Apple Mock iPhone 99 256GB - Chính hãng",
+          "price": 25790000,
+          "list_price": 27990000,
+          "price_type": "sale",
+          "rating": 4.8,
+          "rating_count": 170
+        }
+      ]
+    },
+    {
+      "brand": "Apple",
+      "model_code": "MOCK-AP-I99P-256",
+      "canonical_name": "Apple Mock iPhone 99 Pro 256GB",
+      "specs": {
+        "chipset": "Apple Mock A99 Pro",
+        "ram_gb": 12,
+        "storage_gb": 256,
+        "screen_in": 6.3,
+        "battery_mah": 3900,
+        "os": "iOS 26"
+      },
+      "image_url": "https://mock-images.example/mock-ap-i99p-256.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-ap-i99p-256",
+          "title": "Apple Mock iPhone 99 Pro 256GB - Chính hãng",
+          "price": 30990000,
+          "list_price": 33990000,
+          "price_type": "sale",
+          "rating": 4.9,
+          "rating_count": 350
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-ap-i99p-256",
+          "title": "Apple Mock iPhone 99 Pro 256GB - Chính hãng",
+          "price": 31490000,
+          "list_price": 33990000,
+          "price_type": "sale",
+          "rating": 4.9,
+          "rating_count": 125
+        }
+      ]
+    },
+    {
+      "brand": "Xiaomi",
+      "model_code": "MOCK-XM-RN99-8256",
+      "canonical_name": "Xiaomi Mock Redmi Note 99 8GB 256GB",
+      "specs": {
+        "chipset": "Dimensity Mock 7300",
+        "ram_gb": 8,
+        "storage_gb": 256,
+        "screen_in": 6.67,
+        "battery_mah": 5500,
+        "os": "Android 16"
+      },
+      "image_url": "https://mock-images.example/mock-xm-rn99-8256.jpg",
+      "e2e": true,
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-xm-rn99-8256",
+          "title": "Xiaomi Mock Redmi Note 99 8GB 256GB - Chính hãng",
+          "price": 6590000,
+          "list_price": 7490000,
+          "price_type": "sale",
+          "rating": 4.7,
+          "rating_count": 330,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 7490000
+            },
+            {
+              "days_ago": 9,
+              "price": 6990000
+            }
+          ]
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-xm-rn99-8256",
+          "title": "Xiaomi Mock Redmi Note 99 8GB 256GB - Chính hãng",
+          "price": 6790000,
+          "list_price": 7490000,
+          "price_type": "sale",
+          "rating": 4.6,
+          "rating_count": 140
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-xm-rn99-8256",
+          "title": "Xiaomi Mock Redmi Note 99 8GB 256GB - Chính hãng",
+          "price": 6890000,
+          "rating": 4.5,
+          "rating_count": 33
+        }
+      ]
+    },
+    {
+      "brand": "Xiaomi",
+      "model_code": "MOCK-XM-PX9-12256",
+      "canonical_name": "Xiaomi Mock Poco X9 12GB 256GB",
+      "specs": {
+        "chipset": "Snapdragon Mock 7s Gen 4",
+        "ram_gb": 12,
+        "storage_gb": 256,
+        "screen_in": 6.67,
+        "battery_mah": 6000,
+        "os": "Android 16"
+      },
+      "image_url": "https://mock-images.example/mock-xm-px9-12256.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-xm-px9-12256",
+          "title": "Xiaomi Mock Poco X9 12GB 256GB - Chính hãng",
+          "price": 9190000,
+          "list_price": 9990000,
+          "price_type": "sale",
+          "rating": 4.7,
+          "rating_count": 160
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-xm-px9-12256",
+          "title": "Xiaomi Mock Poco X9 12GB 256GB - Chính hãng",
+          "price": 9390000,
+          "list_price": 9990000,
+          "price_type": "sale",
+          "rating": 4.6,
+          "rating_count": 72
+        }
+      ]
+    },
+    {
+      "brand": "OPPO",
+      "model_code": "MOCK-OP-R99F-8256",
+      "canonical_name": "OPPO Mock Reno 99F 8GB 256GB",
+      "specs": {
+        "chipset": "Dimensity Mock 7300 Energy",
+        "ram_gb": 8,
+        "storage_gb": 256,
+        "screen_in": 6.57,
+        "battery_mah": 7000,
+        "os": "Android 16"
+      },
+      "image_url": "https://mock-images.example/mock-op-r99f-8256.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-op-r99f-8256",
+          "title": "OPPO Mock Reno 99F 8GB 256GB - Chính hãng",
+          "price": 10690000,
+          "list_price": 11990000,
+          "price_type": "sale",
+          "rating": 4.6,
+          "rating_count": 180
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-op-r99f-8256",
+          "title": "OPPO Mock Reno 99F 8GB 256GB - Chính hãng",
+          "price": 10490000,
+          "list_price": 11990000,
+          "price_type": "sale",
+          "rating": 4.5,
+          "rating_count": 90,
+          "history": [
+            {
+              "days_ago": 30,
+              "price": 11990000
+            },
+            {
+              "days_ago": 5,
+              "price": 10490000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "brand": "OPPO",
+      "model_code": "MOCK-OP-FX99-16512",
+      "canonical_name": "OPPO Mock Find X99 16GB 512GB",
+      "specs": {
+        "chipset": "Snapdragon Mock 8 Elite",
+        "ram_gb": 16,
+        "storage_gb": 512,
+        "screen_in": 6.8,
+        "battery_mah": 6000,
+        "os": "Android 16"
+      },
+      "image_url": "https://mock-images.example/mock-op-fx99-16512.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-op-fx99-16512",
+          "title": "OPPO Mock Find X99 16GB 512GB - Chính hãng",
+          "price": 25990000,
+          "list_price": 28990000,
+          "price_type": "sale",
+          "rating": 4.8,
+          "rating_count": 75
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-op-fx99-16512",
+          "title": "OPPO Mock Find X99 16GB 512GB - Chính hãng",
+          "price": 26490000,
+          "list_price": 28990000,
+          "price_type": "sale",
+          "rating": 4.7,
+          "rating_count": 40
+        }
+      ]
+    },
+    {
+      "brand": "Honor",
+      "model_code": "MOCK-HN-X99-6128",
+      "canonical_name": "Honor Mock X99 6GB 128GB",
+      "specs": {
+        "chipset": "Snapdragon Mock 685",
+        "ram_gb": 6,
+        "storage_gb": 128,
+        "screen_in": 6.77,
+        "battery_mah": 6000,
+        "os": "Android 15"
+      },
+      "image_url": "https://mock-images.example/mock-hn-x99-6128.jpg",
+      "offers": [
+        {
+          "site": "fptshop",
+          "url": "https://mock-fptshop.example/p/mock-hn-x99-6128",
+          "title": "Honor Mock X99 6GB 128GB - Chính hãng",
+          "price": 4390000,
+          "list_price": 4990000,
+          "price_type": "sale",
+          "rating": 4.4,
+          "rating_count": 95
+        },
+        {
+          "site": "nguyenkim",
+          "url": "https://mock-nguyenkim.example/p/mock-hn-x99-6128",
+          "title": "Honor Mock X99 6GB 128GB - Chính hãng",
+          "price": 4290000,
+          "list_price": 4990000,
+          "price_type": "sale",
+          "rating": 4.3,
+          "rating_count": 61
+        },
+        {
+          "site": "mockshop",
+          "url": "https://mock-mockshop.example/p/mock-hn-x99-6128",
+          "title": "Honor Mock X99 6GB 128GB - Chính hãng",
+          "price": 4490000,
+          "rating": 4.2,
+          "rating_count": 18
+        }
+      ]
+    }
+  ]
+}

@@ -113,7 +113,7 @@ class TestCatalogSize:
         )
 
         assert counts[Category.laptop] >= 30
-        for category in (Category.mouse, Category.keyboard, Category.headset):
+        for category in (Category.mouse, Category.keyboard, Category.headset, Category.phone):
             assert counts[category] >= 10, category
 
     def test_every_product_and_offer_is_fictional(self, seeded: Session) -> None:
@@ -131,6 +131,7 @@ class TestCatalogSize:
             Category.mouse,
             Category.keyboard,
             Category.headset,
+            Category.phone,
         }
 
 

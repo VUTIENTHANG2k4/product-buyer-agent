@@ -35,7 +35,7 @@ import {
 const MAX_KEY_SPECS = 4
 
 function KeySpecs({ row }: { row: ProductRow }) {
-  const entries = specEntries(row.key_specs, MAX_KEY_SPECS)
+  const entries = specEntries(row.key_specs, MAX_KEY_SPECS, row.category)
   if (entries.length === 0) return null
   return (
     <ul className="space-y-0.5 text-xs text-muted-foreground">

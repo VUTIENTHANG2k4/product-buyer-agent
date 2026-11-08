@@ -44,7 +44,13 @@ class TestE2eProfile:
     def test_has_every_accessory_group_for_the_search_flow(self, e2e: Session) -> None:
         categories = set(e2e.exec(select(Product.category)).all())
 
-        assert {Category.laptop, Category.mouse, Category.keyboard, Category.headset} <= categories
+        assert {
+            Category.laptop,
+            Category.mouse,
+            Category.keyboard,
+            Category.headset,
+            Category.phone,
+        } <= categories
 
     def test_starts_without_lists_so_the_e2e_flow_creates_its_own(self, e2e: Session) -> None:
         assert e2e.exec(select(func.count()).select_from(ShoppingList)).one() == 0

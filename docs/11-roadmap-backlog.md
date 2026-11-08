@@ -435,7 +435,7 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 | X1.3 | FptShopScraper cho điện thoại (sitemap `sitemap-dien-thoai.xml`) | S–M | ✅ |
 | X1.4 | NguyenKimScraper (danh mục `/dien-thoai.c?page=N` đọc `__NEXT_DATA__` + chi tiết JSON-LD) | M | ✅ |
 | X1.5 | Agent, dịch vụ, rematch cho `phone` (intent tầng 1, `search_catalog`, prompt, `KEY_SPEC_FIELDS`) | M | ✅ |
-| X1.6 | Seed `phones.json`, câu eval, giao diện (nhãn `chipset`/`battery_mah`), ảnh chụp, e2e | S–M | ⬜ |
+| X1.6 | Seed `phones.json`, câu eval, giao diện (nhãn `chipset`/`battery_mah`), ảnh chụp, e2e. Bằng chứng: `e2e/ask-phone.spec.ts` (12/12 E2E xanh), ảnh `docs/ui/screens/results-phone-{light,dark}-{1280,375}.png`; `ResultsTable` xếp thông số nổi bật theo nhóm (JSONB làm xáo trộn thứ tự khóa) | S–M | ✅ |
 | X1.7 | Chạy thật có kiểm soát (người dùng bật), rematch, eval, cập nhật docs | S | ⬜ |
 | X2 | Đổi trang lõi nếu một nguồn bị loại ở T0.4 (gợi ý: FPT Shop, HACOM) | L | ⬜ |
 | X3 | Xuất danh sách mua ra CSV / chia sẻ link | S | ✅ |

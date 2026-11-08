@@ -242,6 +242,40 @@ cases:
     query: "dưới 5 triệu"
     expect_clarification: true
 
+  # ---------- Điện thoại (X1, tầng 1: FPT Shop + Nguyễn Kim) ----------
+  - id: P01
+    query: "điện thoại Samsung dưới 10 triệu"
+    expected:
+      intent: {category: phone, tier: 1, price_max: 10000000}
+      constraints:
+        - {field: min_price, op: lte, value: 10000000}
+        - {field: brand, op: eq, value: Samsung}
+      min_results: 2
+      tools_required: [search_catalog]
+      tools_forbidden: [live_search_other, add_to_shopping_list, create_price_alert]
+
+  - id: P02
+    query: "điện thoại RAM 8GB bộ nhớ từ 256GB dưới 12 triệu"
+    expected:
+      intent: {category: phone, tier: 1, price_max: 12000000}
+      constraints:
+        - {field: min_price, op: lte, value: 12000000}
+        - {field: spec.ram_gb, op: gte, value: 8}
+        - {field: spec.storage_gb, op: gte, value: 256}
+      min_results: 3
+      tools_required: [search_catalog]
+      tools_forbidden: [live_search_other]
+
+  - id: P03
+    query: "iPhone nào rẻ nhất"
+    expected:
+      intent: {category: phone, tier: 1, sort: price_asc}
+      constraints:
+        - {field: brand, op: eq, value: Apple}
+      min_results: 3
+      tools_required: [search_catalog]
+      tools_forbidden: [live_search_other]
+
   # ---------- Tầng 2 ----------
   - id: T01
     query: "loa bluetooth dưới 1 triệu"

@@ -4,6 +4,8 @@ describe('specLabel', () => {
   it('nhãn tiếng Việt cho trường đã biết, trường lạ giữ nguyên tên', () => {
     expect(specLabel('gpu_model')).toBe('GPU')
     expect(specLabel('ram_gb')).toBe('RAM')
+    expect(specLabel('chipset')).toBe('Chip xử lý')
+    expect(specLabel('battery_mah')).toBe('Pin')
     expect(specLabel('truong_la')).toBe('truong_la')
   })
 })
@@ -26,6 +28,8 @@ describe('formatSpecValue', () => {
     ['weight_g', 85, '85 g'],
     ['dpi_max', 25600, '25.600 DPI'],
     ['driver_mm', 40, '40 mm'],
+    ['battery_mah', 5000, '5.000 mAh'],
+    ['battery_mah', 750, '750 mAh'],
     ['buttons', 6, '6'],
     ['is_gaming', true, 'Có'],
     ['rgb', false, 'Không'],
@@ -59,6 +63,55 @@ describe('specEntries', () => {
     ])
     expect(specEntries({ cpu_model: 'i7', ram_gb: 16 }, 1)).toHaveLength(1)
     expect(specEntries(undefined)).toEqual([])
+  })
+
+  // JSONB của PostgreSQL trả khóa theo độ dài (os, ram_gb, chipset, screen_in, ...), không theo thứ tự lưu.
+  const scrambledPhone = {
+    os: 'Android 16',
+    ram_gb: 8,
+    chipset: 'Exynos Mock 1480',
+    screen_in: 6.7,
+    storage_gb: 128,
+    battery_mah: 5000,
+  }
+
+  it('xếp thông số nổi bật của điện thoại trước khi cắt: RAM, bộ nhớ, chip, màn hình', () => {
+    expect(specEntries(scrambledPhone, 4, 'phone').map((entry) => entry.field)).toEqual([
+      'ram_gb',
+      'storage_gb',
+      'chipset',
+      'screen_in',
+    ])
+  })
+
+  it('trường ngoài danh sách nổi bật xếp sau, giữ thứ tự cũ', () => {
+    const fields = specEntries({ zzz: 'x', os: 'iOS', ram_gb: 8, aaa: 'y' }, 10, 'phone')
+    expect(fields.map((entry) => entry.field)).toEqual(['ram_gb', 'os', 'zzz', 'aaa'])
+  })
+
+  it('laptop: CPU, GPU, RAM, ổ cứng lên đầu dù khóa bị xáo trộn', () => {
+    const scrambled = {
+      ram_gb: 16,
+      cpu_model: 'i7',
+      gpu_model: 'RTX 4060',
+      storage_gb: 512,
+      screen_in: 15.6,
+    }
+    expect(specEntries(scrambled, 4, 'laptop').map((entry) => entry.field)).toEqual([
+      'cpu_model',
+      'gpu_model',
+      'ram_gb',
+      'storage_gb',
+    ])
+  })
+
+  it('nhóm lạ hoặc không nêu nhóm: giữ nguyên thứ tự khóa', () => {
+    expect(specEntries(scrambledPhone, 3, 'other').map((entry) => entry.field)).toEqual([
+      'os',
+      'ram_gb',
+      'chipset',
+    ])
+    expect(specEntries(scrambledPhone, 2).map((entry) => entry.field)).toEqual(['os', 'ram_gb'])
   })
 })
 

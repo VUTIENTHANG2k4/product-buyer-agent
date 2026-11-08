@@ -425,6 +425,16 @@ TITLES: dict[Category, list[str]] = {
         "Tai nghe gaming Razer Kraken V3",
         "Tai nghe không rõ hãng",
     ],
+    Category.phone: [
+        "Điện thoại iPhone 16 128GB Đen",
+        "Điện thoại iPhone 16 128GB Trắng",
+        "Điện thoại iPhone 16 256GB Đen",
+        "Điện thoại Samsung Galaxy A57 5G (8GB/128GB) xanh SM-A576BZVQXXV",
+        "Samsung Galaxy A57 5G 8GB 128GB",
+        "ĐTDĐ Samsung S26 SM-S942B/DS, 12GB+256GB, Xanh dương",
+        "Điện thoại OPPO Reno16F 8GB/256GB Trắng (CPH2859)",
+        "Điện thoại lạ không rõ hãng 4G",
+    ],
     Category.laptop: [
         ACER,
         ACER_FPT,
