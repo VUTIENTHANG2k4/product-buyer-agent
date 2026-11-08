@@ -9,7 +9,8 @@ const VALUE_LABELS: Record<string, Record<string, string>> = strings.specs.value
 
 function enumLabel(field: string, value: unknown): string {
   const text = String(value)
-  return VALUE_LABELS[field]?.[text] ?? text
+  const labels = Object.hasOwn(VALUE_LABELS, field) ? VALUE_LABELS[field] : undefined
+  return labels && Object.hasOwn(labels, text) ? labels[text]! : text
 }
 
 /** Thứ tự hiển thị trong bảng so sánh/chi tiết; trường không có trong danh sách xếp sau, theo tên. */
@@ -48,6 +49,8 @@ function formatStorage(gb: number): string {
 export function formatSpecValue(field: string, value: unknown): string {
   if (isMissing(value)) return '—'
   if (typeof value === 'boolean') return value ? strings.specs.yes : strings.specs.no
+  // Đối tượng (JSONB hỏng) không có cách hiển thị đúng: coi như thiếu thay vì in "[object Object]".
+  if (typeof value === 'object' && !Array.isArray(value)) return '—'
   if (Array.isArray(value)) return value.map((item) => enumLabel(field, item)).join(', ')
   if (typeof value === 'number') {
     switch (field) {
@@ -99,7 +102,9 @@ export function specEntries(
   limit = Number.POSITIVE_INFINITY,
   category?: string,
 ): { field: string; label: string; value: string }[] {
-  const order = (category ? KEY_SPEC_ORDER[category] : undefined) ?? []
+  const order =
+    (category && Object.hasOwn(KEY_SPEC_ORDER, category) ? KEY_SPEC_ORDER[category] : undefined) ??
+    []
   const rank = (field: string) => {
     const index = order.indexOf(field)
     return index === -1 ? order.length : index

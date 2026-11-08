@@ -114,7 +114,10 @@ def select_sitemaps(category: Category, index_locs: Sequence[str]) -> list[str]:
     for loc in index_locs:
         if not _same_site(loc):
             continue
-        path = urlsplit(loc).path  # `_same_site` đã chắc `urlsplit(loc)` không lỗi
+        parts = urlsplit(loc)  # `_same_site` đã chắc `urlsplit(loc)` không lỗi
+        if parts.query or parts.fragment:
+            continue  # cùng quy tắc với `select_product_urls`: không đi vào URL có tham số
+        path = parts.path
         if category in _OWN_SITEMAP_PATH:
             matches = path == _OWN_SITEMAP_PATH[category]
         else:
@@ -147,7 +150,7 @@ def select_product_urls(category: Category, locs: Sequence[str]) -> list[str]:
         if not wanted:
             continue
         try:
-            url = clean_url(loc)
+            url = clean_url(f"{_BASE_URL}/{section}/{slug}")  # bỏ "/" cuối và "//" kép
         except ValueError:
             continue
         if url not in seen:

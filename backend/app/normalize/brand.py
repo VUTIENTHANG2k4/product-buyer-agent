@@ -37,6 +37,7 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("OnePlus", ("oneplus",)),
     ("ZTE", ("zte",)),
     ("Benco", ("benco",)),
+    ("HMD", ("hmd",)),  # sau Nokia: "Nokia HMD 105" vẫn là Nokia
     ("Sony", ("sony",)),
     ("Logitech", ("logitech", "logi")),
     ("Razer", ("razer",)),
@@ -106,6 +107,8 @@ _TYPE_STARTS = frozenset(
         "pc",
         "dien",  # "Điện thoại …"
         "dtdd",  # "ĐTDĐ Samsung …" (điện thoại di động)
+        "smartphone",
+        "tablet",
     ]
 )
 # Từ phụ kiện ở phần mô tả bị bỏ qua: "Bộ sạc laptop Dell 65W" là sạc, không phải laptop Dell.

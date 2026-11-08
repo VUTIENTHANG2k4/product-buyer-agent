@@ -37,7 +37,7 @@ _RAM_LABELS: Final = ("dung luong ram", "ram")
 _STORAGE_LABELS: Final = ("bo nho trong", "dung luong luu tru", "rom")
 _SCREEN_LABELS: Final = ("kich thuoc man hinh", "man hinh")
 _BATTERY_LABELS: Final = ("dung luong pin", "pin")
-_CHIPSET_LABELS: Final = ("chip xu ly", "chipset", "vi xu ly", "cpu")
+_CHIPSET_LABELS: Final = ("chip xu ly", "chipset", "vi xu ly")
 _OS_LABELS: Final = ("he dieu hanh",)
 
 # RAM điện thoại tới 24 GB. Một dung lượng đơn từ 32 GB trở lên là bộ nhớ trong; dưới mức đó
@@ -68,10 +68,10 @@ def _memory_from_title(title: str) -> tuple[int | None, int | None]:
     ("8GB (+8GB mở rộng)/256GB") không đủ căn cứ nên để trống.
     """
     found = capacities_gb(title)
-    if len(found) == 1 and found[0] >= _MIN_SINGLE_STORAGE_GB:
+    if len(found) == 1 and _MIN_SINGLE_STORAGE_GB <= found[0] <= _MAX_STORAGE_GB:
         return None, found[0]
     if len(found) == _PAIR and found[0] < found[1] and found[0] <= _MAX_RAM_GB:
-        return found[0], found[1]
+        return (found[0], found[1]) if found[1] <= _MAX_STORAGE_GB else (None, None)
     return None, None
 
 

@@ -307,6 +307,7 @@ def _from_brand(text: str) -> str:
 
 
 _CAPACITY_KEY = re.compile(r"^\d{1,4}(?:gb|tb)$")
+_CAPACITY_SPACE = re.compile(r"(?<=\d)\s+(?=(?:gb|tb)\b)", re.IGNORECASE)  # "128 GB" -> "128GB"
 _CAPACITY_PLUS = re.compile(r"^\d{1,4}(?:gb|tb)(?:\+\d{1,4}(?:gb|tb))+$")  # "12GB+256GB"
 _NETWORK_KEYS: Final = frozenset(["5g", "4g", "3g", "lte"])
 
@@ -341,6 +342,8 @@ def canonical_name(title: str, category: Category) -> str:
         span = laptop_code_span(cleaned)
         if span is not None:
             return _from_brand(span[0])
+    if category is Category.phone:
+        cleaned = _CAPACITY_SPACE.sub("", cleaned)
     tokens = _tokens(cleaned)
     brand_at = _brand_index(tokens)
     tokens = tokens[brand_at if brand_at is not None else _leading_prefix_length(tokens) :]

@@ -10,6 +10,8 @@ qua, đếm vào `skipped`.
 import json
 import logging
 import re
+import unicodedata
+from collections.abc import AsyncIterator
 from typing import Any, ClassVar
 
 from pydantic import HttpUrl, TypeAdapter, ValidationError
@@ -33,7 +35,9 @@ _MAX_SPEC_VALUE = 500  # giá trị thuộc tính dài hơn là rác (hoặc đo
 
 def _text(value: object) -> str:
     """Chuỗi đã bỏ NUL (PostgreSQL không lưu được) và khoảng trắng thừa; không phải chuỗi → rỗng."""
-    return " ".join(value.replace("\x00", "").split()) if isinstance(value, str) else ""
+    if not isinstance(value, str):
+        return ""
+    return unicodedata.normalize("NFC", " ".join(value.replace("\x00", "").split()))
 
 
 def _vi(value: object) -> str:
@@ -173,6 +177,28 @@ class NguyenKimScraper(BaseScraper):
         )
         # URL trang sau do `BaseScraper.crawl_category` dựng bằng `listing_url` (`?page=N`).
         return ListingPage(items=items, has_next=has_next, skipped=skipped)
+
+    async def crawl_category(
+        self,
+        category: Category,
+        max_pages: int,
+        *,
+        start_page: int = 1,
+        expect_items: bool = False,
+    ) -> AsyncIterator[ListingPage]:
+        """Như `BaseScraper.crawl_category`, và dừng khi một trang trả lại đúng các sản phẩm của
+        trang trước (máy chủ bỏ qua `?page=N`): không đếm lặp cùng một danh sách nhiều lần."""
+        previous: frozenset[str] | None = None
+        async for page in super().crawl_category(
+            category, max_pages, start_page=start_page, expect_items=expect_items
+        ):
+            urls = frozenset(str(item.url) for item in page.items)
+            if urls and urls == previous:
+                logger.warning("Trang danh mục trùng trang trước, dừng phân trang")
+                yield ListingPage(items=[], has_next=False, pagination_loop=True)
+                return
+            previous = urls
+            yield page
 
     def _parse_entry(self, entry: object, category: Category) -> ListingItem:
         if not isinstance(entry, dict):

@@ -392,3 +392,16 @@ def test_slugs_that_are_not_a_plain_path_segment_are_skipped(slug: str) -> None:
         next_page([entry(slugs={"value": {"vi": slug}, "postfix": ""})]), Category.phone, "x"
     )
     assert (page.items, page.skipped) == ([], 1)
+
+
+async def test_a_repeated_listing_page_stops_the_crawl_and_reports_the_loop() -> None:
+    page2 = f"{CATEGORY_URL}?page=2"
+    same = fixture("listing_phone_p1.html")  # máy chủ bỏ qua ?page=2
+    fetcher = ScriptedFetcher(
+        {CATEGORY_URL: response(CATEGORY_URL, same), page2: response(page2, same)}
+    )
+
+    pages = [p async for p in NguyenKimScraper(fetcher).crawl_category(Category.phone, 5)]
+
+    assert [(len(page.items), page.pagination_loop) for page in pages] == [(25, False), (0, True)]
+    assert fetcher.requested == [CATEGORY_URL, page2]
