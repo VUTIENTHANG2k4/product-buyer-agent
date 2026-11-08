@@ -436,7 +436,7 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 | X1.4 | NguyenKimScraper (danh mục `/dien-thoai.c?page=N` đọc `__NEXT_DATA__` + chi tiết JSON-LD) | M | ✅ |
 | X1.5 | Agent, dịch vụ, rematch cho `phone` (intent tầng 1, `search_catalog`, prompt, `KEY_SPEC_FIELDS`) | M | ✅ |
 | X1.6 | Seed `phones.json`, câu eval, giao diện (nhãn `chipset`/`battery_mah`), ảnh chụp, e2e. Bằng chứng: `e2e/ask-phone.spec.ts` (12/12 E2E xanh), ảnh `docs/ui/screens/results-phone-{light,dark}-{1280,375}.png`; `ResultsTable` xếp thông số nổi bật theo nhóm (JSONB làm xáo trộn thứ tự khóa) | S–M | ✅ |
-| X1.7 | Chạy thật có kiểm soát (người dùng bật), rematch, eval, cập nhật docs | S | ⬜ |
+| X1.7 | Chạy thật có kiểm soát (người dùng bật), rematch, eval, cập nhật docs. Kết quả: FPT Shop 20/20 và Nguyễn Kim 25/25 mục parse được, 0 `BLOCKED`; `make rematch CAT=phone` ổn định; eval P01–P03 đạt (intent 100%, ràng buộc 100%, 0 hallucination) | S | ✅ |
 | X2 | Đổi trang lõi nếu một nguồn bị loại ở T0.4 (gợi ý: FPT Shop, HACOM) | L | ⬜ |
 | X3 | Xuất danh sách mua ra CSV / chia sẻ link | S | ✅ |
 | X3.1 | Endpoint `GET /lists/{id}/export.csv`. Xong khi: CSV đúng cột 07 §3.4, giá từ DB (kể cả offer ưu tiên, mục không còn bán), BOM + CRLF, chống CSV injection, 404/422 JSON; test unit + API, `make gen-api` | S | ✅ |

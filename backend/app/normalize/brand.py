@@ -36,6 +36,7 @@ _BRANDS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Motorola", ("motorola", "moto")),
     ("OnePlus", ("oneplus",)),
     ("ZTE", ("zte",)),
+    ("Benco", ("benco",)),
     ("Sony", ("sony",)),
     ("Logitech", ("logitech", "logi")),
     ("Razer", ("razer",)),

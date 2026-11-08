@@ -272,7 +272,8 @@ cases:
       intent: {category: phone, tier: 1, sort: price_asc}
       constraints:
         - {field: brand, op: eq, value: Apple}
-      min_results: 3
+      # "Rẻ nhất" hỏi một máy: agent trả đúng 1 (lần đầu ghi 3, sai kỳ vọng, sửa 2026-11-08 ở X1.7).
+      min_results: 1
       tools_required: [search_catalog]
       tools_forbidden: [live_search_other]
 

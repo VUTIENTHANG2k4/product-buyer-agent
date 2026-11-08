@@ -137,6 +137,7 @@ def test_garbage_input_does_not_raise() -> None:
         ("Điện thoại Nokia HMD 105 4G", "Nokia"),
         ("Máy tính bảng Honor Pad X8b 6GB/128GB", "Honor"),
         ("Điện thoại Google Pixel 9", "Google"),
+        ("Benco S1 Pro 8GB 256GB", "Benco"),  # gặp khi chạy thật FPT Shop (X1.7)
         ("Laptop ASUS Vivobook 14", "ASUS"),  # "vivo" chỉ khớp khi đứng riêng
     ],
 )
