@@ -302,7 +302,7 @@ def test_a_category_without_offers_reports_nothing_and_changes_nothing(
 
 
 @pytest.mark.parametrize("category", [Category.phone, Category.other])
-def test_categories_without_an_extractor_run_without_error_and_are_idempotent(
+def test_rematching_phones_and_unsupported_categories_is_idempotent(
     db_session: Session, category: Category
 ) -> None:
     first = product(db_session, category, brand="Apple", canonical_name="iPhone 15 128GB")

@@ -210,7 +210,8 @@ def test_explicit_sort_from_llm_is_not_overridden() -> None:
     ("given", "category", "tier"),
     [
         ({"category": "other", "tier": 1}, Category.other, 2),
-        ({"category": "phone", "tier": 1}, Category.other, 2),
+        ({"category": "phone", "tier": 1}, Category.phone, 1),  # X1: điện thoại là tầng 1
+        ({"category": "phone", "tier": 2}, Category.other, 2),
         ({"category": "laptop", "tier": 2}, Category.other, 2),
         ({"category": "mouse", "tier": 2}, Category.other, 2),
         ({"category": "mouse", "tier": 1}, Category.mouse, 1),

@@ -34,6 +34,7 @@ KEY_SPEC_FIELDS: Final[Mapping[Category, tuple[str, ...]]] = MappingProxyType(
             "backlight",
         ),
         Category.headset: ("form", "connection", "has_mic", "anc", "surround_7_1", "driver_mm"),
+        Category.phone: ("chipset", "ram_gb", "storage_gb", "screen_in", "battery_mah", "os"),
     }
 )
 

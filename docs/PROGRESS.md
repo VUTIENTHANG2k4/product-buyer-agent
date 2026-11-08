@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: 🔄 X1 Nhóm điện thoại, nhánh `milestone/X1-phones` (2026-11-07): X1.1 ✅ (nguồn điện thoại = FPT Shop + Nguyễn Kim, Viettel Store bỏ vì challenge captcha, ADR-0011). X1.2 ✅ (`extract_phone`, hãng/tên chuẩn cho điện thoại, golden 27 ca + 13 cặp). X1.3 ✅ (FptShopScraper cho điện thoại). X1.4 ✅ (NguyenKimScraper). Kế tiếp X1.5 (agent, dịch vụ, rematch cho `phone`). Thư mục tạm `.scratch_x11/` (untracked) chờ người dùng xóa.
+- Đang làm: 🔄 X1 Nhóm điện thoại, nhánh `milestone/X1-phones` (2026-11-07): X1.1 ✅ (nguồn điện thoại = FPT Shop + Nguyễn Kim, Viettel Store bỏ vì challenge captcha, ADR-0011). X1.2 ✅ (`extract_phone`, hãng/tên chuẩn cho điện thoại, golden 27 ca + 13 cặp). X1.3 ✅ (FptShopScraper cho điện thoại). X1.4 ✅ (NguyenKimScraper). X1.5 ✅ (agent/dịch vụ/rematch cho `phone`). Kế tiếp X1.6 (seed, eval, giao diện). Thư mục tạm `.scratch_x11/` (untracked) chờ người dùng xóa.
 - Backlog chưa làm: X1, X2 (thực tế đã xong nhờ ADR-0008). Gọi tool thừa ở L10/A04/L02 chưa xử lý (không rớt chỉ số). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env`.
 - Cập nhật lần cuối: 2026-11-07 — T6.15 (cảnh báo số tiền bỏ qua cách nói ngân sách và khoảng giá; BUG-T67-4 đã sửa)
 

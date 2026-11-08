@@ -28,7 +28,7 @@ def test_every_tier_one_category_is_accepted(category: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "category", ["phone", "other", "Laptop", "MOUSE", "", "laptop,mouse", "all"]
+    "category", ["tablet", "other", "Laptop", "MOUSE", "", "laptop,mouse", "all"]
 )
 def test_other_categories_and_spellings_are_rejected(category: str) -> None:
     with pytest.raises(SystemExit) as exit_info:
@@ -81,7 +81,7 @@ def test_invalid_input_stops_before_any_database_access(
     monkeypatch.setattr(rematch, "get_engine", forbidden)
 
     with pytest.raises(SystemExit):
-        rematch.main(["--category", "phone", "--apply"])
+        rematch.main(["--category", "other", "--apply"])
 
 
 # ---- Makefile ----
