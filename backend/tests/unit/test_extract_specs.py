@@ -58,9 +58,8 @@ def test_mouse_with_connection_is_complete() -> None:
     assert (result.missing, result.confidence) == ((), 1.0)
 
 
-@pytest.mark.parametrize("category", [Category.phone, Category.other])
-def test_categories_without_an_extractor_give_empty_specs(category: Category) -> None:
-    result = extract_specs(category, "iPhone 15 Pro Max 256GB")
+def test_categories_without_an_extractor_give_empty_specs() -> None:
+    result = extract_specs(Category.other, "iPhone 15 Pro Max 256GB")
     assert (result.specs, result.confidence) == ({}, 0.0)
 
 

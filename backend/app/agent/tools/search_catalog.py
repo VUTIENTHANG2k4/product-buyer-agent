@@ -22,17 +22,17 @@ from app.services.catalog_service import CatalogService
 
 NAME = "search_catalog"
 DESCRIPTION = (
-    "Search the already-collected catalog of laptops, mice, keyboards and headsets "
+    "Search the already-collected catalog of laptops, mice, keyboards, headsets and phones "
     "(tier 1 only) with price, brand, site and spec filters. Use for any shopping "
-    "request in these four categories. Do NOT use for other product types "
+    "request in these five categories. Do NOT use for other product types "
     "(use live_search_other) and never invent products that are not returned."
 )
 
 
 class SearchCatalogArgs(BaseModel):
-    category: Literal[Category.laptop, Category.mouse, Category.keyboard, Category.headset] = Field(
-        description="Product category."
-    )
+    category: Literal[
+        Category.laptop, Category.mouse, Category.keyboard, Category.headset, Category.phone
+    ] = Field(description="Product category.")
     price_min: int | None = Field(default=None, ge=0, description="Minimum price in VND.")
     price_max: int | None = Field(default=None, ge=0, description="Maximum price in VND.")
     brands: list[str] = Field(default_factory=list, max_length=10, description="Brand names.")

@@ -20,11 +20,11 @@ _MAX_AMOUNT_DIGITS: Final = (
 )
 
 TIER1_CATEGORIES: Final = frozenset(
-    {Category.laptop, Category.mouse, Category.keyboard, Category.headset}
+    {Category.laptop, Category.mouse, Category.keyboard, Category.headset, Category.phone}
 )
 # Trang có dữ liệu để tìm ở tầng 1. Trang còn lại (ví dụ viettelstore) chưa có dữ liệu thu thập.
 SEARCHABLE_SITES: Final = frozenset(
-    {SiteKey.gearvn, SiteKey.fptshop, SiteKey.anphat, SiteKey.mockshop}
+    {SiteKey.gearvn, SiteKey.fptshop, SiteKey.anphat, SiteKey.nguyenkim, SiteKey.mockshop}
 )
 UNSUPPORTED_SITE_WORDS: Final = {
     "shopee": "Shopee",
@@ -37,7 +37,7 @@ UNSUPPORTED_SITE_WORDS: Final = {
     "phong vu": "Phong Vũ",
 }
 DEFAULT_CLARIFICATION: Final = (
-    "Bạn muốn tìm loại sản phẩm nào (laptop, chuột, bàn phím, tai nghe…)?"
+    "Bạn muốn tìm loại sản phẩm nào (laptop, chuột, bàn phím, tai nghe, điện thoại…)?"
 )
 MAX_PLAN_STEPS: Final = 5
 
@@ -68,7 +68,9 @@ _APPROX_WORDS = re.compile(r"\b(tam|khoang|xap xi|around|about)\b")
 _EXACT_WORDS = re.compile(r"\b(dung|chinh xac|exactly|exact)\b")
 _CHEAPEST_WORDS = re.compile(r"\b(re nhat|gia thap nhat|cheapest|lowest price)\b")
 # Thông số kiểu "từ X trở lên" mặc định: người dùng nói "RAM 16GB" nghĩa là ít nhất 16GB.
-_AT_LEAST_FIELDS: Final = frozenset({"ram_gb", "storage_gb", "refresh_hz", "gpu_rank"})
+_AT_LEAST_FIELDS: Final = frozenset(
+    {"ram_gb", "storage_gb", "refresh_hz", "gpu_rank", "battery_mah"}
+)
 _GPU_FIELDS: Final = frozenset({"gpu", "gpu_model", "gpu_name", "card", "vga"})
 _GPU_NAME = r"(?:rtx|gtx|rx|arc)\s*\d{3,4}(?:\s*(?:ti|super|xt))?"
 # "tối đa 30 triệu" nói về giá (theo sau là số): chỉ "trở xuống" hoặc cụm không kèm số mới là cận
@@ -281,6 +283,7 @@ def default_plan_steps(intent: QueryIntent) -> list[str]:
         Category.mouse: "chuột",
         Category.keyboard: "bàn phím",
         Category.headset: "tai nghe",
+        Category.phone: "điện thoại",
     }
     target = names.get(intent.category, "sản phẩm") if intent.category else "sản phẩm"
     if intent.tier == 2:

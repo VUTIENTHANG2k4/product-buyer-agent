@@ -128,6 +128,22 @@ def test_existing_offer_fills_missing_specs_without_overwriting_known_ones(
 def test_category_without_extractor_keeps_empty_specs(db_session: Session) -> None:
     item = ListingItem(
         site=SiteKey.mockshop,
+        url="http://localhost:8100/p/speaker-mock",
+        title="Loa Mock X Bluetooth",
+        price=990_000,
+    )
+
+    product_id = resolve(db_session, Category.other, item, None)
+
+    product = get_product(db_session, product_id)
+    assert (product.specs, product.specs_confidence) == ({}, 0.0)
+
+
+def test_phone_specs_are_extracted_and_ram_stays_missing_when_the_title_has_none(
+    db_session: Session,
+) -> None:
+    item = ListingItem(
+        site=SiteKey.mockshop,
         url="http://localhost:8100/p/phone-mock",
         title="Điện thoại Mock X 256GB",
         price=9_990_000,
@@ -136,4 +152,5 @@ def test_category_without_extractor_keeps_empty_specs(db_session: Session) -> No
     product_id = resolve(db_session, Category.phone, item, None)
 
     product = get_product(db_session, product_id)
-    assert (product.specs, product.specs_confidence) == ({}, 0.0)
+    assert product.specs == {"storage_gb": 256}
+    assert product.specs_confidence == 0.24  # thiếu RAM: 0,49 x 1/2, dưới 0,5

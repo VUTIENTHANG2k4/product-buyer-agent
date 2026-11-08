@@ -17,6 +17,7 @@ from app.scrapers.base import BaseScraper
 from app.scrapers.sites.anphat import AnPhatScraper
 from app.scrapers.sites.fptshop import FptShopScraper
 from app.scrapers.sites.gearvn import GearVNScraper
+from app.scrapers.sites.nguyenkim import NguyenKimScraper
 
 TESTS_DIR = Path(__file__).resolve().parent
 GOLDEN_DIR = TESTS_DIR / "unit" / "golden"
@@ -25,6 +26,7 @@ _SCRAPERS: dict[SiteKey, type[BaseScraper]] = {
     SiteKey.gearvn: GearVNScraper,
     SiteKey.anphat: AnPhatScraper,
     SiteKey.fptshop: FptShopScraper,
+    SiteKey.nguyenkim: NguyenKimScraper,
 }
 
 
@@ -34,6 +36,7 @@ _FPT_PREFIX: dict[Category, str] = {
     Category.mouse: "detail_chuot-",
     Category.keyboard: "detail_ban-phim-",
     Category.headset: "detail_tai-nghe-",
+    Category.phone: "detail_dien-thoai-",
 }
 
 

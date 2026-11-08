@@ -10,13 +10,13 @@ Dựa trên menu trang chủ và kết quả tìm kiếm ngày 2026-10-16. "Cầ
 | Trang | Laptop | Chuột | Bàn phím | Tai nghe | Điện thoại (mở rộng) | Tầng 2 (tìm trực tiếp) |
 | --- | --- | --- | --- | --- | --- | --- |
 | GearVN | **Lõi** | **Lõi** | **Lõi** | **Lõi** | Không bán | Có |
-| FPT Shop | **Lõi** | **Lõi** | **Lõi** | **Lõi** | Mở rộng | Có (`/tim-kiem?s=`, HTML dựng sẵn, T10.1; xem [sources/fptshop.md](sources/fptshop.md)) |
+| FPT Shop | **Lõi** | **Lõi** | **Lõi** | **Lõi** | **Lõi** (X1) | Có (`/tim-kiem?s=`, HTML dựng sẵn, T10.1; xem [sources/fptshop.md](sources/fptshop.md)) |
 | An Phát Computer | **Lõi** | **Lõi** | **Lõi** | **Lõi** | Không bán | **Không** (robots chặn `/tim`) |
-| Viettel Store | Mở rộng | Mở rộng | Không thấy | Mở rộng | Mở rộng | **Không** (kết quả tìm kiếm nạp bằng JS, [ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)) |
-| Nguyễn Kim | Mở rộng | Không thấy | Không thấy | Không thấy | Mở rộng | **Không** (Next.js, kết quả tìm kiếm nạp bằng JS, [ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)) |
+| Viettel Store | Mở rộng | Mở rộng | Không thấy | Mở rộng | **Không dùng** (trang chi tiết trả challenge captcha, [ADR-0011](adr/0011-phone-sources-fptshop-nguyenkim.md)) | **Không** (kết quả tìm kiếm nạp bằng JS, [ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)) |
+| Nguyễn Kim | Mở rộng | Không thấy | Không thấy | Không thấy | **Lõi** (X1, danh mục SSR, [ADR-0011](adr/0011-phone-sources-fptshop-nguyenkim.md)) | **Không** (Next.js, kết quả tìm kiếm nạp bằng JS, [ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)) |
 | Mock-shop (nội bộ) | Có | Có | Có | Có | – | Có (dev/test/demo) |
 
-Quy tắc: một nhóm thuộc tầng 1 khi có **ít nhất 2 trang lõi** cung cấp, để so sánh giữa các trang có ý nghĩa. Với điện thoại (pha mở rộng X1), Viettel Store và Nguyễn Kim được nâng thành trang lõi của nhóm này, cùng FPT Shop.
+Quy tắc: một nhóm thuộc tầng 1 khi có **ít nhất 2 trang lõi** cung cấp, để so sánh giữa các trang có ý nghĩa. Với điện thoại (pha mở rộng X1), Nguyễn Kim được nâng thành trang lõi của nhóm này, cùng FPT Shop; Viettel Store bị loại ([ADR-0011](adr/0011-phone-sources-fptshop-nguyenkim.md)).
 
 Từ 2026-10-19 ([ADR-0008](adr/0008-fptshop-anphat-replace-hoangha-laptop88.md)) Hoàng Hà Mobile và Laptop88 không còn là nguồn (lý do ở mục 4); FPT Shop và An Phát thay vào. Các ô "Cần xác minh" của hai trang mới được điền ở T4.1 và T4.3.
 

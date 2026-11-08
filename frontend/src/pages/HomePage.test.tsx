@@ -56,7 +56,9 @@ describe('HomePage · nội dung', () => {
     catalog(hoursAgo(2))
     renderHome()
     expect(screen.queryByText(/Nguồn:/)).toBeNull()
-    expect(await screen.findByText('Nguồn: GearVN · FPT Shop · An Phát')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Nguồn: GearVN · FPT Shop · An Phát · Nguyễn Kim'),
+    ).toBeInTheDocument()
     expect(screen.getByText('Cập nhật: 2 giờ trước')).toBeInTheDocument()
     expect(screen.queryByText(/Giá cập nhật lúc/)).toBeNull()
   })

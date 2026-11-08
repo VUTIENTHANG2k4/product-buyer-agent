@@ -429,7 +429,16 @@ Xong khi: chỉ dùng trang có `supports_live_search=True`; tuần tự, đúng
 
 | ID | Task | Ước lượng | Trạng thái |
 | --- | --- | --- | --- |
-| X1 | Nhóm điện thoại: nâng Viettel Store và Nguyễn Kim thành trang lõi cho nhóm này ([02 §1](02-scope-and-sources.md#1-ma-trận-trang--nhóm-sản-phẩm)); `PhoneSpecs`, scraper FPT Shop/Viettel Store/Nguyễn Kim cho điện thoại, biến thể dung lượng | L | ⬜ |
+| X1 | Nhóm điện thoại (tầng 1): FPT Shop + Nguyễn Kim ([ADR-0011](adr/0011-phone-sources-fptshop-nguyenkim.md)), `PhoneSpecs`, scraper, biến thể dung lượng; chia task X1.1–X1.7 bên dưới | L | ✅ |
+| X1.1 | Khảo sát nguồn điện thoại + ADR-0011 + fixture (FPT Shop, Nguyễn Kim; Viettel Store bị loại vì challenge captcha) | S–M | ✅ |
+| X1.2 | `PhoneSpecs` + bộ trích xuất + chuẩn hóa/ghép biến thể dung lượng + golden | M | ✅ |
+| X1.3 | FptShopScraper cho điện thoại (sitemap `sitemap-dien-thoai.xml`) | S–M | ✅ |
+| X1.4 | NguyenKimScraper (danh mục `/dien-thoai.c?page=N` đọc `__NEXT_DATA__` + chi tiết JSON-LD) | M | ✅ |
+| X1.5 | Agent, dịch vụ, rematch cho `phone` (intent tầng 1, `search_catalog`, prompt, `KEY_SPEC_FIELDS`) | M | ✅ |
+| X1.6 | Seed `phones.json`, câu eval, giao diện (nhãn `chipset`/`battery_mah`), ảnh chụp, e2e. Bằng chứng: `e2e/ask-phone.spec.ts` (12/12 E2E xanh), ảnh `docs/ui/screens/results-phone-{light,dark}-{1280,375}.png`; `ResultsTable` xếp thông số nổi bật theo nhóm (JSONB làm xáo trộn thứ tự khóa) | S–M | ✅ |
+| X1.7 | Chạy thật có kiểm soát (người dùng bật), rematch, eval, cập nhật docs. Kết quả: FPT Shop 20/20 và Nguyễn Kim 25/25 mục parse được, 0 `BLOCKED`; `make rematch CAT=phone` ổn định; eval P01–P03 đạt (intent 100%, ràng buộc 100%, 0 hallucination) | S | ✅ |
+| X1.8 | Phát sinh từ eval đủ 34 câu 2026-11-08 (sau review X1): P01 "điện thoại Samsung dưới 10 triệu" chập chờn (đạt 4/5 lần): đôi khi agent gọi lặp `search_catalog` 4–5 lần rồi kết luận không có điện thoại Samsung dưới 10 triệu dù seed có 2 máy (A99 7,09 và 8,19 triệu). Xong khi: tìm nguyên nhân (tham số tool nào làm rỗng: `brands`, `sites` hay `spec_filters`), sửa prompt/guardrail hoặc tool, P01 đạt ổn định (≥ 9/10 lần); L10/A04 còn gọi tool thừa như đã ghi ở PROGRESS | S | ⬜ |
+| X1.9 | Phát sinh từ QA X1 (3 bug còn lại, giữ bằng `xfail(strict=True)` trong `*_qa_x1.py`): BUG-X1-5 dấu "+" đứng riêng ("S25 + 8GB/256GB") bị khóa tên bỏ nên gộp nhầm với S25; BUG-X1-8 dấu trừ trước số bị bỏ ("-5000 mAh" → 5000, "-6.7 inch" → 6.7); BUG-X1-13 câu "Chưa hỗ trợ Shopee" luôn nêu nguồn laptop (GearVN, FPT Shop, An Phát), không nêu Nguyễn Kim cho điện thoại. Xong khi: sửa cả ba, gỡ `xfail` của `test_a_detached_plus_sign_still_separates_the_plus_model`, `test_negative_battery_and_screen_values_are_not_read_as_positive`, `test_unsupported_site_note_names_the_sources_that_really_sell_phones` | S | ⬜ |
 | X2 | Đổi trang lõi nếu một nguồn bị loại ở T0.4 (gợi ý: FPT Shop, HACOM) | L | ⬜ |
 | X3 | Xuất danh sách mua ra CSV / chia sẻ link | S | ✅ |
 | X3.1 | Endpoint `GET /lists/{id}/export.csv`. Xong khi: CSV đúng cột 07 §3.4, giá từ DB (kể cả offer ưu tiên, mục không còn bán), BOM + CRLF, chống CSV injection, 404/422 JSON; test unit + API, `make gen-api` | S | ✅ |

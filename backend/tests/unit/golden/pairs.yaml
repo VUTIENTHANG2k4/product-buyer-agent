@@ -412,3 +412,113 @@
   why: khác hãng
   a: {site: anphat, title: "Laptop ASUS ExpertBook B3 B3405CCA-LY0080W (Intel Core Ultra 7 255H | Intel Graphics | 14 inch WUXGA | 16GB | 512GB | Win 11 | Xám)"}
   b: {site: anphat, title: "Laptop HP Elitebook 8 G1i Next Gen AI 47 TOPS D85ZNAT (Intel Core Ultra 7-258V | Intel Arc Graphics | 14 inch WUXGA | 32 GB | 512 GB | Windows 11 Home 64 | Bạc)"}
+
+# ---------- ĐIỆN THOẠI (X1): NÊN GHÉP ----------
+# Mỗi dung lượng là một Product, màu không phân biệt mẫu; Nguyễn Kim bán mỗi màu một SKU.
+- id: phone-colour-iphone-18-pro-max-256
+  category: phone
+  expect: merge
+  why: cùng iPhone 18 Pro Max 256GB, khác màu (Đen / Đỏ Burgundy)
+  a: {site: nguyenkim, title: "Điện thoại iPhone 18 Pro Max 256GB Đen"}
+  b: {site: nguyenkim, title: "Điện thoại iPhone 18 Pro Max 256GB Đỏ Burgundy"}
+- id: phone-colour-galaxy-a08
+  category: phone
+  expect: merge
+  why: cùng Galaxy A08 4GB/64GB, khác màu
+  a: {site: nguyenkim, title: "Điện thoại Samsung Galaxy A08 4G (4GB, 64GB ) Green"}
+  b: {site: nguyenkim, title: "Điện thoại Samsung Galaxy A08 4G (4GB, 64GB ) Dark Blue"}
+- id: phone-colour-galaxy-a18
+  category: phone
+  expect: merge
+  why: cùng Galaxy A18 6GB/128GB, khác màu và mã phụ tùng SM-A185…
+  a: {site: nguyenkim, title: "Điện thoại Samsung Galaxy A18 (6GB/128GB) bạc SM-A185GZSLXXV"}
+  b: {site: nguyenkim, title: "Điện thoại Samsung Galaxy A18 (6GB/128GB) xanh SM-A185GLBLXXV"}
+- id: phone-colour-iphone-17-256
+  category: phone
+  expect: merge
+  why: cùng iPhone 17 256GB, khác màu và mã (MG6J4ZP/A)
+  a: {site: nguyenkim, title: "Điện thoại iPhone 17 256GB Đen (MG6J4ZP/A)"}
+  b: {site: nguyenkim, title: "Điện thoại iPhone 17 256GB Trắng (MG6K4ZP/A)"}
+- id: phone-cross-site-galaxy-a57
+  category: phone
+  expect: merge
+  why: cùng Galaxy A57 5G 8GB/128GB ở FPT Shop và Nguyễn Kim (bản viết lại theo định dạng Nguyễn Kim)
+  a: {site: fptshop, title: "Samsung Galaxy A57 5G 8GB 128GB"}
+  b:
+    site: nguyenkim
+    title: "Điện thoại Samsung Galaxy A57 5G (8GB/128GB) xanh SM-A576BZVQXXV"
+    synthetic_from: {site: fptshop, title: "Samsung Galaxy A57 5G 8GB 128GB"}
+- id: phone-cross-site-iphone-16
+  category: phone
+  expect: merge
+  why: cùng iPhone 16 128GB; FPT Shop có RAM trong bảng thông số, Nguyễn Kim không ghi RAM
+  a: {site: fptshop, title: "iPhone 16 128GB"}
+  b:
+    site: nguyenkim
+    title: "Điện thoại iPhone 16 128GB Đen"
+    synthetic_from: {site: fptshop, title: "iPhone 16 128GB"}
+- id: phone-plus-notation-ram-rom
+  category: phone
+  expect: merge
+  why: '"12GB+256GB" và "12GB/256GB" là cùng cấu hình'
+  a: {site: nguyenkim, title: "ĐTDĐ Samsung S26 Ultra SM-S948B/DS, 12GB+256GB, Đen, SM-S948BZKBXXV"}
+  b:
+    site: nguyenkim
+    title: "Điện thoại Samsung S26 Ultra SM-S948B/DS 12GB/256GB Trắng"
+    synthetic_from: {site: nguyenkim, title: "ĐTDĐ Samsung S26 Ultra SM-S948B/DS, 12GB+256GB, Đen, SM-S948BZKBXXV"}
+
+# ---------- ĐIỆN THOẠI (X1): KHÔNG NÊN GHÉP ----------
+- id: phone-storage-256-vs-512
+  category: phone
+  expect: separate
+  why: cùng iPhone 18 Pro Max nhưng 256GB và 512GB là hai sản phẩm
+  a: {site: nguyenkim, title: "Điện thoại iPhone 18 Pro Max 256GB Đen"}
+  b: {site: nguyenkim, title: "Điện thoại iPhone 18 Pro Max 512GB Đen"}
+- id: phone-storage-256-vs-1tb
+  category: phone
+  expect: separate
+  why: 256GB và 1TB
+  a: {site: nguyenkim, title: "Điện thoại iPhone 18 Pro Max 256GB Đen"}
+  b: {site: nguyenkim, title: "Điện thoại iPhone 18 Pro Max 1TB Đen"}
+- id: phone-pro-max-vs-pro
+  category: phone
+  expect: separate
+  why: iPhone 18 Pro Max khác iPhone 18 Pro dù cùng 256GB
+  a: {site: nguyenkim, title: "Điện thoại iPhone 18 Pro Max 256GB Đen"}
+  b: {site: nguyenkim, title: "Điện thoại iPhone 18 Pro 256GB Đen"}
+- id: phone-base-vs-pro
+  category: phone
+  expect: separate
+  why: iPhone 17 khác iPhone 17 Pro
+  a: {site: nguyenkim, title: "Điện thoại iPhone 17 256GB Đen (MG6J4ZP/A)"}
+  b: {site: nguyenkim, title: "Điện thoại iPhone 17 Pro 256GB Cam Vũ Trụ (MG8H4ZP/A)"}
+- id: phone-galaxy-a08-vs-a18
+  category: phone
+  expect: separate
+  why: hai đời Galaxy khác nhau
+  a: {site: nguyenkim, title: "Điện thoại Samsung Galaxy A08 4G (4GB, 64GB ) Green"}
+  b: {site: nguyenkim, title: "Điện thoại Samsung Galaxy A18 (6GB/128GB) bạc SM-A185GZSLXXV"}
+- id: phone-ram-variant
+  category: phone
+  expect: separate
+  why: cùng Honor X7d 128GB nhưng RAM 8GB khác 6GB (bản viết lại)
+  a: {site: nguyenkim, title: "Điện thoại Honor X7d 8GB/128GB Đen Huyền Bí"}
+  b:
+    site: nguyenkim
+    title: "Điện thoại Honor X7d 6GB/128GB Đen"
+    synthetic_from: {site: nguyenkim, title: "Điện thoại Honor X7d 8GB/128GB Đen Huyền Bí"}
+- id: phone-5g-vs-4g-variant
+  category: phone
+  expect: separate
+  why: Galaxy A57 5G khác bản không ghi 5G (không đoán là cùng máy)
+  a: {site: fptshop, title: "Samsung Galaxy A57 5G 8GB 128GB"}
+  b:
+    site: nguyenkim
+    title: "Điện thoại Samsung Galaxy A57 8GB/128GB xanh"
+    synthetic_from: {site: fptshop, title: "Samsung Galaxy A57 5G 8GB 128GB"}
+- id: phone-different-brands
+  category: phone
+  expect: separate
+  why: khác hãng
+  a: {site: nguyenkim, title: "Điện thoại OPPO A6c 4GB/64GB Tím"}
+  b: {site: nguyenkim, title: "Điện thoại Honor X7d 8GB/128GB Đen Huyền Bí"}

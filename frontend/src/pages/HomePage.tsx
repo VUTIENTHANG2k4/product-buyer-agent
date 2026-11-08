@@ -11,7 +11,12 @@ import { errorMessage } from '@/lib/errorMessage'
 import { formatRelative } from '@/lib/format'
 import { strings } from '@/lib/strings'
 
-const SOURCES = [strings.sites.gearvn, strings.sites.fptshop, strings.sites.anphat].join(' · ')
+const SOURCES = [
+  strings.sites.gearvn,
+  strings.sites.fptshop,
+  strings.sites.anphat,
+  strings.sites.nguyenkim,
+].join(' · ')
 
 function CatalogStatus() {
   const summary = useCatalogSummary()

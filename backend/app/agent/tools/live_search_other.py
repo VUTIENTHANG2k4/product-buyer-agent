@@ -12,9 +12,9 @@ from app.domain.errors import AppError
 
 NAME = "live_search_other"
 DESCRIPTION = (
-    "Live search on retailer sites for products OUTSIDE laptops, mice, keyboards and headsets "
-    "(speakers, monitors, SSDs...). Slow; results are not normalized, show them as live results "
-    "with only name, price and link. Do NOT use for the four tier-1 categories (use "
+    "Live search on retailer sites for products OUTSIDE laptops, mice, keyboards, headsets and "
+    "phones (speakers, monitors, SSDs...). Slow; results are not normalized, show them as live "
+    "results with only name, price and link. Do NOT use for the five tier-1 categories (use "
     "search_catalog)."
 )
 UNAVAILABLE_REASON = "tìm trực tiếp chưa khả dụng"

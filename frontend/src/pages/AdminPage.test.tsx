@@ -462,6 +462,7 @@ describe('AdminPage · lọc và phân trang', () => {
       'GearVN',
       'FPT Shop',
       'An Phát',
+      'Nguyễn Kim',
       'Mock Shop',
     ])
   })

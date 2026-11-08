@@ -31,6 +31,12 @@ def test_fixture_set_covers_every_category_and_the_sitemaps() -> None:
     assert (FIXTURE_DIR / "robots.txt").is_file()
 
 
+def test_fixture_set_covers_phones() -> None:
+    names = {path.name for path in HTML_FIXTURES}
+    assert len([name for name in names if name.startswith("detail_dien-thoai-")]) >= 2
+    assert "sitemap_dien-thoai.xml" in {path.name for path in XML_FIXTURES}
+
+
 @pytest.mark.parametrize("path", TEXT_FIXTURES, ids=lambda path: path.name)
 def test_fixture_is_smaller_than_500_kb_and_valid_utf8(path: Path) -> None:
     assert path.stat().st_size < 500 * 1024
@@ -73,6 +79,9 @@ def robots_text() -> str:
         f"{BASE}/products/sitemap-may-tinh-xach-tay.xml",
         f"{BASE}/products/sitemap-phu-kien.xml",
         f"{BASE}/products/sitemap-phu-kien-2.xml",
+        f"{BASE}/products/sitemap-dien-thoai.xml",
+        f"{BASE}/dien-thoai/samsung-galaxy-a57",
+        f"{BASE}/dien-thoai/iphone-16",
         f"{BASE}/may-tinh-xach-tay/acer-aspire-lite-14-al14-44p-r0sp-r7-7730u",
         f"{BASE}/phu-kien/chuot-khong-day-elecom-m-ir07dr",
         f"{BASE}/phu-kien/ban-phim-co-khong-day-mchose-g75-pro-v2",

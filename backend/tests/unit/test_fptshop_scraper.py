@@ -140,6 +140,7 @@ def test_config_describes_fptshop() -> None:
         Category.mouse,
         Category.keyboard,
         Category.headset,
+        Category.phone,  # X1.3, ADR-0011
     }
 
 
@@ -196,7 +197,7 @@ def test_sitemap_selection_ignores_other_hosts_duplicates_and_unrelated_categori
     ]
     assert select_sitemaps(Category.laptop, locs) == [LAPTOP_SITEMAP]
     assert select_sitemaps(Category.mouse, locs) == []
-    assert select_sitemaps(Category.phone, locs) == []
+    assert select_sitemaps(Category.other, locs) == []
 
 
 def test_laptop_product_urls_come_from_the_laptop_sitemap() -> None:
@@ -259,7 +260,7 @@ def test_sitemap_urls_with_query_or_fragment_are_dropped() -> None:
 
 
 def test_product_urls_for_a_category_without_source_are_empty() -> None:
-    assert select_product_urls(Category.phone, [f"{BASE}/phu-kien/chuot-a"]) == []
+    assert select_product_urls(Category.other, [f"{BASE}/phu-kien/chuot-a"]) == []
 
 
 # --- Trang sản phẩm ---------------------------------------------------------------------------
@@ -690,7 +691,7 @@ async def test_invalid_arguments_and_unsupported_categories_are_rejected() -> No
     with pytest.raises(ValueError, match="max_pages"):
         await collect(scraper, max_pages=1, start_page=0)
     with pytest.raises(ValueError, match="no source"):
-        _ = [p async for p in scraper.crawl_category(Category.phone, 1)]
+        _ = [p async for p in scraper.crawl_category(Category.other, 1)]
 
 
 async def test_product_pages_are_read_from_the_final_url_after_redirects() -> None:

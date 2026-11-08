@@ -52,6 +52,7 @@ def test_every_category_has_pairs() -> None:
         Category.mouse,
         Category.keyboard,
         Category.headset,
+        Category.phone,
     }
 
 

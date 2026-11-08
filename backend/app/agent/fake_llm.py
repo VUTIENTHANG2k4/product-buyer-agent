@@ -24,7 +24,9 @@ from app.domain.dto import QueryIntent
 from app.domain.enums import Category
 from app.normalize.text import fold
 
-CLARIFICATION: Final = "Bạn muốn tìm loại sản phẩm nào (laptop, chuột, bàn phím, tai nghe…)?"
+CLARIFICATION: Final = (
+    "Bạn muốn tìm loại sản phẩm nào (laptop, chuột, bàn phím, tai nghe, điện thoại…)?"
+)
 INTENT_PREFIX: Final = "Ý định đã phân tích: "
 CURRENT_REQUEST: Final = "Yêu cầu hiện tại:\n"
 MAX_TABLE_ROWS: Final = 5
@@ -34,6 +36,7 @@ _CATEGORY_WORDS: Final = (
     (Category.mouse, ("chuot", "mouse")),
     (Category.keyboard, ("ban phim", "keyboard")),
     (Category.headset, ("tai nghe", "headset", "headphone")),
+    (Category.phone, ("dien thoai", "smartphone", "iphone")),
 )
 # Nhóm tầng 2 (không dấu) -> từ khóa tìm trực tiếp; cụm dài đứng trước.
 _TIER2_QUERIES: Final = (

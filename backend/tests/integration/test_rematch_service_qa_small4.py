@@ -302,7 +302,7 @@ def test_a_category_without_offers_reports_nothing_and_changes_nothing(
 
 
 @pytest.mark.parametrize("category", [Category.phone, Category.other])
-def test_categories_without_an_extractor_run_without_error_and_are_idempotent(
+def test_rematching_phones_and_unsupported_categories_is_idempotent(
     db_session: Session, category: Category
 ) -> None:
     first = product(db_session, category, brand="Apple", canonical_name="iPhone 15 128GB")
@@ -424,6 +424,16 @@ TITLES: dict[Category, list[str]] = {
         "Tai nghe HyperX Cloud II Wireless",
         "Tai nghe gaming Razer Kraken V3",
         "Tai nghe không rõ hãng",
+    ],
+    Category.phone: [
+        "Điện thoại iPhone 16 128GB Đen",
+        "Điện thoại iPhone 16 128GB Trắng",
+        "Điện thoại iPhone 16 256GB Đen",
+        "Điện thoại Samsung Galaxy A57 5G (8GB/128GB) xanh SM-A576BZVQXXV",
+        "Samsung Galaxy A57 5G 8GB 128GB",
+        "ĐTDĐ Samsung S26 SM-S942B/DS, 12GB+256GB, Xanh dương",
+        "Điện thoại OPPO Reno16F 8GB/256GB Trắng (CPH2859)",
+        "Điện thoại lạ không rõ hãng 4G",
     ],
     Category.laptop: [
         ACER,

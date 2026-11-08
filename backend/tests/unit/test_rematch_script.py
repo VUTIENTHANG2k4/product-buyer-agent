@@ -18,7 +18,7 @@ def test_flags_select_category_site_and_apply() -> None:
     assert (args.category, args.site, args.apply) == ("mouse", "gearvn", True)
 
 
-@pytest.mark.parametrize("argv", [["--category", "phone"], ["--site", "nowhere"]])
+@pytest.mark.parametrize("argv", [["--category", "other"], ["--site", "nowhere"]])
 def test_unknown_category_or_site_is_rejected(argv: list[str]) -> None:
     with pytest.raises(SystemExit):
         parse_args(argv)

@@ -22,8 +22,10 @@
 - Kết luận: điều khoản **Được dùng** cho tìm kiếm tầng 2 theo yêu cầu người dùng, số lượng nhỏ, có độ trễ (**người dùng đã duyệt 2026-10-23**); chỉ hiển thị tên, giá, link, ảnh đại diện (URL). **Nhưng không dùng cho tầng 2 vì trang tìm kiếm cần JavaScript** (mục 7, [ADR-0010](../adr/0010-tier2-sites-gearvn-fptshop.md)).
 - Ghi chú về cách đọc: công cụ đọc trang chỉ trả về tóm tắt và trích ngắn. Một số trang quy chế có nội dung cũ (nhắc mốc 2010, 2015). Người dùng nên mở 2 link quy chế đối chiếu mục V, VII, VIII.
 
+> **Cập nhật 2026-11-07 (X1.1, [ADR-0011](../adr/0011-phone-sources-fptshop-nguyenkim.md)):** danh mục và chi tiết điện thoại dùng được cho tầng 1 (xem mục 8); kết luận "không dùng cho tầng 2" bên dưới vẫn đúng. Người dùng xác nhận lại điều khoản cho phạm vi danh mục + chi tiết.
+
 ## 3. Danh mục theo nhóm
-Chỉ khảo sát **tìm kiếm** (tầng 2); chưa viết scraper danh mục.
+Mục này ghi khảo sát **tìm kiếm** (tầng 2); điện thoại tầng 1 ở mục 8.
 
 | Nhóm | URL | Phân trang | Số sản phẩm ước tính |
 | --- | --- | --- | --- |
@@ -49,3 +51,34 @@ Không lưu trang tìm kiếm (không có sản phẩm để kiểm thử).
 - **`requires_js = True` cho tìm kiếm** → không dùng cho tầng 2 ([ADR-0010](../adr/0010-tier2-sites-gearvn-fptshop.md)). Lấy dữ liệu chỉ có thể bằng JavaScript hoặc gọi API nội bộ của trang, đều trái quy tắc dự án.
 - Người dùng đã duyệt kết luận điều khoản ngày 2026-10-23; trang không bị loại vì điều khoản mà vì kỹ thuật.
 - Đã đăng ký thử rồi gỡ khung scraper trong lúc khảo sát; `SiteKey.nguyenkim` vẫn có trong enum (pha mở rộng điện thoại X1).
+
+## 8. Điện thoại — tầng 1 (X1.1, khảo sát 2026-11-07)
+Khảo sát 5 request qua Fetcher (`scripts.fetch_page --allow-online`, ≥ 5 s/request): sitemap chỉ mục, `/dien-thoai.c`, `/dien-thoai.c?page=2`, một trang chi tiết (thử URL ghép thiếu hậu tố mã sản phẩm bị 404, đã bỏ). robots.txt cho phép (`Allow: /`, không chặn `?page=`); không challenge.
+
+| Nhóm | URL | Phân trang | Số sản phẩm |
+| --- | --- | --- | --- |
+| phone | `https://www.nguyenkim.com/dien-thoai.c` | `?page=N` (trang 1 không tham số); `pageDetail.pages` = 9, `limit` = 25 | 211 máy (`pageDetail.total`) |
+
+- **`requires_js = False`** cho danh mục và chi tiết: Next.js (pages router) dựng sẵn ở máy chủ. Khác với tìm kiếm, `__NEXT_DATA__.props.pageProps.pageDetail.data` có đủ 25 sản phẩm. Trang không có liên kết phân trang trong HTML: số trang suy từ `pages`/`page`.
+- **Danh sách** (`pageDetail.data[]`): `name.vi` ("Điện thoại Samsung Galaxy A18 (6GB/128GB) bạc SM-A185GZSLXXV"), `code`, `price` (giá niêm yết), `salePrice`/`mediaPrice` (giá bán), `finalPrice` (khi có mã giảm, chưa dùng), `stockStatus` (`inStock`), `slugs.value.vi` + `slugs.postfix`, `thumbnail`, `outstandingFeatures[].value.vi` (điểm nổi bật, có "Pin 6000mAh"). **URL sản phẩm = `/` + slug + postfix** (ví dụ `/dien-thoai-di-dong-oppo-cph2859-8gb-256gb-reno16-f-5g-8gb-256gb-trang-CPH28598GB256GB`); slug không kèm postfix trả 404. Đã bỏ `relatedProducts` khỏi fixture.
+- **Mỗi dung lượng và mỗi màu là một SKU riêng** (ví dụ "Galaxy A08 4G (4GB, 64GB) Green/Dark Blue/Silver", "iPhone 18 Pro Max 256GB Đen/Đỏ Burgundy"): nhiều offer của cùng một sản phẩm; màu không phải khác biệt sản phẩm, dung lượng thì có (X1.2).
+- **Chi tiết:** JSON-LD `Product` (`name`, `sku` = `CPH28598GB256GB`, `mpn` = `CPH2859-8/256/TRANG` — **mã hãng**, dùng làm `model_code_hint` ở X1.4, `brand.name`, `offers.price` = giá bán, `availability`); `__NEXT_DATA__.pageDetail.data.properties[]` là thuộc tính có nhãn (thương hiệu, hệ điều hành, …); `specifications` rỗng.
+- **Giá:** `price` niêm yết lớn hơn `salePrice` → `sale` (giá gốc = `price`); bằng nhau → `regular`. Đã thấy 15.990.000 niêm yết, 13.599.000 bán, `finalPrice` 13.499.000 (có mã giảm, không lưu).
+- Không thấy captcha/challenge. Từ "captcha" xuất hiện 0 lần trong HTML đã tải.
+
+Fixture (`backend/tests/fixtures/nguyenkim/`, bỏ script trừ JSON-LD và `__NEXT_DATA__`; `__NEXT_DATA__` chỉ giữ `pageDetail`, `pageType`; chi tiết bỏ `reviews`, `relatedProducts`, `description`, khuyến mãi…; test `test_nguyenkim_fixtures.py`):
+
+| File | Nội dung |
+| --- | --- |
+| `listing_phone_p1.html`, `listing_phone_p2.html` | Trang 1 và 2 của `/dien-thoai.c` (25 máy mỗi trang) |
+| `detail_dien-thoai-oppo-reno16f-8gb-256gb-trang.html` | OPPO Reno16F 8GB/256GB Trắng: bán 13.599.000đ, niêm yết 15.990.000đ |
+
+Còn lại là mã số thuế của doanh nghiệp (`0302286281`, không phải số cá nhân).
+
+### Cài đặt (X1.4, `app/scrapers/sites/nguyenkim.py`)
+- `NguyenKimScraper`: `requires_js=False`, `supports_live_search=False`, `categories={phone: https://www.nguyenkim.com/dien-thoai.c}`, `min_delay_s=5`. Đã đăng ký trong `registry.py`. `listing_url` dùng `?page=N` mặc định của `BaseScraper`; `parse_listing` đặt `has_next = page < pages` (không đặt `next_url`, `crawl_category` tự dựng bằng `listing_url`).
+- Danh sách: URL = `/` + `slugs.value.vi` + `slugs.postfix` (kiểm đúng một đoạn `[A-Za-z0-9._-]`, mục sai bị bỏ và đếm vào `skipped`); giá bán = `salePrice` (rồi `mediaPrice`, rồi `price`), giá gốc = `price` khi lớn hơn giá bán, `finalPrice` (đã trừ mã giảm) không lưu; `stockStatus` → `StockStatus`; `code` → `site_sku`; `thumbnail` → ảnh. `raw_specs` để rỗng nên pipeline tải trang chi tiết cho từng máy (giới hạn mặc định của pipeline mỗi lượt).
+- Chi tiết: giá lấy từ `__NEXT_DATA__` (JSON-LD `offers.price` dự phòng); `raw_specs` từ `properties[]` (ô nhập `value.vi` hoặc các lựa chọn `values[].value.vi` nối bằng "; ", bỏ giá trị rỗng/quá 500 ký tự); `brand_hint` từ JSON-LD hoặc `brandName`; `model_code_hint` = `mpn` (mã hãng kèm cấu hình/màu, không dùng để ghép điện thoại). Bộ trích xuất đọc được từ bảng này RAM, bộ nhớ trong, màn hình (`Màn hình rộng`), pin (`Pin & Sạc`), chip, hệ điều hành.
+- Không có `parse_search`: tìm kiếm cần JavaScript (ADR-0010). Mỗi lượt đầy đủ ≈ 9 trang danh mục + tối đa số trang chi tiết pipeline cho phép, mỗi request ≥ 5 s. Chạy thật: xem dòng dưới.
+
+- **Chạy thật (X1.7, 2026-11-08, `PAGES=1`, người dùng tự bật `SCRAPER_OFFLINE_ONLY=false`):** `make scrape SITE=nguyenkim CAT=phone PAGES=1` → `PARTIAL` (dừng ở giới hạn trang), 1 trang danh mục (25 máy) + 20 trang chi tiết (giới hạn của pipeline), 0 lỗi, không `BLOCKED`/captcha. 25/25 có giá > 0 (23 `sale`, 2 `regular`), 25/25 còn hàng, 24/25 có bộ nhớ trong, 17/25 đủ RAM + bộ nhớ trong (độ tin cậy 1,0); 8 mục còn lại là iPhone (không ghi RAM trong tên, độ tin cậy 0,24) và Nokia HMD 105 (điện thoại phổ thông, không có dung lượng). 25 offer gom thành 17 sản phẩm: các màu của cùng cấu hình thành một `Product` (ví dụ Galaxy A08 ×3, A18 ×2, S26FE ×3, iPhone 18 Pro 2TB ×2). 5 mục không được tải chi tiết (giới hạn 20) nên thiếu chip/hệ điều hành. Ghép chéo trang: Galaxy A18 6GB 128GB và iPhone 18 Pro 256GB có offer ở cả FPT Shop và Nguyễn Kim. Một cảnh báo "thông số mâu thuẫn ['chipset'], giữ giá trị cũ" (`Apple A20 Pro` của FPT Shop với `Chip A20 Pro` của Nguyễn Kim): chuẩn hóa tên chip chưa làm.

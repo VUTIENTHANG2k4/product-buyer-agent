@@ -163,7 +163,7 @@ def test_the_e2e_profile_never_loads_a_hard_case(db_session: Session) -> None:
 
     codes = set(db_session.exec(select(Product.model_code)).all())
 
-    assert summary.products_created == 16
+    assert summary.products_created == 19  # 16 + 3 điện thoại (X1.6)
     assert codes.isdisjoint(SOLD_OUT | INCOMPLETE)
     low_confidence = db_session.exec(
         select(func.count()).select_from(Product).where(col(Product.specs_confidence) < 1.0)

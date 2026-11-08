@@ -28,8 +28,14 @@ import {
 import { RunCounters } from './RunCounters'
 import { RunStatusBadge } from './RunStatusBadge'
 
-// Chỉ các nguồn đang có scraper; Viettel Store và Nguyễn Kim (pha mở rộng X1) chưa chạy lượt nào.
-const SITES: readonly Schemas['SiteKey'][] = ['gearvn', 'fptshop', 'anphat', 'mockshop']
+// Chỉ các nguồn đang có scraper; Viettel Store không dùng (ADR-0011).
+const SITES: readonly Schemas['SiteKey'][] = [
+  'gearvn',
+  'fptshop',
+  'anphat',
+  'nguyenkim',
+  'mockshop',
+]
 const CATEGORIES = Object.keys(strings.categories) as Schemas['Category'][]
 const STATUSES = Object.keys(strings.admin.statuses) as ScrapeStatus[]
 

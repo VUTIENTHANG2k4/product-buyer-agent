@@ -18,7 +18,7 @@
 | – | [PROGRESS](PROGRESS.md) | Đang ở đâu | Đầu mỗi phiên |
 | – | [ADR](adr/README.md) | Vì sao chọn như vậy | Khi muốn đổi quyết định |
 | – | [Eval](eval/queries.yaml) | Bộ câu hỏi đánh giá agent | M6, M11 |
-| – | [Nguồn](sources/_template.md) · [gearvn](sources/gearvn.md) · [fptshop](sources/fptshop.md) · [anphat](sources/anphat.md) · [hoangha](sources/hoangha.md) và [laptop88](sources/laptop88.md) (không dùng, ADR-0008) · [viettelstore](sources/viettelstore.md) và [nguyenkim](sources/nguyenkim.md) (khảo sát, bỏ khỏi tầng 2 vì cần JS, ADR-0010) | Kết quả khảo sát từng trang (mục 1–2 do T0.4) | M3, M4, M10 |
+| – | [Nguồn](sources/_template.md) · [gearvn](sources/gearvn.md) · [fptshop](sources/fptshop.md) · [anphat](sources/anphat.md) · [hoangha](sources/hoangha.md) và [laptop88](sources/laptop88.md) (không dùng, ADR-0008) · [viettelstore](sources/viettelstore.md) và [nguyenkim](sources/nguyenkim.md) (khảo sát, bỏ khỏi tầng 2 vì cần JS, ADR-0010; điện thoại X1: Nguyễn Kim dùng được, Viettel Store bỏ, ADR-0011) | Kết quả khảo sát từng trang (mục 1–2 do T0.4) | M3, M4, M10 |
 | – | [Ảnh UI](ui/README.md) | Phác thảo / ảnh tham khảo | M8 |
 
 ## Truy vết yêu cầu → thiết kế → task

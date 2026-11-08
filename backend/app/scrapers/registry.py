@@ -7,11 +7,13 @@ from app.scrapers.sites.anphat import AnPhatScraper
 from app.scrapers.sites.fptshop import FptShopScraper
 from app.scrapers.sites.gearvn import GearVNScraper
 from app.scrapers.sites.mockshop import MockShopScraper
+from app.scrapers.sites.nguyenkim import NguyenKimScraper
 
 SCRAPERS: dict[SiteKey, type[BaseScraper]] = {
     SiteKey.gearvn: GearVNScraper,
     SiteKey.fptshop: FptShopScraper,
     SiteKey.anphat: AnPhatScraper,
+    SiteKey.nguyenkim: NguyenKimScraper,
     SiteKey.mockshop: MockShopScraper,
 }
 

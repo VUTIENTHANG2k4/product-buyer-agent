@@ -34,7 +34,13 @@ from app.normalize.names import canonical_name
 
 logger = logging.getLogger(__name__)
 
-REMATCH_CATEGORIES = (Category.laptop, Category.mouse, Category.keyboard, Category.headset)
+REMATCH_CATEGORIES = (
+    Category.laptop,
+    Category.mouse,
+    Category.keyboard,
+    Category.headset,
+    Category.phone,
+)
 
 
 @dataclass(frozen=True)
