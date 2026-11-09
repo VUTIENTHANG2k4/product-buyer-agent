@@ -1,15 +1,24 @@
 """T6.6: harness chạy câu hỏi qua AgentRunner thật (model giả) và chấm điểm."""
 
 from collections.abc import Callable
+from datetime import date
 from typing import Any
 
+import pytest
 from sqlmodel import Session
 
 from app.agent.guardrail import GuardrailOutcome
 from app.agent.testing import tool_call_message
 from app.agent.tools import ToolContext
-from scripts.eval_core import EvalCase, ProductFacts, compute_metrics, score_case
-from scripts.run_eval import make_facts_of, run_all, run_case
+from scripts.eval_core import (
+    CaseRun,
+    EvalCase,
+    ProductFacts,
+    compute_metrics,
+    render_report,
+    score_case,
+)
+from scripts.run_eval import make_facts_of, repeat_cases, run_all, run_case
 from tests.agent.conftest import RunnerParts
 from tests.agent.test_runner import LAPTOP_INTENT, SEARCH, final_call, ids, make_laptops
 
@@ -61,6 +70,69 @@ async def test_run_case_records_intent_tools_products_and_latency(
 
     score = score_case(LAPTOP_CASE, run)
     assert score.passed and (score.products_checked, score.products_satisfying) == (2, 2)
+
+
+async def test_run_case_records_every_tool_call_with_its_arguments_and_result(
+    db_session: Session, tool_ctx: ToolContext, make_runner: Make
+) -> None:
+    products = make_laptops(db_session)
+    parts = make_runner([LAPTOP_INTENT], [SEARCH, final_call(product_ids=ids(products)[:2])])
+    guard, facts_of = wire(parts, tool_ctx)
+
+    run = await run_case(LAPTOP_CASE, parts.runner, guard, facts_of)
+
+    (call,) = run.tool_trace
+    assert call.startswith("search_catalog(category=laptop")
+    assert call.endswith(f"→ Tìm thấy {len(products)} sản phẩm")
+
+
+def test_failed_case_report_lists_the_tool_calls_but_a_passing_one_does_not() -> None:
+    trace = ['search_catalog(category=phone, brands=["Samsung"]) → Tìm thấy 0 sản phẩm']
+    failing = CaseRun(tools_called=["search_catalog"], tool_trace=trace)
+    passing = CaseRun(
+        tools_called=["search_catalog"],
+        tool_trace=trace,
+        intent={"category": "laptop", "price_max": 30_000_000},
+        products=[
+            ProductFacts(
+                product_id=1,
+                brand="MockBrand",
+                min_price=20_000_000,
+                sites=frozenset(),
+                specs={"gpu_rank": 40},
+            ),
+            ProductFacts(
+                product_id=2,
+                brand="MockBrand",
+                min_price=21_000_000,
+                sites=frozenset(),
+                specs={"gpu_rank": 40},
+            ),
+        ],
+    )
+
+    def report_of(run: CaseRun) -> str:
+        score = score_case(LAPTOP_CASE, run)
+        return render_report(
+            [score],
+            compute_metrics([score]),
+            today=date(2026, 11, 9),
+            provider="x",
+            model="y",
+            partial=True,
+        )
+
+    assert "- Lần gọi tool 1: `search_catalog(category=phone" in report_of(failing)
+    assert "Lần gọi tool" not in report_of(passing)
+
+
+def test_repeat_cases_repeats_each_case_in_a_row_and_rejects_less_than_one() -> None:
+    other = EvalCase.model_validate({"id": "Q01", "query": "rẻ rẻ", "expect_clarification": True})
+
+    assert [c.id for c in repeat_cases([LAPTOP_CASE, other], 3)] == ["L01"] * 3 + ["Q01"] * 3
+    assert repeat_cases([LAPTOP_CASE], 1) == [LAPTOP_CASE]
+    with pytest.raises(ValueError, match="--repeat"):
+        repeat_cases([LAPTOP_CASE], 0)
 
 
 async def test_run_case_counts_dropped_ids_as_hallucination(
@@ -167,7 +239,10 @@ async def test_run_all_reports_progress_and_keeps_case_order(
     runs = await run_all([LAPTOP_CASE, second], parts.runner, guard, facts_of, report=lines.append)
 
     assert len(runs) == 2
-    assert lines[0].startswith("[1/2] L01 PASS") and lines[1].startswith("[2/2] Q01 PASS")
+    progress = [line for line in lines if line.startswith("[")]
+    assert progress[0].startswith("[1/2] L01 PASS") and progress[1].startswith("[2/2] Q01 PASS")
+    # Mỗi lần gọi tool in thêm một dòng thụt vào ngay sau dòng tiến độ của câu đó.
+    assert lines[1].startswith("    search_catalog(") and "→ Tìm thấy" in lines[1]
     metrics = {
         m.key: m.ok
         for m in compute_metrics([score_case(LAPTOP_CASE, runs[0]), score_case(second, runs[1])])

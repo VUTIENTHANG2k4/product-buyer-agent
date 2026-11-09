@@ -3,7 +3,7 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: 🔄 X1b (nhánh `milestone/X1b-phone-followups`, 2026-11-09): X1.9 ✅ (3 bug QA X1 đã sửa, hết `xfail`) → còn X1.8 (P01 chập chờn, cần `make eval` thật). X1 đã merge vào `main` (qua `code-reviewer` 0 Phải sửa + `qa-tester` 13/16 bug sửa ngay). X2 thực tế đã xong nhờ ADR-0008. Gọi tool thừa ở L10/A04/L02 chưa xử lý (không rớt chỉ số). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env` (X1.7 đã bật false để chạy thật) và xóa thư mục tạm `.scratch_x11/`.
+- Đang làm: 🔄 X1b (nhánh `milestone/X1b-phone-followups`, 2026-11-09): X1.9 ✅ (3 bug QA X1 đã sửa, hết `xfail`), X1.8 ✅ (P01 chập chờn do Gemini đặt hãng vào `spec_filters`; `search_catalog` tự chuyển sang `brands`; P01 ×10 đạt 10/10, eval 34/34) → còn `/check`, `/review X1b`, `qa-tester`, `/done X1b`; X1.10 (agent gọi tool thừa, bịa bộ lọc `has_mic`/danh sách hãng, thiếu tham số từ khóa) ⬜ chờ quyết định. X1 đã merge vào `main` (qua `code-reviewer` 0 Phải sửa + `qa-tester` 13/16 bug sửa ngay). X2 thực tế đã xong nhờ ADR-0008. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env` (X1.7 đã bật false để chạy thật) và xóa thư mục tạm `.scratch_x11/`.
 - Cập nhật lần cuối: 2026-11-09 — X1 (nhóm điện thoại, FPT Shop + Nguyễn Kim)
 
 ## Milestone

@@ -34,7 +34,14 @@ from sqlmodel import Session
 from app.agent.guardrail import GuardrailOutcome
 from app.agent.llm import get_chat_model
 from app.agent.runner import AgentRunner
-from app.agent.schemas import ClarificationEvent, ErrorEvent, FinalEvent, PlanEvent, ToolStartEvent
+from app.agent.schemas import (
+    ClarificationEvent,
+    ErrorEvent,
+    FinalEvent,
+    PlanEvent,
+    ToolEndEvent,
+    ToolStartEvent,
+)
 from app.config import Settings, get_settings
 from app.db.migrations import upgrade_to_head
 from app.domain.clock import utc_now
@@ -111,6 +118,9 @@ async def run_case(
                 run.intent = event.intent.model_dump(mode="json")
             elif isinstance(event, ToolStartEvent):
                 run.tools_called.append(event.tool)
+                run.tool_trace.append(f"{event.tool}({event.args_summary})")
+            elif isinstance(event, ToolEndEvent) and run.tool_trace:
+                run.tool_trace[-1] += f" → {event.summary}"
             elif isinstance(event, ClarificationEvent):
                 run.clarification = event.question
             elif isinstance(event, FinalEvent):
@@ -187,6 +197,8 @@ async def run_all(
             f"{'' if run.latency_s is None else f'{run.latency_s:.1f}s'}"
             + (f" lỗi={run.error_code or run.crashed}" if run.error_code or run.crashed else "")
         )
+        for call in run.tool_trace:
+            report(f"    {call}")
         if pause_s and index < len(cases):
             await asyncio.sleep(pause_s)
     return runs
@@ -196,6 +208,13 @@ def _parse_ids(values: Sequence[str]) -> list[str]:
     return [part for value in values for part in value.replace(",", " ").split()]
 
 
+def repeat_cases(cases: Sequence[EvalCase], times: int) -> list[EvalCase]:
+    """Mỗi câu lặp `times` lần liền nhau (P01, P01, …, rồi câu kế); `times` < 1 là lỗi."""
+    if times < 1:
+        raise ValueError(f"--repeat phải ≥ 1 (nhận {times})")
+    return [case for case in cases for _ in range(times)]
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Eval agent với LLM thật (docs/05 §7).")
     parser.add_argument(
@@ -203,6 +222,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument(
         "--sleep", type=float, default=0.0, help="giây nghỉ giữa hai câu (tránh giới hạn tốc độ)"
+    )
+    parser.add_argument(
+        "--repeat",
+        type=int,
+        default=1,
+        help="chạy mỗi câu N lần liên tiếp để đo độ ổn định (báo cáo có N dòng mỗi câu)",
     )
     parser.add_argument("--output-dir", type=Path, default=REPO_ROOT / "reports")
     parser.add_argument(
@@ -234,7 +259,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         logger.error("Thiếu TEST_DATABASE_URL trong .env (DB test, tên kết thúc _test).")
         return EXIT_SETUP
     try:
-        cases = load_cases(only=_parse_ids(args.cases))
+        cases = repeat_cases(load_cases(only=_parse_ids(args.cases)), args.repeat)
         planner_model = get_chat_model("planner", settings)
         executor_model = get_chat_model("executor", settings)
     except (ValueError, OSError, yaml.YAMLError, AppError) as error:  # YAML hỏng, thiếu khóa API…
