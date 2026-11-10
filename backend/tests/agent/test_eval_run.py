@@ -1,15 +1,26 @@
 """T6.6: harness chạy câu hỏi qua AgentRunner thật (model giả) và chấm điểm."""
 
-from collections.abc import Callable
-from typing import Any
+from collections.abc import AsyncIterator, Callable
+from datetime import date
+from typing import Any, cast
 
+import pytest
 from sqlmodel import Session
 
 from app.agent.guardrail import GuardrailOutcome
+from app.agent.runner import AgentRunner
+from app.agent.schemas import AgentEvent, ToolEndEvent, ToolStartEvent
 from app.agent.testing import tool_call_message
 from app.agent.tools import ToolContext
-from scripts.eval_core import EvalCase, ProductFacts, compute_metrics, score_case
-from scripts.run_eval import make_facts_of, run_all, run_case
+from scripts.eval_core import (
+    CaseRun,
+    EvalCase,
+    ProductFacts,
+    compute_metrics,
+    render_report,
+    score_case,
+)
+from scripts.run_eval import make_facts_of, repeat_cases, run_all, run_case
 from tests.agent.conftest import RunnerParts
 from tests.agent.test_runner import LAPTOP_INTENT, SEARCH, final_call, ids, make_laptops
 
@@ -61,6 +72,109 @@ async def test_run_case_records_intent_tools_products_and_latency(
 
     score = score_case(LAPTOP_CASE, run)
     assert score.passed and (score.products_checked, score.products_satisfying) == (2, 2)
+
+
+async def test_run_case_records_every_tool_call_with_its_arguments_and_result(
+    db_session: Session, tool_ctx: ToolContext, make_runner: Make
+) -> None:
+    products = make_laptops(db_session)
+    parts = make_runner([LAPTOP_INTENT], [SEARCH, final_call(product_ids=ids(products)[:2])])
+    guard, facts_of = wire(parts, tool_ctx)
+
+    run = await run_case(LAPTOP_CASE, parts.runner, guard, facts_of)
+
+    (call,) = run.tool_trace
+    assert call.startswith("search_catalog(category=laptop")
+    assert call.endswith(f"→ Tìm thấy {len(products)} sản phẩm")
+
+
+class _StubHandle:
+    conversation_id = 1
+
+
+class _StubRunner:
+    """Runner giả phát sẵn một chuỗi sự kiện (để thử ghép tool_start/tool_end)."""
+
+    def __init__(self, events: list[AgentEvent]) -> None:
+        self._events = events
+
+    async def start(self, text: str, conversation_id: int | None) -> _StubHandle:
+        return _StubHandle()
+
+    async def stream(self, handle: object, text: str) -> AsyncIterator[AgentEvent]:
+        for event in self._events:
+            yield event
+
+
+async def test_tool_results_are_paired_with_their_call_by_call_id_even_out_of_order() -> None:
+    events: list[AgentEvent] = [
+        ToolStartEvent(call_id="a", tool="search_catalog", args_summary="category=phone"),
+        ToolStartEvent(call_id="b", tool="get_product_detail", args_summary="product_id=7"),
+        ToolEndEvent(
+            call_id="b", tool="get_product_detail", ok=True, summary="chi tiết", duration_ms=1
+        ),
+        ToolEndEvent(
+            call_id="a", tool="search_catalog", ok=True, summary="Tìm thấy 2", duration_ms=1
+        ),
+        ToolEndEvent(call_id="zzz", tool="x", ok=True, summary="không có lời gọi", duration_ms=1),
+    ]
+    runner = cast(AgentRunner, _StubRunner(events))
+
+    run = await run_case(LAPTOP_CASE, runner, [], lambda ids_: [])
+
+    assert run.tool_trace == [
+        "search_catalog(category=phone) → Tìm thấy 2",
+        "get_product_detail(product_id=7) → chi tiết",
+    ]
+
+
+def test_failed_case_report_lists_the_tool_calls_but_a_passing_one_does_not() -> None:
+    trace = ['search_catalog(category=phone, brands=["Samsung"]) → Tìm thấy 0 sản phẩm']
+    failing = CaseRun(tools_called=["search_catalog"], tool_trace=trace)
+    passing = CaseRun(
+        tools_called=["search_catalog"],
+        tool_trace=trace,
+        intent={"category": "laptop", "price_max": 30_000_000},
+        products=[
+            ProductFacts(
+                product_id=1,
+                brand="MockBrand",
+                min_price=20_000_000,
+                sites=frozenset(),
+                specs={"gpu_rank": 40},
+            ),
+            ProductFacts(
+                product_id=2,
+                brand="MockBrand",
+                min_price=21_000_000,
+                sites=frozenset(),
+                specs={"gpu_rank": 40},
+            ),
+        ],
+    )
+
+    def report_of(run: CaseRun) -> str:
+        score = score_case(LAPTOP_CASE, run)
+        return render_report(
+            [score],
+            compute_metrics([score]),
+            today=date(2026, 11, 9),
+            provider="x",
+            model="y",
+            partial=True,
+        )
+
+    assert "- Lần gọi tool 1: `search_catalog(category=phone" in report_of(failing)
+    assert "Lần gọi tool" not in report_of(passing)
+
+
+def test_repeat_cases_repeats_each_case_in_a_row_and_rejects_less_than_one() -> None:
+    other = EvalCase.model_validate({"id": "Q01", "query": "rẻ rẻ", "expect_clarification": True})
+
+    assert [c.id for c in repeat_cases([LAPTOP_CASE, other], 3)] == ["L01"] * 3 + ["Q01"] * 3
+    assert repeat_cases([LAPTOP_CASE], 1) == [LAPTOP_CASE]
+    with pytest.raises(ValueError, match="--repeat"):
+        repeat_cases([LAPTOP_CASE], 0)
 
 
 async def test_run_case_counts_dropped_ids_as_hallucination(
@@ -167,7 +281,10 @@ async def test_run_all_reports_progress_and_keeps_case_order(
     runs = await run_all([LAPTOP_CASE, second], parts.runner, guard, facts_of, report=lines.append)
 
     assert len(runs) == 2
-    assert lines[0].startswith("[1/2] L01 PASS") and lines[1].startswith("[2/2] Q01 PASS")
+    progress = [line for line in lines if line.startswith("[")]
+    assert progress[0].startswith("[1/2] L01 PASS") and progress[1].startswith("[2/2] Q01 PASS")
+    # Mỗi lần gọi tool in thêm một dòng thụt vào ngay sau dòng tiến độ của câu đó.
+    assert lines[1].startswith("    search_catalog(") and "→ Tìm thấy" in lines[1]
     metrics = {
         m.key: m.ok
         for m in compute_metrics([score_case(LAPTOP_CASE, runs[0]), score_case(second, runs[1])])

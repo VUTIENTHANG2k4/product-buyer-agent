@@ -26,6 +26,15 @@ TIER1_CATEGORIES: Final = frozenset(
 SEARCHABLE_SITES: Final = frozenset(
     {SiteKey.gearvn, SiteKey.fptshop, SiteKey.anphat, SiteKey.nguyenkim, SiteKey.mockshop}
 )
+# Nguồn thật sự có dữ liệu theo nhóm (docs/02 §2): điện thoại chỉ có ở FPT Shop và Nguyễn Kim.
+_LAPTOP_AND_ACCESSORY_SOURCES: Final = "GearVN, FPT Shop, An Phát"
+SOURCES_BY_CATEGORY: Final = {
+    Category.laptop: _LAPTOP_AND_ACCESSORY_SOURCES,
+    Category.mouse: _LAPTOP_AND_ACCESSORY_SOURCES,
+    Category.keyboard: _LAPTOP_AND_ACCESSORY_SOURCES,
+    Category.headset: _LAPTOP_AND_ACCESSORY_SOURCES,
+    Category.phone: "FPT Shop, Nguyễn Kim",
+}
 UNSUPPORTED_SITE_WORDS: Final = {
     "shopee": "Shopee",
     "tiki": "Tiki",
@@ -351,7 +360,10 @@ def postprocess_intent(intent: QueryIntent, message: str) -> QueryIntent:
     )
     if unsupported:
         listed = ", ".join(unsupported)
-        note = f"Chưa hỗ trợ {listed}: tìm trên các nguồn hiện có (GearVN, FPT Shop, An Phát)"
+        sources = SOURCES_BY_CATEGORY.get(category) if category is not None else None
+        note = f"Chưa hỗ trợ {listed}: tìm trên các nguồn hiện có" + (
+            f" ({sources})" if sources else ""
+        )
         if not any(label.lower() in step.lower() for step in steps for label in unsupported):
             steps.append(note)
 

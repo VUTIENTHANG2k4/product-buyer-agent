@@ -88,10 +88,27 @@ def _to_float(number: str) -> float:
     return float(number.replace(",", "."))
 
 
+_MINUS_SIGNS = "-−"  # gạch nối và dấu trừ Unicode
+_BEFORE_SIGN = "(:["
+
+
+def is_negative_at(text: str, start: int) -> bool:
+    """Số bắt đầu ở `start` có dấu trừ đứng liền trước không ("-5000 mAh", "Pin: -6.7").
+
+    Gạch nối trong khoảng hay tên ("4000-5000 mAh", "Acer-15.6 inch") không phải dấu trừ: dấu chỉ
+    tính khi đứng đầu chuỗi hoặc sau khoảng trắng / "(" / ":" / "[".
+    """
+    if start < 1 or text[start - 1] not in _MINUS_SIGNS:
+        return False
+    return start == 1 or text[start - 2].isspace() or text[start - 2] in _BEFORE_SIGN
+
+
 def parse_inches(text: str) -> float | None:
-    """Kích thước màn hình theo inch (`15.6"`, `15.6 inch`, `16-inch`)."""
-    match = _INCHES.search(text)
-    return _to_float(match[1]) if match else None
+    """Kích thước màn hình theo inch (`15.6"`, `15.6 inch`, `16-inch`); số âm bị bỏ qua."""
+    for match in _INCHES.finditer(text):
+        if not is_negative_at(text, match.start(1)):
+            return _to_float(match[1])
+    return None
 
 
 def parse_hertz(text: str) -> int | None:

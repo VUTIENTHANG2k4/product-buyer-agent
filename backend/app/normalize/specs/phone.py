@@ -14,6 +14,7 @@ from app.normalize.specs.parsing import (
     build_specs,
     capacities_gb,
     clean,
+    is_negative_at,
     label_values,
     parse_inches,
 )
@@ -105,7 +106,11 @@ def _screen_in(title: str, raw_specs: Mapping[str, str]) -> float | None:
 
 def _battery_mah(title: str, raw_specs: Mapping[str, str]) -> int | None:
     for text in [*label_values(raw_specs, _BATTERY_LABELS), title]:
-        if match := _BATTERY.search(text):
+        # Số âm ("-5000 mAh") không phải dung lượng pin; lấy khớp dương đầu tiên rồi mới kiểm miền.
+        match = next(
+            (m for m in _BATTERY.finditer(text) if not is_negative_at(text, m.start(1))), None
+        )
+        if match is not None:
             value = int(re.sub(r"[.,]", "", match[1]))
             if _MIN_BATTERY_MAH <= value <= _MAX_BATTERY_MAH:
                 return value

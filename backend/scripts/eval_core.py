@@ -102,6 +102,8 @@ class CaseRun:
 
     intent: dict[str, Any] | None = None
     tools_called: list[str] = field(default_factory=list)
+    # Từng lần gọi tool: "search_catalog(category=phone, …) → Tìm thấy 2 sản phẩm" (chẩn đoán X1.8).
+    tool_trace: list[str] = field(default_factory=list)
     products: list[ProductFacts] = field(default_factory=list)
     clarification: str | None = None
     final_text: str | None = None
@@ -390,6 +392,10 @@ def _failure_lines(score: CaseScore) -> list[str]:
             f"- Tool: cần {score.case.expected.tools_required}, "
             f"cấm {score.case.expected.tools_forbidden}, đã gọi {run.tools_called}"
             + (f", lại hỏi lại ({run.clarification!r})" if run.clarification else "")
+        )
+    if lines and run.tool_trace:
+        lines.extend(
+            f"- Lần gọi tool {number}: `{call}`" for number, call in enumerate(run.tool_trace, 1)
         )
     if score.hallucinated:
         lines.append(

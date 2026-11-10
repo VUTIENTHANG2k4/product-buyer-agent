@@ -80,9 +80,9 @@ e2e: ## Playwright E2E (LLM giả)
 	$(call require,frontend/e2e,T8.8)
 	$(FE) npm run e2e
 
-eval: ## Eval agent với LLM thật (CASES="L01 C02", SLEEP=giây nghỉ giữa các câu; tùy chọn)
+eval: ## Eval agent với LLM thật (CASES="L01 C02", SLEEP=giây nghỉ giữa các câu, REPEAT=số lần lặp mỗi câu; tùy chọn)
 	$(call require,backend/scripts/run_eval.py,T6.6)
-	$(BE) uv run python -m scripts.run_eval $(if $(CASES),--cases $(CASES)) $(if $(SLEEP),--sleep $(SLEEP))
+	$(BE) uv run python -m scripts.run_eval $(if $(CASES),--cases $(CASES)) $(if $(SLEEP),--sleep $(SLEEP)) $(if $(REPEAT),--repeat $(REPEAT))
 
 # pytest thoát mã 5 khi không thu thập được test nào: coi là bình thường khi chưa có test live.
 test-live: ## Test với trang thật (thủ công, cần người dùng cho phép)

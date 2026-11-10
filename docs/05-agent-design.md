@@ -45,7 +45,7 @@ Mọi tool: tham số là Pydantic model (sinh JSON schema cho LLM), trả về 
 
 | # | Tool | Tham số | Trả về | Ghi |
 | --- | --- | --- | --- | --- |
-| 1 | `search_catalog` | `category`, `price_min?`, `price_max?`, `brands?`, `sites?`, `spec_filters?`, `sort`, `limit` (≤ 20) | `{total, items: [ProductSummary], stale, data_as_of, applied_filters}` | Chỉ đọc |
+| 1 | `search_catalog` | `category`, `price_min?`, `price_max?`, `brands?`, `sites?`, `spec_filters?` (bộ lọc `brand`/`brands` với `eq`/`in`/`contains`/`contains_any` bị LLM đặt nhầm ở đây được tự chuyển sang `brands`, tối đa 10 hãng, X1.8), `sort`, `limit` (≤ 20) | `{total, items: [ProductSummary], stale, data_as_of, applied_filters}` | Chỉ đọc |
 | 2 | `live_search_other` | `query`, `price_min?`, `price_max?`, `limit_per_site` (≤ 10) | `{items: [{site, title, price, url, scraped_at}], sites_searched, sites_skipped: [{site, reason}], from_cache, label: "unnormalized"}` | Chỉ đọc; chậm. Lọc giá sau khi đọc cache rồi mới cắt `limit_per_site`; bỏ mục không có giá khi có lọc giá. `scraped_at` là lúc tìm thật (không phải lúc đọc cache). `sites_skipped[].reason`: ngoại tuyến, trang chặn (nghỉ 24 giờ), robots.txt không cho phép, không tải được |
 | 3 | `compare_products` | `product_ids` (2–5) | `{products: [ProductFull], differing_fields, cheapest_product_id}` | Chỉ đọc |
 | 4 | `get_product_detail` | `product_id` | `ProductFull` (thông số + mọi offer) | Chỉ đọc |
@@ -71,7 +71,7 @@ Lưu ở `app/agent/prompts/*.md` (không viết chuỗi prompt dài trong code)
 - Nhóm tầng 1: laptop, mouse, keyboard, headset, phone (X1, ADR-0011). Nhóm khác → `tier=2`, `category="other"`.
 - Quy đổi tiền: "30 triệu", "30tr", "30m" → 30000000; "dưới" → `price_max`; "trên" → `price_min`; "tầm 20 triệu" → `price_min=18000000`, `price_max=22000000` (±10%).
 - "RTX 4060 trở lên" → `{field: "gpu_rank", op: "gte", value: <rank của RTX 4060>}`; "RAM 16GB" → `ram_gb gte 16` (không phải eq) trừ khi người dùng nói "đúng".
-- Tên trang người dùng nhắc ("trên GearVN") → `sites`. Trang không hỗ trợ (Shopee, Tiki) → bỏ qua và thêm một bước kế hoạch nói rõ.
+- Tên trang người dùng nhắc ("trên GearVN") → `sites`. Trang không hỗ trợ (Shopee, Tiki) → bỏ qua và thêm một bước kế hoạch nói rõ, kèm nguồn thật sự có dữ liệu của nhóm đang hỏi (`SOURCES_BY_CATEGORY` ở `agent/intent.py`: điện thoại = FPT Shop, Nguyễn Kim; nhóm còn lại = GearVN, FPT Shop, An Phát).
 - Thiếu nhóm sản phẩm và không suy ra được → `needs_clarification=true` + một câu hỏi ngắn.
 - `plan_steps`: 2–5 câu tiếng Việt ngắn, mô tả việc sẽ làm.
 
@@ -154,5 +154,7 @@ Bộ câu hỏi: [docs/eval/queries.yaml](eval/queries.yaml). `make eval` chạy
 Hai lớp kiểm tra:
 - **Test agent trong CI** (`backend/tests/agent/`, chạy trong `make check`): dùng `ScriptedChatModel` phát tool call định sẵn để kiểm tra nối tool, guardrail, sự kiện SSE, giới hạn bước. Không gọi mạng.
 - **Eval với LLM thật** (`make eval`): gọi Gemini trên toàn bộ `queries.yaml`, xuất báo cáo `reports/eval-<ngày>.md` với các chỉ số trên. Cần `GOOGLE_API_KEY`. Chạy thủ công cuối M6, sau mỗi lần sửa prompt, và trước demo. Không chạy trong CI để tránh tốn phí và kết quả dao động.
+
+**Đo độ ổn định (X1.8):** `make eval CASES=P01 REPEAT=10` chạy mỗi câu N lần liền nhau (báo cáo có N dòng/câu và luôn là bản `-partial`, không ghi đè báo cáo đủ); log và báo cáo (với câu rớt) liệt kê từng lần gọi tool kèm tham số và kết quả ("search_catalog(category=phone, …) → Tìm thấy 0 sản phẩm"), ghép theo `call_id`. Chỉ dùng `REPEAT` cho câu chỉ đọc (tìm kiếm) và luôn kèm `CASES`: các lần lặp dùng chung một transaction và seed, câu có thao tác ghi (thêm vào danh sách, tạo cảnh báo) lần sau sẽ thấy trạng thái lần trước.
 
 **Triển khai (T6.6):** `scripts/eval_core.py` (nạp YAML với khóa chặt, chấm điểm, viết báo cáo; có test không cần LLM) và `scripts/run_eval.py` (chạy từng câu qua `AgentRunner`: các lượt `context` trước rồi câu chính trong cùng hội thoại). Cách chấm: *intent accuracy* tính theo trường đã khai báo trong `expected.intent` (danh sách so như tập, không phân biệt hoa/thường); *constraint satisfaction* theo từng sản phẩm trong bảng kết quả (thiếu thông số = không thỏa); *hallucination* tính từ kết quả guardrail TRƯỚC khi lọc (id/link bị loại hoặc `AGENT_HALLUCINATION`), nên đo đúng điều LLM bịa chứ không phải điều người dùng thấy; *tool correctness* đếm cả tool bị guardrail chặn (LLM đã cố gọi) và hỏi lại chỉ là chấp nhận được khi câu chỉ cấm tool; *latency p50* đo từ lúc gửi câu chính đến khi kết thúc, chỉ các câu có câu trả lời. Lỗi LLM/hạn mức (429, 503) là `LLM_UNAVAILABLE` và làm ca đó hỏng: chạy lại bằng `make eval CASES="…"`. `make eval` mặc định giới hạn 12 lần gọi LLM mỗi phút (`LLM_MAX_RPM` hoặc `--rpm`) vì gói miễn phí Gemini chỉ cho ~15 request/phút/model; `SLEEP=giây` thêm nghỉ giữa các câu. Mã thoát 0 khi mọi chỉ số đạt ngưỡng, 1 khi chưa đạt, 2 khi không chạy được (kể cả khi **mọi** ca đều lỗi ngoài dự kiến, khi đó không ghi báo cáo). Chỉ số `Ca lỗi ngoài dự kiến` phải bằng 0: một ca crash không còn bị bỏ qua lặng lẽ (T6.13).
