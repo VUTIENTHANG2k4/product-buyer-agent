@@ -113,14 +113,16 @@ async def run_case(
         started = time.perf_counter()
         handle = await runner.start(case.query, conversation_id)
         product_ids: list[int] = []
+        trace_index: dict[str, int] = {}  # call_id → vị trí trong run.tool_trace
         async for event in runner.stream(handle, case.query):
             if isinstance(event, PlanEvent):
                 run.intent = event.intent.model_dump(mode="json")
             elif isinstance(event, ToolStartEvent):
                 run.tools_called.append(event.tool)
+                trace_index[event.call_id] = len(run.tool_trace)
                 run.tool_trace.append(f"{event.tool}({event.args_summary})")
-            elif isinstance(event, ToolEndEvent) and run.tool_trace:
-                run.tool_trace[-1] += f" → {event.summary}"
+            elif isinstance(event, ToolEndEvent) and event.call_id in trace_index:
+                run.tool_trace[trace_index[event.call_id]] += f" → {event.summary}"
             elif isinstance(event, ClarificationEvent):
                 run.clarification = event.question
             elif isinstance(event, FinalEvent):
@@ -209,7 +211,11 @@ def _parse_ids(values: Sequence[str]) -> list[str]:
 
 
 def repeat_cases(cases: Sequence[EvalCase], times: int) -> list[EvalCase]:
-    """Mỗi câu lặp `times` lần liền nhau (P01, P01, …, rồi câu kế); `times` < 1 là lỗi."""
+    """Mỗi câu lặp `times` lần liền nhau (P01, P01, …, rồi câu kế); `times` < 1 là lỗi.
+
+    Các lần lặp dùng chung một transaction và dữ liệu seed, nên chỉ đo độ ổn định cho câu chỉ đọc
+    (tìm kiếm): câu ghi (thêm vào danh sách, tạo cảnh báo) lần sau thấy trạng thái lần trước để lại.
+    """
     if times < 1:
         raise ValueError(f"--repeat phải ≥ 1 (nhận {times})")
     return [case for case in cases for _ in range(times)]
@@ -322,7 +328,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return EXIT_SETUP
     scores = [score_case(case, run) for case, run in zip(cases, runs, strict=True)]
     metrics = compute_metrics(scores)
-    partial = bool(args.cases)
+    # Lặp câu làm mỗi câu có trọng số N, không còn là bản đủ: đừng ghi đè báo cáo chính.
+    partial = bool(args.cases) or args.repeat > 1
     model = settings.gemini_model if settings.llm_provider == "gemini" else settings.openai_model
     today = date.today()
     text = render_report(

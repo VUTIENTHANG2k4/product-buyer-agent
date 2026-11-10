@@ -315,16 +315,19 @@ _NETWORK_KEYS: Final = frozenset(["5g", "4g", "3g", "lte"])
 def _attach_detached_plus(text: str) -> str:
     """ "S25 + 8GB/256GB" → "S25+ 8GB/256GB": dấu "+" rời là bản Plus của từ liền trước, khác "S25".
 
-    Chỉ dùng cho điện thoại (nhóm khác coi "+" rời là trang trí). Sau dung lượng ("8GB + 256GB")
-    hoặc đứng đầu chuỗi thì không phải hậu tố của tên mẫu nên giữ nguyên để bị bỏ như dấu câu.
+    Chỉ dùng cho điện thoại (nhóm khác coi "+" rời là trang trí). Sau dung lượng ("8GB + 256GB"),
+    sau chuẩn mạng ("A56 5G + 8GB/256GB": "5G+" không phải tên mẫu) hoặc đứng đầu chuỗi thì không
+    phải hậu tố của tên mẫu nên giữ nguyên để bị bỏ như dấu câu.
     """
     words: list[str] = []
     for word in text.split(" "):
+        previous = words[-1].lower() if words else ""
         if (
             word == "+"
-            and words
-            and not words[-1].endswith("+")
-            and not _CAPACITY_KEY.match(words[-1].lower())
+            and previous
+            and not previous.endswith("+")
+            and not _CAPACITY_KEY.match(previous)
+            and previous not in _NETWORK_KEYS
         ):
             words[-1] += "+"
         else:

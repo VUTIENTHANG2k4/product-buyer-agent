@@ -1,13 +1,15 @@
 """T6.6: harness chạy câu hỏi qua AgentRunner thật (model giả) và chấm điểm."""
 
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
 from datetime import date
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from sqlmodel import Session
 
 from app.agent.guardrail import GuardrailOutcome
+from app.agent.runner import AgentRunner
+from app.agent.schemas import AgentEvent, ToolEndEvent, ToolStartEvent
 from app.agent.testing import tool_call_message
 from app.agent.tools import ToolContext
 from scripts.eval_core import (
@@ -84,6 +86,46 @@ async def test_run_case_records_every_tool_call_with_its_arguments_and_result(
     (call,) = run.tool_trace
     assert call.startswith("search_catalog(category=laptop")
     assert call.endswith(f"→ Tìm thấy {len(products)} sản phẩm")
+
+
+class _StubHandle:
+    conversation_id = 1
+
+
+class _StubRunner:
+    """Runner giả phát sẵn một chuỗi sự kiện (để thử ghép tool_start/tool_end)."""
+
+    def __init__(self, events: list[AgentEvent]) -> None:
+        self._events = events
+
+    async def start(self, text: str, conversation_id: int | None) -> _StubHandle:
+        return _StubHandle()
+
+    async def stream(self, handle: object, text: str) -> AsyncIterator[AgentEvent]:
+        for event in self._events:
+            yield event
+
+
+async def test_tool_results_are_paired_with_their_call_by_call_id_even_out_of_order() -> None:
+    events: list[AgentEvent] = [
+        ToolStartEvent(call_id="a", tool="search_catalog", args_summary="category=phone"),
+        ToolStartEvent(call_id="b", tool="get_product_detail", args_summary="product_id=7"),
+        ToolEndEvent(
+            call_id="b", tool="get_product_detail", ok=True, summary="chi tiết", duration_ms=1
+        ),
+        ToolEndEvent(
+            call_id="a", tool="search_catalog", ok=True, summary="Tìm thấy 2", duration_ms=1
+        ),
+        ToolEndEvent(call_id="zzz", tool="x", ok=True, summary="không có lời gọi", duration_ms=1),
+    ]
+    runner = cast(AgentRunner, _StubRunner(events))
+
+    run = await run_case(LAPTOP_CASE, runner, [], lambda ids_: [])
+
+    assert run.tool_trace == [
+        "search_catalog(category=phone) → Tìm thấy 2",
+        "get_product_detail(product_id=7) → chi tiết",
+    ]
 
 
 def test_failed_case_report_lists_the_tool_calls_but_a_passing_one_does_not() -> None:

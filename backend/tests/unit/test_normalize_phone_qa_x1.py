@@ -452,10 +452,22 @@ def test_a_detached_plus_sign_is_the_same_model_as_the_attached_one() -> None:
         ("+ Samsung Galaxy S25 8GB/256GB", "Samsung Galaxy S25 8GB 256GB"),
         ("Samsung Galaxy S25 8GB + 256GB", "Samsung Galaxy S25 8GB 256GB"),
         ("Samsung Galaxy S25 ++ 8GB/256GB", "Samsung Galaxy S25 8GB 256GB"),
+        (
+            "Samsung Galaxy A56 5G + 8GB/256GB",
+            "Samsung Galaxy A56 5G 8GB 256GB",
+        ),  # không phải "5G+"
     ],
 )
 def test_a_plus_sign_that_is_not_a_model_suffix_is_still_dropped(title: str, expected: str) -> None:
     assert canonical_name(title, PHONE) == expected
+
+
+def test_a_plus_sign_after_a_network_standard_does_not_split_the_same_phone() -> None:
+    assert merges("Samsung Galaxy A56 5G 8GB/256GB", "Samsung Galaxy A56 5G + 8GB/256GB")
+
+
+def test_a_trailing_detached_plus_sign_still_makes_the_plus_model() -> None:
+    assert canonical_name("Samsung Galaxy S25 +", PHONE) == "Samsung Galaxy S25+"
 
 
 def test_unknown_brand_phones_are_never_merged_by_name() -> None:
