@@ -3,8 +3,8 @@
 > Claude Code cập nhật file này ở bước `/done` của mỗi milestone (`/done <task>` chỉ sửa dòng "Đang làm"). Giữ **dưới 60 dòng**: chỉ trạng thái hiện tại, không ghi nhật ký dài (lịch sử chi tiết trước 2026-11-01 nằm ở tag `archive/full-history`; `main` được gộp thành 1 commit, sau đó dùng git log như thường).
 > Backlog đầy đủ: [11-roadmap-backlog.md](11-roadmap-backlog.md)
 ## Trạng thái
-- Đang làm: 🔄 X1b (nhánh `milestone/X1b-phone-followups`, 2026-11-09): X1.9 ✅ (3 bug QA X1 đã sửa, hết `xfail`), X1.8 ✅ (P01 chập chờn do Gemini đặt hãng vào `spec_filters`; `search_catalog` tự chuyển sang `brands`; P01 ×10 đạt 10/10, eval 34/34) → còn `/check`, `/review X1b`, `qa-tester`, `/done X1b`; X1.10 (agent gọi tool thừa, bịa bộ lọc `has_mic`/danh sách hãng, thiếu tham số từ khóa) ⬜ chờ quyết định. X1 đã merge vào `main` (qua `code-reviewer` 0 Phải sửa + `qa-tester` 13/16 bug sửa ngay). X2 thực tế đã xong nhờ ADR-0008. Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env` (X1.7 đã bật false để chạy thật) và xóa thư mục tạm `.scratch_x11/`.
-- Cập nhật lần cuối: 2026-11-09 — X1 (nhóm điện thoại, FPT Shop + Nguyễn Kim)
+- Đang làm: – (X1b xong, nhánh `milestone/X1b-phone-followups`: `make check` xanh, qua `code-reviewer` (0 Phải sửa, 3 Nên sửa đã sửa), **bỏ qua `qa-tester`** theo quyết định của người dùng; chờ người dùng merge). Kế tiếp đề xuất: X1.10 (agent bịa bộ lọc `has_mic`/danh sách hãng, `search_catalog` thiếu tham số từ khóa, lần gọi bị chốt chặn hiện ✗ đỏ; chi tiết ở backlog). Người dùng nhớ đặt `GEMINI_MODEL=gemini-3.5-flash-lite` và `SCRAPER_OFFLINE_ONLY=true` trong `.env` (X1.7 đã bật false để chạy thật) và xóa thư mục tạm `.scratch_x11/`.
+- Cập nhật lần cuối: 2026-11-10 — X1b (việc còn lại của nhóm điện thoại: X1.8, X1.9)
 
 ## Milestone
 | Milestone | Trạng thái | Ghi chú |
@@ -13,7 +13,7 @@
 | M1 Dữ liệu | ✅ | Đã qua `qa-tester`; T1.6–T1.8 xong (T1.7, T1.8 ở M3b) |
 | M2 Hạ tầng thu thập | ✅ | Qua `code-reviewer` + `qa-tester`; T2.7 xong ở M3b, còn T2.8 (cùng T7.4) |
 | M3 GearVN | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 4 nhóm `PAGES=1` 80/80 mục parse đúng. M3b (T1.7, T1.8, T3.4, T2.7) qua `code-reviewer`, **bỏ qua `qa-tester`** theo quyết định của người dùng |
-| M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). T4.6 (migration 0003), T4.7, T4.8 xong |
+| M4 FPT Shop + An Phát (thay Hoàng Hà + Laptop88) | ✅ | Qua `code-reviewer` + `qa-tester`; chạy thật 8 lượt `PAGES=1` (194 offer, 100% parse). T4.6 (migration 0003), T4.7, T4.8 xong; **X2** (đổi trang lõi) xong nhờ ADR-0008 |
 | M5 Chuẩn hóa & ghép | ✅ | Qua `code-reviewer` + `qa-tester`; T5.1, T5.2 xong, T5.3 hoãn sang M6. QA còn 8 lỗi nhỏ ghi thành test `xfail(strict)` (T5.4–T5.7) |
 | M6 Agent | ✅ | Gộp T5.3; qua `code-reviewer` + `qa-tester` (10 bug sửa ngay, 7 bug giữ `xfail(strict)` BUG-M6-11…17 → T6.8–T6.13). T6.7 tùy chọn |
 | M7 API | ✅ | Gộp T6.8, T6.9; qua `code-reviewer` (3 Phải sửa đã sửa) + `qa-tester` (4 bug sửa ngay, 3 bug giữ `xfail(strict)` BUG-M7-3, 4, 6b → T7.7, đã sửa hết ở lượt "việc nhỏ" 2 và 5; còn T7.6 từ review). T2.8 chưa làm |
@@ -21,7 +21,7 @@
 | M9 Theo dõi giá | ✅ | Qua `code-reviewer` (4 Phải sửa + 10/11 Nên sửa đã sửa) + `qa-tester` (8 bug sửa ngay, 227 test `*_qa_m9`); T9.1–T9.4 xong, `make demo-up` chạy cả hệ thống bằng Docker ([ADR-0009](adr/0009-mock-shop-compose-host.md)). T9.5–T9.8 xong |
 | M10 Tầng 2 | ✅ | Qua `code-reviewer` (1 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (5 bug sửa ngay, 346 test `*_qa_m10`); tầng 2 thật = GearVN + FPT Shop, Viettel Store/Nguyễn Kim bỏ vì tìm kiếm cần JS ([ADR-0010](adr/0010-tier2-sites-gearvn-fptshop.md)). T10.4 xong (dọn cache, 24 mục, TTL rỗng 1 giờ) |
 | M11 Hoàn thiện | ✅ | Qua `code-reviewer` (2 Phải sửa + các mục Nên sửa đã sửa) + `qa-tester` (1 bug sửa ngay, 27 test `*_qa_m11`); T11.1–T11.3 xong: eval cuối (intent ≥ 96%, ràng buộc ≥ 98%, 0 hallucination; **latency p50 26–31 s chưa đạt**), README/docs theo code, diễn tập demo 7 bước. T11.5: người dùng chấp nhận ngoại lệ latency (2026-10-25). T11.4 (`make demo-price-drop`) xong. Lượt dọn kiến trúc T11.6–T11.8 (2026-10-29): qua `code-reviewer` (1 Phải sửa + Nên sửa đã sửa), bỏ qua `qa-tester`; ranh giới lớp kiểm bằng `test_layer_boundaries.py` (ngoại lệ theo file), `pipeline.py` thành gói 6 module (lớn nhất 402 dòng) |
-| X1 Nhóm điện thoại | ✅ | Gồm X1.1–X1.7; nguồn = FPT Shop + Nguyễn Kim, Viettel Store bỏ vì challenge captcha ([ADR-0011](adr/0011-phone-sources-fptshop-nguyenkim.md)); `PhoneSpecs` + ghép biến thể dung lượng (docs/04 §5.5, §7), `NguyenKimScraper` đọc `__NEXT_DATA__`; chạy thật `PAGES=1` FPT Shop 20/20, Nguyễn Kim 25/25 (0 `BLOCKED`); qua `code-reviewer` + `qa-tester` (348 test `*_qa_x1`/`*.qa-x1`); phát sinh X1.8, X1.9 |
+| X1 Nhóm điện thoại | ✅ | Gồm X1.1–X1.7; nguồn = FPT Shop + Nguyễn Kim, Viettel Store bỏ vì challenge captcha ([ADR-0011](adr/0011-phone-sources-fptshop-nguyenkim.md)); `PhoneSpecs` + ghép biến thể dung lượng (docs/04 §5.5, §7), `NguyenKimScraper` đọc `__NEXT_DATA__`; chạy thật `PAGES=1` FPT Shop 20/20, Nguyễn Kim 25/25 (0 `BLOCKED`); qua `code-reviewer` + `qa-tester` (348 test `*_qa_x1`/`*.qa-x1`); X1b (2026-11-10): X1.9 sửa 3 bug QA X1 (hết `xfail`), X1.8 sửa P01 chập chờn (Gemini đặt hãng vào `spec_filters` → `search_catalog` chuyển sang `brands`, P01 ×10 đạt 10/10; `run_eval --repeat`); qua `code-reviewer` (0 Phải sửa), bỏ qua `qa-tester`; phát sinh X1.10 |
 | X3 Xuất CSV / chia sẻ link | ✅ | Gộp T6.14; qua `code-reviewer` (0 Phải sửa, 3 Nên sửa đã sửa) + `qa-tester` (3 bug BUG-X3-1…3 sửa ngay, 51 test `*_qa_x3`/`*.qa-x3`); mọi ô CSV bọc nháy kép (Excel vùng VN tách theo `;`); link chia sẻ = URL `/lists/:id` (không đăng nhập) |
 
 ## Bị chặn / cần người dùng quyết định: không có
@@ -29,9 +29,9 @@
 ## Kết quả đo mới nhất
 | Chỉ số | Giá trị | Ngày |
 | --- | --- | --- |
-| Coverage backend | 99% (10315 pass, 3 xfail `BUG-X1-5/8/13`, ngưỡng 80% trong `make test-be`, ~15–25 phút) | 2026-11-09 |
+| Coverage backend | 99,22% (10363 pass, 0 xfail, ngưỡng 80% trong `make test-be`, ~14–25 phút) | 2026-11-10 |
 | Test frontend (Vitest + E2E) | 1190 Vitest pass; 12 E2E Playwright xanh (`make e2e`, cần tắt demo Docker vì cổng 8100); chưa đo coverage | 2026-11-09 |
-| Eval (intent accuracy / constraint satisfaction / hallucination) | 2026-11-08 (sau X1, đủ 34 câu): intent 90,8% (L06, L10 rớt do Gemini 503, đạt khi chạy lại), ràng buộc 100%, tool 93,5%, hallucination 0; P01 chập chờn (4/5 lần đạt, X1.8). **Latency p50 15,7 s, vẫn trên 15 s** (ngoại lệ T11.5). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-11-08.md`. Trước đó 2026-11-06: 30/31, intent 100%, p50 15,4 s | 2026-11-08 |
+| Eval (intent accuracy / constraint satisfaction / hallucination) | 2026-11-09 (sau X1.8, đủ 34 câu): 34/34 đạt, intent 100%, ràng buộc 100%, tool 100%, hallucination 0; P01 ×10 đạt 10/10 (trước đó 9/10). **Latency p50 15,2 s, vẫn trên 15 s** (ngoại lệ T11.5). `gemini-3.5-flash-lite`, báo cáo `reports/eval-2026-11-09.md`. Trước đó 2026-11-08: intent 90,8% (L06, L10 rớt do Gemini 503), tool 93,5% | 2026-11-09 |
 
 ## Ghi chú kỹ thuật cần nhớ (ngắn)
 - 2026-10-16: đổi CSDL sang PostgreSQL 17 qua Docker Compose, test trên Postgres thật ([ADR-0007](adr/0007-postgresql.md) thay ADR-0002). Cần `make db-up`.
