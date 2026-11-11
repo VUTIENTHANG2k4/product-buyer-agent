@@ -53,6 +53,18 @@ ALL = READ_ON_REQUEST_TOOLS
         ("lịch sử giá của Legion 5", frozenset({HISTORY})),
         ("giá Legion 5 gần đây có giảm không", frozenset({HISTORY})),
         ("máy thứ hai còn bảo hành bao lâu", ALL),
+        # review X1.10: câu so sánh / chi tiết hay gặp
+        ("Legion 5 hay LOQ tốt hơn?", frozenset({COMPARE})),
+        ("cái nào đáng mua hơn", frozenset({COMPARE})),
+        ("which one is better", frozenset({COMPARE})),
+        ("Legion 5 có mấy cổng USB", frozenset({DETAIL})),
+        ("Legion 5 bán ở shop nào rẻ nhất", frozenset({DETAIL})),
+        # review X1.10: câu tìm kiếm từng khớp nhầm
+        ("laptop cấu hình mạnh dưới 25 triệu", NONE),
+        ("laptop giá dưới 20 triệu tặng chuột", NONE),
+        ("laptop giá rẻ thời gian dùng pin lâu", NONE),
+        ("chuột còn đâu rẻ hơn không", NONE),
+        ("tai nghe hay dưới 1 triệu", NONE),
         # phủ định trước động từ
         ("tai nghe dưới 1 triệu, không cần so sánh", NONE),
         ("đừng xem chi tiết, chỉ cần danh sách", NONE),
@@ -169,3 +181,37 @@ async def test_parallel_searches_in_the_same_step_all_run() -> None:
 
     assert [call["n"] for call in search.calls] == [1, 2]
     assert run.error_codes() == []
+
+
+async def test_search_stays_available_when_the_user_asked_to_compare() -> None:
+    """Review X1.10: "so sánh Asus TUF A15 với Lenovo LOQ 15" có thể tìm lần lượt từng máy."""
+    search = Fake("search_catalog", result=found(1))
+    script = [
+        tool_call_message("search_catalog", {"n": 1}, "c1"),
+        tool_call_message("search_catalog", {"n": 2}, "c2"),
+        final(),
+    ]
+
+    run = await run_loop(script, [search, Fake(COMPARE)], frozenset({DETAIL, HISTORY}))
+
+    assert [call["n"] for call in search.calls] == [1, 2]
+    assert run.error_codes() == []
+
+
+async def test_repeated_skipped_calls_end_the_turn_without_calling_them_failures() -> None:
+    search = Fake("search_catalog", result=found(2))
+    script = [
+        tool_call_message("search_catalog", {"n": 1}, "c1"),
+        tool_call_message("search_catalog", {"n": 2}, "c2"),
+        tool_call_message("search_catalog", {"n": 3}, "c3"),
+        {"text": "Có 2 sản phẩm."},
+    ]
+
+    run = await run_loop(script, [search], frozenset())
+
+    assert run.error_codes() == ["SEARCH_DONE", "SEARCH_DONE"]
+    assert run.outcome.stop_reason == "skipped_calls"
+    assert run.outcome.answer is not None
+    hint = str(run.model.calls[-1][-1].content)  # lời nhắc tổng hợp gửi kèm cuối
+    assert "không nhắc tới các lời gọi đã bị bỏ qua" in hint
+    assert "chưa lấy được" not in hint

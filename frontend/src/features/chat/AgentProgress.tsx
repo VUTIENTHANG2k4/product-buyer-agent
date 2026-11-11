@@ -40,7 +40,10 @@ function ToolRow({ tool }: { tool: ToolStep }) {
         )}
         aria-hidden="true"
       />
-      <span className="sr-only">{strings.chat.toolStatus[tool.status]}: </span>
+      {/* Câu tóm tắt của lời gọi bị bỏ qua đã bắt đầu bằng "Bỏ qua:", không đọc lặp. */}
+      {tool.status === 'skipped' ? null : (
+        <span className="sr-only">{strings.chat.toolStatus[tool.status]}: </span>
+      )}
       <span>{tool.summary || tool.argsSummary}</span>
       {tool.durationMs !== undefined ? (
         <span className="tabular-nums">· {strings.chat.toolDuration(tool.durationMs)}</span>

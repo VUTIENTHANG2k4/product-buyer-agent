@@ -197,3 +197,67 @@ async def test_without_an_intent_the_loop_passes_arguments_through(
     result = json.loads(str(result_message.content))
     assert result["applied_filters"]["brands"] == ["Razer"]
     assert "ignored_filters" not in result
+
+
+@pytest.mark.parametrize("given", ["E-Dra", "Edra", "E Dra", "e-dra"])
+@pytest.mark.parametrize("message", ["tai nghe edra", "tai nghe E-Dra", "tai nghe e dra"])
+def test_brand_spelling_with_or_without_punctuation_is_the_same_brand(
+    given: str, message: str
+) -> None:
+    """Review X1.10: câu "tai nghe edra", LLM gửi "E-Dra" từng bị bỏ hãng."""
+    intent = QueryIntent(category=Category.headset)
+
+    grounded, dropped = ground_search_args({"brands": [given]}, intent, message)
+
+    assert grounded["brands"] == [given] and dropped == []
+
+
+def test_short_brands_are_not_found_inside_joined_words() -> None:
+    intent = QueryIntent(category=Category.headset)
+
+    _, dropped = ground_search_args({"brands": ["HP", "LG"]}, intent, "tai nghe chụp tai lắng nghe")
+
+    assert dropped == ["hãng HP", "hãng LG"]
+
+
+def test_a_gpu_model_filter_counts_as_the_gpu_rank_the_user_asked_for() -> None:
+    intent = QueryIntent(
+        category=Category.laptop,
+        spec_filters=[SpecFilter(field="gpu_rank", op="gte", value=40)],
+    )
+    spec = {"field": "gpu_model", "op": "contains", "value": "RTX 4060"}
+
+    grounded, dropped = ground_search_args({"spec_filters": [spec]}, intent, "laptop rtx 4060")
+
+    assert grounded["spec_filters"] == [spec] and dropped == []
+
+
+def test_is_gaming_is_kept_when_the_intent_has_the_gaming_keyword() -> None:
+    intent = QueryIntent(category=Category.laptop, keywords=["gaming"])
+    spec = {"field": "is_gaming", "op": "eq", "value": True}
+
+    grounded, dropped = ground_search_args({"spec_filters": [spec]}, intent, "laptop gaming")
+
+    assert grounded["spec_filters"] == [spec] and dropped == []
+
+
+def test_a_string_condition_found_in_the_message_is_kept_even_if_the_planner_missed_it() -> None:
+    intent = QueryIntent(category=Category.laptop)
+    specs = [
+        {"field": "cpu_model", "op": "contains", "value": "i7"},
+        {"field": "cpu_model", "op": "contains", "value": "i9"},
+        {"field": "ram_gb", "op": "gte", "value": 32},
+    ]
+
+    grounded, dropped = ground_search_args({"spec_filters": specs}, intent, "laptop core i7")
+
+    assert grounded["spec_filters"] == specs[:1]
+    assert dropped == ["cpu_model contains i9", "ram_gb gte 32"]
+
+
+def test_keyword_spacing_does_not_matter() -> None:
+    intent = QueryIntent(category=Category.headset, keywords=["  noise   cancelling "])
+
+    grounded, _ = ground_search_args({"keywords": ["noise cancelling"]}, intent, "tai nghe")
+
+    assert grounded["keywords"] == ["noise cancelling"]

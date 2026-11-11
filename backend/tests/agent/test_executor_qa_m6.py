@@ -253,7 +253,9 @@ async def test_blocked_write_attempts_twice_end_the_loop_with_a_synthesized_answ
     run = await drive(script, [write], seen_ids={7})
 
     assert write.calls == []
-    assert run.outcome.stop_reason == "tool_failures"
+    # Vẫn dừng sau 2 lần; từ X1.10 nhãn là `skipped_calls` (người dùng không yêu cầu ghi, không
+    # phải lỗi) để lời nhắc tổng hợp không bảo LLM báo "chưa lấy được".
+    assert run.outcome.stop_reason == "skipped_calls"
     assert run.error_codes() == ["WRITE_NOT_REQUESTED"] * 2
 
 

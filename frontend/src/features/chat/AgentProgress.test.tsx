@@ -133,8 +133,8 @@ describe('AgentProgress: lời gọi bị chốt chặn (X1.10)', () => {
     )
     const row = screen.getByText('Bỏ qua: đã đủ số lần gọi trong lượt').closest('li')
     expect(row).not.toBeNull()
-    // nhãn trạng thái cho trình đọc màn hình đứng trước tóm tắt
-    expect(row).toHaveTextContent(/^Bỏ qua: Bỏ qua: đã đủ/)
+    // tóm tắt đã có "Bỏ qua:", không thêm nhãn trạng thái lặp lại cho trình đọc màn hình
+    expect(row).toHaveTextContent(/^Bỏ qua: đã đủ số lần gọi trong lượt/)
     expect(within(row as HTMLElement).queryByText(/^Lỗi/)).toBeNull()
   })
 })

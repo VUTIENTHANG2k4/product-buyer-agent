@@ -38,7 +38,7 @@ _MAX_KEYWORDS = 5
 _MAX_KEYWORD_CHARS = 40
 # Từ khóa đã có trường thông số tương ứng: lọc theo tên sẽ bỏ sót máy không ghi chữ đó trong tên
 # (Lenovo Legion là laptop gaming nhưng tên không có "Gaming"), nên đổi sang bộ lọc thông số.
-_KEYWORD_SPECS: Final[Mapping[tuple[Category, str], SpecFilter]] = MappingProxyType(
+KEYWORD_SPECS: Final[Mapping[tuple[Category, str], SpecFilter]] = MappingProxyType(
     {(Category.laptop, "gaming"): SpecFilter(field="is_gaming", op="eq", value=True)}
 )
 
@@ -111,7 +111,7 @@ class SearchCatalogArgs(BaseModel):
             if not word or key in seen:
                 continue
             seen.add(key)
-            spec = _KEYWORD_SPECS.get((self.category, key))
+            spec = KEYWORD_SPECS.get((self.category, key))
             if spec is None:
                 words.append(word)
             elif all(existing.field != spec.field for existing in self.spec_filters):
