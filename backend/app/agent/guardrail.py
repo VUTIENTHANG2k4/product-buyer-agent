@@ -13,6 +13,7 @@ from typing import Any, Final
 from app.agent.intent import MIN_AMOUNT_VND, extract_amounts
 from app.agent.schemas import MAX_SUGGESTIONS, FinalAnswer, LiveItem
 from app.agent.tools.base import Result, error_result
+from app.domain.dto import QueryIntent
 from app.normalize.text import fold
 
 PRICE_TOLERANCE: Final = 0.01
@@ -101,6 +102,97 @@ def _requested(pattern: re.Pattern[str], folded: str) -> bool:
         if not _NEGATION.search(window):
             return True
     return False
+
+
+# Tên nhóm hàng (đã bỏ dấu): không phải từ khóa lọc tên ("tai nghe" không có trong "HyperX
+# Cloud II"), nhóm đã nằm ở `category`.
+_CATEGORY_WORDS: Final = frozenset(
+    {
+        "laptop",
+        "may tinh",
+        "may tinh xach tay",
+        "chuot",
+        "mouse",
+        "ban phim",
+        "phim",
+        "keyboard",
+        "tai nghe",
+        "headset",
+        "headphone",
+        "dien thoai",
+        "smartphone",
+        "phone",
+    }
+)
+_BRAND_SPEC_FIELDS: Final = frozenset({"brand", "brands"})
+
+
+def _mentioned(word: str, folded_message: str) -> bool:
+    """`word` (đã bỏ dấu) xuất hiện trọn từ trong câu đã bỏ dấu."""
+    return bool(word) and re.search(rf"(?<!\w){re.escape(word)}(?!\w)", folded_message) is not None
+
+
+def ground_search_args(
+    args: Mapping[str, Any], intent: QueryIntent, message: str
+) -> tuple[dict[str, Any], list[str]]:
+    """Bỏ điều kiện `search_catalog` mà người dùng không nêu; trả (tham số mới, điều kiện đã bỏ).
+
+    Hãng/từ khóa được giữ khi có trong ý định của planner hoặc trong câu của người dùng; điều kiện
+    thông số được giữ khi trường của nó có trong ý định (giá trị được đổi để nới lỏng). Hội thoại
+    50 (X1.10): Gemini tự thêm `has_mic=true` rồi danh sách HyperX/Razer/JBL… cho "tai nghe
+    gaming". Tham số sai kiểu được để nguyên cho tool báo `VALIDATION_ERROR`.
+    """
+    folded = " ".join(fold(message).split())
+    intent_brands = {fold(brand) for brand in intent.brands}
+    intent_fields = {spec.field.lower() for spec in intent.spec_filters}
+    intent_words = {fold(word) for word in intent.keywords}
+    grounded = dict(args)
+    dropped: list[str] = []
+
+    def brand_ok(name: object) -> bool:
+        key = fold(str(name))
+        return key in intent_brands or _mentioned(key, folded)
+
+    brands = args.get("brands")
+    if isinstance(brands, list):
+        kept_brands = [brand for brand in brands if brand_ok(brand)]
+        dropped += [f"hãng {brand}" for brand in brands if not brand_ok(brand)]
+        grounded["brands"] = kept_brands
+
+    specs = args.get("spec_filters")
+    if isinstance(specs, list):
+        kept_specs: list[Any] = []
+        for spec in specs:
+            field_name = spec.get("field") if isinstance(spec, dict) else None
+            if not isinstance(field_name, str):
+                kept_specs.append(spec)
+                continue
+            key = field_name.lower()
+            if key in _BRAND_SPEC_FIELDS:  # hãng đặt nhầm chỗ (X1.8): xét như `brands`
+                values = spec.get("value")
+                names = values if isinstance(values, list) else [values]
+                if all(brand_ok(name) for name in names):
+                    kept_specs.append(spec)
+                else:
+                    dropped.append(f"hãng {', '.join(str(name) for name in names)}")
+            elif key in intent_fields:
+                kept_specs.append(spec)
+            else:
+                dropped.append(f"{field_name} {spec.get('op', '')} {spec.get('value', '')}".strip())
+        grounded["spec_filters"] = kept_specs
+
+    words = args.get("keywords")
+    if isinstance(words, list):
+        kept_words: list[Any] = []
+        for word in words:
+            key = " ".join(fold(str(word)).split())
+            useful = key not in _CATEGORY_WORDS and key not in intent_brands
+            if useful and (key in intent_words or _mentioned(key, folded)):
+                kept_words.append(word)
+            else:
+                dropped.append(f"từ khóa {word}")
+        grounded["keywords"] = kept_words
+    return grounded, dropped
 
 
 def check_write_args(

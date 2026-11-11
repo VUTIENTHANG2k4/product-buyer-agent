@@ -201,6 +201,8 @@ class AgentRunner:
             user_amounts=amounts,
             clock=self._clock,
             run_id=handle.run_id,
+            intent=intent,
+            message=message,
         )
         async for tool_event in loop.run(messages, outcome):
             yield tool_event, None

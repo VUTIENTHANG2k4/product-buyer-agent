@@ -19,15 +19,17 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMe
 from langchain_core.tools import BaseTool
 from pydantic import ValidationError
 
-from app.agent.guardrail import Evidence, check_write_args
+from app.agent.guardrail import Evidence, check_write_args, ground_search_args
 from app.agent.schemas import FinalAnswer, ToolEndEvent, ToolStartEvent
 from app.agent.tools import WRITE_TOOLS
 from app.agent.tools.base import Result, error_result
+from app.domain.dto import QueryIntent
 from app.domain.errors import LlmUnavailable
 
 logger = logging.getLogger(__name__)
 
 FINAL_TOOL: Final = FinalAnswer.__name__
+SEARCH_TOOL: Final = "search_catalog"
 MAX_ARGS_SUMMARY: Final = 200
 MAX_CALLS_PER_STEP: Final = 5
 MAX_WRITE_CALLS: Final = 5  # tool ghi tối đa mỗi lượt
@@ -138,6 +140,8 @@ class ToolLoop:
         user_amounts: Collection[int] = frozenset(),
         clock: Callable[[], float] = time.perf_counter,
         run_id: object | None = None,
+        intent: QueryIntent | None = None,
+        message: str = "",
     ) -> None:
         self._tag = "" if run_id is None else f"[run {run_id}] "  # tiền tố log (docs/05 §5)
         self._model = model
@@ -147,6 +151,9 @@ class ToolLoop:
         self._allowed_writes = allowed_writes
         self._user_amounts = user_amounts  # số tiền người dùng nêu, để bắt tham số sai thang
         self._clock = clock
+        # Ý định + câu người dùng: căn cứ để bỏ điều kiện `search_catalog` họ không nêu (X1.10).
+        self._intent = intent
+        self._message = message
 
     async def run(
         self, messages: list[BaseMessage], outcome: LoopOutcome
@@ -236,6 +243,13 @@ class ToolLoop:
         name: str = call["name"]
         call_id = str(call["id"])
         args: dict[str, Any] = dict(call.get("args") or {})
+        ignored: list[str] = []
+        if name == SEARCH_TOOL and self._intent is not None:
+            args, ignored = ground_search_args(args, self._intent, self._message)
+            if ignored:
+                logger.warning(
+                    "%sBỏ điều kiện người dùng không nêu khỏi %s: %s", self._tag, name, ignored
+                )
         outcome.tool_calls += 1
         yield ToolStartEvent(call_id=call_id, tool=name, args_summary=summarize_args(args))
 
@@ -280,6 +294,8 @@ class ToolLoop:
                 outcome.calls_by_tool[name] = outcome.calls_by_tool.get(name, 0) + 1
 
         ok = result.get("ok") is not False
+        if ok and ignored:  # để LLM biết điều kiện đó không được áp dụng, đừng thêm lại
+            result = {**result, "ignored_filters": ignored}
         if ok:
             outcome.evidence.add_result(name, result)
         else:
