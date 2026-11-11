@@ -110,3 +110,31 @@ describe('AgentProgress', () => {
     expect(container).toBeEmptyDOMElement()
   })
 })
+
+describe('AgentProgress: lời gọi bị chốt chặn (X1.10)', () => {
+  it('hiện "Bỏ qua" thay vì "Lỗi" cho trình đọc màn hình', () => {
+    render(
+      <AgentProgress
+        state={state({
+          phase: 'running',
+          steps,
+          tools: [
+            {
+              callId: 'c4',
+              tool: 'search_catalog',
+              argsSummary: 'headset',
+              status: 'skipped',
+              summary: 'Bỏ qua: đã đủ số lần gọi trong lượt',
+              durationMs: 0,
+            },
+          ],
+        })}
+      />,
+    )
+    const row = screen.getByText('Bỏ qua: đã đủ số lần gọi trong lượt').closest('li')
+    expect(row).not.toBeNull()
+    // tóm tắt đã có "Bỏ qua:", không thêm nhãn trạng thái lặp lại cho trình đọc màn hình
+    expect(row).toHaveTextContent(/^Bỏ qua: đã đủ số lần gọi trong lượt/)
+    expect(within(row as HTMLElement).queryByText(/^Lỗi/)).toBeNull()
+  })
+})

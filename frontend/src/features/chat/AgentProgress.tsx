@@ -1,4 +1,4 @@
-import { Bot, Check, ChevronDown, ChevronUp, Circle, Loader2, X } from 'lucide-react'
+import { Bot, Check, ChevronDown, ChevronUp, Circle, Loader2, Minus, X } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { strings } from '@/lib/strings'
@@ -18,14 +18,18 @@ function StepIcon({ state }: { state: 'done' | 'current' | 'pending' }) {
   return <Circle className="size-4 text-muted-foreground" aria-hidden="true" />
 }
 
+const TOOL_ICONS = { running: Loader2, ok: Check, failed: X, skipped: Minus } as const
+const TOOL_COLORS = {
+  running: 'text-primary',
+  ok: 'text-success',
+  failed: 'text-destructive',
+  // Bị chốt chặn (hết số lần gọi, không được hỏi tới): không phải lỗi nên không tô đỏ (X1.10).
+  skipped: 'text-muted-foreground',
+} as const
+
 function ToolRow({ tool }: { tool: ToolStep }) {
-  const Icon = tool.status === 'ok' ? Check : tool.status === 'failed' ? X : Loader2
-  const color =
-    tool.status === 'ok'
-      ? 'text-success'
-      : tool.status === 'failed'
-        ? 'text-destructive'
-        : 'text-primary'
+  const Icon = TOOL_ICONS[tool.status]
+  const color = TOOL_COLORS[tool.status]
   return (
     <li className="flex items-center gap-2 text-xs text-muted-foreground">
       <Icon
@@ -36,7 +40,10 @@ function ToolRow({ tool }: { tool: ToolStep }) {
         )}
         aria-hidden="true"
       />
-      <span className="sr-only">{strings.chat.toolStatus[tool.status]}: </span>
+      {/* Câu tóm tắt của lời gọi bị bỏ qua đã bắt đầu bằng "Bỏ qua:", không đọc lặp. */}
+      {tool.status === 'skipped' ? null : (
+        <span className="sr-only">{strings.chat.toolStatus[tool.status]}: </span>
+      )}
       <span>{tool.summary || tool.argsSummary}</span>
       {tool.durationMs !== undefined ? (
         <span className="tabular-nums">· {strings.chat.toolDuration(tool.durationMs)}</span>

@@ -13,6 +13,8 @@ from typing import Any, Final
 from app.agent.intent import MIN_AMOUNT_VND, extract_amounts
 from app.agent.schemas import MAX_SUGGESTIONS, FinalAnswer, LiveItem
 from app.agent.tools.base import Result, error_result
+from app.agent.tools.search_catalog import KEYWORD_SPECS
+from app.domain.dto import QueryIntent
 from app.normalize.text import fold
 
 PRICE_TOLERANCE: Final = 0.01
@@ -44,6 +46,42 @@ _ALERT: Final = re.compile(
     r"|\bthong bao\b[^.?!]{0,30}\b(khi|neu)\b|\bnotify me\b"
     r"|\b(muon|hay|giup|can)\b[^.?!]{0,15}\btheo doi gia\b"
     r"|\bkhi\b[^.?!]{0,40}\b(xuong|giam|ha)\b[^.?!]{0,30}\b(duoi|thap hon|con)\b"
+)
+# Cụm từ cho thấy người dùng HỎI so sánh / chi tiết / diễn biến giá (đã bỏ dấu). Không khớp thì
+# executor không đưa ba tool đó cho LLM (X1.10: Gemini gọi thêm chúng ở ~70% lượt P01 dù kết quả
+# tìm đã đủ, p50 30 s thay vì 15 s; dặn trong prompt không đổi gì).
+# Tham chiếu một mục của kết quả trước ("cái thứ 3", "máy đầu tiên"). "con" chỉ đi với thứ tự rõ
+# ràng vì "còn đâu", "còn đó" bỏ dấu cũng thành "con dau", "con do" (review X1.10).
+_REFERENCE: Final = (
+    r"\b(cai|may|chiec|san pham|sp)\b ?(thu \d+|thu (nhat|hai|ba|tu|nam)|so \d+"
+    r"|dau( tien)?|cuoi( cung)?|do|nay|kia)\b"
+    r"|\bcon (thu \d+|thu (nhat|hai|ba|tu|nam)|so \d+|dau tien|cuoi cung|nay|kia)\b"
+)
+_COMPARE: Final = re.compile(
+    r"\bso (sanh|voi)\b|\bkhac (nhau|gi|biet)\b|\bvs\b|\bversus\b|\bcompare\b"
+    r"|\b(nen|chon|lay|mua) (cai|may|con|chiec) nao\b"
+    r"|\b(cai|may|con|chiec) nao\b[^.?!]{0,30}\b(tot|hon|ngon)\b"
+    r"|\bhay\b[^.?!]{0,40}\b(tot hon|ngon hon|dang mua hon|hon)\b"
+    r"|\bhon (cai|may|con|chiec)\b|\bdiem (manh|yeu)\b|\buu nhuoc\b"
+    r"|\bwhich (one )?(is )?(better|best)\b|\bbetter than\b"
+)
+# "cấu hình" / "thông số" đứng một mình là cách nói tìm kiếm ("laptop cấu hình mạnh"): chỉ mở
+# chi tiết khi đi kèm từ hỏi hoặc tham chiếu.
+_DETAIL: Final = re.compile(
+    r"\bchi tiet\b|\bspecs?\b|\bdetails?\b|\bbao hanh\b|\bmo ta\b|\bxem (them|ky)\b"
+    r"|\b(cau hinh|thong so)\b[^.?!]{0,30}\b(the nao|ra sao|gi|nao|day du)\b"
+    r"|\b(xem|cho xem|cho biet)\b[^.?!]{0,10}\b(cau hinh|thong so)\b"
+    r"|\bco (may|bao nhieu)\b|\b(shop|trang|cho|noi) nao\b|" + _REFERENCE
+)
+# "tặng" bỏ dấu thành "tang": chỉ coi là diễn biến giá khi tăng/giảm đứng sát chữ "giá".
+_HISTORY: Final = re.compile(
+    r"\blich su gia\b|\bprice history\b|\bbien dong\b"
+    r"|\b(tang|giam|ha|len|xuong) gia\b|\bgia (co |da |se |dang |vua )?(tang|giam|ha|len|xuong)\b"
+    r"|\bgia\b[^.?!]{0,30}\b(dao nay|gan day|thay doi|the nao|ra sao|truoc (day|kia)"
+    r"|len xuong|con on|on dinh)\b"
+)
+READ_ON_REQUEST_TOOLS: Final = frozenset(
+    {"compare_products", "get_product_detail", "get_price_history"}
 )
 # Từ phủ định đứng ngay trước động từ yêu cầu ("đừng thêm …", "không cần đặt cảnh báo", "khỏi
 # thêm", "không nghĩ nên thêm"): cụm đó là lời từ chối, không phải yêu cầu. Chỉ xét trong cùng
@@ -83,6 +121,25 @@ def allowed_write_tools(message: str) -> frozenset[str]:
     return frozenset(allowed)
 
 
+def allowed_read_tools(message: str) -> frozenset[str]:
+    """Tool trong `READ_ON_REQUEST_TOOLS` mà câu của người dùng hỏi tới (rỗng nếu chỉ tìm kiếm).
+
+    Câu tham chiếu kết quả trước ("cái thứ 3", "máy đầu tiên") mở cả ba, vì câu kiểu "cái đầu
+    tiên giá dạo này thế nào" có thể cần chi tiết lẫn lịch sử giá.
+    """
+    folded = " ".join(fold(message).split())
+    allowed: set[str] = set()
+    if _requested(_COMPARE, folded):
+        allowed.add("compare_products")
+    if _requested(_DETAIL, folded):
+        allowed.add("get_product_detail")
+    if _requested(_HISTORY, folded):
+        allowed.add("get_price_history")
+    if re.search(_REFERENCE, folded):
+        allowed |= READ_ON_REQUEST_TOOLS
+    return frozenset(allowed)
+
+
 def _requested(pattern: re.Pattern[str], folded: str) -> bool:
     """Có cụm yêu cầu khớp `pattern` mà không bị từ phủ định đứng ngay trước trong cùng câu."""
     for match in pattern.finditer(folded):
@@ -101,6 +158,133 @@ def _requested(pattern: re.Pattern[str], folded: str) -> bool:
         if not _NEGATION.search(window):
             return True
     return False
+
+
+# Tên nhóm hàng (đã bỏ dấu): không phải từ khóa lọc tên ("tai nghe" không có trong "HyperX
+# Cloud II"), nhóm đã nằm ở `category`.
+_CATEGORY_WORDS: Final = frozenset(
+    {
+        "laptop",
+        "may tinh",
+        "may tinh xach tay",
+        "chuot",
+        "mouse",
+        "ban phim",
+        "phim",
+        "keyboard",
+        "tai nghe",
+        "headset",
+        "headphone",
+        "dien thoai",
+        "smartphone",
+        "phone",
+    }
+)
+_BRAND_SPEC_FIELDS: Final = frozenset({"brand", "brands"})
+# Trường cùng ý: ý định có `gpu_rank` mà LLM lọc theo `gpu_model` ("RTX 4060") vẫn là điều kiện
+# của người dùng (review X1.10).
+_SAME_MEANING_FIELDS: Final[Mapping[str, frozenset[str]]] = {
+    "gpu_rank": frozenset({"gpu_model"}),
+    "gpu_model": frozenset({"gpu_rank"}),
+}
+
+
+def _brand_key(name: object) -> str:
+    """Tên hãng chỉ còn chữ và số, không dấu: "E-Dra", "Edra", "E Dra" là một."""
+    return re.sub(r"[^a-z0-9]", "", fold(str(name)))
+
+
+def _values_mentioned(value: object, folded_message: str) -> bool:
+    """Giá trị chuỗi (hoặc danh sách chuỗi) của điều kiện đều có trong câu người dùng."""
+    values = value if isinstance(value, list) else [value]
+    texts = [" ".join(fold(item).split()) for item in values if isinstance(item, str)]
+    return len(texts) == len(values) > 0 and all(_mentioned(t, folded_message) for t in texts)
+
+
+def _mentioned(word: str, folded_message: str) -> bool:
+    """`word` (đã bỏ dấu) xuất hiện trọn từ trong câu đã bỏ dấu."""
+    return bool(word) and re.search(rf"(?<!\w){re.escape(word)}(?!\w)", folded_message) is not None
+
+
+def ground_search_args(
+    args: Mapping[str, Any], intent: QueryIntent, message: str
+) -> tuple[dict[str, Any], list[str]]:
+    """Bỏ điều kiện `search_catalog` mà người dùng không nêu; trả (tham số mới, điều kiện đã bỏ).
+
+    Hãng/từ khóa được giữ khi có trong ý định của planner hoặc trong câu của người dùng; điều kiện
+    thông số được giữ khi trường của nó (hoặc trường cùng ý, hoặc trường mà từ khóa của ý định đổi
+    thành như "gaming" → `is_gaming`) có trong ý định, giá trị được đổi để nới lỏng; hoặc khi giá
+    trị chuỗi của nó có trong câu (planner bỏ sót "RTX 4060"). Hội thoại
+    50 (X1.10): Gemini tự thêm `has_mic=true` rồi danh sách HyperX/Razer/JBL… cho "tai nghe
+    gaming". Tham số sai kiểu được để nguyên cho tool báo `VALIDATION_ERROR`.
+    """
+    folded = " ".join(fold(message).split())
+    folded_compact = re.sub(r"[^a-z0-9]", "", folded)
+    intent_brands = {_brand_key(brand) for brand in intent.brands}
+    intent_words = {" ".join(fold(word).split()) for word in intent.keywords}
+    intent_fields = {spec.field.lower() for spec in intent.spec_filters}
+    intent_fields |= {
+        same for field in tuple(intent_fields) for same in _SAME_MEANING_FIELDS.get(field, ())
+    }
+    if intent.category is not None:
+        intent_fields |= {
+            spec.field
+            for (category, word), spec in KEYWORD_SPECS.items()
+            if category == intent.category and word in intent_words
+        }
+    grounded = dict(args)
+    dropped: list[str] = []
+
+    def brand_ok(name: object) -> bool:
+        key = _brand_key(name)
+        # Dạng chỉ chữ-số ("edra" trong "tai nghe e dra") chỉ dùng cho tên từ 4 ký tự: "hp", "lg"
+        # dễ khớp nhầm khi nối liền các từ.
+        return bool(key) and (
+            key in intent_brands
+            or _mentioned(fold(str(name)), folded)
+            or (len(key) >= 4 and key in folded_compact)
+        )
+
+    brands = args.get("brands")
+    if isinstance(brands, list):
+        kept_brands = [brand for brand in brands if brand_ok(brand)]
+        dropped += [f"hãng {brand}" for brand in brands if not brand_ok(brand)]
+        grounded["brands"] = kept_brands
+
+    specs = args.get("spec_filters")
+    if isinstance(specs, list):
+        kept_specs: list[Any] = []
+        for spec in specs:
+            field_name = spec.get("field") if isinstance(spec, dict) else None
+            if not isinstance(field_name, str):
+                kept_specs.append(spec)
+                continue
+            key = field_name.lower()
+            if key in _BRAND_SPEC_FIELDS:  # hãng đặt nhầm chỗ (X1.8): xét như `brands`
+                values = spec.get("value")
+                names = values if isinstance(values, list) else [values]
+                if all(brand_ok(name) for name in names):
+                    kept_specs.append(spec)
+                else:
+                    dropped.append(f"hãng {', '.join(str(name) for name in names)}")
+            elif key in intent_fields or _values_mentioned(spec.get("value"), folded):
+                kept_specs.append(spec)
+            else:
+                dropped.append(f"{field_name} {spec.get('op', '')} {spec.get('value', '')}".strip())
+        grounded["spec_filters"] = kept_specs
+
+    words = args.get("keywords")
+    if isinstance(words, list):
+        kept_words: list[Any] = []
+        for word in words:
+            key = " ".join(fold(str(word)).split())
+            useful = key not in _CATEGORY_WORDS and _brand_key(key) not in intent_brands
+            if useful and (key in intent_words or _mentioned(key, folded)):
+                kept_words.append(word)
+            else:
+                dropped.append(f"từ khóa {word}")
+        grounded["keywords"] = kept_words
+    return grounded, dropped
 
 
 def check_write_args(

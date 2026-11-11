@@ -245,5 +245,7 @@ describe('ResultsTable · key_specs bị xáo trộn, cả 5 nhóm (QA X1)', () 
     const body = bodyRows()
     expect(body).toHaveLength(300)
     expect(specLines(body[299]!)).toEqual(phone.shown)
-  })
+    // Dựng 300 hàng mất ~5,9 s khi chạy riêng, vượt trần mặc định 5 s khi cả bộ chạy song song
+    // (`make test-fe`, 2026-11-12): trần riêng cho ca nặng này, không đổi khẳng định.
+  }, 30_000)
 })

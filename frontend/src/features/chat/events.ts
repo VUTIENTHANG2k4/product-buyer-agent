@@ -17,6 +17,8 @@ export type AgentEvent =
       callId: string
       tool: string
       ok: boolean
+      /** Lời gọi bị chốt chặn (không chạy tool), không phải lỗi; hiển thị trung tính. */
+      skipped?: boolean
       summary: string
       durationMs: number
     }
@@ -67,6 +69,7 @@ export function parseAgentEvent(name: string, raw: string): AgentEvent | null {
         callId: data.call_id,
         tool: data.tool,
         ok: data.ok !== false,
+        skipped: data.skipped === true,
         summary: typeof data.summary === 'string' ? data.summary : '',
         durationMs: typeof data.duration_ms === 'number' ? data.duration_ms : 0,
       }

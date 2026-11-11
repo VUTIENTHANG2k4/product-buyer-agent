@@ -1,6 +1,8 @@
 """Tool `search_catalog`: tìm sản phẩm trong danh mục đã thu thập (docs/05 §3, tool 1)."""
 
-from typing import Literal, Self
+from collections.abc import Mapping
+from types import MappingProxyType
+from typing import Final, Literal, Self
 
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field, model_validator
@@ -23,7 +25,7 @@ from app.services.catalog_service import CatalogService
 NAME = "search_catalog"
 DESCRIPTION = (
     "Search the already-collected catalog of laptops, mice, keyboards, headsets and phones "
-    "(tier 1 only) with price, brand, site and spec filters. Use for any shopping "
+    "(tier 1 only) with price, brand, site, spec and keyword filters. Use for any shopping "
     "request in these five categories. Do NOT use for other product types "
     "(use live_search_other) and never invent products that are not returned."
 )
@@ -32,6 +34,13 @@ DESCRIPTION = (
 _BRAND_FIELDS = frozenset({"brand", "brands"})
 _SELECT_OPS = frozenset({"eq", "in", "contains", "contains_any"})
 _MAX_BRANDS = 10
+_MAX_KEYWORDS = 5
+_MAX_KEYWORD_CHARS = 40
+# Từ khóa đã có trường thông số tương ứng: lọc theo tên sẽ bỏ sót máy không ghi chữ đó trong tên
+# (Lenovo Legion là laptop gaming nhưng tên không có "Gaming"), nên đổi sang bộ lọc thông số.
+KEYWORD_SPECS: Final[Mapping[tuple[Category, str], SpecFilter]] = MappingProxyType(
+    {(Category.laptop, "gaming"): SpecFilter(field="is_gaming", op="eq", value=True)}
+)
 
 
 class SearchCatalogArgs(BaseModel):
@@ -50,6 +59,14 @@ class SearchCatalogArgs(BaseModel):
         description=(
             "Spec conditions, e.g. field=gpu_rank op=gte value=40. Spec fields only: put brands "
             "in `brands`, sites in `sites` and prices in price_min/price_max, never here."
+        ),
+    )
+    keywords: list[str] = Field(
+        default_factory=list,
+        max_length=_MAX_KEYWORDS,
+        description=(
+            "Words that must appear in the product name, e.g. ['gaming'] for 'tai nghe gaming'. "
+            "Only features with no spec field; never the category, a brand, a price or a site."
         ),
     )
     sort: Literal["relevance", "price_asc", "price_desc", "rating_desc"] = Field(
@@ -80,6 +97,28 @@ class SearchCatalogArgs(BaseModel):
         self.brands, self.spec_filters = brands[:_MAX_BRANDS], kept
         return self
 
+    @model_validator(mode="after")
+    def _keywords_are_clean(self) -> Self:
+        """Bỏ khoảng trắng thừa, mục rỗng và mục trùng; từ khóa có trường thông số thì đổi sang
+        bộ lọc thông số (laptop "gaming" → `is_gaming`)."""
+        words: list[str] = []
+        seen: set[str] = set()
+        for raw in self.keywords:
+            word = " ".join(raw.split())
+            if len(word) > _MAX_KEYWORD_CHARS:
+                raise ValueError(f"keyword longer than {_MAX_KEYWORD_CHARS} characters")
+            key = word.casefold()
+            if not word or key in seen:
+                continue
+            seen.add(key)
+            spec = KEYWORD_SPECS.get((self.category, key))
+            if spec is None:
+                words.append(word)
+            elif all(existing.field != spec.field for existing in self.spec_filters):
+                self.spec_filters = [*self.spec_filters, spec]
+        self.keywords = words
+        return self
+
 
 def compact_summary(item: ProductSummary) -> dict[str, object]:
     best = item.best_offer
@@ -106,6 +145,7 @@ async def handler(ctx: ToolContext, args: SearchCatalogArgs) -> Result:
     def work(session: Session) -> Result:
         filters = CatalogFilters(
             category=args.category,
+            q=" ".join(args.keywords) or None,
             price_min=args.price_min,
             price_max=args.price_max,
             brands=args.brands,
@@ -114,7 +154,11 @@ async def handler(ctx: ToolContext, args: SearchCatalogArgs) -> Result:
             sort=args.sort,
             limit=args.limit,
         )
-        found = CatalogService(session, now=ctx.now).search(filters)
+        service = CatalogService(session, now=ctx.now)
+        found = service.search(filters)
+        relaxed = found.total == 0 and filters.q is not None
+        if relaxed:  # từ khóa làm rỗng: bỏ từ khóa, giữ mọi điều kiện khác (quyết định X1.10)
+            found = service.search(filters.model_copy(update={"q": None}))
         result: Result = {
             "ok": True,
             "total": found.total,
@@ -123,6 +167,9 @@ async def handler(ctx: ToolContext, args: SearchCatalogArgs) -> Result:
             "data_as_of": iso(found.data_as_of),
             "applied_filters": found.applied_filters,
         }
+        if relaxed:
+            result["keywords_relaxed"] = True
+            result["ignored_keywords"] = list(args.keywords)
         return limit_size(result, ("items",))
 
     return await run_in_session(ctx, work)

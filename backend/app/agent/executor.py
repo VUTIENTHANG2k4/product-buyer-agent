@@ -19,15 +19,18 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMe
 from langchain_core.tools import BaseTool
 from pydantic import ValidationError
 
-from app.agent.guardrail import Evidence, check_write_args
+from app.agent.guardrail import Evidence, check_write_args, ground_search_args
 from app.agent.schemas import FinalAnswer, ToolEndEvent, ToolStartEvent
 from app.agent.tools import WRITE_TOOLS
 from app.agent.tools.base import Result, error_result
+from app.domain.dto import QueryIntent
 from app.domain.errors import LlmUnavailable
 
 logger = logging.getLogger(__name__)
 
 FINAL_TOOL: Final = FinalAnswer.__name__
+SEARCH_TOOL: Final = "search_catalog"
+COMPARE_TOOL: Final = "compare_products"
 MAX_ARGS_SUMMARY: Final = 200
 MAX_CALLS_PER_STEP: Final = 5
 MAX_WRITE_CALLS: Final = 5  # tool ghi tối đa mỗi lượt
@@ -40,13 +43,33 @@ TOOL_CALL_CAPS: Final[Mapping[str, int]] = MappingProxyType(
     {"live_search_other": 2, "search_catalog": 3}
 )
 
-StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures"]
+# Mã lỗi của lời gọi bị chốt chặn (tool không chạy): báo `skipped` cho giao diện, không phải lỗi.
+SKIPPED_REASONS: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "TOOL_CALL_LIMIT": "đã đủ số lần gọi trong lượt",
+        "TOOL_NOT_REQUESTED": "người dùng không hỏi tới",
+        "SEARCH_DONE": "đã có kết quả tìm",
+        "WRITE_NOT_REQUESTED": "người dùng chưa yêu cầu rõ ràng",
+    }
+)
+
+# Lời gọi người dùng không cần (khác hết trần `TOOL_CALL_LIMIT`, khi LLM còn thiếu dữ liệu): dừng
+# vì chúng thì lời nhắc tổng hợp không nói "chưa lấy được".
+UNNEEDED_CALLS: Final = frozenset({"SEARCH_DONE", "TOOL_NOT_REQUESTED", "WRITE_NOT_REQUESTED"})
+
+StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures", "skipped_calls"]
 
 _SYNTHESIS_HINTS: Final = {
     "text_fallback": "Hãy trả lời bằng FinalAnswer dựa trên kết quả tool ở trên.",
     "step_limit": (
         "Đã hết số bước cho phép. Hãy tổng hợp FinalAnswer từ những kết quả tool đã có, "
         "không gọi thêm tool và không bịa thêm."
+    ),
+    # Lời gọi bị chốt chặn lặp lại không phải lỗi: đừng để LLM báo "chưa lấy được" thứ người dùng
+    # không hỏi (review X1.10).
+    "skipped_calls": (
+        "Đã đủ dữ liệu cho câu hỏi. Hãy tổng hợp FinalAnswer từ những kết quả tool đã có, "
+        "không gọi thêm tool và không nhắc tới các lời gọi đã bị bỏ qua."
     ),
     "tool_failures": (
         "Một tool liên tục lỗi hoặc đã hết số lần gọi cho phép trong lượt. Hãy tổng hợp "
@@ -87,7 +110,8 @@ def summarize_result(tool: str, result: Result) -> str:
     if result.get("ok") is False:
         return str(result.get("message", "Tool lỗi"))
     if tool == "search_catalog":
-        return f"Tìm thấy {result.get('total', 0)} sản phẩm"
+        note = " (đã bỏ từ khóa vì không có kết quả)" if result.get("keywords_relaxed") else ""
+        return f"Tìm thấy {result.get('total', 0)} sản phẩm{note}"
     if tool == "live_search_other":
         if result.get("reason"):
             return str(result["reason"]).capitalize()
@@ -137,15 +161,36 @@ class ToolLoop:
         user_amounts: Collection[int] = frozenset(),
         clock: Callable[[], float] = time.perf_counter,
         run_id: object | None = None,
+        intent: QueryIntent | None = None,
+        message: str = "",
+        hidden_tools: frozenset[str] = frozenset(),
     ) -> None:
         self._tag = "" if run_id is None else f"[run {run_id}] "  # tiền tố log (docs/05 §5)
         self._model = model
         self._tools = {tool.name: tool for tool in tools}
-        self._bound = model.bind_tools([*tools, FinalAnswer])
+        # Tool ẩn không được đưa cho LLM (X1.10: tool đọc người dùng không hỏi tới), nên LLM không
+        # tốn một lượt gọi chúng; gọi tên đoán mò vẫn bị chặn ở `_run_tool`.
+        self._all_tools = list(tools)
+        self._hidden = hidden_tools
+        self._bound = self._bind()
+        # Đã có lần `search_catalog` ra ≥ 1 sản phẩm: từ bước LLM sau, không đưa tool tìm nữa
+        # (X1.10: eval A04 tìm 3 lần cùng điều kiện, lần nào cũng 1 sản phẩm). Kết quả rỗng vẫn cho
+        # tìm lại để nới điều kiện; lời gọi song song cùng bước (chuột và bàn phím) vẫn chạy hết.
+        self._search_found = False
+        self._search_locked = False
+        self._skips: dict[str, int] = {}  # lời gọi bị bỏ qua theo tool (phần của bộ đếm lỗi)
         self._max_steps = max_steps
         self._allowed_writes = allowed_writes
         self._user_amounts = user_amounts  # số tiền người dùng nêu, để bắt tham số sai thang
         self._clock = clock
+        # Ý định + câu người dùng: căn cứ để bỏ điều kiện `search_catalog` họ không nêu (X1.10).
+        self._intent = intent
+        self._message = message
+
+    def _bind(self) -> Any:
+        return self._model.bind_tools(
+            [*(tool for tool in self._all_tools if tool.name not in self._hidden), FinalAnswer]
+        )
 
     async def run(
         self, messages: list[BaseMessage], outcome: LoopOutcome
@@ -183,6 +228,12 @@ class ToolLoop:
             for call in real[:MAX_CALLS_PER_STEP]:
                 async for event in self._run_tool(call, messages, outcome, failures):
                     yield event
+            # Người dùng hỏi so sánh thì có thể cần tìm lần lượt từng máy: không khóa tìm kiếm.
+            compare_wanted = COMPARE_TOOL in self._tools and COMPARE_TOOL not in self._hidden
+            if self._search_found and not self._search_locked and not compare_wanted:
+                self._search_locked = True
+                self._hidden = self._hidden | {SEARCH_TOOL}
+                self._bound = self._bind()
             for call in real[MAX_CALLS_PER_STEP:]:  # LLM đòi quá nhiều tool trong một bước
                 messages.append(
                     _tool_message(
@@ -216,9 +267,13 @@ class ToolLoop:
                     continue
                 outcome.stop_reason = "final"
                 return
-            if any(count >= TOOL_FAILURE_LIMIT for count in failures.values()):
-                outcome.stop_reason = "tool_failures"
-                outcome.answer = await self._synthesize(messages, "tool_failures")
+            reached = [name for name, count in failures.items() if count >= TOOL_FAILURE_LIMIT]
+            if reached:
+                # Dừng như cũ (lỗi và lời gọi bị bỏ qua cùng tính); chỉ khi mọi lần tính vào trần
+                # đều là bị bỏ qua thì lời nhắc tổng hợp không nói tới "chưa lấy được".
+                only_skips = all(self._skips.get(name, 0) >= failures[name] for name in reached)
+                outcome.stop_reason = "skipped_calls" if only_skips else "tool_failures"
+                outcome.answer = await self._synthesize(messages, outcome.stop_reason)
                 return
 
         outcome.stop_reason = "step_limit"
@@ -235,6 +290,13 @@ class ToolLoop:
         name: str = call["name"]
         call_id = str(call["id"])
         args: dict[str, Any] = dict(call.get("args") or {})
+        ignored: list[str] = []
+        if name == SEARCH_TOOL and self._intent is not None:
+            args, ignored = ground_search_args(args, self._intent, self._message)
+            if ignored:
+                logger.warning(
+                    "%sBỏ điều kiện người dùng không nêu khỏi %s: %s", self._tag, name, ignored
+                )
         outcome.tool_calls += 1
         yield ToolStartEvent(call_id=call_id, tool=name, args_summary=summarize_args(args))
 
@@ -242,6 +304,16 @@ class ToolLoop:
         tool = self._tools.get(name)
         if tool is None:
             result = error_result("UNKNOWN_TOOL", f"Không có tool {name[:40]}")
+        elif name == SEARCH_TOOL and self._search_locked:
+            result = error_result(
+                "SEARCH_DONE",
+                "Đã có kết quả tìm kiếm; hãy trả lời bằng FinalAnswer từ kết quả đó",
+            )
+        elif name in self._hidden:
+            result = error_result(
+                "TOOL_NOT_REQUESTED",
+                "Người dùng không hỏi tới thao tác này; hãy trả lời từ kết quả đã có",
+            )
         elif name in WRITE_TOOLS and name not in self._allowed_writes:
             logger.warning("%sChặn tool ghi %s: người dùng chưa yêu cầu rõ ràng", self._tag, name)
             result = error_result(
@@ -279,16 +351,24 @@ class ToolLoop:
                 outcome.calls_by_tool[name] = outcome.calls_by_tool.get(name, 0) + 1
 
         ok = result.get("ok") is not False
+        if ok and name == SEARCH_TOOL and int(result.get("total") or 0) > 0:
+            self._search_found = True
+        if ok and ignored:  # để LLM biết điều kiện đó không được áp dụng, đừng thêm lại
+            result = {**result, "ignored_filters": ignored}
+        skipped = SKIPPED_REASONS.get(str(result.get("error")))
         if ok:
             outcome.evidence.add_result(name, result)
         else:
             failures[name] = failures.get(name, 0) + 1
+            if result.get("error") in UNNEEDED_CALLS:
+                self._skips[name] = self._skips.get(name, 0) + 1
         messages.append(_tool_message({"id": call_id, "name": name}, result))
         yield ToolEndEvent(
             call_id=call_id,
             tool=name,
             ok=ok,
-            summary=summarize_result(name, result),
+            summary=f"Bỏ qua: {skipped}" if skipped else summarize_result(name, result),
+            skipped=skipped is not None,
             duration_ms=max(0, round((self._clock() - started) * 1000)),
         )
 

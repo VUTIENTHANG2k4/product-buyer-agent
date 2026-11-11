@@ -94,6 +94,9 @@ class ToolEndEvent(AgentEvent):
     ok: bool
     summary: str
     duration_ms: int
+    # Lời gọi bị chốt chặn (hết số lần, không được hỏi tới): không chạy tool, không phải lỗi;
+    # giao diện hiển thị trung tính thay vì ✗ đỏ (X1.10). Luôn đi kèm `ok=false`.
+    skipped: bool = False
 
 
 class FinalEvent(AgentEvent):

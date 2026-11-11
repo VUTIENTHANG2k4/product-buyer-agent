@@ -131,7 +131,7 @@ event: tool_start
 data: {"call_id":"c1","tool":"search_catalog","args_summary":"laptop, ≤ 30.000.000 ₫, GPU ≥ RTX 4060"}
 
 event: tool_end
-data: {"call_id":"c1","tool":"search_catalog","ok":true,"summary":"Tìm thấy 7 sản phẩm","duration_ms":84}
+data: {"call_id":"c1","tool":"search_catalog","ok":true,"summary":"Tìm thấy 7 sản phẩm","duration_ms":84,"skipped":false}
 
 event: final
 data: {"text":"Có 7 laptop phù hợp…","table":[…],"live_items":[],"suggestions":["So sánh 2 máy rẻ nhất","Đặt cảnh báo giá"],"data_as_of":"2026-10-16T02:00:00Z"}

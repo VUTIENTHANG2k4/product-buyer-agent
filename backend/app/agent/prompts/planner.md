@@ -24,6 +24,7 @@ Bạn là bộ lập kế hoạch của trợ lý mua sắm đồ công nghệ �
 - Chỉ đưa điều kiện người dùng nói rõ. Không tự thêm điều kiện.
 
 ## Khác
+- `keywords` (tầng 1): chỉ đặc điểm người dùng nêu mà không có trường thông số ("gaming" của tai nghe, chuột, bàn phím), không chứa tên nhóm, hãng, giá hay trang. Laptop gaming dùng `is_gaming`.
 - Hãng người dùng nhắc → `brands`. Tên trang nhắc đến ("trên GearVN") → `sites` với khóa `gearvn`, `fptshop`, `anphat`, `nguyenkim`. Trang không hỗ trợ (Shopee, Tiki, Lazada…) thì không đưa vào `sites`, và thêm một bước kế hoạch nói rõ sẽ tìm trên các nguồn hiện có.
 - "rẻ nhất" → `sort="price_asc"`; "đắt nhất" → `price_desc`; "đánh giá cao" → `rating_desc`; còn lại `relevance`.
 - `limit` mặc định 10 (1–20); người dùng nói "top 5" thì 5.

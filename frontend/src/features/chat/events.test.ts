@@ -28,8 +28,17 @@ describe('parseAgentEvent', () => {
       callId: 'c1',
       tool: 'search_catalog',
       ok: true,
+      skipped: false,
       summary: 'Tìm thấy 7 sản phẩm',
       durationMs: 84,
+    })
+  })
+
+  it('tool_end bị chốt chặn giữ cờ skipped (X1.10)', () => {
+    const data = { ...sample.toolEnd, ok: false, skipped: true, summary: 'Bỏ qua: đã đủ số lần' }
+    expect(parseAgentEvent('tool_end', json(data))).toMatchObject({ ok: false, skipped: true })
+    expect(parseAgentEvent('tool_end', json({ ...data, skipped: 'yes' }))).toMatchObject({
+      skipped: false,
     })
   })
 
