@@ -87,7 +87,8 @@ def summarize_result(tool: str, result: Result) -> str:
     if result.get("ok") is False:
         return str(result.get("message", "Tool lỗi"))
     if tool == "search_catalog":
-        return f"Tìm thấy {result.get('total', 0)} sản phẩm"
+        note = " (đã bỏ từ khóa vì không có kết quả)" if result.get("keywords_relaxed") else ""
+        return f"Tìm thấy {result.get('total', 0)} sản phẩm{note}"
     if tool == "live_search_other":
         if result.get("reason"):
             return str(result["reason"]).capitalize()
