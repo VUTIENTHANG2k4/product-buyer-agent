@@ -407,6 +407,9 @@ def _failure_lines(score: CaseScore) -> list[str]:
     return lines
 
 
+SEARCH_TOOL = "search_catalog"
+
+
 def render_report(
     scores: Sequence[CaseScore],
     metrics: Sequence[Metric],
@@ -444,12 +447,20 @@ def render_report(
             f"| {metric.label} | {_format_metric(metric)} | {_threshold_text(metric)} "
             f"| {_mark(metric.ok)} | {metric.detail} |"
         )
+    searched = [score for score in scores if SEARCH_TOOL in score.run.tools_called]
+    if searched:
+        once = sum(score.run.tools_called.count(SEARCH_TOOL) == 1 for score in searched)
+        out += [
+            "",
+            f"Gọi đúng 1 lần `{SEARCH_TOOL}`: {once}/{len(searched)} ca có tìm danh mục (X1.10).",
+        ]
     out += [
         "",
         "## Từng câu",
         "",
-        "| ID | Câu hỏi | Kết quả | Intent | RB | Tool | Hỏi lại | Số KQ | Giây |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| ID | Câu hỏi | Kết quả | Intent | RB | Tool | Hỏi lại | Số KQ | Lần tìm | Số tool "
+        "| Giây |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for score in scores:
         intent_ok = None if not score.intent_checks else all(c.ok for c in score.intent_checks)
@@ -463,7 +474,8 @@ def render_report(
         out.append(
             f"| {score.case.id} | {query} | {_mark(score.passed)} | {_mark(intent_ok)} "
             f"| {_mark(constraint_ok)} | {_mark(score.tools_ok)} | {_mark(score.clarification_ok)} "
-            f"| {len(score.run.products)} | {latency} |"
+            f"| {len(score.run.products)} | {score.run.tools_called.count(SEARCH_TOOL)} "
+            f"| {len(score.run.tools_called)} | {latency} |"
         )
     failed = [score for score in scores if not score.passed or score.run.price_warnings]
     if failed:

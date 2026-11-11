@@ -291,6 +291,47 @@ def test_report_lists_metrics_cases_and_failure_details() -> None:
     assert text.endswith("\n") and not text.endswith("\n\n")
 
 
+def test_report_counts_catalog_searches_per_case_and_overall() -> None:
+    expected = {"tools_required": ["search_catalog"]}
+    once = (
+        case(id="P01", query="điện thoại Samsung", expected=expected),
+        CaseRun(tools_called=["search_catalog"], final_text="ok", latency_s=5.0),
+    )
+    thrice = (
+        case(id="L10", query="laptop i7", expected=expected),
+        CaseRun(
+            tools_called=[
+                "search_catalog",
+                "get_product_detail",
+                "search_catalog",
+                "search_catalog",
+            ],
+            final_text="ok",
+            latency_s=9.0,
+        ),
+    )
+    clarify = (
+        case(id="Q01", query="rẻ rẻ", expect_clarification=True),
+        CaseRun(clarification="Bạn cần loại nào?"),
+    )
+    scores = [score_case(*once), score_case(*thrice), score_case(*clarify)]
+
+    text = render_report(
+        scores,
+        compute_metrics(scores),
+        today=date(2026, 11, 11),
+        provider="fake",
+        model="m",
+        partial=True,
+    )
+
+    assert "Gọi đúng 1 lần `search_catalog`: 1/2 ca có tìm danh mục" in text
+    assert "| Số KQ | Lần tìm | Số tool | Giây |" in text
+    assert "| 0 | 1 | 1 | 5.0 |" in text  # P01: 0 sản phẩm, 1 lần tìm, 1 lần gọi tool
+    assert "| 0 | 3 | 4 | 9.0 |" in text
+    assert "| 0 | 0 | 0 |  |" in text  # câu hỏi lại: không gọi tool, không có latency
+
+
 def test_report_path_marks_partial_runs() -> None:
     folder = Path("reports")
     assert report_path(folder, date(2026, 10, 21), partial=False) == folder / "eval-2026-10-21.md"
