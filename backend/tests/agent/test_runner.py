@@ -8,6 +8,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 from sqlmodel import Session, select
 
 from app.agent.executor import FINAL_TOOL
+from app.agent.guardrail import READ_ON_REQUEST_TOOLS
 from app.agent.prompt_loader import load_prompt
 from app.agent.runner import HALLUCINATION_MESSAGE, STEP_LIMIT_NOTE
 from app.agent.schemas import (
@@ -127,7 +128,9 @@ async def test_executor_receives_prompt_intent_and_request(
     assert '"category":"laptop"' in str(human.content)
     assert "plan_steps" not in str(human.content)
     assert "FinalAnswer" in parts.executor.bound_tool_names
-    assert len(parts.executor.bound_tool_names) == 9
+    # Câu chỉ tìm kiếm: ba tool đọc theo yêu cầu không được đưa cho LLM (X1.10).
+    assert len(parts.executor.bound_tool_names) == 9 - len(READ_ON_REQUEST_TOOLS)
+    assert not READ_ON_REQUEST_TOOLS & set(parts.executor.bound_tool_names)
 
 
 async def test_tool_result_is_sent_back_to_the_llm_as_tool_message(

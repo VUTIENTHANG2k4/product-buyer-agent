@@ -142,11 +142,17 @@ class ToolLoop:
         run_id: object | None = None,
         intent: QueryIntent | None = None,
         message: str = "",
+        hidden_tools: frozenset[str] = frozenset(),
     ) -> None:
         self._tag = "" if run_id is None else f"[run {run_id}] "  # tiền tố log (docs/05 §5)
         self._model = model
         self._tools = {tool.name: tool for tool in tools}
-        self._bound = model.bind_tools([*tools, FinalAnswer])
+        # Tool ẩn không được đưa cho LLM (X1.10: tool đọc người dùng không hỏi tới), nên LLM không
+        # tốn một lượt gọi chúng; gọi tên đoán mò vẫn bị chặn ở `_run_tool`.
+        self._hidden = hidden_tools
+        self._bound = model.bind_tools(
+            [*(tool for tool in tools if tool.name not in hidden_tools), FinalAnswer]
+        )
         self._max_steps = max_steps
         self._allowed_writes = allowed_writes
         self._user_amounts = user_amounts  # số tiền người dùng nêu, để bắt tham số sai thang
@@ -257,6 +263,11 @@ class ToolLoop:
         tool = self._tools.get(name)
         if tool is None:
             result = error_result("UNKNOWN_TOOL", f"Không có tool {name[:40]}")
+        elif name in self._hidden:
+            result = error_result(
+                "TOOL_NOT_REQUESTED",
+                "Người dùng không hỏi tới thao tác này; hãy trả lời từ kết quả đã có",
+            )
         elif name in WRITE_TOOLS and name not in self._allowed_writes:
             logger.warning("%sChặn tool ghi %s: người dùng chưa yêu cầu rõ ràng", self._tag, name)
             result = error_result(

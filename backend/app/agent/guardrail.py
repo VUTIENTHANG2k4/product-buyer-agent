@@ -46,6 +46,30 @@ _ALERT: Final = re.compile(
     r"|\b(muon|hay|giup|can)\b[^.?!]{0,15}\btheo doi gia\b"
     r"|\bkhi\b[^.?!]{0,40}\b(xuong|giam|ha)\b[^.?!]{0,30}\b(duoi|thap hon|con)\b"
 )
+# Cụm từ cho thấy người dùng HỎI so sánh / chi tiết / diễn biến giá (đã bỏ dấu). Không khớp thì
+# executor không đưa ba tool đó cho LLM (X1.10: Gemini gọi thêm chúng ở ~70% lượt P01 dù kết quả
+# tìm đã đủ, p50 30 s thay vì 15 s; dặn trong prompt không đổi gì).
+_REFERENCE: Final = (
+    r"\b(cai|may|con|chiec|san pham|sp)\b ?(thu \d+|thu (nhat|hai|ba|tu|nam)|so \d+"
+    r"|dau( tien)?|cuoi( cung)?|do|nay|kia)\b"
+)
+_COMPARE: Final = re.compile(
+    r"\bso (sanh|voi)\b|\bkhac (nhau|gi|biet)\b|\bvs\b|\bversus\b|\bcompare\b"
+    r"|\b(nen|chon|lay|mua) (cai|may|con|chiec) nao\b|\b(cai|may|con) nao (tot|hon|ngon)"
+    r"|\bhon (cai|may|con|chiec)\b|\bdiem (manh|yeu)\b|\buu nhuoc\b"
+)
+_DETAIL: Final = re.compile(
+    r"\bchi tiet\b|\bthong so\b|\bcau hinh\b|\bspecs?\b|\bdetails?\b"
+    r"|\bbao hanh\b|\bmo ta\b|\bxem (them|ky)\b|" + _REFERENCE
+)
+_HISTORY: Final = re.compile(
+    r"\blich su gia\b|\bprice history\b|\bbien dong\b|\b(tang|giam|ha|len) gia\b"
+    r"|\bgia\b[^.?!]{0,30}\b(dao nay|gan day|thoi gian|thay doi|the nao|ra sao|truoc (day|kia)"
+    r"|tang|giam|len xuong|con on|on dinh|bao gio|khi nao)\b"
+)
+READ_ON_REQUEST_TOOLS: Final = frozenset(
+    {"compare_products", "get_product_detail", "get_price_history"}
+)
 # Từ phủ định đứng ngay trước động từ yêu cầu ("đừng thêm …", "không cần đặt cảnh báo", "khỏi
 # thêm", "không nghĩ nên thêm"): cụm đó là lời từ chối, không phải yêu cầu. Chỉ xét trong cùng
 # mệnh đề và khi từ phủ định cách động từ tối đa 2 từ, nên "không quá 30 triệu và đặt cảnh báo"
@@ -81,6 +105,25 @@ def allowed_write_tools(message: str) -> frozenset[str]:
         allowed.add(ADD_TOOL)
     if _requested(_ALERT, folded):
         allowed.add(ALERT_TOOL)
+    return frozenset(allowed)
+
+
+def allowed_read_tools(message: str) -> frozenset[str]:
+    """Tool trong `READ_ON_REQUEST_TOOLS` mà câu của người dùng hỏi tới (rỗng nếu chỉ tìm kiếm).
+
+    Câu tham chiếu kết quả trước ("cái thứ 3", "máy đầu tiên") mở cả ba, vì câu kiểu "cái đầu
+    tiên giá dạo này thế nào" có thể cần chi tiết lẫn lịch sử giá.
+    """
+    folded = " ".join(fold(message).split())
+    allowed: set[str] = set()
+    if _requested(_COMPARE, folded):
+        allowed.add("compare_products")
+    if _requested(_DETAIL, folded):
+        allowed.add("get_product_detail")
+    if _requested(_HISTORY, folded):
+        allowed.add("get_price_history")
+    if re.search(_REFERENCE, folded):
+        allowed |= READ_ON_REQUEST_TOOLS
     return frozenset(allowed)
 
 

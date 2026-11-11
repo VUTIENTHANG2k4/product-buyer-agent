@@ -19,7 +19,14 @@ from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from sqlmodel import Session
 
 from app.agent.executor import LoopOutcome, ToolLoop
-from app.agent.guardrail import Evidence, GuardrailOutcome, allowed_write_tools, apply_guardrail
+from app.agent.guardrail import (
+    READ_ON_REQUEST_TOOLS,
+    Evidence,
+    GuardrailOutcome,
+    allowed_read_tools,
+    allowed_write_tools,
+    apply_guardrail,
+)
 from app.agent.intent import extract_amounts
 from app.agent.memory import ConversationContext, to_context
 from app.agent.planner import Planner
@@ -203,6 +210,7 @@ class AgentRunner:
             run_id=handle.run_id,
             intent=intent,
             message=message,
+            hidden_tools=READ_ON_REQUEST_TOOLS - allowed_read_tools(message),
         )
         async for tool_event in loop.run(messages, outcome):
             yield tool_event, None
