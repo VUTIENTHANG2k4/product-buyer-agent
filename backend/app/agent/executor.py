@@ -47,7 +47,8 @@ SKIPPED_REASONS: Final[Mapping[str, str]] = MappingProxyType(
     {
         "TOOL_CALL_LIMIT": "đã đủ số lần gọi trong lượt",
         "TOOL_NOT_REQUESTED": "người dùng không hỏi tới",
-        "WRITE_NOT_REQUESTED": "người dùng chưa yêu cầu",
+        "SEARCH_DONE": "đã có kết quả tìm",
+        "WRITE_NOT_REQUESTED": "người dùng chưa yêu cầu rõ ràng",
     }
 )
 
@@ -158,10 +159,14 @@ class ToolLoop:
         self._tools = {tool.name: tool for tool in tools}
         # Tool ẩn không được đưa cho LLM (X1.10: tool đọc người dùng không hỏi tới), nên LLM không
         # tốn một lượt gọi chúng; gọi tên đoán mò vẫn bị chặn ở `_run_tool`.
+        self._all_tools = list(tools)
         self._hidden = hidden_tools
-        self._bound = model.bind_tools(
-            [*(tool for tool in tools if tool.name not in hidden_tools), FinalAnswer]
-        )
+        self._bound = self._bind()
+        # Đã có lần `search_catalog` ra ≥ 1 sản phẩm: từ bước LLM sau, không đưa tool tìm nữa
+        # (X1.10: eval A04 tìm 3 lần cùng điều kiện, lần nào cũng 1 sản phẩm). Kết quả rỗng vẫn cho
+        # tìm lại để nới điều kiện; lời gọi song song cùng bước (chuột và bàn phím) vẫn chạy hết.
+        self._search_found = False
+        self._search_locked = False
         self._max_steps = max_steps
         self._allowed_writes = allowed_writes
         self._user_amounts = user_amounts  # số tiền người dùng nêu, để bắt tham số sai thang
@@ -169,6 +174,11 @@ class ToolLoop:
         # Ý định + câu người dùng: căn cứ để bỏ điều kiện `search_catalog` họ không nêu (X1.10).
         self._intent = intent
         self._message = message
+
+    def _bind(self) -> Any:
+        return self._model.bind_tools(
+            [*(tool for tool in self._all_tools if tool.name not in self._hidden), FinalAnswer]
+        )
 
     async def run(
         self, messages: list[BaseMessage], outcome: LoopOutcome
@@ -206,6 +216,10 @@ class ToolLoop:
             for call in real[:MAX_CALLS_PER_STEP]:
                 async for event in self._run_tool(call, messages, outcome, failures):
                     yield event
+            if self._search_found and not self._search_locked:
+                self._search_locked = True
+                self._hidden = self._hidden | {SEARCH_TOOL}
+                self._bound = self._bind()
             for call in real[MAX_CALLS_PER_STEP:]:  # LLM đòi quá nhiều tool trong một bước
                 messages.append(
                     _tool_message(
@@ -272,6 +286,11 @@ class ToolLoop:
         tool = self._tools.get(name)
         if tool is None:
             result = error_result("UNKNOWN_TOOL", f"Không có tool {name[:40]}")
+        elif name == SEARCH_TOOL and self._search_locked:
+            result = error_result(
+                "SEARCH_DONE",
+                "Đã có kết quả tìm kiếm; hãy trả lời bằng FinalAnswer từ kết quả đó",
+            )
         elif name in self._hidden:
             result = error_result(
                 "TOOL_NOT_REQUESTED",
@@ -314,6 +333,8 @@ class ToolLoop:
                 outcome.calls_by_tool[name] = outcome.calls_by_tool.get(name, 0) + 1
 
         ok = result.get("ok") is not False
+        if ok and name == SEARCH_TOOL and int(result.get("total") or 0) > 0:
+            self._search_found = True
         if ok and ignored:  # để LLM biết điều kiện đó không được áp dụng, đừng thêm lại
             result = {**result, "ignored_filters": ignored}
         if ok:

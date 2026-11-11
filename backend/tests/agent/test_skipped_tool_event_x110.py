@@ -30,7 +30,11 @@ async def test_a_write_the_user_did_not_ask_for_is_skipped() -> None:
     run = await drive(script, [Fake("add_to_shopping_list")])
 
     (end,) = run.ends
-    assert (end.ok, end.skipped, end.summary) == (False, True, "Bỏ qua: người dùng chưa yêu cầu")
+    assert (end.ok, end.skipped, end.summary) == (
+        False,
+        True,
+        "Bỏ qua: người dùng chưa yêu cầu rõ ràng",
+    )
 
 
 async def test_a_real_tool_error_is_still_a_failure() -> None:

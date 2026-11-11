@@ -5,15 +5,17 @@ Eval P01 (2026-11-09, ×10): sau khi `search_catalog` đã đủ kết quả, Ge
 15 s); dặn trong prompt không đổi gì. Không đưa ba tool đó cho LLM thì nó không gọi được.
 """
 
+from collections.abc import Sequence
 from typing import Any
 
 import pytest
 from langchain_core.messages import BaseMessage, HumanMessage
+from pydantic import Field
 
 from app.agent.executor import FINAL_TOOL, LoopOutcome, ToolLoop
 from app.agent.guardrail import READ_ON_REQUEST_TOOLS, allowed_read_tools
 from app.agent.testing import ScriptedChatModel, tool_call_message
-from tests.agent.test_executor_qa_m6 import Driven, Fake, final
+from tests.agent.test_executor_qa_m6 import Driven, Fake, final, several
 
 COMPARE = "compare_products"
 DETAIL = "get_product_detail"
@@ -109,3 +111,61 @@ async def test_tools_the_user_asked_for_stay_available() -> None:
 
     assert COMPARE in run.model.bound_tool_names
     assert len(compare.calls) == 1 and run.error_codes() == []
+
+
+# ---- không tìm lại khi đã có kết quả (eval A04 2026-11-11: 3 lần cùng điều kiện) ----
+class BindRecorder(ScriptedChatModel):
+    """Ghi lại danh sách tool của từng lần `bind_tools`."""
+
+    offered: list[list[str]] = Field(default_factory=list)
+
+    def bind_tools(self, tools: Sequence[Any], **kwargs: Any) -> ScriptedChatModel:
+        self.offered.append([getattr(tool, "name", None) or tool.__name__ for tool in tools])
+        return super().bind_tools(tools, **kwargs)
+
+
+def found(total: int) -> dict[str, object]:
+    return {"ok": True, "total": total, "items": []}
+
+
+async def test_after_a_search_with_results_search_is_no_longer_offered() -> None:
+    search = Fake("search_catalog", result=found(1))
+    script = [
+        tool_call_message("search_catalog", {"n": 1}, "c1"),
+        tool_call_message("search_catalog", {"n": 2}, "c2"),
+        final(),
+    ]
+    model = BindRecorder(script=script)
+    loop = ToolLoop(model, [search.tool], max_steps=6, allowed_writes=frozenset())
+    messages: list[BaseMessage] = [HumanMessage(content="phím cơ không dây hotswap tầm 2 triệu")]
+    events = [event async for event in loop.run(messages, LoopOutcome())]
+    run = Driven(events, LoopOutcome(), messages, model)
+
+    assert [call["n"] for call in search.calls] == [1]
+    assert run.error_codes() == ["SEARCH_DONE"]
+    assert model.offered == [["search_catalog", FINAL_TOOL], [FINAL_TOOL]]
+    assert [(end.ok, end.skipped) for end in run.ends] == [(True, False), (False, True)]
+
+
+async def test_an_empty_search_may_be_retried_with_relaxed_conditions() -> None:
+    search = Fake("search_catalog", result=found(0))
+    script = [
+        tool_call_message("search_catalog", {"n": 1}, "c1"),
+        tool_call_message("search_catalog", {"n": 2}, "c2"),
+        final(),
+    ]
+
+    run = await run_loop(script, [search], frozenset())
+
+    assert [call["n"] for call in search.calls] == [1, 2]
+    assert run.error_codes() == []
+
+
+async def test_parallel_searches_in_the_same_step_all_run() -> None:
+    search = Fake("search_catalog", result=found(3))
+    batch = several(("search_catalog", {"n": 1}, "c1"), ("search_catalog", {"n": 2}, "c2"))
+
+    run = await run_loop([batch, final()], [search], frozenset())
+
+    assert [call["n"] for call in search.calls] == [1, 2]
+    assert run.error_codes() == []
