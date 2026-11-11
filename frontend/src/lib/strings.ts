@@ -60,7 +60,7 @@ export const strings = {
     expand: 'Mở rộng',
     analyzing: 'Đang phân tích yêu cầu…',
     waiting: 'Đang xử lý…',
-    toolStatus: { running: 'Đang chạy', ok: 'Xong', failed: 'Lỗi' },
+    toolStatus: { running: 'Đang chạy', ok: 'Xong', failed: 'Lỗi', skipped: 'Bỏ qua' },
     toolDuration: (ms: number) => `${ms} ms`,
     followUpTitle: 'Gợi ý tiếp',
     dataAsOf: (time: string) => `Dữ liệu cập nhật lúc ${time}`,

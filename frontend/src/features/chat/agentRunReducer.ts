@@ -5,7 +5,7 @@ export interface ToolStep {
   callId: string
   tool: string
   argsSummary: string
-  status: 'running' | 'ok' | 'failed'
+  status: 'running' | 'ok' | 'failed' | 'skipped'
   summary?: string
   durationMs?: number
 }
@@ -71,7 +71,7 @@ function applyEvent(state: AgentRunState, event: AgentEvent): AgentRunState {
         callId: event.callId,
         tool: event.tool,
         argsSummary: '',
-        status: event.ok ? 'ok' : 'failed',
+        status: event.skipped ? 'skipped' : event.ok ? 'ok' : 'failed',
         summary: event.summary,
         durationMs: event.durationMs,
       }

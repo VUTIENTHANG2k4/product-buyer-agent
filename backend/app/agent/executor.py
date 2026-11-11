@@ -42,6 +42,15 @@ TOOL_CALL_CAPS: Final[Mapping[str, int]] = MappingProxyType(
     {"live_search_other": 2, "search_catalog": 3}
 )
 
+# Mã lỗi của lời gọi bị chốt chặn (tool không chạy): báo `skipped` cho giao diện, không phải lỗi.
+SKIPPED_REASONS: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "TOOL_CALL_LIMIT": "đã đủ số lần gọi trong lượt",
+        "TOOL_NOT_REQUESTED": "người dùng không hỏi tới",
+        "WRITE_NOT_REQUESTED": "người dùng chưa yêu cầu",
+    }
+)
+
 StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures"]
 
 _SYNTHESIS_HINTS: Final = {
@@ -312,11 +321,13 @@ class ToolLoop:
         else:
             failures[name] = failures.get(name, 0) + 1
         messages.append(_tool_message({"id": call_id, "name": name}, result))
+        skipped = SKIPPED_REASONS.get(str(result.get("error")))
         yield ToolEndEvent(
             call_id=call_id,
             tool=name,
             ok=ok,
-            summary=summarize_result(name, result),
+            summary=f"Bỏ qua: {skipped}" if skipped else summarize_result(name, result),
+            skipped=skipped is not None,
             duration_ms=max(0, round((self._clock() - started) * 1000)),
         )
 

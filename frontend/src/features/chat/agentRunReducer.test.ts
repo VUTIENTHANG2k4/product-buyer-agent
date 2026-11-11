@@ -136,3 +136,22 @@ describe('agentRunReducer · fail và snapshot', () => {
     expect(run([ev(final, 1), status({ error: { code: 'E', message: 'm' } })]).phase).toBe('done')
   })
 })
+
+describe('agentRunReducer: lời gọi bị chốt chặn (X1.10)', () => {
+  it('tool_end có skipped thì trạng thái là skipped, không phải failed', () => {
+    const skipped: AgentEvent = {
+      name: 'tool_end',
+      callId: 'c1',
+      tool: 'search_catalog',
+      ok: false,
+      skipped: true,
+      summary: 'Bỏ qua: đã đủ số lần gọi trong lượt',
+      durationMs: 0,
+    }
+    const state = run([ev(plan), ev(start), ev(skipped)])
+    expect(state.tools.map((tool) => tool.status)).toEqual(['skipped'])
+    expect(run([ev(plan), ev(start), ev({ ...skipped, skipped: false })]).tools[0]?.status).toBe(
+      'failed',
+    )
+  })
+})

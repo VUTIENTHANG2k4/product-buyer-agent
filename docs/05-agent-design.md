@@ -134,7 +134,7 @@ Bộ nhớ (`memory.py`): sáu tin nhắn gần nhất đưa vào executor như 
 | `plan` | `{intent: QueryIntent, steps: [str]}` | Sau planner |
 | `clarification` | `{question}` | Planner yêu cầu hỏi lại; kết thúc run |
 | `tool_start` | `{call_id, tool, args_summary}` | Trước mỗi tool |
-| `tool_end` | `{call_id, tool, ok, summary, duration_ms}` | Sau mỗi tool (`summary` ví dụ "Tìm thấy 7 laptop") |
+| `tool_end` | `{call_id, tool, ok, summary, duration_ms, skipped}` | Sau mỗi tool (`summary` ví dụ "Tìm thấy 7 laptop"). `skipped=true` (luôn kèm `ok=false`, X1.10) khi lời gọi bị chốt chặn và tool không chạy: `TOOL_CALL_LIMIT`, `TOOL_NOT_REQUESTED`, `WRITE_NOT_REQUESTED` (`SKIPPED_REASONS` ở `executor.py`); `summary` là "Bỏ qua: <lý do>". Sự kiện cũ không có trường này được hiểu là `false` |
 | `final` | `{text, table: [ProductRow], live_items, suggestions, data_as_of}` | Kết thúc thành công |
 | `error` | `{code, message}` | Lỗi không phục hồi |
 
