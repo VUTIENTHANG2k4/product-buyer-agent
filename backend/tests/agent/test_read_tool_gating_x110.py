@@ -148,14 +148,18 @@ async def test_after_a_search_with_results_search_is_no_longer_offered() -> None
         final(),
     ]
     model = BindRecorder(script=script)
-    loop = ToolLoop(model, [search.tool], max_steps=6, allowed_writes=frozenset())
+    # Người dùng có hỏi chi tiết (tool chi tiết hiện ra) nên LLM còn bước sau lần tìm: không tự
+    # tổng hợp (X1.12), khóa tìm kiếm vẫn áp dụng.
+    loop = ToolLoop(
+        model, [search.tool, Fake(DETAIL).tool], max_steps=6, allowed_writes=frozenset()
+    )
     messages: list[BaseMessage] = [HumanMessage(content="phím cơ không dây hotswap tầm 2 triệu")]
     events = [event async for event in loop.run(messages, LoopOutcome())]
     run = Driven(events, LoopOutcome(), messages, model)
 
     assert [call["n"] for call in search.calls] == [1]
     assert run.error_codes() == ["SEARCH_DONE"]
-    assert model.offered == [["search_catalog", FINAL_TOOL], [FINAL_TOOL]]
+    assert model.offered == [["search_catalog", DETAIL, FINAL_TOOL], [DETAIL, FINAL_TOOL]]
     assert [(end.ok, end.skipped) for end in run.ends] == [(True, False), (False, True)]
 
 
@@ -207,7 +211,8 @@ async def test_repeated_skipped_calls_end_the_turn_without_calling_them_failures
         {"text": "Có 2 sản phẩm."},
     ]
 
-    run = await run_loop(script, [search], frozenset())
+    # Tool chi tiết hiện ra nên không tự tổng hợp sau lần tìm (X1.12): LLM còn gọi lại được.
+    run = await run_loop(script, [search, Fake(DETAIL)], frozenset())
 
     assert run.error_codes() == ["SEARCH_DONE", "SEARCH_DONE"]
     assert run.outcome.stop_reason == "skipped_calls"

@@ -8,6 +8,7 @@ Không nguồn nào trả mã hãng (MPN) nên mã đọc từ tên: `AL15-53P-5
 import re
 from typing import Final
 
+from app.domain.categories import profile_of
 from app.domain.enums import Category
 from app.normalize.specs.parsing import clean
 
@@ -115,7 +116,8 @@ def extract_model_code(category: Category, title: str, hint: str | None = None) 
     Phụ kiện bỏ cả `hint` vì MPN gắn với từng màu (`910-005880` đen, `910-005881` trắng) nên
     dùng nó sẽ tách các biến thể màu thành nhiều sản phẩm.
     """
-    if category is not Category.laptop:
+    profile = profile_of(category)
+    if profile is None or not profile.uses_model_code:  # nhóm ghép theo mã: `CategoryProfile`
         return None
     from_hint = hint_code(hint)
     if from_hint is not None:

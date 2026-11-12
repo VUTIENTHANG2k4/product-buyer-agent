@@ -8,6 +8,7 @@ ngoài những gì người dùng nói rõ trong câu hỏi.
 import re
 from typing import Any, Final
 
+from app.domain.categories import profile_of, supported_names_vi, tier1_categories
 from app.domain.dto import QueryIntent, SpecFilter
 from app.domain.enums import Category, SiteKey
 from app.normalize.specs.gpu_rank import GPU_RANKS, normalize_gpu_name
@@ -19,21 +20,18 @@ _MAX_AMOUNT_DIGITS: Final = (
     15  # số chữ số tối đa đem đổi sang số (chặn OverflowError, giới hạn 4300)
 )
 
-TIER1_CATEGORIES: Final = frozenset(
-    {Category.laptop, Category.mouse, Category.keyboard, Category.headset, Category.phone}
-)
+# Nhóm tầng 1 và nguồn bán theo nhóm lấy từ `CategoryProfile` (X1.11); hai hằng này chỉ để đọc
+# nhanh, logic gọi `profile_of` lúc chạy.
+TIER1_CATEGORIES: Final = frozenset(tier1_categories())
 # Trang có dữ liệu để tìm ở tầng 1. Trang còn lại (ví dụ viettelstore) chưa có dữ liệu thu thập.
 SEARCHABLE_SITES: Final = frozenset(
     {SiteKey.gearvn, SiteKey.fptshop, SiteKey.anphat, SiteKey.nguyenkim, SiteKey.mockshop}
 )
 # Nguồn thật sự có dữ liệu theo nhóm (docs/02 §2): điện thoại chỉ có ở FPT Shop và Nguyễn Kim.
-_LAPTOP_AND_ACCESSORY_SOURCES: Final = "GearVN, FPT Shop, An Phát"
 SOURCES_BY_CATEGORY: Final = {
-    Category.laptop: _LAPTOP_AND_ACCESSORY_SOURCES,
-    Category.mouse: _LAPTOP_AND_ACCESSORY_SOURCES,
-    Category.keyboard: _LAPTOP_AND_ACCESSORY_SOURCES,
-    Category.headset: _LAPTOP_AND_ACCESSORY_SOURCES,
-    Category.phone: "FPT Shop, Nguyễn Kim",
+    category: profile.sources_vi
+    for category in tier1_categories()
+    if (profile := profile_of(category)) is not None
 }
 UNSUPPORTED_SITE_WORDS: Final = {
     "shopee": "Shopee",
@@ -45,9 +43,7 @@ UNSUPPORTED_SITE_WORDS: Final = {
     "hacom": "HACOM",
     "phong vu": "Phong Vũ",
 }
-DEFAULT_CLARIFICATION: Final = (
-    "Bạn muốn tìm loại sản phẩm nào (laptop, chuột, bàn phím, tai nghe, điện thoại…)?"
-)
+DEFAULT_CLARIFICATION: Final = f"Bạn muốn tìm loại sản phẩm nào ({supported_names_vi()}…)?"
 MAX_PLAN_STEPS: Final = 5
 
 _UNIT_FACTOR: Final = {
@@ -287,14 +283,8 @@ def _gpu_filter_from_message(message: str) -> SpecFilter | None:
 
 def default_plan_steps(intent: QueryIntent) -> list[str]:
     """Các bước kế hoạch mặc định (tiếng Việt) khi LLM không đưa ra bước nào."""
-    names = {
-        Category.laptop: "laptop",
-        Category.mouse: "chuột",
-        Category.keyboard: "bàn phím",
-        Category.headset: "tai nghe",
-        Category.phone: "điện thoại",
-    }
-    target = names.get(intent.category, "sản phẩm") if intent.category else "sản phẩm"
+    profile = profile_of(intent.category)
+    target = profile.label_vi if profile is not None else "sản phẩm"
     if intent.tier == 2:
         return [f"Tìm trực tiếp {target} ở các trang bán lẻ hỗ trợ tìm kiếm"]
     steps = [f"Tìm {target} trong danh mục đã thu thập"]
@@ -319,7 +309,7 @@ def postprocess_intent(intent: QueryIntent, message: str) -> QueryIntent:
 
     # Tầng và nhóm phải nhất quán: nhóm ngoài 4 nhóm lõi là tầng 2 với category "other".
     category = intent.category
-    if intent.tier == 2 or (category is not None and category not in TIER1_CATEGORIES):
+    if intent.tier == 2 or (category is not None and profile_of(category) is None):
         data["tier"] = 2
         data["category"] = Category.other
         category = Category.other
@@ -360,7 +350,8 @@ def postprocess_intent(intent: QueryIntent, message: str) -> QueryIntent:
     )
     if unsupported:
         listed = ", ".join(unsupported)
-        sources = SOURCES_BY_CATEGORY.get(category) if category is not None else None
+        profile = profile_of(category)
+        sources = profile.sources_vi if profile is not None else None
         note = f"Chưa hỗ trợ {listed}: tìm trên các nguồn hiện có" + (
             f" ({sources})" if sources else ""
         )

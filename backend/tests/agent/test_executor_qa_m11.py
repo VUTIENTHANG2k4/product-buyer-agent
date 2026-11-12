@@ -11,8 +11,8 @@ from langchain_core.tools import StructuredTool
 from pydantic import BaseModel
 
 from app.agent.executor import (
-    _SYNTHESIS_HINTS,
     MAX_CALLS_PER_STEP,
+    SYNTHESIS_HINTS,
     TOOL_CALL_CAPS,
     TOOL_FAILURE_LIMIT,
 )
@@ -83,7 +83,7 @@ def test_caps_name_real_tools_that_are_not_write_tools_and_cannot_be_mutated() -
 
 
 def test_synthesis_hint_for_tool_failures_mentions_the_call_limit() -> None:
-    assert "hết số lần gọi" in _SYNTHESIS_HINTS["tool_failures"]
+    assert "hết số lần gọi" in SYNTHESIS_HINTS["tool_failures"]
 
 
 # ---- nhiều tool trong một bước ----
@@ -244,7 +244,7 @@ async def test_stop_after_blocked_calls_synthesizes_from_results_already_collect
     assert run.outcome.evidence.live_urls == set(urls[:CAP])
     last_prompt = run.model.calls[-1]
     assert isinstance(last_prompt[-1], HumanMessage)
-    assert last_prompt[-1].content == _SYNTHESIS_HINTS["tool_failures"]
+    assert last_prompt[-1].content == SYNTHESIS_HINTS["tool_failures"]
     sent = " ".join(str(m.content) for m in last_prompt if isinstance(m, ToolMessage))
     assert all(url in sent for url in urls[:CAP]) and urls[CAP] not in sent
     assert run.model.cursor == 5  # 4 bước + 1 lần tổng hợp

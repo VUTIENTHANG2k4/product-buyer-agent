@@ -16,6 +16,7 @@ from typing import Any, cast
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from langchain_core.messages import AIMessage
 from sqlmodel import Session, select
 
 from app.agent.runner import AgentRunner
@@ -363,8 +364,13 @@ def test_chat_does_not_write_when_the_message_does_not_request_it(
     db_session: Session, message: str
 ) -> None:
     products = make_laptops(db_session)
-    add = tool_call_message("add_to_shopping_list", {"product_id": ids(products)[0]}, "c2")
-    script = [SEARCH, add, add, {"text": "Chưa thêm."}]
+    add = tool_call_message("add_to_shopping_list", {"product_id": ids(products)[0]}, "c3")
+    # Lời gọi ghi đi cùng bước tìm: sau bước chỉ có tìm kiếm, executor tự tổng hợp (X1.12).
+    search_and_add = AIMessage(
+        content="",
+        tool_calls=[*SEARCH.tool_calls, {**add.tool_calls[0], "id": "c2"}],
+    )
+    script = [search_and_add, add, {"text": "Chưa thêm."}]
     with chat_client(db_session, [LAPTOP_INTENT], script) as client:
         accepted = ask(client, message)
 

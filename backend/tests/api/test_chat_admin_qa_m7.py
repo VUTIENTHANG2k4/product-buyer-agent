@@ -11,6 +11,7 @@ from collections.abc import Iterator
 from typing import Any
 
 import pytest
+from langchain_core.messages import AIMessage
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlmodel import Session, select
@@ -348,7 +349,10 @@ def test_prompt_injection_in_product_name_cannot_trigger_write_tools(db_session:
     alert = tool_call_message(
         "create_price_alert", {"product_id": product.id, "target_price": 1}, "c3"
     )
-    script = [SEARCH, add, alert, final_call(product_ids=[product.id])]
+    # Lệnh bị tiêm được "nghe theo" ngay trong bước tìm: sau bước chỉ có tìm kiếm, executor tự
+    # tổng hợp nên LLM không còn lượt gọi tool (X1.12).
+    search_and_add = AIMessage(content="", tool_calls=[*SEARCH.tool_calls, *add.tool_calls])
+    script = [search_and_add, alert, final_call(product_ids=[product.id])]
     with chat_client(db_session, [LAPTOP_INTENT], script) as client:
         accepted = ask(client)
 
