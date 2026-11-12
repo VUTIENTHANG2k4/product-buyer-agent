@@ -2,10 +2,10 @@
 
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Final, Literal, Self
+from typing import Annotated, Final, Literal, Self
 
 from langchain_core.tools import StructuredTool
-from pydantic import BaseModel, Field, model_validator
+from pydantic import AfterValidator, BaseModel, Field, WithJsonSchema, model_validator
 from sqlmodel import Session
 
 from app.agent.tools.base import (
@@ -18,16 +18,40 @@ from app.agent.tools.base import (
     run_in_session,
 )
 from app.domain.catalog import CatalogFilters, ProductSummary
+from app.domain.categories import profile_of, supported_names_en, tier1_categories
 from app.domain.dto import SpecFilter
 from app.domain.enums import Category, SiteKey
 from app.services.catalog_service import CatalogService
 
 NAME = "search_catalog"
+
+
+def _count_word(count: int) -> str:
+    words = ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
+    return words[count - 1] if 1 <= count <= len(words) else str(count)
+
+
+def _tier1_only(category: Category) -> Category:
+    """Chỉ nhóm đã đăng ký `CategoryProfile` (X1.11); nhóm khác dùng `live_search_other`."""
+    if profile_of(category) is None:
+        allowed = ", ".join(f"'{c.value}'" for c in tier1_categories())
+        raise ValueError(f"Input should be one of {allowed}")
+    return category
+
+
+# Lược đồ gửi LLM liệt kê đúng các nhóm tầng 1 (như `Literal` trước X1.11).
+Tier1Category = Annotated[
+    Category,
+    AfterValidator(_tier1_only),
+    WithJsonSchema(
+        {"enum": [c.value for c in tier1_categories()], "title": "Category", "type": "string"}
+    ),
+]
 DESCRIPTION = (
-    "Search the already-collected catalog of laptops, mice, keyboards, headsets and phones "
+    f"Search the already-collected catalog of {supported_names_en()} "
     "(tier 1 only) with price, brand, site, spec and keyword filters. Use for any shopping "
-    "request in these five categories. Do NOT use for other product types "
-    "(use live_search_other) and never invent products that are not returned."
+    f"request in these {_count_word(len(tier1_categories()))} categories. Do NOT use for other "
+    "product types (use live_search_other) and never invent products that are not returned."
 )
 
 
@@ -44,9 +68,7 @@ KEYWORD_SPECS: Final[Mapping[tuple[Category, str], SpecFilter]] = MappingProxyTy
 
 
 class SearchCatalogArgs(BaseModel):
-    category: Literal[
-        Category.laptop, Category.mouse, Category.keyboard, Category.headset, Category.phone
-    ] = Field(description="Product category.")
+    category: Tier1Category = Field(description="Product category.")
     price_min: int | None = Field(default=None, ge=0, description="Minimum price in VND.")
     price_max: int | None = Field(default=None, ge=0, description="Maximum price in VND.")
     brands: list[str] = Field(

@@ -8,34 +8,14 @@ from typing import Any, Final
 from app.db.models import Offer, Product
 from app.db.repositories import effective_price_of
 from app.domain.catalog import OfferView, ProductFull
+from app.domain.categories import MAX_KEY_SPECS, profile_of, registered_profiles
 from app.domain.enums import Category, StockStatus
 from app.domain.errors import ValidationFailed
 
-MAX_KEY_SPECS: Final = 6
-
-# Thông số hiển thị gọn trong bảng kết quả (thứ tự ưu tiên, tối đa `MAX_KEY_SPECS`).
+# Thông số hiển thị gọn trong bảng kết quả (thứ tự ưu tiên, tối đa `MAX_KEY_SPECS`), lấy từ
+# `CategoryProfile` (X1.11); hằng này chỉ để đọc nhanh, `key_specs` gọi `profile_of` lúc chạy.
 KEY_SPEC_FIELDS: Final[Mapping[Category, tuple[str, ...]]] = MappingProxyType(
-    {
-        Category.laptop: (
-            "cpu_model",
-            "gpu_model",
-            "ram_gb",
-            "storage_gb",
-            "screen_in",
-            "refresh_hz",
-        ),
-        Category.mouse: ("connection", "dpi_max", "sensor", "buttons", "weight_g", "rgb"),
-        Category.keyboard: (
-            "connection",
-            "switch_type",
-            "switch_name",
-            "form_factor",
-            "hot_swap",
-            "backlight",
-        ),
-        Category.headset: ("form", "connection", "has_mic", "anc", "surround_7_1", "driver_mm"),
-        Category.phone: ("ram_gb", "storage_gb", "chipset", "screen_in", "battery_mah", "os"),
-    }
+    {profile.category: profile.key_spec_fields for profile in registered_profiles()}
 )
 
 Clock = Callable[[], datetime]
@@ -86,7 +66,8 @@ def best_price(offers: Sequence[Offer]) -> int | None:
 
 def key_specs(category: Category, specs: Mapping[str, Any]) -> dict[str, Any]:
     """Tối đa `MAX_KEY_SPECS` thông số nổi bật có giá trị (nhóm chưa khai báo: theo thứ tự lưu)."""
-    names = KEY_SPEC_FIELDS.get(category) or tuple(specs)
+    profile = profile_of(category)
+    names = profile.key_spec_fields if profile is not None else tuple(specs)
     picked: dict[str, Any] = {}
     for name in names:
         value = specs.get(name)

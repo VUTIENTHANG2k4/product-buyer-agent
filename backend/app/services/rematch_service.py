@@ -25,6 +25,7 @@ from sqlmodel import Session
 
 from app.db.models import Offer, Product
 from app.db.repositories import OfferRepository, ProductRepository
+from app.domain.categories import profile_of, tier1_categories
 from app.domain.enums import Category, MatchMethod, SiteKey
 from app.normalize.brand import detect_brand
 from app.normalize.extract import SpecsExtraction, extract_specs, merge_specs, specs_confidence
@@ -34,13 +35,7 @@ from app.normalize.names import canonical_name
 
 logger = logging.getLogger(__name__)
 
-REMATCH_CATEGORIES = (
-    Category.laptop,
-    Category.mouse,
-    Category.keyboard,
-    Category.headset,
-    Category.phone,
-)
+REMATCH_CATEGORIES = tier1_categories()  # mọi nhóm đã đăng ký `CategoryProfile` (X1.11)
 
 
 @dataclass(frozen=True)
@@ -127,6 +122,9 @@ class RematchService:
         self, category: Category, site: SiteKey | None, apply: bool, report: RematchReport
     ) -> None:
         offers = self._offers.list_by_category(category)
+        profile = profile_of(category)
+        # Nhóm ghép theo mã model (laptop): mã đang có thắng mã yếu, đổi mã thì đổi tên.
+        uses_model_code = profile is not None and profile.uses_model_code
         current = {
             p.id: p
             for p in self._products.get_many(sorted({o.product_id for o in offers}))
@@ -150,7 +148,7 @@ class RematchService:
             same_brand = own.brand == brand
             code = extract_model_code(category, offer.title)
             if (
-                category is Category.laptop
+                uses_model_code
                 and same_brand
                 and own.model_code is not None
                 and (code is None or not is_strong_code(code))
@@ -191,7 +189,7 @@ class RematchService:
                 # theo luật hiện tại khi ghép). Laptop đổi mã thì đổi tên: tên chuẩn laptop kết thúc
                 # bằng mã model (BUG-S4-2).
                 keep_name = kept and same_brand
-                if category is Category.laptop and final_code != own.model_code:
+                if uses_model_code and final_code != own.model_code:
                     keep_name = False
                 target = _Target(
                     key=key,

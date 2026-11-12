@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Final
 
+from app.domain.categories import profile_of
 from app.domain.enums import Category
 from app.normalize.brand import (
     UNKNOWN_BRAND,
@@ -361,17 +362,19 @@ def canonical_name(title: str, category: Category) -> str:
     loại, màu, mã phụ tùng và nhãn khuyến mãi. Không rỗng: về cuối dùng nguyên tiêu đề đã gọn.
     """
     cleaned = clean(title)
-    if category is Category.laptop:
+    profile = profile_of(category)
+    style = profile.name_style if profile is not None else "plain"  # quy tắc tên theo nhóm (X1.11)
+    if style == "model_code":
         span = laptop_code_span(cleaned)
         if span is not None:
             return _from_brand(span[0])
-    if category is Category.phone:
+    if style == "capacity_variants":
         cleaned = _attach_detached_plus(_CAPACITY_SPACE.sub("", cleaned))
     tokens = _tokens(cleaned)
     brand_at = _brand_index(tokens)
     tokens = tokens[brand_at if brand_at is not None else _leading_prefix_length(tokens) :]
     tokens = [t for t in _drop_colors(tokens) if t.key not in {"mau", "chinh", "hang"}]
-    if category is Category.phone:
+    if style == "capacity_variants":
         tokens = _phone_core(tokens)
     name = " ".join(token.text for token in tokens)
     return name or cleaned
