@@ -89,6 +89,12 @@ class ScriptedChatModel(BaseChatModel):
                     return item
                 if isinstance(item, dict):
                     return schema.model_validate(item)
+                # Kịch bản viết bước cuối là tool call `FinalAnswer` vẫn dùng được khi executor
+                # tổng hợp bằng structured output (X1.12): lấy tham số của tool call đó.
+                if isinstance(item, AIMessage):
+                    for call in item.tool_calls:
+                        if call["name"] == schema.__name__:
+                            return schema.model_validate(call["args"])
                 text = item.content if isinstance(item, AIMessage) else str(item)
                 return schema.model_validate_json(str(text))
             return item.model_dump() if isinstance(item, BaseModel) else item

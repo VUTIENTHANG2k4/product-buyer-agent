@@ -19,7 +19,12 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMe
 from langchain_core.tools import BaseTool
 from pydantic import ValidationError
 
-from app.agent.guardrail import Evidence, check_write_args, ground_search_args
+from app.agent.guardrail import (
+    READ_ON_REQUEST_TOOLS,
+    Evidence,
+    check_write_args,
+    ground_search_args,
+)
 from app.agent.schemas import FinalAnswer, ToolEndEvent, ToolStartEvent
 from app.agent.tools import WRITE_TOOLS
 from app.agent.tools.base import Result, error_result
@@ -57,9 +62,17 @@ SKIPPED_REASONS: Final[Mapping[str, str]] = MappingProxyType(
 # vì chúng thì lời nhắc tổng hợp không nói "chưa lấy được".
 UNNEEDED_CALLS: Final = frozenset({"SEARCH_DONE", "TOOL_NOT_REQUESTED", "WRITE_NOT_REQUESTED"})
 
-StopReason = Literal["final", "text_fallback", "step_limit", "tool_failures", "skipped_calls"]
+StopReason = Literal[
+    "final", "text_fallback", "step_limit", "tool_failures", "skipped_calls", "search_done"
+]
 
-_SYNTHESIS_HINTS: Final = {
+SYNTHESIS_HINTS: Final = {
+    # Đã có kết quả tìm và không còn tool nào người dùng cần (X1.12): tổng hợp ngay thay vì hỏi
+    # LLM có tool, vì Gemini hay thử tìm lại rồi bị `SEARCH_DONE` chặn, tốn thêm một lượt.
+    "search_done": (
+        "Đã có kết quả tìm kiếm đủ cho câu hỏi. Hãy tổng hợp FinalAnswer từ kết quả tool ở trên, "
+        "không gọi thêm tool. Kết quả ít là bình thường: chỉ nêu những sản phẩm đã tìm được."
+    ),
     "text_fallback": "Hãy trả lời bằng FinalAnswer dựa trên kết quả tool ở trên.",
     "step_limit": (
         "Đã hết số bước cho phép. Hãy tổng hợp FinalAnswer từ những kết quả tool đã có, "
@@ -178,6 +191,8 @@ class ToolLoop:
         # tìm lại để nới điều kiện; lời gọi song song cùng bước (chuột và bàn phím) vẫn chạy hết.
         self._search_found = False
         self._search_locked = False
+        # Khóa tìm kiếm mà không còn tool nào cần gọi: bước sau tổng hợp thẳng (X1.12).
+        self._finish_after_search = False
         self._skips: dict[str, int] = {}  # lời gọi bị bỏ qua theo tool (phần của bộ đếm lỗi)
         self._max_steps = max_steps
         self._allowed_writes = allowed_writes
@@ -198,6 +213,10 @@ class ToolLoop:
         """Chạy vòng lặp, phát sự kiện tool; `messages` và `outcome` được cập nhật tại chỗ."""
         failures: dict[str, int] = {}
         for step in range(1, self._max_steps + 1):
+            if self._finish_after_search:
+                outcome.stop_reason = "search_done"
+                outcome.answer = await self._synthesize(messages, "search_done")
+                return
             reply = await self._ask(self._bound, messages)
             outcome.llm_steps += 1
             _ensure_call_ids(reply, step)  # trước khi vào lịch sử: id AIMessage = id ToolMessage
@@ -234,6 +253,7 @@ class ToolLoop:
                 self._search_locked = True
                 self._hidden = self._hidden | {SEARCH_TOOL}
                 self._bound = self._bind()
+                self._finish_after_search = self._nothing_left_to_call(real)
             for call in real[MAX_CALLS_PER_STEP:]:  # LLM đòi quá nhiều tool trong một bước
                 messages.append(
                     _tool_message(
@@ -279,6 +299,21 @@ class ToolLoop:
         outcome.stop_reason = "step_limit"
         if outcome.evidence.product_ids or outcome.evidence.live_urls or outcome.tool_calls:
             outcome.answer = await self._synthesize(messages, "step_limit")
+
+    def _nothing_left_to_call(self, step_calls: Sequence[Any]) -> bool:
+        """Sau khi khóa tìm kiếm, lượt này còn cần tool nào nữa không (X1.12).
+
+        Không còn khi: người dùng không yêu cầu ghi, không hỏi chi tiết/so sánh/lịch sử giá (mọi
+        tool đọc theo yêu cầu đều ẩn hoặc không có), ý định là tầng 1 (không cần tìm trực tiếp) và
+        bước vừa rồi chỉ gọi `search_catalog` (gọi tool khác thì để LLM tự quyết bước sau).
+        """
+        if self._allowed_writes:
+            return False
+        if any(name in self._tools and name not in self._hidden for name in READ_ON_REQUEST_TOOLS):
+            return False
+        if self._intent is not None and self._intent.tier != 1:
+            return False
+        return all(call["name"] == SEARCH_TOOL for call in step_calls)
 
     async def _run_tool(
         self,
@@ -391,7 +426,7 @@ class ToolLoop:
         self, messages: list[BaseMessage], reason: StopReason
     ) -> FinalAnswer | None:
         """Một lần gọi structured output để lấy `FinalAnswer` (không gọi thêm tool)."""
-        prompt = [*messages, HumanMessage(content=_SYNTHESIS_HINTS[reason])]
+        prompt = [*messages, HumanMessage(content=SYNTHESIS_HINTS[reason])]
         try:
             result = await self._model.with_structured_output(FinalAnswer).ainvoke(prompt)
         except (ValidationError, OutputParserException):

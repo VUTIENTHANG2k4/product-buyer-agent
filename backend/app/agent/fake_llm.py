@@ -18,6 +18,7 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMe
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.runnables import Runnable, RunnableLambda
 
+from app.agent.executor import SYNTHESIS_HINTS
 from app.agent.intent import extract_amounts
 from app.agent.schemas import FinalAnswer, LiveItem
 from app.domain.dto import QueryIntent
@@ -98,8 +99,11 @@ def _vnd(amount: int) -> str:
 def _tool_results(messages: Sequence[BaseMessage]) -> list[dict[str, Any]]:
     """Kết quả (dict JSON) của các tool trong lượt hiện tại, sau tin nhắn người dùng cuối."""
     results: list[dict[str, Any]] = []
+    hints = set(SYNTHESIS_HINTS.values())
     for message in reversed(messages):
         if isinstance(message, HumanMessage):
+            if str(message.content) in hints:  # lời nhắc tổng hợp của executor, không phải lượt mới
+                continue
             break
         if isinstance(message, ToolMessage):
             try:
