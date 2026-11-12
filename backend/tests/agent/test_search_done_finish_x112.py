@@ -196,9 +196,38 @@ async def test_without_intent_the_shortcut_still_applies() -> None:
     assert run.outcome.stop_reason == "search_done"
 
 
-async def test_an_invalid_synthesis_leaves_no_answer() -> None:
-    script = [tool_call_message(SEARCH, {"n": 1}, "c1"), AIMessage(content="không phải JSON")]
+async def test_an_invalid_synthesis_falls_back_to_a_tool_bound_step() -> None:
+    """Review X1c: tổng hợp hỏng thì hỏi lại LLM có tool như trước X1.12 (FinalAnswer sai còn được
+    báo lại để viết lại), thay vì kết thúc lượt không có câu trả lời."""
+    script = [
+        tool_call_message(SEARCH, {"n": 1}, "c1"),
+        AIMessage(content="không phải JSON"),  # lần tổng hợp hỏng
+        final("Có 1 bàn phím."),  # bước có tool kế tiếp
+    ]
 
     run = await drive(script, [Fake(SEARCH, result=found(1))])
 
-    assert run.outcome.stop_reason == "search_done" and run.outcome.answer is None
+    assert run.outcome.stop_reason == "final"
+    assert run.outcome.answer is not None and run.outcome.answer.text == "Có 1 bàn phím."
+    assert run.outcome.llm_steps == 2 and len(run.model.calls) == 3
+
+
+async def test_a_search_locked_on_the_last_step_is_not_reported_as_a_step_limit() -> None:
+    model = ScriptedChatModel(
+        script=[tool_call_message(SEARCH, {"n": 1}, "c1"), FinalAnswer(text="ok")]
+    )
+    messages: list[BaseMessage] = [HumanMessage(content=A04)]
+    outcome = LoopOutcome()
+    loop = ToolLoop(
+        model,
+        [Fake(SEARCH, result=found(1)).tool],
+        max_steps=1,
+        allowed_writes=frozenset(),
+        intent=KEYBOARD,
+        message=A04,
+    )
+
+    _ = [event async for event in loop.run(messages, outcome)]
+
+    assert outcome.stop_reason == "search_done"
+    assert outcome.answer is not None and outcome.answer.text == "ok"

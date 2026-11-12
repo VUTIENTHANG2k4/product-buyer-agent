@@ -5,7 +5,10 @@ xuất ở `normalize/specs` (`SPEC_MODELS`, `_EXTRACTORS`), rồi đăng ký m�
 Agent (ý định, câu hỏi lại, bước kế hoạch, LLM giả, `search_catalog`), dịch vụ (thông số nổi bật,
 rematch) và quy tắc tên đọc profile thay vì rẽ nhánh theo từng nhóm.
 
-Hàm ở dưới đọc `CATEGORY_PROFILES` lúc gọi (không chép sẵn vào hằng) để test thay registry được.
+Hàm ở dưới đọc `CATEGORY_PROFILES` lúc gọi để test thay registry được. Một số hằng dựng sẵn lúc
+import (lược đồ/mô tả `search_catalog`, `REMATCH_CATEGORIES`, `KEY_SPEC_FIELDS`, `TIER1_CATEGORIES`)
+chỉ phản ánh registry khi khởi động; logic theo nhóm (ý định, thông số nổi bật, tên, mã model) gọi
+`profile_of` lúc chạy.
 """
 
 from types import MappingProxyType
@@ -36,6 +39,7 @@ class CategoryProfile(BaseModel):
     # "capacity_variants" = bỏ màu/mã phụ sau dung lượng, giữ chuẩn mạng (điện thoại).
     name_style: NameStyle = "plain"
     # Có ghép theo mã model (MPN/mã trong tên) không; phụ kiện không có mã ổn định (docs/04 §7).
+    # Đọc ở `extract_model_code`, `decide_match` (so cấu hình chặt) và rematch.
     uses_model_code: bool = False
 
 

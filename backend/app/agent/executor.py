@@ -213,9 +213,7 @@ class ToolLoop:
         """Chạy vòng lặp, phát sự kiện tool; `messages` và `outcome` được cập nhật tại chỗ."""
         failures: dict[str, int] = {}
         for step in range(1, self._max_steps + 1):
-            if self._finish_after_search:
-                outcome.stop_reason = "search_done"
-                outcome.answer = await self._synthesize(messages, "search_done")
+            if await self._finish_from_search(messages, outcome):
                 return
             reply = await self._ask(self._bound, messages)
             outcome.llm_steps += 1
@@ -253,7 +251,7 @@ class ToolLoop:
                 self._search_locked = True
                 self._hidden = self._hidden | {SEARCH_TOOL}
                 self._bound = self._bind()
-                self._finish_after_search = self._nothing_left_to_call(real)
+                self._finish_after_search = self._nothing_left_to_call(real[:MAX_CALLS_PER_STEP])
             for call in real[MAX_CALLS_PER_STEP:]:  # LLM đòi quá nhiều tool trong một bước
                 messages.append(
                     _tool_message(
@@ -296,9 +294,30 @@ class ToolLoop:
                 outcome.answer = await self._synthesize(messages, outcome.stop_reason)
                 return
 
+        # Khóa tìm kiếm bật đúng ở bước cuối: đã đủ kết quả, không phải hết bước (review X1c).
+        if await self._finish_from_search(messages, outcome):
+            return
         outcome.stop_reason = "step_limit"
         if outcome.evidence.product_ids or outcome.evidence.live_urls or outcome.tool_calls:
             outcome.answer = await self._synthesize(messages, "step_limit")
+
+    async def _finish_from_search(self, messages: list[BaseMessage], outcome: LoopOutcome) -> bool:
+        """Tổng hợp ngay khi đã có kết quả tìm và không còn tool nào cần gọi (X1.12).
+
+        Trả True khi đã có `FinalAnswer`. Lần tổng hợp hỏng (JSON sai, `text` rỗng…) thì quay về
+        một bước LLM có tool như trước X1.12, để `FinalAnswer` sai được báo lại và viết lại
+        (review X1c); cờ tắt nên chỉ thử lối tắt một lần.
+        """
+        if not self._finish_after_search:
+            return False
+        self._finish_after_search = False
+        answer = await self._synthesize(messages, "search_done")
+        if answer is None:
+            logger.warning("%sTổng hợp sau khi tìm không hợp lệ, hỏi lại LLM có tool", self._tag)
+            return False
+        outcome.stop_reason = "search_done"
+        outcome.answer = answer
+        return True
 
     def _nothing_left_to_call(self, step_calls: Sequence[Any]) -> bool:
         """Sau khi khóa tìm kiếm, lượt này còn cần tool nào nữa không (X1.12).

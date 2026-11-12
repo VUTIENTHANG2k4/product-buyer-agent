@@ -18,6 +18,7 @@ from typing import Any, Final
 
 from rapidfuzz import fuzz
 
+from app.domain.categories import profile_of
 from app.domain.enums import Category, MatchMethod
 from app.normalize.brand import UNKNOWN_BRAND
 from app.normalize.extract import missing_required
@@ -142,7 +143,8 @@ def decide_match(
         # không ghép mờ (mã model đã được xét ở trên).
         return MatchDecision(None, MatchMethod.new, None, code_taken)
 
-    strict = category is Category.laptop
+    profile = profile_of(category)
+    strict = profile is not None and profile.uses_model_code  # nhóm có mã model: so cấu hình chặt
     best: tuple[float, int] | None = None
     for candidate in sorted(candidates, key=lambda c: c.product_id):
         if model_code is not None and candidate.model_code not in (None, model_code):

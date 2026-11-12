@@ -166,7 +166,7 @@ def test_spec_registries_cover_exactly_the_profiles() -> None:
 def test_profiles_are_immutable_and_validated() -> None:
     profile = CATEGORY_PROFILES[Category.phone]
     with pytest.raises(ValueError):
-        profile.model_copy(update={}).__setattr__("label_vi", "x")
+        profile.label_vi = "x"
     with pytest.raises(ValueError):
         CategoryProfile(
             category=Category.other,
@@ -179,6 +179,8 @@ def test_profiles_are_immutable_and_validated() -> None:
 
 
 # ---- đăng ký một nhóm giả là đủ ----
+# Enum `Category` không thêm giá trị lúc chạy được (CHECK ở DB), nên nhóm giả mượn `Category.other`;
+# chưa đăng ký thì `other` là đích tầng 2 (test cuối file).
 CAMERA = CategoryProfile(
     category=Category.other,
     label_vi="máy ảnh",
