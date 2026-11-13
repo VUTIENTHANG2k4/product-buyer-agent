@@ -11,6 +11,11 @@ from app.domain.errors import AppError
 API_SPEC = Path(__file__).resolve().parents[3] / "docs" / "07-api-spec.md"
 
 # AGENT_HALLUCINATION / AGENT_STEP_LIMIT chỉ có trong sự kiện SSE `error` (không có HTTP status).
+requires_docs = pytest.mark.skipif(
+    not API_SPEC.exists(),
+    reason="docs/ không được đưa vào git; test đối chiếu tài liệu chỉ chạy khi có docs/",
+)
+
 SSE_ONLY_CODES = {"AGENT_HALLUCINATION", "AGENT_STEP_LIMIT"}
 
 
@@ -42,6 +47,7 @@ def _domain_errors() -> list[type[AppError]]:
     return found
 
 
+@requires_docs
 def test_domain_errors_match_the_http_error_table_in_the_api_spec() -> None:
     in_code = {cls.code: cls.status_code for cls in _domain_errors()}
     assert in_code == _documented_http_errors()

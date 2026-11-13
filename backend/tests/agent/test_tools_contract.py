@@ -26,8 +26,13 @@ from tests.agent.conftest import call
 from tests.service_support import NOW
 
 DOCS = Path(__file__).resolve().parents[3] / "docs" / "05-agent-design.md"
+requires_docs = pytest.mark.skipif(
+    not DOCS.exists(),
+    reason="docs/ không được đưa vào git; test đối chiếu tài liệu chỉ chạy khi có docs/",
+)
 
 
+@requires_docs
 def test_tool_names_and_order_match_the_docs_table() -> None:
     rows = re.findall(r"^\| \d \| `(\w+)` \|", DOCS.read_text(encoding="utf-8"), re.MULTILINE)
     assert list(TOOL_NAMES) == rows

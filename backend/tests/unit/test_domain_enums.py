@@ -10,6 +10,10 @@ from app.domain import enums
 
 DATA_MODEL = Path(__file__).resolve().parents[3] / "docs" / "04-data-model.md"
 SECTION_TITLE = "## 4. Enum"
+requires_docs = pytest.mark.skipif(
+    not DATA_MODEL.exists(),
+    reason="docs/ không được đưa vào git; test đối chiếu tài liệu chỉ chạy khi có docs/",
+)
 
 
 def _documented_enums() -> dict[str, list[str]]:
@@ -38,15 +42,20 @@ def _code_enums() -> dict[str, type[StrEnum]]:
     }
 
 
+@requires_docs
 def test_documented_table_was_parsed() -> None:
     assert len(_documented_enums()) == 12
 
 
+@requires_docs
 def test_code_and_docs_define_the_same_enums() -> None:
     assert set(_code_enums()) == set(_documented_enums())
 
 
-@pytest.mark.parametrize("name", sorted(_documented_enums()))
+@requires_docs
+@pytest.mark.parametrize(
+    "name", sorted(_documented_enums()) if DATA_MODEL.exists() else ["<docs missing>"]
+)
 def test_enum_values_match_documented_table(name: str) -> None:
     expected = _documented_enums()[name]
     actual = [member.value for member in _code_enums()[name]]
