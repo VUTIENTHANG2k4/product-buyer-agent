@@ -6,12 +6,14 @@ kiểu, khoảng giá ngược), rồi chạy `postprocess_intent` để sửa c
 
 import logging
 from collections.abc import Sequence
+from functools import partial
 
 from langchain_core.exceptions import OutputParserException
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from app.agent.intent import postprocess_intent
+from app.agent.llm_retry import NO_RETRY, RetryPolicy, call_with_retry
 from app.agent.prompt_loader import load_prompt
 from app.domain.dto import QueryIntent
 from app.domain.errors import LlmUnavailable
@@ -44,8 +46,9 @@ def build_messages(message: str, history: Sequence[str]) -> list[BaseMessage]:
 
 
 class Planner:
-    def __init__(self, model: BaseChatModel) -> None:
+    def __init__(self, model: BaseChatModel, *, retry: RetryPolicy = NO_RETRY) -> None:
         self._structured = model.with_structured_output(QueryIntent)
+        self._retry = retry  # thử lại khi LLM lỗi tạm thời (X4)
 
     async def plan(
         self, message: str, history: Sequence[str] = (), *, run_id: object | None = None
@@ -57,7 +60,12 @@ class Planner:
         last_error: Exception | None = None
         for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
-                result = await self._structured.ainvoke(messages)
+                result = await call_with_retry(
+                    partial(self._structured.ainvoke, messages),
+                    self._retry,
+                    tag=tag,
+                    stage="planner",
+                )
                 intent = (
                     result
                     if isinstance(result, QueryIntent)

@@ -25,6 +25,7 @@ from app.agent.guardrail import (
     check_write_args,
     ground_search_args,
 )
+from app.agent.llm_retry import NO_RETRY, RetryPolicy, call_with_retry
 from app.agent.schemas import FinalAnswer, ToolEndEvent, ToolStartEvent
 from app.agent.tools import WRITE_TOOLS
 from app.agent.tools.base import Result, error_result
@@ -177,6 +178,7 @@ class ToolLoop:
         intent: QueryIntent | None = None,
         message: str = "",
         hidden_tools: frozenset[str] = frozenset(),
+        retry: RetryPolicy = NO_RETRY,
     ) -> None:
         self._tag = "" if run_id is None else f"[run {run_id}] "  # tiền tố log (docs/05 §5)
         self._model = model
@@ -201,6 +203,7 @@ class ToolLoop:
         # Ý định + câu người dùng: căn cứ để bỏ điều kiện `search_catalog` họ không nêu (X1.10).
         self._intent = intent
         self._message = message
+        self._retry = retry  # thử lại khi LLM lỗi tạm thời (X4)
 
     def _bind(self) -> Any:
         return self._model.bind_tools(
@@ -428,7 +431,9 @@ class ToolLoop:
 
     async def _ask(self, runnable: Any, messages: list[BaseMessage]) -> AIMessage:
         try:
-            reply = await runnable.ainvoke(messages)
+            reply = await call_with_retry(
+                lambda: runnable.ainvoke(messages), self._retry, tag=self._tag, stage="executor"
+            )
         except Exception as error:
             logger.error(
                 "%sExecutor không gọi được LLM: %s: %s",
@@ -447,7 +452,10 @@ class ToolLoop:
         """Một lần gọi structured output để lấy `FinalAnswer` (không gọi thêm tool)."""
         prompt = [*messages, HumanMessage(content=SYNTHESIS_HINTS[reason])]
         try:
-            result = await self._model.with_structured_output(FinalAnswer).ainvoke(prompt)
+            structured = self._model.with_structured_output(FinalAnswer)
+            result = await call_with_retry(
+                lambda: structured.ainvoke(prompt), self._retry, tag=self._tag, stage="tổng hợp"
+            )
         except (ValidationError, OutputParserException):
             logger.warning(
                 "%sLLM trả FinalAnswer không hợp lệ (%s)", self._tag, reason, exc_info=True
