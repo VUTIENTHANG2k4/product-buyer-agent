@@ -248,3 +248,94 @@ def test_test_settings_never_retry() -> None:
 def test_out_of_range_retry_settings_are_rejected(field: str, value: float) -> None:
     with pytest.raises(ValidationError):
         make_settings(**{field: value})
+
+
+# ---- lỗi thật của thư viện (review X4): bắt được khi nâng SDK làm đổi cách bọc lỗi ----
+def _raised(func: Callable[[], object]) -> Exception:
+    try:
+        func()
+    except Exception as error:
+        return error
+    raise AssertionError("phải ném lỗi")
+
+
+def _gemini_server(code: int) -> Exception:
+    from google.genai.errors import ServerError
+    from langchain_google_genai.chat_models import _handle_server_error
+
+    payload = {"error": {"code": code, "status": "UNAVAILABLE", "message": "high demand"}}
+    return _raised(lambda: _handle_server_error(ServerError(code, payload)))
+
+
+def _gemini_client(code: int) -> Exception:
+    from google.genai.errors import ClientError
+    from langchain_google_genai.chat_models import _handle_client_error
+
+    payload = {"error": {"code": code, "status": "S", "message": "x"}}
+    return _raised(lambda: _handle_client_error(ClientError(code, payload), {"model": "m"}))
+
+
+def _openai(kind: str) -> Exception:
+    import httpx2
+    import openai
+    from langchain_openai.chat_models.base import _handle_openai_api_error
+
+    request = httpx2.Request("POST", "https://api.example/v1/chat")
+
+    def raise_it() -> None:
+        try:
+            if kind == "timeout":
+                raise httpx2.ReadTimeout("slow")
+            raise httpx2.ConnectError("refused")
+        except httpx2.HTTPError as cause:
+            try:
+                if kind == "timeout":
+                    raise openai.APITimeoutError(request=request) from cause
+                raise openai.APIConnectionError(request=request) from cause
+            except openai.APIError as error:
+                _handle_openai_api_error(error)
+
+    return _raised(raise_it)
+
+
+@pytest.mark.parametrize(
+    ("build", "expected"),
+    [
+        (lambda: _gemini_server(503), True),
+        (lambda: _gemini_server(504), True),
+        (lambda: _gemini_server(500), True),
+        (lambda: _gemini_client(429), True),
+        (lambda: _gemini_client(400), False),
+        (lambda: _openai("timeout"), True),
+        (lambda: _openai("connection"), True),
+    ],
+    ids=[
+        "gemini-503",
+        "gemini-504",
+        "gemini-500",
+        "gemini-429",
+        "gemini-400",
+        "openai-timeout",
+        "openai-connection",
+    ],
+)
+def test_real_provider_errors_are_classified(
+    build: Callable[[], Exception], expected: bool
+) -> None:
+    assert is_transient(build()) is expected
+
+
+def test_app_errors_are_never_retried_even_with_a_5xx_status() -> None:
+    from app.domain.errors import InternalError, LlmUnavailable
+
+    assert not is_transient(LlmUnavailable())  # status_code 503 là mã của API này
+    assert not is_transient(InternalError())
+    assert not is_transient(wrapped(LlmUnavailable()))
+
+
+@pytest.mark.parametrize(
+    "error",
+    [httpx.UnsupportedProtocol("ftp"), httpx.LocalProtocolError("bad header")],
+)
+def test_configuration_errors_from_httpx_are_not_retried(error: Exception) -> None:
+    assert not is_transient(error)

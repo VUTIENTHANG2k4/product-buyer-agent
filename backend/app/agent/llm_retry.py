@@ -4,9 +4,12 @@ Gemini gói miễn phí hay trả 503 "high demand" (eval 2026-11-13: 10/34 câu
 Thử lại ở tầng agent, không dùng cơ chế của SDK, để mỗi lần thử đi qua bộ giới hạn `LLM_MAX_RPM`
 của LangChain và có log kèm `[run <id>]`; thử lại của SDK bị tắt ở `llm.py`.
 
-Lỗi tạm thời: HTTP 408/429/500/502/503/504 (thuộc tính `code` hoặc `status_code`, xét cả chuỗi
-`__cause__`/`__context__`), hết thời gian và lỗi kết nối. Lỗi dữ liệu (JSON sai, sai khung), 400,
-401, 403, 404 không thử lại.
+Phân loại (xét cả chuỗi `__cause__`/`__context__`): lỗi chuẩn của LangChain (`ModelError`, mà
+langchain-google-genai và langchain-openai đều bọc lỗi SDK thành) quyết định bằng `is_retryable`
+(quá tải/5xx, 429, hết thời gian, lỗi kết nối); không có thì xét mã HTTP 408/429/500/502/503/504
+(`code`/`status_code`) rồi `TimeoutError` và lỗi mạng của httpx. Lỗi nghiệp vụ của ứng dụng
+(`AppError`, ví dụ `LlmUnavailable` có status 503), lỗi dữ liệu (JSON sai, sai khung), 400, 401,
+403, 404 không thử lại.
 """
 
 import asyncio
@@ -17,8 +20,10 @@ from dataclasses import dataclass, field
 from typing import Final, TypeVar
 
 import httpx
+from langchain_core.exceptions import ModelError
 
 from app.config import Settings
+from app.domain.errors import AppError
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +31,14 @@ T = TypeVar("T")
 
 TRANSIENT_STATUS: Final = frozenset({408, 429, 500, 502, 503, 504})
 _MAX_CHAIN: Final = 10  # số tầng `__cause__`/`__context__` tối đa khi tìm mã lỗi
+# Lỗi mạng tạm thời của httpx (Gemini async dùng httpx.AsyncClient); `UnsupportedProtocol`,
+# `LocalProtocolError` là lỗi cấu hình/lập trình nên không thử lại (review X4).
+_NETWORK_ERRORS: Final = (
+    TimeoutError,
+    httpx.TimeoutException,
+    httpx.NetworkError,
+    httpx.RemoteProtocolError,
+)
 
 
 @dataclass(frozen=True)
@@ -71,8 +84,14 @@ def _chain(error: BaseException) -> list[BaseException]:
 
 
 def status_of(error: BaseException) -> int | None:
-    """Mã HTTP đầu tiên tìm thấy trên lỗi hoặc nguyên nhân của nó (None nếu không có)."""
+    """Mã HTTP đầu tiên tìm thấy trên lỗi hoặc nguyên nhân của nó (None nếu không có).
+
+    Bỏ qua `AppError`: `status_code` của nó là mã trả cho client của API này, không phải mã của
+    nhà cung cấp LLM (`LlmUnavailable` là 503 nhưng thử lại không giúp gì).
+    """
     for item in _chain(error):
+        if isinstance(item, AppError):
+            continue
         for name in ("code", "status_code"):
             value = getattr(item, name, None)
             if isinstance(value, int) and not isinstance(value, bool) and 100 <= value <= 599:
@@ -82,13 +101,16 @@ def status_of(error: BaseException) -> int | None:
 
 def is_transient(error: BaseException) -> bool:
     """Lỗi có thể hết khi thử lại sau ít giây (quá tải, giới hạn tần suất, mạng)."""
+    chain = _chain(error)
+    if any(isinstance(item, AppError) for item in chain):
+        return False
+    model_error = next((item for item in chain if isinstance(item, ModelError)), None)
+    if model_error is not None:
+        return bool(model_error.is_retryable)
     status = status_of(error)
     if status is not None:
         return status in TRANSIENT_STATUS
-    return any(
-        isinstance(item, TimeoutError | httpx.TimeoutException | httpx.TransportError)
-        for item in _chain(error)
-    )
+    return any(isinstance(item, _NETWORK_ERRORS) for item in chain)
 
 
 async def call_with_retry(
