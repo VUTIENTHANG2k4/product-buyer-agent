@@ -22,6 +22,8 @@ def make_settings(**overrides: object) -> Settings:
         "scraper_user_agent": "test-agent/0.1",
         "alert_default_email": "mock@example.com",
         "telegram_chat_id": "",
+        # Test không bao giờ chờ thật: lỗi LLM giả không được thử lại (X4); test thử lại tự đặt.
+        "llm_retry_attempts": 1,
     }
     return Settings.model_validate({**base, **overrides})
 

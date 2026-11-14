@@ -28,6 +28,7 @@ from app.agent.guardrail import (
     apply_guardrail,
 )
 from app.agent.intent import extract_amounts
+from app.agent.llm_retry import RetryPolicy
 from app.agent.memory import ConversationContext, to_context
 from app.agent.planner import Planner
 from app.agent.prompt_loader import load_prompt
@@ -91,6 +92,7 @@ class AgentRunner:
         clock: Callable[[], float] = time.perf_counter,
         observer: Callable[[GuardrailOutcome], None] | None = None,
         live_search: LiveSearchService | None = None,
+        retry: RetryPolicy | None = None,
     ) -> None:
         # `observer` nhận kết quả guardrail của mỗi lượt (eval đo hallucination trước khi lọc).
         self.observer = observer
@@ -98,7 +100,9 @@ class AgentRunner:
         self._settings = settings
         self._now = now
         self._clock = clock
-        self._planner = Planner(planner_model)
+        # Thử lại khi LLM lỗi tạm thời (X4): chung một chính sách cho planner và executor.
+        self._retry = retry if retry is not None else RetryPolicy.from_settings(settings)
+        self._planner = Planner(planner_model, retry=self._retry)
         self._executor_model = executor_model
         self._tools = build_tools(ToolContext(session_factory, settings, now, live_search))
 
@@ -211,6 +215,7 @@ class AgentRunner:
             intent=intent,
             message=message,
             hidden_tools=READ_ON_REQUEST_TOOLS - allowed_read_tools(message),
+            retry=self._retry,
         )
         async for tool_event in loop.run(messages, outcome):
             yield tool_event, None

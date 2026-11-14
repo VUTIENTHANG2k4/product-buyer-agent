@@ -1,7 +1,8 @@
 """Nhà máy model chat theo vai trò (docs/05 §2).
 
 Nhà cung cấp chọn bằng `LLM_PROVIDER`: `gemini`, `openai` hoặc `fake` (test/e2e). Mỗi lần gọi LLM
-hết hạn sau 30 giây và thử lại 1 lần.
+hết hạn sau 30 giây. SDK không tự thử lại: thử lại khi lỗi tạm thời nằm ở `llm_retry.py` (X4) để mỗi
+lần thử đi qua bộ giới hạn `LLM_MAX_RPM` và có log theo lượt chạy.
 """
 
 from functools import lru_cache
@@ -19,7 +20,11 @@ from app.domain.errors import LlmUnavailable
 Role = Literal["planner", "executor", "extractor"]
 
 LLM_TIMEOUT_SECONDS = 30.0
-LLM_MAX_RETRIES = 1
+# Gemini (google-genai `HttpRetryOptions.attempts`) tính cả lần gọi đầu: 1 = không thử lại.
+# OpenAI tính số lần thử lại: 0 = không thử lại. Trước X4 giá trị `retries=1` của Gemini vốn đã
+# là "không thử lại" dù chú thích ghi "thử lại 1 lần".
+GEMINI_ATTEMPTS = 1
+OPENAI_MAX_RETRIES = 0
 # Planner và extractor cần kết quả ổn định; executor được lệch nhẹ khi viết câu trả lời.
 TEMPERATURE: dict[Role, float] = {"planner": 0.0, "executor": 0.2, "extractor": 0.0}
 
@@ -52,7 +57,7 @@ def get_chat_model(role: Role, settings: Settings | None = None) -> BaseChatMode
             temperature=temperature,
             api_key=google_key,
             request_timeout=LLM_TIMEOUT_SECONDS,
-            retries=LLM_MAX_RETRIES,
+            max_retries=GEMINI_ATTEMPTS,
             rate_limiter=_limiter(settings),
         )
     openai_key = settings.openai_api_key
@@ -63,6 +68,6 @@ def get_chat_model(role: Role, settings: Settings | None = None) -> BaseChatMode
         temperature=temperature,
         api_key=openai_key,
         timeout=LLM_TIMEOUT_SECONDS,
-        max_retries=LLM_MAX_RETRIES,
+        max_retries=OPENAI_MAX_RETRIES,
         rate_limiter=_limiter(settings),
     )

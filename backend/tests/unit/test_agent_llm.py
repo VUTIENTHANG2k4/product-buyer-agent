@@ -9,7 +9,13 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, SecretStr
 
 from app.agent.fake_llm import ShoppingFakeChatModel
-from app.agent.llm import LLM_MAX_RETRIES, LLM_TIMEOUT_SECONDS, TEMPERATURE, get_chat_model
+from app.agent.llm import (
+    GEMINI_ATTEMPTS,
+    LLM_TIMEOUT_SECONDS,
+    OPENAI_MAX_RETRIES,
+    TEMPERATURE,
+    get_chat_model,
+)
 from app.agent.testing import ScriptedChatModel, ScriptExhausted, tool_call_message
 from app.config import Settings
 from app.domain.errors import LlmUnavailable
@@ -38,7 +44,9 @@ def test_gemini_provider_uses_configured_model_timeout_and_retry() -> None:
     assert model.model == "gemini-test"
     assert model.temperature == TEMPERATURE["executor"] == 0.2
     assert model.timeout == LLM_TIMEOUT_SECONDS == 30.0
-    assert model.max_retries == LLM_MAX_RETRIES == 1
+    # SDK không tự thử lại (X4): `attempts` của google-genai tính cả lần đầu, 1 = gọi một lần;
+    # thử lại nằm ở `llm_retry.py` để đi qua bộ giới hạn LLM_MAX_RPM.
+    assert model.max_retries == GEMINI_ATTEMPTS == 1
 
 
 def test_openai_provider_uses_configured_model() -> None:
@@ -49,7 +57,7 @@ def test_openai_provider_uses_configured_model() -> None:
     assert isinstance(model, ChatOpenAI)
     assert model.model_name == "gpt-test"
     assert model.temperature == 0.0
-    assert model.max_retries == 1
+    assert model.max_retries == OPENAI_MAX_RETRIES == 0  # OpenAI tính số lần thử lại (X4)
 
 
 @pytest.mark.parametrize(

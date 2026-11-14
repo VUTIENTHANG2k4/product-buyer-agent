@@ -94,6 +94,12 @@ class Settings(BaseSettings):
     # 0 = không giới hạn. Gói miễn phí của Gemini cho ~15 request/phút/model: đặt 12 khi chạy eval.
     llm_max_rpm: NonNegativeInt = 0
     llm_extractor_enabled: bool = True
+    # Thử lại khi LLM lỗi tạm thời (503/504/429, hết thời gian; X4): số lần gọi tối đa kể cả lần
+    # đầu (1 = không thử lại), lần chờ đầu (giây, gấp đôi mỗi lần), trần mỗi lần chờ và tổng chờ.
+    llm_retry_attempts: Annotated[int, Field(ge=1, le=6)] = 3
+    llm_retry_base_seconds: Annotated[float, Field(ge=0, le=60, allow_inf_nan=False)] = 2.0
+    llm_retry_max_delay_seconds: Annotated[float, Field(ge=0, le=120, allow_inf_nan=False)] = 10.0
+    llm_retry_max_total_seconds: Annotated[float, Field(ge=0, le=300, allow_inf_nan=False)] = 20.0
 
     # Cơ sở dữ liệu (URL chứa mật khẩu nên là SecretStr; không có mặc định để khỏi hardcode).
     # test_database_url chỉ pytest dùng nên không bắt buộc khi chạy API/worker.
